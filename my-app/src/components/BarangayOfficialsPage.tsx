@@ -182,10 +182,10 @@ const BarangayOfficialsPage: React.FC = () => {
       {/* Top Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Officials Overview */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">Officials Overview</h1>
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-green-50 rounded-lg p-6 border border-gray-100">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Officials</p>
@@ -197,7 +197,7 @@ const BarangayOfficialsPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-green-50 rounded-lg p-6 border border-gray-100">
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Upcoming Elections</p>
