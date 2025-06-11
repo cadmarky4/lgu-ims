@@ -1,0 +1,286 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
+
+class BlotterCase extends Model
+{
+    protected $fillable = [
+        'case_number',
+        'case_title',
+        'case_description',
+        'case_type',
+        'complainant_resident_id',
+        'complainant_name',
+        'complainant_contact',
+        'complainant_address',
+        'respondent_resident_id',
+        'respondent_name',
+        'respondent_contact',
+        'respondent_address',
+        'incident_date',
+        'incident_time',
+        'incident_location',
+        'incident_narrative',
+        'witnesses',
+        'evidence_items',
+        'status',
+        'date_filed',
+        'hearing_date',
+        'hearing_time',
+        'hearing_location',
+        'investigating_officer',
+        'mediator_assigned',
+        'lupon_members',
+        'settlement_agreement',
+        'settlement_date',
+        'resolution_type',
+        'attachments',
+        'investigation_report',
+        'mediation_notes',
+        'court_documents',
+        'requires_monitoring',
+        'next_followup_date',
+        'followup_notes',
+        'compliance_status',
+        'priority',
+        'is_urgent',
+        'urgency_reason',
+        'applicable_laws',
+        'ordinance_violated',
+        'legal_basis',
+        'remarks',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'incident_date' => 'date',
+        'incident_time' => 'datetime:H:i',
+        'date_filed' => 'date',
+        'hearing_date' => 'date',
+        'hearing_time' => 'datetime:H:i',
+        'settlement_date' => 'date',
+        'next_followup_date' => 'date',
+        'requires_monitoring' => 'boolean',
+        'is_urgent' => 'boolean',
+        'evidence_items' => 'array',
+        'attachments' => 'array',
+        'court_documents' => 'array'
+    ];
+
+    protected $appends = [
+        'days_pending',
+        'is_overdue'
+    ];
+
+    // Relationships
+    public function complainantResident(): BelongsTo
+    {
+        return $this->belongsTo(Resident::class, 'complainant_resident_id');
+    }
+
+    public function respondentResident(): BelongsTo
+    {
+        return $this->belongsTo(Resident::class, 'respondent_resident_id');
+    }
+
+    public function investigatingOfficer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'investigating_officer');
+    }
+
+    public function mediatorAssigned(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'mediator_assigned');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    // Computed attributes
+    public function getDaysPendingAttribute(): int
+    {
+        if (in_array($this->status, ['SETTLED', 'DISMISSED', 'CLOSED'])) {
+            return 0;
+        }
+        
+        return Carbon::parse($this->date_filed)->diffInDays(now());
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        if (!$this->hearing_date || in_array($this->status, ['SETTLED', 'DISMISSED', 'CLOSED'])) {
+            return false;
+        }
+        
+        return Carbon::parse($this->hearing_date)->isPast();
+    }
+
+    // Scopes
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->whereNotIn('status', ['SETTLED', 'DISMISSED', 'CLOSED']);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['FILED', 'UNDER_INVESTIGATION', 'MEDIATION_SCHEDULED', 'IN_MEDIATION']);
+    }
+
+    public function scopeUrgent(Builder $query): Builder
+    {
+        return $query->where('is_urgent', true)
+                    ->orWhere('priority', 'URGENT');
+    }
+
+    public function scopeHighPriority(Builder $query): Builder
+    {
+        return $query->whereIn('priority', ['HIGH', 'URGENT']);
+    }
+
+    public function scopeByCaseType(Builder $query, string $type): Builder
+    {
+        return $query->where('case_type', $type);
+    }
+
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query->where('hearing_date', '<', now())
+                    ->whereNotIn('status', ['SETTLED', 'DISMISSED', 'CLOSED']);
+    }
+
+    public function scopeRequiresFollowup(Builder $query): Builder
+    {
+        return $query->where('requires_monitoring', true)
+                    ->where('next_followup_date', '<=', now());
+    }
+
+    // Helper methods
+    public function generateCaseNumber(): string
+    {
+        $year = date('Y');
+        $count = static::whereYear('created_at', $year)->count() + 1;
+        return "BLT-{$year}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function assignInvestigator(int $officerId): void
+    {
+        $this->update([
+            'investigating_officer' => $officerId,
+            'status' => 'UNDER_INVESTIGATION'
+        ]);
+    }
+
+    public function scheduleHearing(Carbon $date, Carbon $time, string $location): void
+    {
+        $this->update([
+            'hearing_date' => $date,
+            'hearing_time' => $time,
+            'hearing_location' => $location,
+            'status' => 'MEDIATION_SCHEDULED'
+        ]);
+    }
+
+    public function assignMediator(int $mediatorId): void
+    {
+        $this->update([
+            'mediator_assigned' => $mediatorId
+        ]);
+    }
+
+    public function startMediation(): void
+    {
+        $this->update([
+            'status' => 'IN_MEDIATION'
+        ]);
+    }
+
+    public function settle(string $agreement, string $resolutionType = 'AMICABLE_SETTLEMENT'): void
+    {
+        $this->update([
+            'status' => 'SETTLED',
+            'settlement_agreement' => $agreement,
+            'settlement_date' => now(),
+            'resolution_type' => $resolutionType
+        ]);
+    }
+
+    public function referToAuthority(string $authority): void
+    {
+        $status = $authority === 'court' ? 'REFERRED_TO_COURT' : 'REFERRED_TO_POLICE';
+        
+        $this->update([
+            'status' => $status,
+            'resolution_type' => $status
+        ]);
+    }
+
+    public function dismiss(string $reason): void
+    {
+        $this->update([
+            'status' => 'DISMISSED',
+            'resolution_type' => 'DISMISSED',
+            'remarks' => $reason
+        ]);
+    }
+
+    public function close(): void
+    {
+        $this->update([
+            'status' => 'CLOSED'
+        ]);
+    }
+
+    public function scheduleFollowup(Carbon $date, string $notes = null): void
+    {
+        $this->update([
+            'requires_monitoring' => true,
+            'next_followup_date' => $date,
+            'followup_notes' => $notes
+        ]);
+    }
+
+    public function updateCompliance(string $status, string $notes = null): void
+    {
+        $this->update([
+            'compliance_status' => $status,
+            'followup_notes' => $notes
+        ]);
+    }
+
+    public function markAsUrgent(string $reason): void
+    {
+        $this->update([
+            'is_urgent' => true,
+            'priority' => 'URGENT',
+            'urgency_reason' => $reason
+        ]);
+    }
+
+    // Boot method
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($blotterCase) {
+            if (empty($blotterCase->case_number)) {
+                $blotterCase->case_number = $blotterCase->generateCaseNumber();
+            }
+            if (empty($blotterCase->date_filed)) {
+                $blotterCase->date_filed = now();
+            }
+        });
+    }
+}
