@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --color-smblue-50: #f3fff0;
+  --color-smblue-100: #8fdbc5;
+  --color-smblue-200: #64adc4;
+  --color-smblue-300: #4887b7;
+  --color-smblue-400: #367096;
+  --color-darktext: #2c332f;
+  --color-stats-card: #e4f0ed;
+}
+
 @layer base {
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    /* --color-darktext */
+    color: #2c332f;
   }
 }
 
@@ -10,15 +22,15 @@
   .sidebar-link {
     @apply flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200;
   }
-  
+
   .sidebar-link.active {
     @apply bg-blue-600 text-white hover:bg-blue-700 hover:text-white;
   }
-  
+
   .stat-card {
     @apply bg-white rounded-lg p-6 shadow-sm border border-gray-100;
   }
-  
+
   .quick-action-btn {
     @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-sm font-medium;
   }
