@@ -8,6 +8,7 @@ import ProcessDocument from './components/ProcessDocument';
 import BarangayOfficialsPage from './components/BarangayOfficialsPage';
 import SettingsPage from './components/SettingsPage';
 import ProjectsAndPrograms from './components/ProjectsAndPrograms';
+import UserManagement from './components/UserManagement';
 import './index.css';
 
 function App() {
@@ -32,8 +33,9 @@ function App() {
           {(activeMenuItem === 'process-document' || activeMenuItem === 'barangay-clearance' || activeMenuItem === 'business-permit' || activeMenuItem === 'certificate-indigency' || activeMenuItem === 'certificate-residency') && <ProcessDocument onNavigate={handleMenuItemClick} />}
           {activeMenuItem === 'officials' && <BarangayOfficialsPage />}
           {activeMenuItem === 'projects' && <ProjectsAndPrograms />}
+          {activeMenuItem === 'users' && <UserManagement />}
           {activeMenuItem === 'settings' && <SettingsPage />}
-          {activeMenuItem !== 'dashboard' && activeMenuItem !== 'residents' && activeMenuItem !== 'household' && activeMenuItem !== 'process-document' && activeMenuItem !== 'barangay-clearance' && activeMenuItem !== 'business-permit' && activeMenuItem !== 'certificate-indigency' && activeMenuItem !== 'certificate-residency' && activeMenuItem !== 'officials' && activeMenuItem !== 'projects' && activeMenuItem !== 'settings' && (
+          {activeMenuItem !== 'dashboard' && activeMenuItem !== 'residents' && activeMenuItem !== 'household' && activeMenuItem !== 'process-document' && activeMenuItem !== 'barangay-clearance' && activeMenuItem !== 'business-permit' && activeMenuItem !== 'certificate-indigency' && activeMenuItem !== 'certificate-residency' && activeMenuItem !== 'officials' && activeMenuItem !== 'projects' && activeMenuItem !== 'users' && activeMenuItem !== 'settings' && (
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 {activeMenuItem.charAt(0).toUpperCase() + activeMenuItem.slice(1)} Page
