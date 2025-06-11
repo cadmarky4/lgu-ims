@@ -9,18 +9,58 @@ import BarangayOfficialsPage from './components/BarangayOfficialsPage';
 import SettingsPage from './components/SettingsPage';
 import ProjectsAndPrograms from './components/ProjectsAndPrograms';
 import UserManagement from './components/UserManagement';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
 import './index.css';
 
 function App() {
   const [activeMenuItem, setActiveMenuItem] = useState('dashboard');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'signup'>('login');
 
   const handleMenuItemClick = (item: string) => {
     setActiveMenuItem(item);
   };
 
+  const handleLogin = (credentials: { email: string; password: string; rememberMe: boolean }) => {
+    console.log('Login attempt:', credentials);
+    // Here you would typically validate credentials with backend
+    setIsAuthenticated(true);
+  };
+
+  const handleSignup = (userData: any) => {
+    console.log('Signup data:', userData);
+    // Here you would typically send to backend
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActiveMenuItem('dashboard');
+  };
+
+  // Show authentication pages if not logged in
+  if (!isAuthenticated) {
+    if (authView === 'login') {
+      return (
+        <LoginPage 
+          onLogin={handleLogin}
+          onNavigateToSignup={() => setAuthView('signup')}
+        />
+      );
+    } else {
+      return (
+        <SignupPage 
+          onSignup={handleSignup}
+          onNavigateToLogin={() => setAuthView('login')}
+        />
+      );
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header onLogout={handleLogout} />
       <div className="flex">
         <Sidebar 
           activeItem={activeMenuItem} 
