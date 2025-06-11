@@ -144,7 +144,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onNavigateToSignup }) =>
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
-            © 2024 Barangay San Miguel. All rights reserved.
+            © 2025 Barangay San Miguel. All rights reserved.
           </p>
         </div>
       </div>

@@ -9,15 +9,21 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    middleName: '',
+    position: '',
+    department: '',
+    employeeId: '',
     email: '',
+    phone: '',
     username: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -101,20 +107,120 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
               </div>
             </div>
 
-            {/* Email Field */}
+            {/* Middle Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
+                Middle Name
               </label>
               <input
-                type="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                name="middleName"
+                value={formData.middleName}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="Enter your email"
-                required
+                placeholder="Middle name (optional)"
               />
+            </div>
+
+            {/* Employee ID and Position */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Employee ID
+                </label>
+                <input
+                  type="text"
+                  name="employeeId"
+                  value={formData.employeeId}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="Employee ID"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Position
+                </label>
+                <select
+                  name="position"
+                  value={formData.position}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  aria-label="Select Position"
+                  required
+                >
+                  <option value="">Select Position</option>
+                  <option value="Barangay Captain">Barangay Captain</option>
+                  <option value="Barangay Kagawad">Barangay Kagawad</option>
+                  <option value="Barangay Secretary">Barangay Secretary</option>
+                  <option value="Barangay Treasurer">Barangay Treasurer</option>
+                  <option value="SK Chairperson">SK Chairperson</option>
+                  <option value="Records Officer">Records Officer</option>
+                  <option value="Administrative Assistant">Administrative Assistant</option>
+                  <option value="Data Encoder">Data Encoder</option>
+                  <option value="IT Support">IT Support</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Department */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department/Office
+              </label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                aria-label="Select Department"
+                required
+              >
+                <option value="">Select Department</option>
+                <option value="Barangay Council">Barangay Council</option>
+                <option value="Administrative Office">Administrative Office</option>
+                <option value="Records Management">Records Management</option>
+                <option value="Permit and Licensing">Permit and Licensing</option>
+                <option value="Social Services">Social Services</option>
+                <option value="Public Safety">Public Safety</option>
+                <option value="Environment and Sanitation">Environment and Sanitation</option>
+                <option value="IT Department">IT Department</option>
+                <option value="Finance Office">Finance Office</option>
+              </select>
+            </div>
+
+            {/* Contact Information */}
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Official Email Address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="official.email@barangaysanmiguel.gov.ph"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="+63 9XX XXX XXXX"
+                  required
+                />
+              </div>
             </div>
 
             {/* Username Field */}
@@ -213,7 +319,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
-            © 2024 Barangay San Miguel. All rights reserved.
+            © 2025 Barangay San Miguel. All rights reserved.
           </p>
         </div>
       </div>
