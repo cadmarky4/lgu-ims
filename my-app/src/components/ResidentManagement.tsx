@@ -107,10 +107,10 @@ const ResidentManagement: React.FC = () => {
   ];
 
   const stats = [
-    { title: 'Total Residents', value: '40,199', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: 'PWD', value: '2,345', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: 'Senior Citizens', value: '3,239', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: 'Children', value: '7,199', icon: FiUsers, bgColor: 'bg-green-50' }
+    { title: 'Total Residents', value: '40,199', icon: FiUsers },
+    { title: 'PWD', value: '2,345', icon: FiUsers },
+    { title: 'Senior Citizens', value: '3,239', icon: FiUsers },
+    { title: 'Children', value: '7,199', icon: FiUsers }
   ];
 
   const handleAddResident = (residentData: any) => {
@@ -137,7 +137,7 @@ const ResidentManagement: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className={`${stat.bgColor} rounded-lg p-6 border border-gray-100`}>
+          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>

@@ -8,10 +8,10 @@ const ProjectsAndPrograms: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const stats = [
-    { title: 'Total Projects', value: '24', icon: FiFolder, bgColor: 'bg-green-50' },
-    { title: 'Completed Projects', value: '12', icon: FiCheckCircle, bgColor: 'bg-green-50' },
-    { title: 'Active Projects', value: '8', icon: FiClock, bgColor: 'bg-green-50' },
-    { title: 'Total Budget', value: '₱2.4 M', icon: FiDollarSign, bgColor: 'bg-green-50' }
+    { title: 'Total Projects', value: '24', icon: FiFolder },
+    { title: 'Completed Projects', value: '12', icon: FiCheckCircle },
+    { title: 'Active Projects', value: '8', icon: FiClock },
+    { title: 'Total Budget', value: '₱2.4 M', icon: FiDollarSign }
   ];
 
   const categories = ['All Projects', 'Infrastructure', 'Community', 'Health', 'Education'];
@@ -122,7 +122,7 @@ const ProjectsAndPrograms: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className={`${stat.bgColor} rounded-lg p-6 border border-gray-100`}>
+          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>

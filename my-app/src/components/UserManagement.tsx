@@ -109,10 +109,10 @@ const UserManagement: React.FC = () => {
   ];
 
   const stats = [
-    { title: 'Total Users', value: '156', icon: FiUsers, bgColor: 'bg-blue-50' },
-    { title: 'Active Users', value: '142', icon: FiUserCheck, bgColor: 'bg-green-50' },
-    { title: 'Administrators', value: '8', icon: FiShield, bgColor: 'bg-purple-50' },
-    { title: 'New This Month', value: '12', icon: FiUserPlus, bgColor: 'bg-orange-50' }
+    { title: 'Total Users', value: '156', icon: FiUsers },
+    { title: 'Active Users', value: '142', icon: FiUserCheck },
+    { title: 'Administrators', value: '8', icon: FiShield },
+    { title: 'New This Month', value: '12', icon: FiUserPlus }
   ];
 
   const getRoleBadgeColor = (role: string) => {
@@ -179,7 +179,7 @@ const UserManagement: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className={`${stat.bgColor} rounded-lg p-6 border border-gray-100`}>
+          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
