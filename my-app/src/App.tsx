@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -13,19 +13,46 @@ import "./index.css";
 
 function App() {
   const [activeMenuItem, setActiveMenuItem] = useState("dashboard");
+  const [isOpen, setIsOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(
+    window.matchMedia("(max-width: 768px)").matches
+  );
 
   const handleMenuItemClick = (item: string) => {
     setActiveMenuItem(item);
+    if (isMobile) setIsOpen(false);
   };
+
+  const handleSidebarToggle = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+    const handleMediaChange = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches);
+      setIsOpen(!event.matches);
+    };
+
+    // call onmount
+    setIsMobile(mediaQuery.matches);
+    setIsOpen(!mediaQuery.matches);
+    console.log("HANDLED: Mounted");
+
+    mediaQuery.addEventListener("change", handleMediaChange);
+    return () => mediaQuery.removeEventListener("change", handleMediaChange);
+  }, []);
 
   return (
     // <div className="min-h-screen bg-gray-50">
     <>
-      <Header />
+      <Header onToggleSidebar={handleSidebarToggle} />
       <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
         <Sidebar
           activeItem={activeMenuItem}
           onItemClick={handleMenuItemClick}
+          isExpanded={isOpen}
         />
         <main className="flex-1 overflow-y-auto">
           {activeMenuItem === "dashboard" && <Dashboard />}

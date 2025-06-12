@@ -1,7 +1,7 @@
-import React from "react";
 import { FiUser } from "react-icons/fi";
+import { BiSidebar } from "react-icons/bi";
 
-const Header: React.FC = () => {
+const Header = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -21,14 +21,20 @@ const Header: React.FC = () => {
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden">
+          <button
+            className="cursor-pointer hover:bg-gray-200 p-3 rounded-2xl"
+            onClick={onToggleSidebar}
+          >
+            <BiSidebar fontSize={24} />
+          </button>
+          <div className="hidden md:flex w-12 h-12 rounded-full items-center justify-center overflow-hidden">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-full flex items-center justify-center">
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
                 <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-green-600 rounded-full"></div>
               </div>
             </div>
           </div>
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-xl font-bold text-gray-900">
               Barangay San Miguel
             </h1>
@@ -50,8 +56,10 @@ const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
-            <FiUser className="w-5 h-5" />
-            <span className="font-medium">Ayevinna Hao</span>
+            <FiUser className="header-pre-mobile:mr-0 mr-2 w-5 h-5 flex justify-center" />
+            <span className="font-medium header-pre-mobile:hidden">
+              Ayevinna Hao
+            </span>
           </div>
         </div>
       </div>

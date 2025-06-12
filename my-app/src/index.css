@@ -10,6 +10,8 @@
   --color-stats-card: #e4f0ed;
 }
 
+@custom-variant header-pre-mobile (@media (max-width: 864px));
+
 @layer base {
   body {
     font-family: "Inter", system-ui, -apple-system, sans-serif;

@@ -14,9 +14,14 @@ import {
 interface SidebarProps {
   activeItem: string;
   onItemClick: (item: string) => void;
+  isExpanded: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  activeItem,
+  onItemClick,
+  isExpanded,
+}) => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: FiHome },
     { id: "residents", label: "Resident Management", icon: FiUsers },
@@ -53,13 +58,39 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
   ];
 
   return (
-    <aside className="overflow-y-auto min-w-64 w-64 bg-gray-50 border-r border-gray-200 min-h-screen">
+    // <aside className="transition-all duration-500 md:w-64 md:min-w-64 overflow-x-hidden overflow-y-auto min-w-0 w-0 bg-gray-50 border-r border-gray-200 min-h-screen">
+    <aside
+      className={`transition-all duration-500 ${
+        isExpanded ? "md:w-64 md:min-w-64" : "md:min-w-0 md:w-0"
+      } overflow-x-hidden overflow-y-auto ${
+        isExpanded ? "min-w-screen w-screen" : "min-w-0 w-0"
+      } bg-gray-50 border-r border-gray-200 min-h-screen`}
+    >
       <nav className="py-4 mb-20">
+        {/* Logo and Title */}
+        <div className="flex md:hidden items-center space-x-3 px-3 py-4 w-screen overflow-x-hidden">
+          <div className="w-12 h-12 rounded-full items-center justify-center overflow-hidden">
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-green-600 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              Barangay San Miguel
+            </h1>
+            <p className="text-sm text-gray-500">
+              Information Management System
+            </p>
+          </div>
+        </div>
+
         {menuItems.map((item) => (
           <div key={item.id}>
             <button
               onClick={() => onItemClick(item.id)}
-              className={`sidebar-link w-full ${
+              className={`sidebar-link md:w-64 w-screen overflow-x-hidden${
                 activeItem === item.id ? "active" : ""
               }`}
             >
