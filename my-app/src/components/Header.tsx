@@ -1,23 +1,23 @@
-import React from 'react';
-import { FiUser } from 'react-icons/fi';
+import React from "react";
+import { FiUser } from "react-icons/fi";
 
 const Header: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  
-  const currentTime = new Date().toLocaleTimeString('en-US', {
+
+  const currentTime = new Date().toLocaleTimeString("en-US", {
     hour12: true,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <header className="fixed w-screen top-0 left-0 z-50 bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
         <div className="flex items-center space-x-3">
@@ -29,20 +29,26 @@ const Header: React.FC = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Barangay San Miguel</h1>
-            <p className="text-sm text-gray-500">Information Management System</p>
+            <h1 className="text-xl font-bold text-gray-900">
+              Barangay San Miguel
+            </h1>
+            <p className="text-sm text-gray-500">
+              Information Management System
+            </p>
           </div>
         </div>
 
         {/* Welcome Section and User Profile */}
         <div className="flex items-center space-x-6">
           <div className="text-right">
-            <h2 className="text-lg font-semibold text-gray-900">Welcome, Juan</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Welcome, Juan
+            </h2>
             <p className="text-sm text-gray-500">
               {currentDate.toUpperCase()} | {currentTime.toUpperCase()}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
             <FiUser className="w-5 h-5" />
             <span className="font-medium">Ayevinna Hao</span>
@@ -53,4 +59,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;

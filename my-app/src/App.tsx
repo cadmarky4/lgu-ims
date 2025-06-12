@@ -19,14 +19,15 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    // <div className="min-h-screen bg-gray-50">
+    <>
       <Header />
-      <div className="flex">
+      <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
         <Sidebar
           activeItem={activeMenuItem}
           onItemClick={handleMenuItemClick}
         />
-        <main className="flex-1">
+        <main className="flex-1 overflow-y-auto">
           {activeMenuItem === "dashboard" && <Dashboard />}
           {activeMenuItem === "residents" && <ResidentManagement />}
           {activeMenuItem === "household" && <HouseholdManagement />}
@@ -67,7 +68,7 @@ function App() {
             )}
         </main>
       </div>
-    </div>
+    </>
   );
 }
 
