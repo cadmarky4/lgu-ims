@@ -9,6 +9,10 @@ import {
   FaUserCheck,
 } from "react-icons/fa";
 import HorizontalStackedBarChart from "./reportsVisuals/HorizontalStackedBarChart";
+import ResponsiveAreaChart from "./reportsVisuals/ResponsiveAreaChart";
+import ResponsiveBarGraph from "./reportsVisuals/ResponsiveBarGraph";
+import ResponsivePieChart from "./reportsVisuals/ResponsivePieChart";
+import ResponsiveServicesTable from "./reportsVisuals/ResponsiveServicesTable";
 
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
@@ -59,7 +63,7 @@ export default function ReportsPage() {
   const ageGroupDistributionData = [
     { name: "Children (0-7)", percentage: 32 },
     { name: "Adults (18-59)", percentage: 24 },
-    { name: "Senior Citizens (60+)", percentage: 56 },
+    { name: "Senior Citizens (60+)", percentage: 44 },
   ];
 
   const specialPopulationRegistryData = [
@@ -67,6 +71,83 @@ export default function ReportsPage() {
     { name: "PWD", percentage: 12 },
     { name: "Solo Parents", percentage: 26 },
     { name: "4Ps Beneficiaries", percentage: 20 },
+  ];
+
+  const revenueData = Array.from({ length: 12 }, (_, index) => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return {
+      timeLabel: months[index],
+      value: Math.floor(Math.random() * (42000 - 15000 + 1)) + 15000,
+    };
+  });
+
+  const populationDistributionByPurokData = Array.from(
+    { length: 4 },
+    (_, index) => {
+      return {
+        label: `Purok ${index + 1}`,
+        value: Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000,
+      };
+    }
+  );
+
+  const documentsIssuedData = [
+    { label: "Barangay Clearance", value: 120 },
+    { label: "Certificate of Residency", value: 85 },
+    { label: "Certificate of Indigency", value: 60 },
+    { label: "Business Permit", value: 45 },
+    { label: "Other Documents", value: 30 },
+  ];
+
+  const mostRequestedServicesData = [
+    {
+      service: "Barangay Clearance",
+      requested: 150,
+      completed: 140,
+      avgProcessingTimeInDays: 2,
+      feesCollected: 7500,
+    },
+    {
+      service: "Certificate of Residency",
+      requested: 120,
+      completed: 115,
+      avgProcessingTimeInDays: 3,
+      feesCollected: 6000,
+    },
+    {
+      service: "Certificate of Indigency",
+      requested: 90,
+      completed: 85,
+      avgProcessingTimeInDays: 1,
+      feesCollected: 4500,
+    },
+    {
+      service: "Business Permit",
+      requested: 60,
+      completed: 55,
+      avgProcessingTimeInDays: 5,
+      feesCollected: 12000,
+    },
+    {
+      service: "Other Documents",
+      requested: 40,
+      completed: 35,
+      avgProcessingTimeInDays: 4,
+      feesCollected: 2000,
+    },
   ];
 
   return (
@@ -183,23 +264,29 @@ export default function ReportsPage() {
       </section>
 
       {/* Financial data and Population Dist by Purok/Sitio */}
-      <section className="w-full grid grid-cols-[2fr_3fr_2fr] gap-4">
+      <section className="min-h-[450px] w-full grid grid-cols-[2fr_3fr_2fr] gap-4">
         <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Population Distribution by Purok/Sitio
           </h3>
+
+          <ResponsiveBarGraph data={populationDistributionByPurokData} />
         </article>
 
         <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Monthly Revenue Collection
           </h3>
+
+          <ResponsiveAreaChart data={revenueData} />
         </article>
 
         <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Document Types Issued
           </h3>
+
+          <ResponsivePieChart data={documentsIssuedData} />
         </article>
       </section>
 
@@ -208,6 +295,8 @@ export default function ReportsPage() {
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Most Requested Services
         </h3>
+
+        <ResponsiveServicesTable data={mostRequestedServicesData} />
       </section>
     </main>
   );

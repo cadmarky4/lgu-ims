@@ -12,7 +12,7 @@ export default function HorizontalStackedBarChart({
     },
     {
       bg: "--color-smblue-200",
-      text: "black",
+      text: "white",
     },
     {
       bg: "--color-smblue-300",
@@ -50,7 +50,7 @@ export default function HorizontalStackedBarChart({
 
       <section className="w-full flex flex-col gap-1">
         {data.map((item, index) => (
-          <div className="flex justify-between">
+          <div key={index} className="flex justify-between gap-2">
             <div className="flex items-center gap-2">
               <div
                 className="rounded-4xl h-4 w-4"
@@ -58,9 +58,9 @@ export default function HorizontalStackedBarChart({
                   background: `var(${colors[index % colors.length].bg})`,
                 }}
               ></div>
-              <span>{item.name}</span>
+              <span className="text-sm">{item.name}</span>
             </div>
-            <span className="font-bold">{item.percentage}%</span>
+            <span className="text-sm font-bold">{item.percentage}%</span>
           </div>
         ))}
       </section>
