@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiHome, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiFilter } from 'react-icons/fi';
+import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
 import AddNewHousehold from './AddNewHousehold';
+import StatCard from './StatCard';
 
 const HouseholdManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,13 +77,6 @@ const HouseholdManagement: React.FC = () => {
     }
   ];
 
-  const stats = [
-    { title: 'Total Households', value: '40,199', icon: FiUsers },
-    { title: '4Ps Households', value: '2,345', icon: FiUsers },
-    { title: 'Average Household Members', value: '3,239', icon: FiUsers },
-    { title: 'Low Income', value: '7,199', icon: FiUsers }
-  ];
-
   const filterOptions = [
     'All Households',
     '4Ps Households',
@@ -132,33 +127,45 @@ const HouseholdManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Household Management</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Household Management</h1>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className="text-blue-600">
-                <stat.icon className="w-8 h-8" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Statistics Overview */}
+      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          Statistics Overview
+        </h3>
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard 
+            title="Total Households" 
+            value={40199} 
+            icon={FaHome}
+          />
+          <StatCard 
+            title="4Ps Households" 
+            value={2345} 
+            icon={FaUsers}
+          />
+          <StatCard 
+            title="Average Household Members" 
+            value={4.2} 
+            icon={FaUserFriends}
+          />
+          <StatCard 
+            title="Low Income Households" 
+            value={7199} 
+            icon={FaDollarSign}
+          />
+        </div>
+      </section>
 
       {/* Households Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">Households</h2>
+          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Households</h3>
           
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -170,14 +177,14 @@ const HouseholdManagement: React.FC = () => {
                 placeholder="Search Households..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
             
             {/* Add Button */}
             <button 
               onClick={() => setShowAddForm(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
+              className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Household</span>
@@ -190,7 +197,7 @@ const HouseholdManagement: React.FC = () => {
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               title="Filter households"
             >
               {filterOptions.map((option) => (
@@ -200,23 +207,59 @@ const HouseholdManagement: React.FC = () => {
               ))}
             </select>
 
-            {/* Advance Filter */}
-            <button 
+            {/* Advanced Filter Toggle */}
+            <button
               onClick={() => setShowAdvanceFilter(!showAdvanceFilter)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
             >
               <FiFilter className="w-4 h-4" />
-              <span>Advance Filter</span>
+              <span>Advanced Filter</span>
             </button>
           </div>
         </div>
+
+        {/* Advanced Filter Panel */}
+        {showAdvanceFilter && (
+          <div className="p-6 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Income Range</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                  <option>All Income Levels</option>
+                  <option>Below ₱15,000</option>
+                  <option>₱15,000 - ₱30,000</option>
+                  <option>Above ₱30,000</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Household Size</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                  <option>All Sizes</option>
+                  <option>1-2 members</option>
+                  <option>3-5 members</option>
+                  <option>6+ members</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Property Ownership</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                  <option>All Types</option>
+                  <option>Owned</option>
+                  <option>Rented</option>
+                  <option>Shared</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Household Information</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Household ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Head of Family</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Members</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income</th>
@@ -227,32 +270,26 @@ const HouseholdManagement: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredHouseholds.map((household, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FiHome className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{household.id}</div>
-                        <div className="text-sm text-gray-500">{household.headName}</div>
-                      </div>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {household.id}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{household.address}</div>
-                    <div className="text-sm text-gray-500">{household.ownership}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {household.headName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {household.address}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {household.members} members
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {household.income.toLocaleString()}
+                    ₱{household.income.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
-                      {household.programs.map((program, idx) => (
+                      {household.programs.map((program, programIndex) => (
                         <span
-                          key={idx}
+                          key={programIndex}
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getProgramBadgeColor(program)}`}
                         >
                           {program}
@@ -263,13 +300,13 @@ const HouseholdManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="View household details"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-green-600 hover:text-green-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="Edit household"
                       >
                         <FiEdit className="w-4 h-4" />
@@ -292,7 +329,7 @@ const HouseholdManagement: React.FC = () => {
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing 1 to 8 of 78 results
+              Showing 1 to {filteredHouseholds.length} of {households.length} results
             </div>
             <div className="flex items-center space-x-2">
               <button 
@@ -307,7 +344,7 @@ const HouseholdManagement: React.FC = () => {
                   key={page}
                   className={`px-3 py-1 text-sm rounded ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-smblue-400 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   onClick={() => setCurrentPage(page)}
@@ -316,7 +353,7 @@ const HouseholdManagement: React.FC = () => {
                 </button>
               ))}
               <button 
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300"
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
                 Next
@@ -324,8 +361,8 @@ const HouseholdManagement: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

@@ -61,8 +61,9 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Add New User Account</h1>
+        <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New User Account</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">

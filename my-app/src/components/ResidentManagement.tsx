@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUsers } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
+import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from 'react-icons/fa';
 import AddNewResident from './AddNewResident';
+import StatCard from './StatCard';
 
 const ResidentManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,13 +108,6 @@ const ResidentManagement: React.FC = () => {
     }
   ];
 
-  const stats = [
-    { title: 'Total Residents', value: '40,199', icon: FiUsers },
-    { title: 'PWD', value: '2,345', icon: FiUsers },
-    { title: 'Senior Citizens', value: '3,239', icon: FiUsers },
-    { title: 'Children', value: '7,199', icon: FiUsers }
-  ];
-
   const handleAddResident = (residentData: any) => {
     console.log('New resident data:', residentData);
     // Here you would typically save to a database
@@ -128,33 +123,45 @@ const ResidentManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Resident Management</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Resident Management</h1>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className="text-blue-600">
-                <stat.icon className="w-8 h-8" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Statistics Overview */}
+      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          Statistics Overview
+        </h3>
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard 
+            title="Total Residents" 
+            value={40199} 
+            icon={FaUsers}
+          />
+          <StatCard 
+            title="PWD" 
+            value={2345} 
+            icon={FaWheelchair}
+          />
+          <StatCard 
+            title="Senior Citizens" 
+            value={3239} 
+            icon={FaUserFriends}
+          />
+          <StatCard 
+            title="Children" 
+            value={7199} 
+            icon={FaChild}
+          />
+        </div>
+      </section>
 
       {/* Residents Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">Residents</h2>
+          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Residents</h3>
           
           {/* Search and Add Button */}
           <div className="flex justify-between items-center">
@@ -165,12 +172,12 @@ const ResidentManagement: React.FC = () => {
                 placeholder="Search Residents by name or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
             <button 
               onClick={() => setShowAddForm(true)}
-              className="ml-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Resident</span>
@@ -229,13 +236,13 @@ const ResidentManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="View resident details"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-green-600 hover:text-green-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="Edit resident"
                       >
                         <FiEdit className="w-4 h-4" />
@@ -273,7 +280,7 @@ const ResidentManagement: React.FC = () => {
                   key={page}
                   className={`px-3 py-1 text-sm rounded ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-smblue-400 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   onClick={() => setCurrentPage(page)}
@@ -282,7 +289,7 @@ const ResidentManagement: React.FC = () => {
                 </button>
               ))}
               <button 
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300"
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
                 Next
@@ -290,8 +297,8 @@ const ResidentManagement: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
