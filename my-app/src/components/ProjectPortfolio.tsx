@@ -290,7 +290,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
           {displayedProjects.map((project, index) => (
             <div
               key={project.id}
-              className={`border rounded-lg p-6 transition-all duration-200 hover:shadow-md animate-slide-in-up border-l-4 ${getPriorityColor(project.priority)}`}
+              className={`rounded-lg p-6 transition-all duration-200 shadow-md animate-slide-in-up border-l-4 ${getPriorityColor(project.priority)}`}
               style={{animationDelay: `${index * 100}ms`}}
             >
               <div className="flex justify-between items-start mb-4">
