@@ -1,4 +1,12 @@
 import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -14,42 +22,32 @@ import SignupPage from "./components/SignupPage";
 import ReportsPage from "./components/ReportsPage";
 import "./index.css";
 
-function App() {
-  const [activeMenuItem, setActiveMenuItem] = useState("dashboard");
+// Main App Layout Component
+const AppLayout: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 768px)").matches
   );
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authView, setAuthView] = useState<"login" | "signup">("login");
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get current active menu item from URL
+  const getActiveMenuItem = () => {
+    const path = location.pathname.substring(1) || "dashboard";
+    return path;
+  };
 
   const handleMenuItemClick = (item: string) => {
-    setActiveMenuItem(item);
+    navigate(`/${item}`);
     if (isMobile) setIsOpen(false);
-  };
-
-  const handleLogin = (credentials: {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-  }) => {
-    console.log("Login attempt:", credentials);
-    // Here you would typically validate credentials with backend
-    setIsAuthenticated(true);
-  };
-
-  const handleSignup = (userData: any) => {
-    console.log("Signup data:", userData);
-    // Here you would typically send to backend
-    setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setActiveMenuItem("dashboard");
+    navigate("/login");
   };
-
-  // Show authentication pages if not logged in
 
   const handleSidebarToggle = () => {
     setIsOpen((prev) => !prev);
@@ -63,14 +61,148 @@ function App() {
       setIsOpen(!event.matches);
     };
 
-    // call onmount
     setIsMobile(mediaQuery.matches);
     setIsOpen(!mediaQuery.matches);
-    console.log("HANDLED: Mounted");
 
     mediaQuery.addEventListener("change", handleMediaChange);
     return () => mediaQuery.removeEventListener("change", handleMediaChange);
   }, []);
+
+  return (
+    <>
+      <Header onToggleSidebar={handleSidebarToggle} onLogout={handleLogout} />
+      <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
+        <Sidebar
+          activeItem={getActiveMenuItem()}
+          onItemClick={handleMenuItemClick}
+          isExpanded={isOpen}
+        />
+        <main className="flex-1 overflow-y-auto">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/residents" element={<ResidentManagement />} />
+            <Route path="/household" element={<HouseholdManagement />} />
+            <Route
+              path="/process-document"
+              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+            />
+            <Route
+              path="/barangay-clearance"
+              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+            />
+            <Route
+              path="/business-permit"
+              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+            />
+            <Route
+              path="/certificate-indigency"
+              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+            />
+            <Route
+              path="/certificate-residency"
+              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+            />
+            <Route path="/officials" element={<BarangayOfficialsPage />} />
+            <Route path="/projects" element={<ProjectsAndPrograms />} />
+            <Route path="/users" element={<UserManagement />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+
+            {/* Help desk routes */}
+            <Route
+              path="/helpdesk"
+              element={
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Help Desk
+                  </h2>
+                  <p className="text-gray-600">
+                    Help desk main page. Content will be implemented here.
+                  </p>
+                </div>
+              }
+            />
+            <Route
+              path="/appointments"
+              element={
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Appointments
+                  </h2>
+                  <p className="text-gray-600">
+                    Appointments management. Content will be implemented here.
+                  </p>
+                </div>
+              }
+            />
+            <Route
+              path="/blotter"
+              element={
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Blotter
+                  </h2>
+                  <p className="text-gray-600">
+                    Blotter records. Content will be implemented here.
+                  </p>
+                </div>
+              }
+            />
+            <Route
+              path="/complaints"
+              element={
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Complaints
+                  </h2>
+                  <p className="text-gray-600">
+                    Complaints management. Content will be implemented here.
+                  </p>
+                </div>
+              }
+            />
+            <Route
+              path="/suggestions"
+              element={
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Suggestions
+                  </h2>
+                  <p className="text-gray-600">
+                    Suggestions box. Content will be implemented here.
+                  </p>
+                </div>
+              }
+            />
+
+            {/* Catch all route for undefined paths */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </>
+  );
+};
+
+// Main App Component with Authentication
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [authView, setAuthView] = useState<"login" | "signup">("login");
+
+  const handleLogin = (credentials: {
+    email: string;
+    password: string;
+    rememberMe: boolean;
+  }) => {
+    console.log("Login attempt:", credentials);
+    setIsAuthenticated(true);
+  };
+
+  const handleSignup = (userData: any) => {
+    console.log("Signup data:", userData);
+    setIsAuthenticated(true);
+  };
 
   if (!isAuthenticated) {
     if (authView === "login") {
@@ -91,59 +223,9 @@ function App() {
   }
 
   return (
-    // <div className="min-h-screen bg-gray-50">
-    <>
-      <Header onToggleSidebar={handleSidebarToggle} onLogout={handleLogout} />
-      <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
-        <Sidebar
-          activeItem={activeMenuItem}
-          onItemClick={handleMenuItemClick}
-          isExpanded={isOpen}
-        />
-        <main className="flex-1 overflow-y-auto">
-          {activeMenuItem === "dashboard" && <Dashboard />}
-          {activeMenuItem === "residents" && <ResidentManagement />}
-          {activeMenuItem === "household" && <HouseholdManagement />}
-          {(activeMenuItem === "process-document" ||
-            activeMenuItem === "barangay-clearance" ||
-            activeMenuItem === "business-permit" ||
-            activeMenuItem === "certificate-indigency" ||
-            activeMenuItem === "certificate-residency") && (
-            <ProcessDocument onNavigate={handleMenuItemClick} />
-          )}
-          {activeMenuItem === "officials" && <BarangayOfficialsPage />}
-          {activeMenuItem === "projects" && <ProjectsAndPrograms />}
-          {activeMenuItem === "users" && <UserManagement />}
-          {activeMenuItem === "settings" && <SettingsPage />}
-          {activeMenuItem === "reports" && <ReportsPage />}
-          {activeMenuItem !== "dashboard" &&
-            activeMenuItem !== "residents" &&
-            activeMenuItem !== "household" &&
-            activeMenuItem !== "process-document" &&
-            activeMenuItem !== "barangay-clearance" &&
-            activeMenuItem !== "business-permit" &&
-            activeMenuItem !== "certificate-indigency" &&
-            activeMenuItem !== "certificate-residency" &&
-            activeMenuItem !== "officials" &&
-            activeMenuItem !== "projects" &&
-            activeMenuItem !== "users" &&
-            activeMenuItem !== "settings" &&
-            activeMenuItem !== "reports" && (
-              <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  {activeMenuItem.charAt(0).toUpperCase() +
-                    activeMenuItem.slice(1)}{" "}
-                  Page
-                </h2>
-                <p className="text-gray-600">
-                  This is the {activeMenuItem} section. Content will be
-                  implemented here.
-                </p>
-              </div>
-            )}
-        </main>
-      </div>
-    </>
+    <Router>
+      <AppLayout />
+    </Router>
   );
 }
 

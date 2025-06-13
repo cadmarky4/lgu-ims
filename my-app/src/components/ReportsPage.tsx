@@ -157,7 +157,7 @@ export default function ReportsPage() {
     // AI BG
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Filter options */}
-      <section className="w-fit rounded-2xl flex items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border">
+      <section className="w-full rounded-2xl flex items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border">
         <div className="flex flex-col gap-1">
           <h4>Year</h4>
           <select
