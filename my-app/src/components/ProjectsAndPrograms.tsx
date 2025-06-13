@@ -3,7 +3,8 @@ import { FiSearch, FiPlus, FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChe
 import { FaFolder, FaCheckCircle, FaSpinner, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import AddNewProject from './AddNewProject';
 import StatCard from './StatCard';
-import Calendar from './Calendar'; // Import the Calendar component
+import Calendar from './Calendar';
+import RecentActivity from './RecentActivity'; // Import the new RecentActivity component
 import { FaCircleCheck } from 'react-icons/fa6';
 
 const ProjectsAndPrograms: React.FC = () => {
@@ -65,14 +66,6 @@ const ProjectsAndPrograms: React.FC = () => {
       startDate: null,
       completedDate: 'May 2025'
     }
-  ];
-
-  const recentActivities = [
-    { id: 1, activity: 'Street Lighting project milestone completed.', time: '2 hours ago' },
-    { id: 2, activity: 'New Project Proposal Submitted', time: '1 day ago' },
-    { id: 3, activity: 'Health Center renovation approved', time: '3 days ago' },
-    { id: 4, activity: 'Waste Management project completed', time: '1 week ago' },
-    { id: 5, activity: 'Youth Education training started', time: '2 weeks ago' }
   ];
 
   const getStatusBadgeColor = (status: string) => {
@@ -169,7 +162,7 @@ const ProjectsAndPrograms: React.FC = () => {
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search Residents by name or address..."
+                  placeholder="Search projects by title or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -246,25 +239,11 @@ const ProjectsAndPrograms: React.FC = () => {
 
         {/* Right Sidebar */} 
         <div className="lg:col-span-1 space-y-6">
-          {/* Project Calendar - Replace the commented calendar with the imported Calendar component */}
+          {/* Project Calendar */}
           <Calendar />
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">Recent Activity</h3>
-            
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm text-gray-900">{activity.activity}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Recent Activity - Now using the separate component */}
+          <RecentActivity />
         </div>
       </div>
     </main>
