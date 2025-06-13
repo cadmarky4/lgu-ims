@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FiFolder, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
 import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import AddNewProject from './AddNewProject';
-import EditProject from './EditProject'; // Import the EditProject component
+import EditProject from './EditProject';
+import ViewProject from './ViewProject';
 import StatCard from './StatCard';
 import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
@@ -12,6 +13,7 @@ import { FaCircleCheck } from 'react-icons/fa6';
 const ProjectsAndPrograms: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const stats = [
@@ -29,6 +31,12 @@ const ProjectsAndPrograms: React.FC = () => {
   const handleEditProject = (project: any) => {
     setSelectedProject(project);
     setShowEditForm(true);
+  };
+
+  const handleViewProject = (project: any) => {
+    console.log('Viewing project:', project); // Debug log
+    setSelectedProject(project);
+    setShowViewModal(true);
   };
 
   const handleUpdateProject = (projectData: any) => {
@@ -97,10 +105,11 @@ const ProjectsAndPrograms: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          {/* Project Portfolio - Now using the separate component */}
+          {/* Project Portfolio */}
           <ProjectPortfolio 
             onAddProject={() => setShowAddForm(true)} 
             onEditProject={handleEditProject}
+            onViewProject={handleViewProject}
           />
         </div>
 
@@ -109,10 +118,23 @@ const ProjectsAndPrograms: React.FC = () => {
           {/* Project Calendar */}
           <Calendar />
 
-          {/* Recent Activity - Now using the separate component */}
+          {/* Recent Activity */}
           <RecentActivity />
         </div>
       </div>
+
+      {/* ViewProject Modal */}
+      {selectedProject && (
+        <ViewProject 
+          project={selectedProject}
+          isOpen={showViewModal}
+          onClose={() => {
+            console.log('Closing modal'); // Debug log
+            setShowViewModal(false);
+            setSelectedProject(null);
+          }}
+        />
+      )}
     </main>
   );
 };

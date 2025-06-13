@@ -19,9 +19,10 @@ interface Project {
 interface ProjectPortfolioProps {
   onAddProject: () => void;
   onEditProject: (project: Project) => void;
+  onViewProject: (project: Project) => void;
 }
 
-const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEditProject }) => {
+const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEditProject, onViewProject }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Projects');
   const [sortBy, setSortBy] = useState<'title' | 'status' | 'budget' | 'progress'>('title');
@@ -333,6 +334,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                     
                     <div className="flex items-center space-x-2">
                       <button 
+                        onClick={() => onViewProject(project)}
                         className="p-2 text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
                         title="View project details"
                       >
