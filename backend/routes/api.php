@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/search', [ResidentController::class, 'search']);
         Route::get('/household-heads', [ResidentController::class, 'householdHeads']);
         Route::get('/by-purok/{purok}', [ResidentController::class, 'byPurok']);
+        Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates']);
         Route::post('/bulk-import', [ResidentController::class, 'bulkImport']);
         Route::get('/export', [ResidentController::class, 'export']);
     });

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Resident;
+use App\Models\Household;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class ResidentController extends Controller
 {
@@ -16,17 +19,17 @@ class ResidentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Resident::with(['household', 'createdBy', 'updatedBy']);
+        $query = Resident::with(['household']);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('middle_name', 'like', "%{$search}%")
-                  ->orWhere('complete_address', 'like', "%{$search}%")
-                  ->orWhere('mobile_number', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('middle_name', 'like', "%{$search}%")
+                    ->orWhere('complete_address', 'like', "%{$search}%")
+                    ->orWhere('mobile_number', 'like', "%{$search}%");
             });
         }
 
@@ -136,7 +139,7 @@ class ResidentController extends Controller
 
             $resident = Resident::create([
                 ...$validator->validated(),
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
                 'status' => 'ACTIVE'
             ]);
 
@@ -149,10 +152,9 @@ class ResidentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $resident->load(['household', 'createdBy']),
+                'data' => $resident->load(['household']),
                 'message' => 'Resident created successfully'
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -173,9 +175,7 @@ class ResidentController extends Controller
             'documents',
             'complaints',
             'suggestions',
-            'appointments',
-            'createdBy',
-            'updatedBy'
+            'appointments'
         ])->find($id);
 
         if (!$resident) {
@@ -215,7 +215,30 @@ class ResidentController extends Controller
             'birth_place' => 'sometimes|required|string|max:255',
             'gender' => 'sometimes|required|in:MALE,FEMALE',
             'civil_status' => 'sometimes|required|in:SINGLE,MARRIED,WIDOWED,DIVORCED,SEPARATED',
-            // ... other validation rules similar to store method
+            'nationality' => 'sometimes|required|string|max:100',
+            'religion' => 'nullable|string|max:100',
+            'mobile_number' => 'nullable|string|max:20',
+            'telephone_number' => 'nullable|string|max:20',
+            'email_address' => 'nullable|email|max:255',
+            'complete_address' => 'sometimes|required|string',
+            'purok' => 'nullable|string|max:100',
+            'household_id' => 'nullable|exists:households,id',
+            'is_household_head' => 'boolean',
+            'relationship_to_head' => 'nullable|string|max:100',
+            'occupation' => 'nullable|string|max:255',
+            'employer' => 'nullable|string|max:255',
+            'monthly_income' => 'nullable|numeric|min:0',
+            'employment_status' => 'nullable|in:EMPLOYED,UNEMPLOYED,SELF_EMPLOYED,RETIRED,STUDENT,OFW',
+            'educational_attainment' => 'nullable|string',
+            'senior_citizen' => 'boolean',
+            'person_with_disability' => 'boolean',
+            'disability_type' => 'nullable|string|max:255',
+            'indigenous_people' => 'boolean',
+            'indigenous_group' => 'nullable|string|max:255',
+            'four_ps_beneficiary' => 'boolean',
+            'four_ps_household_id' => 'nullable|string|max:50',
+            'voter_status' => 'sometimes|required|in:REGISTERED,NOT_REGISTERED,DECEASED,TRANSFERRED',
+            'precinct_number' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -230,15 +253,15 @@ class ResidentController extends Controller
             DB::beginTransaction();
 
             $oldHouseholdId = $resident->household_id;
-            
+
             $resident->update([
                 ...$validator->validated(),
-                'updated_by' => auth()->id()
+                'updated_by' => Auth::id()
             ]);
 
             // Update member counts for old and new households
             if ($oldHouseholdId && $oldHouseholdId !== $resident->household_id) {
-                $oldHousehold = \App\Models\Household::find($oldHouseholdId);
+                $oldHousehold = Household::find($oldHouseholdId);
                 if ($oldHousehold) {
                     $oldHousehold->updateMemberCounts();
                 }
@@ -252,10 +275,9 @@ class ResidentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $resident->load(['household', 'updatedBy']),
+                'data' => $resident->load(['household']),
                 'message' => 'Resident updated successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -296,7 +318,7 @@ class ResidentController extends Controller
 
             // Update household member counts
             if ($householdId) {
-                $household = \App\Models\Household::find($householdId);
+                $household = Household::find($householdId);
                 if ($household) {
                     $household->updateMemberCounts();
                 }
@@ -308,7 +330,6 @@ class ResidentController extends Controller
                 'success' => true,
                 'message' => 'Resident deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -329,7 +350,7 @@ class ResidentController extends Controller
                 'total_residents' => Resident::count(),
                 'male_residents' => Resident::where('gender', 'MALE')->count(),
                 'female_residents' => Resident::where('gender', 'FEMALE')->count(),
-                'senior_citizens' => Resident::where('birth_date', '<=', now()->subYears(60))->count(),
+                'senior_citizens' => Resident::where('birth_date', '<=', Carbon::now()->subYears(60))->count(),
                 'registered_voters' => Resident::where('voter_status', 'REGISTERED')->count(),
                 'by_civil_status' => Resident::selectRaw('civil_status, COUNT(*) as count')
                     ->groupBy('civil_status')
@@ -339,10 +360,10 @@ class ResidentController extends Controller
                     ->groupBy('purok')
                     ->pluck('count', 'purok'),
                 'age_groups' => [
-                    'children_0_12' => Resident::where('birth_date', '>', now()->subYears(12))->count(),
-                    'teens_13_17' => Resident::whereBetween('birth_date', [now()->subYears(17), now()->subYears(13)])->count(),
-                    'adults_18_59' => Resident::whereBetween('birth_date', [now()->subYears(59), now()->subYears(18)])->count(),
-                    'seniors_60_plus' => Resident::where('birth_date', '<=', now()->subYears(60))->count(),
+                    'children_0_12' => Resident::where('birth_date', '>', Carbon::now()->subYears(12))->count(),
+                    'teens_13_17' => Resident::whereBetween('birth_date', [Carbon::now()->subYears(17), Carbon::now()->subYears(13)])->count(),
+                    'adults_18_59' => Resident::whereBetween('birth_date', [Carbon::now()->subYears(59), Carbon::now()->subYears(18)])->count(),
+                    'seniors_60_plus' => Resident::where('birth_date', '<=', Carbon::now()->subYears(60))->count(),
                 ]
             ];
 
@@ -366,7 +387,7 @@ class ResidentController extends Controller
     public function search(Request $request): JsonResponse
     {
         $query = $request->get('q', '');
-        
+
         if (strlen($query) < 2) {
             return response()->json([
                 'success' => true,
@@ -375,13 +396,13 @@ class ResidentController extends Controller
             ]);
         }
 
-        $residents = Resident::active()
+        $residents = Resident::where('status', 'ACTIVE')
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('middle_name', 'like', "%{$query}%")
-                  ->orWhere('complete_address', 'like', "%{$query}%")
-                  ->orWhere('mobile_number', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('middle_name', 'like', "%{$query}%")
+                    ->orWhere('complete_address', 'like', "%{$query}%")
+                    ->orWhere('mobile_number', 'like', "%{$query}%");
             })
             ->with('household')
             ->limit(20)
@@ -399,9 +420,9 @@ class ResidentController extends Controller
      */
     public function householdHeads(): JsonResponse
     {
-        $householdHeads = Resident::active()
-            ->householdHeads()
-            ->with('householdsAsHead')
+        $householdHeads = Resident::where('status', 'ACTIVE')
+            ->where('is_household_head', true)
+            ->with('household')
             ->get();
 
         return response()->json([
@@ -416,8 +437,8 @@ class ResidentController extends Controller
      */
     public function byPurok(string $purok): JsonResponse
     {
-        $residents = Resident::active()
-            ->byPurok($purok)
+        $residents = Resident::where('status', 'ACTIVE')
+            ->where('purok', $purok)
             ->with('household')
             ->paginate(20);
 
@@ -425,6 +446,42 @@ class ResidentController extends Controller
             'success' => true,
             'data' => $residents,
             'message' => "Residents in Purok {$purok} retrieved successfully"
+        ]);
+    }
+
+    /**
+     * Check for potential duplicate residents
+     */
+    public function checkDuplicates(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'birth_date' => 'required|date'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $firstName = $request->input('first_name');
+        $lastName = $request->input('last_name');
+        $birthDate = $request->input('birth_date');
+
+        $duplicates = Resident::where('first_name', 'LIKE', "%{$firstName}%")
+            ->where('last_name', 'LIKE', "%{$lastName}%")
+            ->whereDate('birth_date', $birthDate)
+            ->where('status', 'ACTIVE')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $duplicates,
+            'message' => 'Duplicate check completed'
         ]);
     }
 }
