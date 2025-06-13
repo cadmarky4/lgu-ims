@@ -12,17 +12,20 @@ import {
   FiChevronDown,
   FiChevronRight,
 } from "react-icons/fi";
+import sanMiguelLogo from "@/assets/sanMiguelLogo.jpg";
 
 interface SidebarProps {
   activeItem: string;
   onItemClick: (item: string) => void;
   isExpanded: boolean;
+  isMobile: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   activeItem,
   onItemClick,
   isExpanded,
+  isMobile,
 }) => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
@@ -114,27 +117,36 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`transition-all duration-500 ${
-        isExpanded ? "md:w-64 md:min-w-64" : "md:min-w-0 md:w-0"
+      className={`transition-all duration-200 ${
+        isExpanded ? "md:w-72 md:min-w-72" : "md:min-w-16 md:w-16"
       } overflow-x-hidden overflow-y-auto ${
         isExpanded ? "min-w-screen w-screen" : "min-w-0 w-0"
       } bg-gray-50 border-r border-gray-200 min-h-screen`}
     >
-      <nav className="py-4 mb-20">
+      <nav className="py-4">
         {/* Logo and Title */}
-        <div className="flex md:hidden items-center space-x-3 px-3 py-4 w-screen overflow-x-hidden">
-          <div className="w-12 h-12 rounded-full items-center justify-center overflow-hidden">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-green-600 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
+        <div
+          className={`transition-all duration-200 ${
+            !isMobile && !isExpanded ? "w-16" : "w-72"
+          } flex gap-3 space-x-3 px-3 py-4 overflow-x-hidden`}
+        >
+          <img
+            src={sanMiguelLogo}
+            className={`transition-all duration-200 ${
+              !isMobile && !isExpanded ? "w-10 h-10" : "w-16 h-16"
+            } rounded-full m-0`}
+          />
+          <div className={`${!isMobile && !isExpanded ? "max-w-0" : ""}`}>
+            <h1 className="whitespace-nowrap text-md font-bold text-gray-900">
               Barangay San Miguel
             </h1>
-            <p className="text-sm text-gray-500">
+            <p
+              className={`${
+                !isMobile && !isExpanded
+                  ? "whitespace-nowrap"
+                  : "whitespace-normal"
+              } text-sm text-gray-500`}
+            >
               Information Management System
             </p>
           </div>
@@ -145,24 +157,45 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Link
               to={item.hasSubmenu ? "#" : `/${item.id}`}
               onClick={(e) => handleMenuClick(e, item)}
-              className={`sidebar-link md:w-64 w-screen overflow-x-hidden cursor-pointer ${
+              className={`sidebar-link px-[22px] min-h-12 ${
+                isExpanded ? "md:w-72" : "md:w-full"
+              } w-screen overflow-x-hidden cursor-pointer ${
                 activeItem === item.id ||
                 (item.hasSubmenu && isSubmenuActive(item.submenu || []))
                   ? "active"
                   : ""
               }`}
             >
-              <item.icon className="w-5 h-5 mr-3" />
-              <span className="flex-1 text-left">{item.label}</span>
+              <item.icon
+                className={`transition-all duration-200 w-5 h-5 ${
+                  isExpanded || isMobile ? "mr-3" : "mr-0"
+                }`}
+              />
+              <span
+                className={`flex-1 text-left ${
+                  !isMobile && !isExpanded
+                    ? "max-w-0 max-h-0 overflow-hidden"
+                    : ""
+                }`}
+              >
+                {item.label}
+              </span>
               {item.hasSubmenu &&
                 (expandedMenus.includes(item.id) ? (
-                  <FiChevronDown className="w-4 h-4" />
+                  <FiChevronDown
+                    className={`w-4 h-4 ${
+                      !isMobile && !isExpanded ? "hidden" : "block"
+                    }`}
+                  />
                 ) : (
-                  <FiChevronRight className="w-4 h-4" />
+                  <FiChevronRight
+                    className={`w-4 h-4 ${
+                      !isMobile && !isExpanded ? "hidden" : "block"
+                    }`}
+                  />
                 ))}
             </Link>
 
-            {/* Submenu */}
             {item.hasSubmenu && expandedMenus.includes(item.id) && (
               <div className="ml-8 mt-1 space-y-0 relative">
                 {/* Continuous vertical line */}

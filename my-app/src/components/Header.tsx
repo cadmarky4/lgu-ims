@@ -4,9 +4,16 @@ import { BiSidebar } from "react-icons/bi";
 interface HeaderProps {
   onToggleSidebar: () => void;
   onLogout?: () => void;
+  isSidebarExpanded: boolean;
+  isMobile: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({
+  onLogout,
+  onToggleSidebar,
+  isSidebarExpanded,
+  isMobile,
+}) => {
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -22,7 +29,17 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar }) => {
   });
 
   return (
-    <header className="fixed w-screen top-0 left-0 z-50 bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <header
+      className={`fixed transition-all duration-200 ${
+        !isSidebarExpanded && !isMobile
+          ? "w-[calc(100vw-64px)] left-16"
+          : isSidebarExpanded && isMobile
+          ? "w-0 left-[100vw]"
+          : isSidebarExpanded
+          ? "w-[calc(100vw-288px)] left-72"
+          : "w-screen left-0"
+      } top-0 z-50 bg-white shadow-sm border-b border-gray-200 px-6 py-4`}
+    >
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
         <div className="flex items-center space-x-3">
@@ -32,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar }) => {
           >
             <BiSidebar fontSize={24} />
           </button>
-          <div className="hidden md:flex w-12 h-12 rounded-full items-center justify-center overflow-hidden">
+          {/* <div className="hidden md:flex w-12 h-12 rounded-full items-center justify-center overflow-hidden">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-full flex items-center justify-center">
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
                 <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-green-600 rounded-full"></div>
@@ -46,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar }) => {
             <p className="text-sm text-gray-500">
               Information Management System
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Welcome Section and User Profile */}

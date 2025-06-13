@@ -70,14 +70,20 @@ const AppLayout: React.FC = () => {
 
   return (
     <>
-      <Header onToggleSidebar={handleSidebarToggle} onLogout={handleLogout} />
-      <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
+      <Header
+        isSidebarExpanded={isOpen}
+        onToggleSidebar={handleSidebarToggle}
+        onLogout={handleLogout}
+        isMobile={isMobile}
+      />
+      <div className="bg-gray-50 flex h-screen overflow-hidden">
         <Sidebar
           activeItem={getActiveMenuItem()}
           onItemClick={handleMenuItemClick}
           isExpanded={isOpen}
+          isMobile={isMobile}
         />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 mt-[81px] h-[calc(100vh-81px)] overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
