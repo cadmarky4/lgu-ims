@@ -22,11 +22,11 @@
 
 @layer components {
   .sidebar-link {
-    @apply flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200;
+    @apply flex items-center px-4 py-3 hover:bg-smblue-400/10 hover:text-smblue-400 transition-colors duration-200;
   }
 
   .sidebar-link.active {
-    @apply bg-blue-600 text-white hover:bg-blue-700 hover:text-white;
+    @apply bg-smblue-400/20 text-smblue-400;
   }
 
   .stat-card {
