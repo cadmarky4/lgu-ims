@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiSearch } from 'react-icons/fi';
 
-interface AddNewHouseholdProps {
+interface EditHouseholdProps {
+  household: any;
   onClose: () => void;
   onSave: (householdData: any) => void;
 }
 
-const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {
+const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSave }) => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingHousehold, setIsFetchingHousehold] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reference data from backend
@@ -18,24 +20,24 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
   const [filteredResidents, setFilteredResidents] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
-    householdId: 'Auto-generated',
+    householdId: household.id || 'Auto-generated',
     householdType: '',
     barangay: '',
     streetSitio: '',
     houseNumber: '',
-    completeAddress: '',
-    householdHeadSearch: '',
+    completeAddress: household.address || '',
+    householdHeadSearch: household.headName || '',
     memberSearch: '',
-    monthlyIncome: '',
+    monthlyIncome: household.income?.toString() || '',
     primaryIncomeSource: '',
     householdClassification: {
-      fourPsBeneficiary: false,
+      fourPsBeneficiary: household.programs?.includes('4Ps') || false,
       indigentFamily: false,
-      hasSeniorCitizen: false,
+      hasSeniorCitizen: household.programs?.includes('Senior Citizen Assistance') || false,
       hasPwdMember: false
     },
     houseType: '',
-    ownershipStatus: '',
+    ownershipStatus: household.ownership || '',
     utilitiesAccess: {
       electricity: false,
       waterSupply: false,
@@ -62,9 +64,9 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     }));
   };
 
-  // Fetch reference data on component mount
+  // Fetch reference data and fresh household data on component mount
   useEffect(() => {
-    const fetchReferenceData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
@@ -101,8 +103,56 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       }
     };
 
-    fetchReferenceData();
-  }, []);
+    // Fetch fresh household data
+    const fetchHouseholdData = async () => {
+      if (!household.id) return;
+      
+      setIsFetchingHousehold(true);
+      try {
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch(`/api/households/${household.id}`);
+        // const householdData = await response.json();
+        // 
+        // if (response.ok) {
+        //   setFormData({
+        //     householdId: householdData.id,
+        //     householdType: householdData.householdType || '',
+        //     barangay: householdData.barangay || '',
+        //     streetSitio: householdData.streetSitio || '',
+        //     houseNumber: householdData.houseNumber || '',
+        //     completeAddress: householdData.address || '',
+        //     householdHeadSearch: householdData.headName || '',
+        //     memberSearch: '',
+        //     monthlyIncome: householdData.income?.toString() || '',
+        //     primaryIncomeSource: householdData.primaryIncomeSource || '',
+        //     householdClassification: {
+        //       fourPsBeneficiary: householdData.programs?.includes('4Ps') || false,
+        //       indigentFamily: householdData.classifications?.indigentFamily || false,
+        //       hasSeniorCitizen: householdData.programs?.includes('Senior Citizen Assistance') || false,
+        //       hasPwdMember: householdData.classifications?.hasPwdMember || false
+        //     },
+        //     houseType: householdData.houseType || '',
+        //     ownershipStatus: householdData.ownership || '',
+        //     utilitiesAccess: {
+        //       electricity: householdData.utilities?.electricity || false,
+        //       waterSupply: householdData.utilities?.waterSupply || false,
+        //       internetAccess: householdData.utilities?.internetAccess || false
+        //     },
+        //     remarks: householdData.remarks || ''
+        //   });
+        // }
+
+      } catch (err) {
+        setError('Failed to load household data');
+        console.error('Error fetching household data:', err);
+      } finally {
+        setIsFetchingHousehold(false);
+      }
+    };
+
+    fetchData();
+    fetchHouseholdData();
+  }, [household.id]);
 
   // Filter residents based on search input
   useEffect(() => {
@@ -124,8 +174,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
     try {
       // TODO: Backend developer - replace with actual endpoint
-      // const response = await fetch('/api/households', {
-      //   method: 'POST',
+      // const response = await fetch(`/api/households/${household.id}`, {
+      //   method: 'PUT', // or 'PATCH'
       //   headers: {
       //     'Content-Type': 'application/json',
       //   },
@@ -133,17 +183,17 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       // });
 
       // if (!response.ok) {
-      //   throw new Error('Failed to create household');
+      //   throw new Error('Failed to update household');
       // }
 
-      // const newHousehold = await response.json();
+      // const updatedHousehold = await response.json();
       
       // For now, using the existing client-side save
-      onSave(formData);
+      onSave({ ...formData, id: household.id });
       onClose();
     } catch (err) {
-      setError('Failed to save household. Please try again.');
-      console.error('Error saving household:', err);
+      setError('Failed to update household. Please try again.');
+      console.error('Error updating household:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -157,7 +207,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
       <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
+        <h1 className="text-2xl font-bold text-darktext pl-0">Edit Household Profile</h1>
       </div>
 
       {/* Error Display */}
@@ -168,9 +218,11 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       )}
 
       {/* Loading State */}
-      {isLoading && (
+      {(isLoading || isFetchingHousehold) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p className="text-blue-800 text-sm">Loading reference data...</p>
+          <p className="text-blue-800 text-sm">
+            {isFetchingHousehold ? 'Loading household data...' : 'Loading reference data...'}
+          </p>
         </div>
       )}
 
@@ -227,7 +279,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
                 title="Select barangay"
-                disabled={isLoading}
+                disabled={isLoading || isFetchingHousehold}
               >
                 <option value="">Select Barangay</option>
                 {barangays.map((barangay) => (
@@ -304,7 +356,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   onChange={handleInputChange}
                   placeholder="Enter name, ID, or phone number"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                  disabled={isLoading}
+                  disabled={isLoading || isFetchingHousehold}
                 />
                 {/* Search Results Dropdown */}
                 {filteredResidents.length > 0 && (
@@ -325,20 +377,13 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
             </div>
 
             <div className="text-center">
-              <span className="text-gray-500 font-medium">OR</span>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add New Resident as Head
-              </label>
               <button
                 type="button"
                 onClick={handleAddNewResident}
-                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="text-smblue-400 hover:text-smblue-300 font-medium flex items-center justify-center space-x-2 mx-auto"
               >
                 <FiPlus className="w-4 h-4" />
-                <span>Add New Resident</span>
+                <span>Add New Resident as Head</span>
               </button>
             </div>
           </div>
@@ -352,7 +397,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Members from Residents
+                Search and Add Members
               </label>
               <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -361,118 +406,114 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   name="memberSearch"
                   value={formData.memberSearch}
                   onChange={handleInputChange}
-                  placeholder="Enter name, ID, or phone number"
+                  placeholder="Search residents to add as members"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
 
             <div className="text-center">
-              <span className="text-gray-500 font-medium">OR</span>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add New Resident as Member
-              </label>
               <button
                 type="button"
                 onClick={handleAddNewResident}
-                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="text-smblue-400 hover:text-smblue-300 font-medium flex items-center justify-center space-x-2 mx-auto"
               >
                 <FiPlus className="w-4 h-4" />
-                <span>Add New Resident</span>
+                <span>Add New Resident as Member</span>
               </button>
             </div>
           </div>
         </section>
 
-        {/* Socioeconomic Information */}
+        {/* Economic Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Socioeconomic Information</h2>
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Economic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Household Income
+                Monthly Household Income *
               </label>
-              <select
+              <input
+                type="number"
                 name="monthlyIncome"
                 value={formData.monthlyIncome}
                 onChange={handleInputChange}
+                placeholder="Enter monthly income in PHP"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                title="Select income range"
-              >
-                <option value="">Select Income Range</option>
-                <option value="below-10000">Below ₱10,000</option>
-                <option value="10000-25000">₱10,000 - ₱25,000</option>
-                <option value="25000-50000">₱25,000 - ₱50,000</option>
-                <option value="50000-100000">₱50,000 - ₱100,000</option>
-                <option value="above-100000">Above ₱100,000</option>
-              </select>
+                required
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Primary Income Source
+                Primary Income Source *
               </label>
-              <input
-                type="text"
+              <select
                 name="primaryIncomeSource"
                 value={formData.primaryIncomeSource}
                 onChange={handleInputChange}
-                placeholder="e.g. Employment, Business, Agriculture"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
+                required
+              >
+                <option value="">Select Income Source</option>
+                <option value="employment">Employment</option>
+                <option value="business">Business</option>
+                <option value="agriculture">Agriculture</option>
+                <option value="remittance">Remittance (OFW)</option>
+                <option value="pension">Pension</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
+        </section>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Household Classification
+        {/* Household Classification */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Classification</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.householdClassification.fourPsBeneficiary}
+                onChange={() => handleCheckboxChange('householdClassification', 'fourPsBeneficiary')}
+                className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">4Ps Beneficiary Family</span>
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.householdClassification.fourPsBeneficiary}
-                  onChange={() => handleCheckboxChange('householdClassification', 'fourPsBeneficiary')}
-                  className="mr-2"
-                />
-                4Ps Beneficiary
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.householdClassification.indigentFamily}
-                  onChange={() => handleCheckboxChange('householdClassification', 'indigentFamily')}
-                  className="mr-2"
-                />
-                Indigent Family
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.householdClassification.hasSeniorCitizen}
-                  onChange={() => handleCheckboxChange('householdClassification', 'hasSeniorCitizen')}
-                  className="mr-2"
-                />
-                Has Senior Citizen
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.householdClassification.hasPwdMember}
-                  onChange={() => handleCheckboxChange('householdClassification', 'hasPwdMember')}
-                  className="mr-2"
-                />
-                Has PWD member
-              </label>
-            </div>
+
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.householdClassification.indigentFamily}
+                onChange={() => handleCheckboxChange('householdClassification', 'indigentFamily')}
+                className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">Indigent Family</span>
+            </label>
+
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.householdClassification.hasSeniorCitizen}
+                onChange={() => handleCheckboxChange('householdClassification', 'hasSeniorCitizen')}
+                className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">Has Senior Citizen Member</span>
+            </label>
+
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.householdClassification.hasPwdMember}
+                onChange={() => handleCheckboxChange('householdClassification', 'hasPwdMember')}
+                className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">Has PWD Member</span>
+            </label>
           </div>
         </section>
 
@@ -484,103 +525,101 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                House Type
+                House Type *
               </label>
               <select
                 name="houseType"
                 value={formData.houseType}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                title="Select house type"
+                required
               >
                 <option value="">Select House Type</option>
                 <option value="concrete">Concrete</option>
-                <option value="semi-concrete">Semi-Concrete</option>
                 <option value="wood">Wood</option>
-                <option value="bamboo">Bamboo</option>
-                <option value="mixed">Mixed Materials</option>
+                <option value="mixed">Mixed (Concrete & Wood)</option>
+                <option value="bamboo">Bamboo/Nipa</option>
+                <option value="other">Other</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ownership Status
+                Ownership Status *
               </label>
               <select
                 name="ownershipStatus"
                 value={formData.ownershipStatus}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                title="Select ownership status"
+                required
               >
                 <option value="">Select Ownership</option>
-                <option value="owned">Owned</option>
-                <option value="rented">Rented</option>
-                <option value="shared">Shared</option>
-                <option value="informal-settler">Informal Settler</option>
+                <option value="Owned">Owned</option>
+                <option value="Rented">Rented</option>
+                <option value="Shared">Shared</option>
+                <option value="Caretaker">Caretaker</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Utilities access
-            </label>
-            <div className="grid grid-cols-3 gap-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Utilities Access</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.utilitiesAccess.electricity}
                   onChange={() => handleCheckboxChange('utilitiesAccess', 'electricity')}
-                  className="mr-2"
+                  className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
                 />
-                Electricity
+                <span className="text-sm font-medium text-gray-700">Electricity</span>
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.utilitiesAccess.waterSupply}
                   onChange={() => handleCheckboxChange('utilitiesAccess', 'waterSupply')}
-                  className="mr-2"
+                  className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
                 />
-                Water Supply
+                <span className="text-sm font-medium text-gray-700">Water Supply</span>
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.utilitiesAccess.internetAccess}
                   onChange={() => handleCheckboxChange('utilitiesAccess', 'internetAccess')}
-                  className="mr-2"
+                  className="mr-3 h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
                 />
-                Internet Access
+                <span className="text-sm font-medium text-gray-700">Internet Access</span>
               </label>
             </div>
           </div>
         </section>
 
-        {/* Remarks */}
+        {/* Additional Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Remarks</h2>
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Additional Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Notes or Comments
+              Remarks
             </label>
             <textarea
               name="remarks"
               value={formData.remarks}
               onChange={handleInputChange}
-              placeholder="Enter any additional information, notes, or special circumstances about this household..."
+              placeholder="Any additional notes or remarks about this household"
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
             />
-        </div>
+          </div>
         </section>
 
-        {/* Form Actions */}
+        {/* Action Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
@@ -593,7 +632,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <button
             type="submit"
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            disabled={isLoading || isSubmitting}
+            disabled={isLoading || isFetchingHousehold || isSubmitting}
           >
             {isSubmitting && (
               <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -601,7 +640,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             )}
-            <span>{isSubmitting ? 'Saving...' : 'Save Household'}</span>
+            <span>{isSubmitting ? 'Updating...' : 'Update Household'}</span>
           </button>
         </div>
       </form>
@@ -609,4 +648,4 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
   );
 };
 
-export default AddNewHousehold; 
+export default EditHousehold;

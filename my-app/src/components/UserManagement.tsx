@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiUserCheck, FiShield, FiUserPlus, FiLock, FiPower } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiLock, FiPower } from 'react-icons/fi';
+import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
 import AddNewUser from './AddNewUser';
+import StatCard from './StatCard';
 
 const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,13 +110,6 @@ const UserManagement: React.FC = () => {
     }
   ];
 
-  const stats = [
-    { title: 'Total Users', value: '156', icon: FiUsers },
-    { title: 'Active Users', value: '142', icon: FiUserCheck },
-    { title: 'Administrators', value: '8', icon: FiShield },
-    { title: 'New This Month', value: '12', icon: FiUserPlus }
-  ];
-
   const getRoleBadgeColor = (role: string) => {
     const colors: { [key: string]: string } = {
       'SUPER_ADMIN': 'bg-red-100 text-red-800',
@@ -170,36 +165,48 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">User Management</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">User Management</h1>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+      {/* Statistics Overview */}
+      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          Statistics Overview
+        </h3>
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard 
+            title="Total Users" 
+            value={156} 
+            icon={FaUsers}
+          />
+          <StatCard 
+            title="Active Users" 
+            value={142} 
+            icon={FaUserCheck}
+          />
+          <StatCard 
+            title="Administrators" 
+            value={8} 
+            icon={FaShieldAlt}
+          />
+          <StatCard 
+            title="New This Month" 
+            value={12} 
+            icon={FaUserPlus}
+          />
               </div>
-              <div className="text-blue-600">
-                <stat.icon className="w-8 h-8" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      </section>
 
       {/* Users Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">System Users</h2>
+          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">System Users</h3>
           
-          {/* Search and Filters */}
-          <div className="flex flex-wrap justify-between items-center gap-4">
+          {/* Search and Add Button */}
+          <div className="flex justify-between items-center mb-4">
             <div className="relative flex-1 max-w-md">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -207,15 +214,24 @@ const UserManagement: React.FC = () => {
                 placeholder="Search users by name, email, or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+            <button 
+              onClick={() => setShowAddForm(true)}
+              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>Add New User</span>
+            </button>
+            </div>
             
+          {/* Filters */}
             <div className="flex gap-3">
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 aria-label="Filter by role"
               >
                 <option value="">All Roles</option>
@@ -234,7 +250,7 @@ const UserManagement: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 aria-label="Filter by status"
               >
                 <option value="">All Status</option>
@@ -242,15 +258,6 @@ const UserManagement: React.FC = () => {
                 <option value="Inactive">Inactive</option>
                 <option value="Pending">Pending</option>
               </select>
-
-              <button 
-                onClick={() => setShowAddForm(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                <FiPlus className="w-4 h-4" />
-                <span>Add New User</span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -260,8 +267,9 @@ const UserManagement: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Information</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role & Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -289,12 +297,12 @@ const UserManagement: React.FC = () => {
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col space-y-1">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
                         {formatRoleName(user.role)}
                       </span>
-                      <div className="text-sm text-gray-500">{user.department}</div>
-                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.department}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(user.status)}`}>
@@ -305,20 +313,35 @@ const UserManagement: React.FC = () => {
                     {user.lastLogin}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50" title="View user details">
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        className="text-smblue-400 hover:text-smblue-300"
+                        title="View user details"
+                      >
                         <FiEye className="w-4 h-4" />
                       </button>
-                      <button className="text-green-600 hover:text-green-900 p-1 rounded-md hover:bg-green-50" title="Edit user">
+                      <button 
+                        className="text-smblue-400 hover:text-smblue-300"
+                        title="Edit user"
+                      >
                         <FiEdit className="w-4 h-4" />
                       </button>
-                      <button className="text-orange-600 hover:text-orange-900 p-1 rounded-md hover:bg-orange-50" title="Reset password">
+                      <button 
+                        className="text-yellow-600 hover:text-yellow-900"
+                        title="Reset password"
+                      >
                         <FiLock className="w-4 h-4" />
                       </button>
-                      <button className={`p-1 rounded-md ${user.status === 'Active' ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'}`} title={user.status === 'Active' ? 'Deactivate user' : 'Activate user'}>
+                      <button 
+                        className="text-orange-600 hover:text-orange-900"
+                        title="Toggle status"
+                      >
                         <FiPower className="w-4 h-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50" title="Delete user">
+                      <button 
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete user"
+                      >
                         <FiTrash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -330,33 +353,43 @@ const UserManagement: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredUsers.length}</span> of{' '}
-              <span className="font-medium">{filteredUsers.length}</span> results
+              Showing 1 to {filteredUsers.length} of {users.length} results
             </div>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
               <button
+                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-md">
-                1
+              {[1, 2, 3, 4].map((page) => (
+                <button
+                  key={page}
+                  className={`px-3 py-1 text-sm rounded ${
+                    currentPage === page
+                      ? 'bg-smblue-400 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
               </button>
+              ))}
               <button
-                disabled={true}
-                className="px-3 py-1 text-sm text-gray-500 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300"
+                onClick={() => setCurrentPage(currentPage + 1)}
               >
                 Next
               </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

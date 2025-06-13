@@ -1,81 +1,123 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiFilter } from 'react-icons/fi';
 import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
 import AddNewHousehold from './AddNewHousehold';
+import EditHousehold from './EditHousehold';
+import ViewHousehold from './ViewHousehold';
 import StatCard from './StatCard';
 
 const HouseholdManagement: React.FC = () => {
+  // API integration states
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState('All Households');
   const [showAdvanceFilter, setShowAdvanceFilter] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewForm, setShowViewForm] = useState(false);
+  const [selectedHousehold, setSelectedHousehold] = useState<any>(null);
 
-  const households = [
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps', 'Senior Citizen Assistance']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps', 'Educational Assistance']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps', 'Senior Citizen Assistance']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps', 'Senior Citizen Assistance']
-    },
-    {
-      id: 'HSH-001',
-      headName: 'John Doe',
-      address: 'Purok 1, Block 2, San Miguel',
-      ownership: 'Owned',
-      members: 5,
-      income: 25000,
-      programs: ['4Ps', 'Senior Citizen Assistance']
-    }
-  ];
+  const [households, setHouseholds] = useState<any[]>([]);
+
+  // Fetch households on component mount
+  useEffect(() => {
+    const fetchHouseholds = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch('/api/households');
+        // const data = await response.json();
+        // 
+        // if (response.ok) {
+        //   setHouseholds(data);
+        // } else {
+        //   throw new Error('Failed to fetch households');
+        // }
+
+        // For now, using mock data
+        const mockHouseholds = [
+          {
+            id: 'HSH-001',
+            headName: 'Juan Dela Cruz',
+            address: 'Purok 1, Block 2, San Miguel',
+            ownership: 'Owned',
+            members: 5,
+            income: 25000,
+            programs: ['4Ps', 'Senior Citizen Assistance']
+          },
+          {
+            id: 'HSH-002',
+            headName: 'Maria Santos',
+            address: 'Purok 3, Sitio Maligaya, Poblacion',
+            ownership: 'Rented',
+            members: 3,
+            income: 18000,
+            programs: ['4Ps', 'Educational Assistance']
+          },
+          {
+            id: 'HSH-003',
+            headName: 'Roberto Garcia',
+            address: 'Purok 2, Block 1, Santo Domingo',
+            ownership: 'Owned',
+            members: 4,
+            income: 32000,
+            programs: ['Senior Citizen Assistance']
+          },
+          {
+            id: 'HSH-004',
+            headName: 'Ana Reyes',
+            address: 'Purok 4, Sitio Bagong Silang, San Miguel',
+            ownership: 'Shared',
+            members: 6,
+            income: 15000,
+            programs: ['4Ps', 'Educational Assistance']
+          },
+          {
+            id: 'HSH-005',
+            headName: 'Pedro Villanueva',
+            address: 'Purok 1, Block 3, Poblacion',
+            ownership: 'Owned',
+            members: 2,
+            income: 45000,
+            programs: []
+          },
+          {
+            id: 'HSH-006',
+            headName: 'Carmen Lopez',
+            address: 'Purok 2, Sitio Riverside, Santo Domingo',
+            ownership: 'Rented',
+            members: 7,
+            income: 22000,
+            programs: ['4Ps', 'Senior Citizen Assistance']
+          },
+          {
+            id: 'HSH-007',
+            headName: 'Miguel Torres',
+            address: 'Purok 3, Block 4, San Miguel',
+            ownership: 'Owned',
+            members: 4,
+            income: 28000,
+            programs: ['Educational Assistance']
+          }
+        ];
+
+        setHouseholds(mockHouseholds);
+
+      } catch (err) {
+        setError('Failed to load households. Please try again.');
+        console.error('Error fetching households:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHouseholds();
+  }, []);
 
   const filterOptions = [
     'All Households',
@@ -100,8 +142,83 @@ const HouseholdManagement: React.FC = () => {
   });
 
   const handleAddHousehold = (householdData: any) => {
-    console.log('New household data:', householdData);
-    // Here you would typically save to a database or state management system
+    const newHousehold = {
+      id: `HSH-${String(households.length + 1).padStart(3, '0')}`,
+      headName: householdData.householdHeadSearch || 'New Head',
+      address: householdData.completeAddress || 'No address provided',
+      ownership: householdData.ownershipStatus || 'Not specified',
+      members: 1,
+      income: parseInt(householdData.monthlyIncome) || 0,
+      programs: [] as string[]
+    };
+
+    // Add programs based on classification
+    if (householdData.householdClassification?.fourPsBeneficiary) {
+      newHousehold.programs.push('4Ps');
+    }
+    if (householdData.householdClassification?.hasSeniorCitizen) {
+      newHousehold.programs.push('Senior Citizen Assistance');
+    }
+
+    setHouseholds(prev => [...prev, newHousehold]);
+    console.log('New household added:', newHousehold);
+  };
+
+  const handleEditHousehold = (householdData: any) => {
+    setHouseholds(prev => prev.map(household => 
+      household.id === householdData.id 
+        ? {
+            ...household,
+            headName: householdData.householdHeadSearch || household.headName,
+            address: householdData.completeAddress || household.address,
+            ownership: householdData.ownershipStatus || household.ownership,
+            income: parseInt(householdData.monthlyIncome) || household.income,
+            programs: [
+              ...(householdData.householdClassification?.fourPsBeneficiary ? ['4Ps'] : []),
+              ...(householdData.householdClassification?.hasSeniorCitizen ? ['Senior Citizen Assistance'] : [])
+            ]
+          }
+        : household
+    ));
+    console.log('Household updated:', householdData);
+  };
+
+  const handleDeleteHousehold = async (household: any) => {
+    if (window.confirm(`Are you sure you want to delete household ${household.id}?`)) {
+      setIsDeleting(household.id);
+      setError(null);
+      
+      try {
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch(`/api/households/${household.id}`, {
+        //   method: 'DELETE'
+        // });
+        // 
+        // if (!response.ok) {
+        //   throw new Error('Failed to delete household');
+        // }
+
+        // For now, using client-side delete
+        setHouseholds(prev => prev.filter(h => h.id !== household.id));
+        console.log('Household deleted:', household.id);
+
+      } catch (err) {
+        setError('Failed to delete household. Please try again.');
+        console.error('Error deleting household:', err);
+      } finally {
+        setIsDeleting(null);
+      }
+    }
+  };
+
+  const openEditForm = (household: any) => {
+    setSelectedHousehold(household);
+    setShowEditForm(true);
+  };
+
+  const openViewForm = (household: any) => {
+    setSelectedHousehold(household);
+    setShowViewForm(true);
   };
 
   const getProgramBadgeColor = (program: string) => {
@@ -126,12 +243,51 @@ const HouseholdManagement: React.FC = () => {
     );
   }
 
+  if (showEditForm && selectedHousehold) {
+    return (
+      <EditHousehold 
+        household={selectedHousehold}
+        onClose={() => {
+          setShowEditForm(false);
+          setSelectedHousehold(null);
+        }} 
+        onSave={handleEditHousehold}
+      />
+    );
+  }
+
+  if (showViewForm && selectedHousehold) {
+    return (
+      <ViewHousehold 
+        household={selectedHousehold}
+        onClose={() => {
+          setShowViewForm(false);
+          setSelectedHousehold(null);
+        }}
+      />
+    );
+  }
+
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Household Management</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">Loading households...</p>
+        </div>
+      )}
 
       {/* Statistics Overview */}
       <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
@@ -159,7 +315,7 @@ const HouseholdManagement: React.FC = () => {
             value={7199} 
             icon={FaDollarSign}
           />
-        </div>
+              </div>
       </section>
 
       {/* Households Section */}
@@ -208,7 +364,7 @@ const HouseholdManagement: React.FC = () => {
             </select>
 
             {/* Advanced Filter Toggle */}
-            <button
+            <button 
               onClick={() => setShowAdvanceFilter(!showAdvanceFilter)}
               className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
             >
@@ -224,7 +380,10 @@ const HouseholdManagement: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Income Range</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                <select 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  title="Filter by income range"
+                >
                   <option>All Income Levels</option>
                   <option>Below ₱15,000</option>
                   <option>₱15,000 - ₱30,000</option>
@@ -233,7 +392,10 @@ const HouseholdManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Household Size</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                <select 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  title="Filter by household size"
+                >
                   <option>All Sizes</option>
                   <option>1-2 members</option>
                   <option>3-5 members</option>
@@ -242,7 +404,10 @@ const HouseholdManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Property Ownership</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200">
+                <select 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  title="Filter by property ownership"
+                >
                   <option>All Types</option>
                   <option>Owned</option>
                   <option>Rented</option>
@@ -300,22 +465,33 @@ const HouseholdManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
+                        onClick={() => openViewForm(household)}
                         className="text-smblue-400 hover:text-smblue-300"
                         title="View household details"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
+                        onClick={() => openEditForm(household)}
                         className="text-smblue-400 hover:text-smblue-300"
                         title="Edit household"
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => handleDeleteHousehold(household)}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                         title="Delete household"
+                        disabled={isDeleting === household.id}
                       >
-                        <FiTrash2 className="w-4 h-4" />
+                        {isDeleting === household.id ? (
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <FiTrash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>
