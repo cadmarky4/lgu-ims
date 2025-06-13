@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 interface ProcessDocumentProps {
   onNavigate: (page: string) => void;
@@ -22,7 +23,10 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   const [selectedDocumentType, setSelectedDocumentType] = useState('Barangay Clearance');
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedRecord, setExpandedRecord] = useState(false);
+  const [expandedRecord, setExpandedRecord] = useState(false);  const [residents, setResidents] = useState<Resident[]>([]);  
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [certificateDetails, setCertificateDetails] = useState({
     purposeOfRequest: '',
@@ -31,48 +35,133 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     certifyingOfficial: ''
   });
 
-  // Sample residents data
-  const residents: Resident[] = [
-    {
-      id: '1',
-      firstName: 'Ella',
-      lastName: 'Garcia',
-      middleName: 'V.',
-      gender: 'Female',
-      dateOfBirth: 'MM/DD/YYYY',
-      age: 22,
-      civilStatus: 'Single',
-      placeOfBirth: 'Pasig, Philippines',
-      nationality: 'Filipino',
-      address: '123 San Miguel St., Pasig City'
-    },
-    {
-      id: '2',
-      firstName: 'Juan',
-      lastName: 'Cruz',
-      middleName: 'D.',
-      gender: 'Male',
-      dateOfBirth: 'MM/DD/YYYY',
-      age: 35,
-      civilStatus: 'Married',
-      placeOfBirth: 'Pasig, Philippines',
-      nationality: 'Filipino',
-      address: '456 Sampaguita St., Pasig City'
-    },
-    {
-      id: '3',
-      firstName: 'Maria',
-      lastName: 'Santos',
-      middleName: 'A.',
-      gender: 'Female',
-      dateOfBirth: 'MM/DD/YYYY',
-      age: 28,
-      civilStatus: 'Single',
-      placeOfBirth: 'Pasig, Philippines',
-      nationality: 'Filipino',
-      address: '789 Rose St., Pasig City'
+  // Fetch residents data
+  useEffect(() => {
+    fetchResidents();
+  }, []);
+
+  const fetchResidents = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getResidents({
+        per_page: 100 // Get more residents for document processing
+      });
+      // Transform API data to match local interface
+      const transformedResidents = response.data.map((resident: any) => ({
+        id: resident.id.toString(),
+        firstName: resident.first_name || resident.firstName,
+        lastName: resident.last_name || resident.lastName,
+        middleName: resident.middle_name || resident.middleName,
+        gender: resident.gender,
+        dateOfBirth: resident.date_of_birth || resident.dateOfBirth || 'MM/DD/YYYY',
+        age: resident.age || 0,
+        civilStatus: resident.civil_status || resident.civilStatus || 'Single',
+        placeOfBirth: resident.place_of_birth || resident.placeOfBirth || 'Pasig, Philippines',
+        nationality: resident.nationality || 'Filipino',
+        address: resident.street_address || resident.address || 'Not specified'
+      }));
+      setResidents(transformedResidents);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching residents:', err);
+      setError('Failed to load residents');
+      // Fallback to static data for demo
+      setResidents([
+        {
+          id: '1',
+          firstName: 'Ella',
+          lastName: 'Garcia',
+          middleName: 'V.',
+          gender: 'Female',
+          dateOfBirth: 'MM/DD/YYYY',
+          age: 22,
+          civilStatus: 'Single',
+          placeOfBirth: 'Pasig, Philippines',
+          nationality: 'Filipino',
+          address: '123 San Miguel St., Pasig City'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+  
+  const validateForm = () => {
+    if (!selectedResident) {
+      setError('Please select a resident first');
+      return false;
+    }
+    
+    if (!certificateDetails.purposeOfRequest.trim()) {
+      setError('Please specify the purpose for this document');
+      return false;
+    }
+    
+    if (!certificateDetails.validIdPresented.trim()) {
+      setError('Please specify what valid ID was presented');
+      return false;
+    }
+    
+    if (!certificateDetails.yearsOfResidency.trim()) {
+      setError('Please specify years of residency');
+      return false;
+    }
+    
+    if (!certificateDetails.certifyingOfficial.trim()) {
+      setError('Please select a certifying official');
+      return false;
+    }
+    
+    setError(null);
+    return true;
+  };
+
+  const handleProcessDocument = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      if (!selectedResident) {
+        throw new Error("No resident selected");
+      }
+      
+      const documentData = {
+        resident_id: selectedResident.id,
+        document_type: selectedDocumentType,
+        purpose: certificateDetails.purposeOfRequest,
+        valid_id: certificateDetails.validIdPresented,
+        years_of_residency: certificateDetails.yearsOfResidency,
+        certifying_official: certificateDetails.certifyingOfficial,
+        request_date: new Date().toISOString().split('T')[0]
+      };
+
+      await apiService.createDocument(documentData);
+      
+      // Success message
+      setError(null);
+      alert('Document processed successfully!');
+      
+      // Reset form
+      setSelectedResident(null);
+      setCertificateDetails({
+        purposeOfRequest: '',
+        validIdPresented: '',
+        yearsOfResidency: '',
+        certifyingOfficial: ''
+      });
+      
+      // Navigate back to document management
+      onNavigate('documents');
+    } catch (err) {
+      console.error('Error processing document:', err);
+      setError('Failed to process document. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const documentTypes = [
     { id: 'barangay-clearance', name: 'Barangay Clearance', description: 'Process Document for' },
@@ -98,18 +187,21 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
       [field]: value
     }));
   };
-
-  const handleProcessDocument = () => {
-    // Handle document processing logic here
-    console.log('Processing document:', {
-      documentType: selectedDocumentType,
-      resident: selectedResident,
-      certificateDetails
-    });
-  };
-
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+      
+      {/* Loading Status */}
+      {loading && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-600 text-sm">Loading resident data...</p>
+        </div>
+      )}
       {/* Select Document Type */}
       <div className="mb-8">
         <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200 border-l-4 border-blue-600 pl-4">
@@ -351,7 +443,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
             onClick={handleProcessDocument}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Process Document →
+            {submitting ? 'Processing...' : 'Process Document →'}
           </button>
         </div>
       )}
@@ -359,4 +451,4 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   );
 };
 
-export default ProcessDocument; 
+export default ProcessDocument;

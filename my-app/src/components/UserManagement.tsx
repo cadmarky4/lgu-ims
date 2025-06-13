@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiUserCheck, FiShield, FiUserPlus, FiLock, FiPower } from 'react-icons/fi';
 import AddNewUser from './AddNewUser';
+import { apiService } from '../services/api';
 
 const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,8 +9,78 @@ const UserManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const users = [
+  // Fetch users data
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, searchTerm, roleFilter, statusFilter]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getUsers({
+        page: currentPage,
+        per_page: 15,
+        search: searchTerm,
+        role: roleFilter || undefined,
+        status: statusFilter || undefined
+      });
+      setUsers(response.data);
+      setTotalPages(response.last_page);
+      setTotalCount(response.total);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to load users');
+      // Fallback to static data for demo
+      setUsers([
+        {
+          id: 1,
+          firstName: 'Juan',
+          lastName: 'Dela Cruz',
+          email: 'juan.delacruz@barangay.gov.ph',
+          username: 'jdelacruz',
+          role: 'ADMIN',
+          department: 'Administration',
+          status: 'Active',
+          lastLogin: '2024-01-15 09:30 AM',
+          photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddUser = async (userData: any) => {
+    try {
+      await apiService.createUser(userData);
+      setShowAddForm(false);
+      fetchUsers(); // Refresh the list
+    } catch (err) {
+      console.error('Error creating user:', err);
+      alert('Failed to create user');
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await apiService.deleteUser(id);
+        fetchUsers(); // Refresh the list
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        alert('Failed to delete user');
+      }
+    }
+  };
+
+  const users_static = [
     {
       id: 1,
       firstName: 'Juan',
@@ -141,18 +212,12 @@ const UserManagement: React.FC = () => {
   };
 
   const formatRoleName = (role: string) => {
-    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const handleAddUser = (userData: any) => {
-    console.log('New user data:', userData);
-    // Here you would typically save to a database
-  };
+    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());  };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (user.firstName || user.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.lastName || user.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.username.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === '' || user.role === roleFilter;
     const matchesStatus = statusFilter === '' || user.status === statusFilter;

@@ -10,53 +10,47 @@ class Household extends Model
     use HasFactory;
 
     protected $fillable = [
+        // System fields
         'household_number',
         'head_resident_id',
+        
+        // Address Information
         'house_number',
         'street',
-        'purok',
         'barangay',
-        'municipality',
-        'province',
-        'zip_code',
         'complete_address',
-        'total_members',
-        'male_members',
-        'female_members',
-        'senior_citizens',
-        'pwd_members',
-        'children_under_5',
-        'school_age_children',
-        'estimated_monthly_income',
-        'income_classification',
+        
+        // Basic household info
+        'household_type',
+        
+        // Economic information
+        'monthly_income_bracket',
+        'source_of_income',
         'four_ps_beneficiary',
-        'four_ps_household_id',
-        'house_ownership',
-        'house_type',
-        'roof_material',
-        'wall_material',
-        'number_of_rooms',
+        'indigent_family',
+        'has_senior_citizen',
+        'has_pwd_member',
+        
+        // Utilities and facilities
         'has_electricity',
         'has_water_supply',
-        'water_source',
-        'has_toilet',
-        'toilet_type',
-        'government_programs',
-        'livelihood_programs',
-        'health_programs',
-        'status',
+        'has_internet',
+        
+        // Metadata
         'remarks',
+        'status',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'estimated_monthly_income' => 'decimal:2',
         'four_ps_beneficiary' => 'boolean',
+        'indigent_family' => 'boolean',
+        'has_senior_citizen' => 'boolean',
+        'has_pwd_member' => 'boolean',
         'has_electricity' => 'boolean',
         'has_water_supply' => 'boolean',
-        'has_toilet' => 'boolean',
-        'government_programs' => 'array',
+        'has_internet' => 'boolean',
     ];
 
     /**
@@ -65,6 +59,12 @@ class Household extends Model
     public function headResident()
     {
         return $this->belongsTo(Resident::class, 'head_resident_id');
+    }
+
+    // Alias for easier use in frontend
+    public function householdHead()
+    {
+        return $this->headResident();
     }
 
     public function members()

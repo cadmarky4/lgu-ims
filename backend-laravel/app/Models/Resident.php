@@ -10,6 +10,7 @@ class Resident extends Model
     use HasFactory;
 
     protected $fillable = [
+        // Basic Information
         'first_name',
         'last_name',
         'middle_name',
@@ -20,29 +21,39 @@ class Resident extends Model
         'civil_status',
         'nationality',
         'religion',
+        'employment_status',
+        'educational_attainment',
+        
+        // Contact Information
         'mobile_number',
-        'telephone_number',
+        'landline_number',
         'email_address',
         'house_number',
         'street',
         'purok',
-        'barangay',
-        'municipality',
-        'province',
-        'zip_code',
         'complete_address',
+        
+        // Family Information
+        'household_id',
+        'is_household_head',
+        'relationship_to_head',
+        'mother_name',
+        'father_name',
+        'emergency_contact_name',
+        'emergency_contact_number',
+        'emergency_contact_relationship',
+        
+        // Government IDs and Documents
+        'primary_id_type',
+        'id_number',
         'philhealth_number',
         'sss_number',
         'tin_number',
         'voters_id_number',
-        'household_id',
-        'is_household_head',
-        'relationship_to_head',
-        'occupation',
-        'employer',
-        'monthly_income',
-        'employment_status',
-        'educational_attainment',
+        
+        // Health & Classifications
+        'medical_conditions',
+        'allergies',
         'senior_citizen',
         'person_with_disability',
         'disability_type',
@@ -50,13 +61,11 @@ class Resident extends Model
         'indigenous_group',
         'four_ps_beneficiary',
         'four_ps_household_id',
-        'voter_status',
-        'precinct_number',
-        'medical_conditions',
-        'allergies',
-        'emergency_contact_name',
-        'emergency_contact_number',
-        'emergency_contact_relationship',
+        
+        // Profile Photo
+        'photo_path',
+        
+        // System fields
         'status',
         'remarks',
         'created_by',
@@ -65,13 +74,28 @@ class Resident extends Model
 
     protected $casts = [
         'birth_date' => 'date',
-        'monthly_income' => 'decimal:2',
         'is_household_head' => 'boolean',
         'senior_citizen' => 'boolean',
         'person_with_disability' => 'boolean',
         'indigenous_people' => 'boolean',
         'four_ps_beneficiary' => 'boolean',
     ];
+
+    /**
+     * Get the full URL for the resident's photo
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if ($this->photo_path) {
+            return asset('storage/' . $this->photo_path);
+        }
+        return null;
+    }
+
+    /**
+     * Append photo_url to the model's array form
+     */
+    protected $appends = ['photo_url'];
 
     /**
      * Computed attributes

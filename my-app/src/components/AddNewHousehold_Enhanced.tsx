@@ -11,7 +11,8 @@ interface FieldError {
   [key: string]: string;
 }
 
-const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {  const [formData, setFormData] = useState({
+const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {
+  const [formData, setFormData] = useState({
     household_head_id: '',
     purok: '',
     address: '',
@@ -58,6 +59,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       [name]: value
     }));
   };
+
   const handleCheckboxChange = (field: keyof typeof formData) => {
     setFormData(prev => ({
       ...prev,
@@ -75,6 +77,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       }
     });
   };
+
   const validateForm = (): boolean => {
     const errors: FieldError = {};
     
@@ -137,7 +140,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
-    const handleSubmit = async (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Prevent double-click submission
@@ -154,7 +158,9 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       setLoading(false);
       setError("Please fix the highlighted errors below.");
       return;
-    }    try {
+    }
+
+    try {
       // Transform form data to match backend API structure with all fields
       const householdData = {
         household_head_id: formData.household_head_id,
@@ -212,6 +218,11 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         if (errData.housing_type) apiErrors.housing_type = errData.housing_type[0];
         if (errData.monthly_income_bracket) apiErrors.monthly_income_bracket = errData.monthly_income_bracket[0];
         if (errData.source_of_income) apiErrors.source_of_income = errData.source_of_income[0];
+        if (errData.house_ownership) apiErrors.house_ownership = errData.house_ownership[0];
+        if (errData.house_type) apiErrors.house_type = errData.house_type[0];
+        if (errData.income_classification) apiErrors.income_classification = errData.income_classification[0];
+        if (errData.estimated_monthly_income) apiErrors.estimated_monthly_income = errData.estimated_monthly_income[0];
+        if (errData.number_of_rooms) apiErrors.number_of_rooms = errData.number_of_rooms[0];
         
         setFieldErrors(apiErrors);
         setError('Please correct the errors below.');
@@ -356,7 +367,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
             <div className="md:col-span-3">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Complete Address *
+                Complete Address
               </label>
               <textarea
                 name="complete_address"
@@ -397,14 +408,13 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                House Ownership *
+                House Ownership
               </label>
               <select
                 name="house_ownership"
                 value={formData.house_ownership}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border ${fieldErrors.house_ownership ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                required
               >
                 <option value="">Select House Ownership</option>
                 <option value="OWNED">Owned</option>
@@ -756,11 +766,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 Other Government Programs (Check all that apply)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {/*
-                  List of government programs can be fetched from an API or defined as a constant array
-                  For now, using a static list as an example
-                */}
-                {/*
+                {[
                   'DSWD Social Pension',
                   'PhilHealth',
                   'SSS',
@@ -771,8 +777,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   'Scholarship Program',
                   'Health Program',
                   'Skills Training'
-                */}
-                {['DSWD Social Pension', 'PhilHealth', 'SSS', 'GSIS', 'Conditional Cash Transfer', 'Livelihood Program', 'Housing Program', 'Scholarship Program', 'Health Program', 'Skills Training'].map((program) => (
+                ].map((program) => (
                   <label key={program} className="flex items-center">
                     <input
                       type="checkbox"
@@ -815,6 +820,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
               </div>
             </div>
+          </div>
         </div>
         
         {/* Legacy Housing Information - keeping for backward compatibility */}
@@ -845,6 +851,25 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 </p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div className="mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Additional Information</h2>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Remarks
+            </label>
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleInputChange}
+              placeholder="Enter any additional remarks or notes"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
         </div>
 

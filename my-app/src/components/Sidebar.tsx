@@ -20,27 +20,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome },
     { id: 'residents', label: 'Resident Management', icon: FiUsers },
-    { id: 'household', label: 'Household Management', icon: FiUsers },
-    { 
-      id: 'process-document', 
-      label: 'Process Document', 
+    { id: 'household', label: 'Household Management', icon: FiUsers },    {
+      id: 'documents',
+      label: 'Documents Management',
       icon: FiFile,
       hasSubmenu: true,
       submenu: [
-        { id: 'barangay-clearance', label: 'Barangay Clearance' },
-        { id: 'business-permit', label: 'Business Permit' },
-        { id: 'certificate-indigency', label: 'Certificate of Indigency' },
-        { id: 'certificate-residency', label: 'Certificate of Residency' }
+        { id: 'documents', label: 'All Documents' },
+        { id: 'process-document', label: 'Process New Document' }
       ]
-    },
-    { 
+    },{ 
       id: 'helpdesk', 
       label: 'Help desk', 
       icon: FiHelpCircle,
       hasSubmenu: true,
       submenu: [
         { id: 'appointments', label: 'Appointments' },
-        { id: 'blotter', label: 'Blotter' },
+        { id: 'blotter-cases', label: 'Blotter Cases' },
         { id: 'complaints', label: 'Complaints' },
         { id: 'suggestions', label: 'Suggestions' }
       ]
@@ -56,11 +52,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
     <aside className="w-64 bg-gray-50 border-r border-gray-200 min-h-screen">
       <nav className="py-4">
         {menuItems.map((item) => (
-          <div key={item.id}>
-            <button
+          <div key={item.id}>            <button
               onClick={() => onItemClick(item.id)}
               className={`sidebar-link w-full ${
-                activeItem === item.id ? 'active' : ''
+                activeItem === item.id || 
+                (item.id === 'documents' && ['documents', 'process-document', 'barangay-clearance', 'business-permit', 'certificate-indigency', 'certificate-residency'].includes(activeItem)) ||
+                (item.id === 'helpdesk' && ['appointments', 'blotter-cases', 'complaints', 'suggestions'].includes(activeItem))
+                  ? 'active' : ''
               }`}
             >
               <item.icon className="w-5 h-5 mr-3" />
@@ -69,9 +67,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
                 <FiChevronDown className="w-4 h-4" />
               )}
             </button>
-            
-            {/* Submenu for Process Document */}
-            {item.hasSubmenu && activeItem === item.id && (
+              {/* Submenu for Process Document and Help Desk */}            {item.hasSubmenu && (activeItem === item.id || 
+              (item.id === 'documents' && ['documents', 'process-document', 'barangay-clearance', 'business-permit', 'certificate-indigency', 'certificate-residency'].includes(activeItem)) ||
+              (item.id === 'helpdesk' && ['appointments', 'blotter-cases', 'complaints', 'suggestions'].includes(activeItem))
+            ) && (
               <div className="ml-8 mt-1 space-y-1">
                 {item.submenu?.map((subItem) => (
                   <button

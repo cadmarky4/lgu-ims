@@ -7,6 +7,7 @@ use App\Models\Household;
 use App\Models\Resident;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -61,25 +62,46 @@ class HouseholdController extends Controller
     {
         try {
             $validated = $request->validate([
+                // Basic info
                 'household_head_id' => 'required|exists:residents,id',
-                'purok' => 'required|string|max:50',
-                'address' => 'required|string',
-                'housing_type' => 'required|in:OWNED,RENTED,SHARED,INFORMAL_SETTLER',
+                'household_type' => 'required|in:OWNED,RENTED,SHARED,INFORMAL_SETTLER',
+                'house_number' => 'nullable|string|max:20',
+                'street' => 'nullable|string|max:100',
+                'barangay' => 'nullable|string|max:100',
+                'complete_address' => 'nullable|string',
+                
+                // Economic information
                 'monthly_income_bracket' => 'required|in:BELOW_5000,5000_10000,10001_15000,15001_20000,20001_30000,30001_50000,ABOVE_50000',
                 'source_of_income' => 'nullable|string',
-                'government_programs' => 'nullable|array',
+                'four_ps_beneficiary' => 'boolean',
+                'indigent_family' => 'boolean',
+                'has_senior_citizen' => 'boolean',
+                'has_pwd_member' => 'boolean',
+                
+                // Utilities and facilities
                 'has_electricity' => 'boolean',
                 'has_water_supply' => 'boolean',
-                'has_toilet' => 'boolean',
                 'has_internet' => 'boolean',
-                'vehicle_owned' => 'nullable|string',
+                
+                // Other
                 'remarks' => 'nullable|string'
             ]);
 
-            $validated['created_by'] = auth()->id();
+            // Set default values and generate household number
+            $validated['household_number'] = 'HH-' . date('Y') . '-' . str_pad(Household::count() + 1, 6, '0', STR_PAD_LEFT);
+            $validated['head_resident_id'] = $validated['household_head_id'];
+            $validated['created_by'] = Auth::id();
+            
+            // Remove the alias field
+            unset($validated['household_head_id']);
+            
+            // Use complete address if provided, otherwise use basic address
+            if (empty($validated['complete_address'])) {
+                $validated['complete_address'] = $validated['address'] ?? '';
+            }
             
             $household = Household::create($validated);
-            $household->load(['householdHead', 'members']);
+            $household->load(['headResident', 'members']);
 
             return response()->json([
                 'success' => true,
@@ -133,26 +155,41 @@ class HouseholdController extends Controller
             $household = Household::findOrFail($id);
 
             $validated = $request->validate([
-                'household_head_id' => 'sometimes|exists:residents,id',
-                'purok' => 'sometimes|string|max:50',
-                'address' => 'sometimes|string',
-                'housing_type' => 'sometimes|in:OWNED,RENTED,SHARED,INFORMAL_SETTLER',
-                'monthly_income_bracket' => 'sometimes|in:BELOW_5000,5000_10000,10001_15000,15001_20000,20001_30000,30001_50000,ABOVE_50000',
+                // Basic info
+                'household_head_id' => 'sometimes|required|exists:residents,id',
+                'household_type' => 'sometimes|required|in:OWNED,RENTED,SHARED,INFORMAL_SETTLER',
+                'house_number' => 'nullable|string|max:20',
+                'street' => 'nullable|string|max:100',
+                'barangay' => 'nullable|string|max:100',
+                'complete_address' => 'nullable|string',
+                
+                // Economic information
+                'monthly_income_bracket' => 'sometimes|required|in:BELOW_5000,5000_10000,10001_15000,15001_20000,20001_30000,30001_50000,ABOVE_50000',
                 'source_of_income' => 'nullable|string',
-                'government_programs' => 'nullable|array',
+                'four_ps_beneficiary' => 'boolean',
+                'indigent_family' => 'boolean',
+                'has_senior_citizen' => 'boolean',
+                'has_pwd_member' => 'boolean',
+                
+                // Utilities and facilities
                 'has_electricity' => 'boolean',
                 'has_water_supply' => 'boolean',
-                'has_toilet' => 'boolean',
                 'has_internet' => 'boolean',
-                'vehicle_owned' => 'nullable|string',
-                'status' => 'sometimes|in:ACTIVE,INACTIVE,MOVED_OUT',
+                
+                // Other
                 'remarks' => 'nullable|string'
             ]);
 
-            $validated['updated_by'] = auth()->id();
+            // Update head_resident_id if household_head_id is provided
+            if (isset($validated['household_head_id'])) {
+                $validated['head_resident_id'] = $validated['household_head_id'];
+                unset($validated['household_head_id']); // Remove the alias field
+            }
+
+            $validated['updated_by'] = Auth::id();
             
             $household->update($validated);
-            $household->load(['householdHead', 'members']);
+            $household->load(['headResident', 'members']);
 
             return response()->json([
                 'success' => true,

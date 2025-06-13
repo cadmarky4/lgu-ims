@@ -71,31 +71,90 @@ class ProjectController extends Controller
     {
         try {
             $validated = $request->validate([
+                // Basic Information
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
                 'objectives' => 'nullable|string',
                 'expected_outcomes' => 'nullable|string',
+                
+                // Project Classification
                 'category' => 'required|in:INFRASTRUCTURE,HEALTH,EDUCATION,SOCIAL_SERVICES,ENVIRONMENT,LIVELIHOOD,DISASTER_PREPAREDNESS,YOUTH_DEVELOPMENT,SENIOR_CITIZEN_PROGRAM,WOMEN_EMPOWERMENT,OTHER',
                 'type' => 'sometimes|in:REGULAR,SPECIAL,EMERGENCY,FUNDED,DONATION',
                 'priority' => 'sometimes|in:LOW,NORMAL,HIGH,CRITICAL',
+                
+                // Timeline
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after:start_date',
+                'actual_start_date' => 'nullable|date',
+                'actual_end_date' => 'nullable|date|after_or_equal:actual_start_date',
+                
+                // Budget Information
                 'total_budget' => 'required|numeric|min:0',
                 'allocated_budget' => 'required|numeric|min:0|lte:total_budget',
-                'funding_source' => 'nullable|string',
-                'funding_agency' => 'nullable|string',
-                'location' => 'nullable|string',
+                'utilized_budget' => 'nullable|numeric|min:0|lte:allocated_budget',
+                'funding_source' => 'sometimes|in:BARANGAY_FUNDS,MUNICIPAL_FUNDS,PROVINCIAL_FUNDS,NATIONAL_GOVERNMENT,NGO,PRIVATE_SECTOR,DONATIONS,MIXED_FUNDING',
+                'funding_agency' => 'nullable|string|max:255',
+                
+                // Location and Beneficiaries
+                'location' => 'required|string|max:255',
                 'target_puroks' => 'nullable|array',
+                'target_puroks.*' => 'string|max:100',
                 'target_beneficiaries' => 'nullable|integer|min:0',
+                'actual_beneficiaries' => 'nullable|integer|min:0',
                 'beneficiary_criteria' => 'nullable|string',
+                
+                // Project Management
                 'project_manager_id' => 'nullable|exists:users,id',
-                'remarks' => 'nullable|string'
+                'approving_official_id' => 'nullable|exists:users,id',
+                'approved_date' => 'nullable|date',
+                
+                // Status and Progress
+                'status' => 'sometimes|in:PLANNING,APPROVED,IN_PROGRESS,ON_HOLD,COMPLETED,CANCELLED,SUSPENDED',
+                'progress_percentage' => 'sometimes|integer|min:0|max:100',
+                
+                // Documentation
+                'attachments' => 'nullable|array',
+                'remarks' => 'nullable|string',
+                'completion_report' => 'nullable|string',
+                'lessons_learned' => 'nullable|array',
+                
+                // Monitoring and Evaluation
+                'last_monitoring_date' => 'nullable|date',
+                'monitoring_remarks' => 'nullable|string',
+                'quality_rating' => 'nullable|integer|min:1|max:5',
+                'evaluation_notes' => 'nullable|string',
+                
+                // Legacy fields for compatibility
+                'name' => 'sometimes|string|max:255',
+                'budget_breakdown' => 'nullable|array',
+                'milestones' => 'nullable|array',
+                'team_members' => 'nullable|array',
+                'success_metrics' => 'nullable|string',
+                'potential_risks' => 'nullable|string',
+                'key_stakeholders' => 'nullable|string'
             ]);
 
+            // Set defaults for required fields
             $validated['created_by'] = auth()->id();
+            $validated['type'] = $validated['type'] ?? 'REGULAR';
+            $validated['priority'] = $validated['priority'] ?? 'NORMAL';
+            $validated['status'] = $validated['status'] ?? 'PLANNING';
+            $validated['progress_percentage'] = $validated['progress_percentage'] ?? 0;
+            $validated['funding_source'] = $validated['funding_source'] ?? 'BARANGAY_FUNDS';
+            
+            // Calculate remaining budget
+            $totalBudget = $validated['total_budget'];
+            $allocatedBudget = $validated['allocated_budget'];
+            $utilizedBudget = $validated['utilized_budget'] ?? 0;
+            $validated['remaining_budget'] = $allocatedBudget - $utilizedBudget;
+            
+            // Use title as fallback for name field
+            if (!isset($validated['title']) && isset($validated['name'])) {
+                $validated['title'] = $validated['name'];
+            }
             
             $project = Project::create($validated);
-            $project->load(['projectManager', 'createdBy']);
+            $project->load(['projectManager', 'approvingOfficial', 'createdBy']);
 
             return response()->json([
                 'success' => true,
@@ -155,33 +214,71 @@ class ProjectController extends Controller
             $project = Project::findOrFail($id);
 
             $validated = $request->validate([
+                // Basic Information
                 'title' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
                 'objectives' => 'nullable|string',
                 'expected_outcomes' => 'nullable|string',
+                
+                // Project Classification
                 'category' => 'sometimes|in:INFRASTRUCTURE,HEALTH,EDUCATION,SOCIAL_SERVICES,ENVIRONMENT,LIVELIHOOD,DISASTER_PREPAREDNESS,YOUTH_DEVELOPMENT,SENIOR_CITIZEN_PROGRAM,WOMEN_EMPOWERMENT,OTHER',
                 'type' => 'sometimes|in:REGULAR,SPECIAL,EMERGENCY,FUNDED,DONATION',
                 'priority' => 'sometimes|in:LOW,NORMAL,HIGH,CRITICAL',
+                
+                // Timeline
                 'start_date' => 'sometimes|date',
                 'end_date' => 'sometimes|date|after:start_date',
+                'actual_start_date' => 'nullable|date',
+                'actual_end_date' => 'nullable|date|after_or_equal:actual_start_date',
+                
+                // Budget Information
                 'total_budget' => 'sometimes|numeric|min:0',
                 'allocated_budget' => 'sometimes|numeric|min:0',
-                'funding_source' => 'nullable|string',
-                'funding_agency' => 'nullable|string',
-                'location' => 'nullable|string',
+                'utilized_budget' => 'nullable|numeric|min:0',
+                'funding_source' => 'sometimes|in:BARANGAY_FUNDS,MUNICIPAL_FUNDS,PROVINCIAL_FUNDS,NATIONAL_GOVERNMENT,NGO,PRIVATE_SECTOR,DONATIONS,MIXED_FUNDING',
+                'funding_agency' => 'nullable|string|max:255',
+                
+                // Location and Beneficiaries
+                'location' => 'sometimes|string|max:255',
                 'target_puroks' => 'nullable|array',
+                'target_puroks.*' => 'string|max:100',
                 'target_beneficiaries' => 'nullable|integer|min:0',
-                'beneficiary_criteria' => 'nullable|string',
-                'project_manager_id' => 'nullable|exists:users,id',
-                'progress_percentage' => 'sometimes|integer|min:0|max:100',
                 'actual_beneficiaries' => 'nullable|integer|min:0',
-                'remarks' => 'nullable|string'
+                'beneficiary_criteria' => 'nullable|string',
+                
+                // Project Management
+                'project_manager_id' => 'nullable|exists:users,id',
+                'approving_official_id' => 'nullable|exists:users,id',
+                'approved_date' => 'nullable|date',
+                
+                // Status and Progress
+                'status' => 'sometimes|in:PLANNING,APPROVED,IN_PROGRESS,ON_HOLD,COMPLETED,CANCELLED,SUSPENDED',
+                'progress_percentage' => 'sometimes|integer|min:0|max:100',
+                
+                // Documentation
+                'attachments' => 'nullable|array',
+                'remarks' => 'nullable|string',
+                'completion_report' => 'nullable|string',
+                'lessons_learned' => 'nullable|array',
+                
+                // Monitoring and Evaluation
+                'last_monitoring_date' => 'nullable|date',
+                'monitoring_remarks' => 'nullable|string',
+                'quality_rating' => 'nullable|integer|min:1|max:5',
+                'evaluation_notes' => 'nullable|string'
             ]);
 
             $validated['updated_by'] = auth()->id();
             
+            // Calculate remaining budget if budget fields are updated
+            if (isset($validated['allocated_budget']) || isset($validated['utilized_budget'])) {
+                $allocatedBudget = $validated['allocated_budget'] ?? $project->allocated_budget;
+                $utilizedBudget = $validated['utilized_budget'] ?? $project->utilized_budget ?? 0;
+                $validated['remaining_budget'] = $allocatedBudget - $utilizedBudget;
+            }
+            
             $project->update($validated);
-            $project->load(['projectManager', 'milestones', 'teamMembers']);
+            $project->load(['projectManager', 'approvingOfficial', 'milestones', 'teamMembers', 'updatedBy']);
 
             return response()->json([
                 'success' => true,

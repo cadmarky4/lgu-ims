@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BarangayOfficial;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
@@ -70,12 +71,12 @@ class BarangayOfficialController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            // Basic information
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'suffix' => 'nullable|string|max:20',
             'position' => 'required|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
-            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
             'contact_number' => 'nullable|string|max:255',
             'email_address' => 'nullable|email|max:255',
             'home_address' => 'nullable|string',
@@ -84,6 +85,8 @@ class BarangayOfficialController extends Controller
             'civil_status' => 'nullable|in:SINGLE,MARRIED,DIVORCED,WIDOWED,SEPARATED',
             'educational_background' => 'nullable|string',
             'work_experience' => 'nullable|string',
+            // Term information
+            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
             'term_start' => 'required|date',
             'term_end' => 'required|date|after:term_start',
             'oath_date' => 'nullable|date',
@@ -91,6 +94,7 @@ class BarangayOfficialController extends Controller
             'salary_grade' => 'nullable|string|max:20',
             'plantilla_position' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'is_active' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -109,7 +113,10 @@ class BarangayOfficialController extends Controller
             $validated['photo_path'] = $photoPath;
         }
 
-        $validated['is_active'] = true;
+        // Set default is_active if not provided
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = true;
+        }
 
         $official = BarangayOfficial::create($validated);
 
@@ -137,12 +144,12 @@ class BarangayOfficialController extends Controller
     public function update(Request $request, BarangayOfficial $barangayOfficial): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            // Basic information
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'suffix' => 'nullable|string|max:20',
             'position' => 'sometimes|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
-            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
             'contact_number' => 'nullable|string|max:255',
             'email_address' => 'nullable|email|max:255',
             'home_address' => 'nullable|string',
@@ -151,6 +158,8 @@ class BarangayOfficialController extends Controller
             'civil_status' => 'nullable|in:SINGLE,MARRIED,DIVORCED,WIDOWED,SEPARATED',
             'educational_background' => 'nullable|string',
             'work_experience' => 'nullable|string',
+            // Term information
+            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
             'term_start' => 'sometimes|date',
             'term_end' => 'sometimes|date|after:term_start',
             'oath_date' => 'nullable|date',
@@ -291,7 +300,7 @@ class BarangayOfficialController extends Controller
             'performance_rating' => $request->performance_rating,
             'performance_notes' => $request->performance_notes,
             'last_evaluation_date' => now(),
-            'evaluated_by' => $request->get('evaluated_by', auth()->id()),
+            'evaluated_by' => $request->get('evaluated_by', Auth::id()),
         ]);
 
         return response()->json([
@@ -326,7 +335,7 @@ class BarangayOfficialController extends Controller
             'end_reason' => $request->end_reason,
             'end_notes' => $request->end_notes,
             'archived_at' => now(),
-            'archived_by' => auth()->id(),
+            'archived_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -364,7 +373,7 @@ class BarangayOfficialController extends Controller
             'archived_at' => null,
             'archived_by' => null,
             'reactivated_at' => now(),
-            'reactivated_by' => auth()->id(),
+            'reactivated_by' => Auth::id(),
         ]);
 
         return response()->json([

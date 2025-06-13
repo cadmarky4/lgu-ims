@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FiUpload } from 'react-icons/fi';
 import { apiService } from '../services/api';
 
 interface AddNewResidentProps {
@@ -9,80 +8,55 @@ interface AddNewResidentProps {
 
 const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    // Basic Information
-    first_name: '',
-    last_name: '',
-    middle_name: '',
-    suffix: '',
-    birth_date: '',
-    birth_place: '',
+    firstName: '',
+    lastName: '',
+    middleName: '',    suffix: '',
+    birthDate: '',
+    birthPlace: '',
     age: '',
     gender: '',
-    civil_status: '',
+    civilStatus: '',
     nationality: 'Filipino',
     religion: '',
-    
-    // Address Information
-    house_number: '',
+    houseNumber: '',
     street: '',
     purok: '',
-    complete_address: '',
-    
-    // Contact Information
-    mobile_number: '',
-    telephone_number: '',
-    email_address: '',
-    
-    // Household Information
-    is_household_head: '',
-    relationship_to_head: '',
-    
-    // Employment Information
+    completeAddress: '',
+    mobileNumber: '',
+    telephoneNumber: '',
+    emailAddress: '',
+    isHouseholdHead: '',
+    relationshipToHead: '',
     occupation: '',
     employer: '',
-    monthly_income: '',
-    employment_status: '',
-    educational_attainment: '',
-    
-    // Family Information
-    mother_name: '',
-    father_name: '',
-    
-    // Emergency Contact
-    emergency_contact_name: '',
-    emergency_contact_number: '',
-    emergency_contact_relationship: '',
-    
-    // Government IDs
-    primary_id_type: '',
-    id_number: '',
-    philhealth_number: '',
-    sss_number: '',
-    tin_number: '',
-    voters_id_number: '',
-    
-    // Voter Information
-    voter_status: 'NOT_REGISTERED',
-    precinct_number: '',
-    
-    // Health Information
-    medical_conditions: '',
+    monthlyIncome: '',
+    employmentStatus: '',
+    educationalAttainment: '',    emergencyContactName: '',
+    emergencyContactNumber: '',
+    emergencyContactRelationship: '',
+    motherName: '',
+    fatherName: '',
+    primaryIdType: '',
+    idNumber: '',
+    philhealthNumber: '',
+    sssNumber: '',
+    tinNumber: '',
+    votersIdNumber: '',
+    voterStatus: 'NOT_REGISTERED',
+    precinctNumber: '',
+    medicalConditions: '',
     allergies: '',
-    
-    // Special Classifications
     specialClassifications: {
-      senior_citizen: false,
-      person_with_disability: false,
-      disability_type: '',
-      indigenous_people: false,
-      indigenous_group: '',
-      fourps_beneficiary: false,
-      fourps_household_id: ''
+      seniorCitizen: false,
+      personWithDisability: false,
+      disabilityType: '',
+      indigenousPeople: false,
+      indigenousGroup: '',
+      fourPsBeneficiary: false,
+      fourPsHouseholdId: ''
     }
   });
-
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Calculate age from birth date
@@ -101,32 +75,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (name.startsWith('specialClassifications.')) {
-      const classificationKey = name.replace('specialClassifications.', '');
-      setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const newData = {
         ...prev,
-        specialClassifications: {
-          ...prev.specialClassifications,
-          [classificationKey]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-        }
-      }));
-    } else {
-      setFormData(prev => {
-        const newData = {
-          ...prev,
-          [name]: value
-        };
-        
-        // Auto-calculate age when birth date changes
-        if (name === 'birth_date' && value) {
-          newData.age = calculateAge(value);
-        }
-        
-        return newData;
-      });
-    }
+        [name]: value
+      };
+      
+      // Auto-calculate age when birth date changes
+      if (name === 'birthDate' && value) {
+        newData.age = calculateAge(value);
+      }
+      
+      return newData;
+    });
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,22 +101,33 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       }
     }));
   };
+
+  const handleSpecialFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      specialClassifications: {
+        ...prev.specialClassifications,
+        [name]: value
+      }
+    }));
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Prevent double-click submission
-    if (isLoading) {
+    if (loading) {
       return;
     }
     
-    setIsLoading(true);
+    setLoading(true);
     setError(null);    try {
       // Check for potential duplicates first
-      if (formData.first_name && formData.last_name && formData.birth_date) {
+      if (formData.firstName && formData.lastName && formData.birthDate) {
         const duplicates = await apiService.checkDuplicateResident(
-          formData.first_name,
-          formData.last_name,
-          formData.birth_date
+          formData.firstName,
+          formData.lastName,
+          formData.birthDate
         );
         
         if (duplicates.length > 0) {
@@ -167,7 +140,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           );
           
           if (!confirmed) {
-            setIsLoading(false);
+            setLoading(false);
             return;
           }
         }
@@ -175,56 +148,54 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
       // Transform form data to match backend API structure
       const residentData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        middle_name: formData.middle_name || null,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        middle_name: formData.middleName || null,
         suffix: formData.suffix || null,
-        birth_date: formData.birth_date,
-        birth_place: formData.birth_place,
-        gender: formData.gender.toUpperCase(),
-        civil_status: formData.civil_status.toUpperCase(),
+        birth_date: formData.birthDate,
+        birth_place: formData.birthPlace,
+        gender: formData.gender,
+        civil_status: formData.civilStatus,
         nationality: formData.nationality,
         religion: formData.religion || null,
-        mobile_number: formData.mobile_number || null,
-        telephone_number: formData.telephone_number || null,
-        email_address: formData.email_address || null,
-        house_number: formData.house_number || null,
+        mobile_number: formData.mobileNumber || null,
+        telephone_number: formData.telephoneNumber || null,
+        email_address: formData.emailAddress || null,
+        house_number: formData.houseNumber || null,
         street: formData.street || null,
         purok: formData.purok || null,
-        complete_address: formData.complete_address,
-        philhealth_number: formData.philhealth_number || null,
-        sss_number: formData.sss_number || null,
-        tin_number: formData.tin_number || null,
-        voters_id_number: formData.voters_id_number || null,
-        is_household_head: formData.is_household_head === 'yes',
-        relationship_to_head: formData.relationship_to_head || null,
+        complete_address: formData.completeAddress,
+        philhealth_number: formData.philhealthNumber || null,
+        sss_number: formData.sssNumber || null,
+        tin_number: formData.tinNumber || null,
+        voters_id_number: formData.votersIdNumber || null,
+        is_household_head: formData.isHouseholdHead === 'yes',
+        relationship_to_head: formData.relationshipToHead || null,
         occupation: formData.occupation || null,
         employer: formData.employer || null,
-        monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
-        employment_status: formData.employment_status || null,
-        educational_attainment: formData.educational_attainment || null,
-        emergency_contact_name: formData.emergency_contact_name || null,
-        emergency_contact_number: formData.emergency_contact_number || null,
-        emergency_contact_relationship: formData.emergency_contact_relationship || null,
-        voter_status: formData.voter_status,
-        precinct_number: formData.precinct_number || null,
-        medical_conditions: formData.medical_conditions || null,
-        allergies: formData.allergies || null,        mother_name: formData.mother_name || null,
-        father_name: formData.father_name || null,
-        primary_id_type: formData.primary_id_type || null,
-        id_number: formData.id_number || null,
+        monthly_income: formData.monthlyIncome ? parseFloat(formData.monthlyIncome) : null,
+        employment_status: formData.employmentStatus || null,
+        educational_attainment: formData.educationalAttainment || null,        emergency_contact_name: formData.emergencyContactName || null,
+        emergency_contact_number: formData.emergencyContactNumber || null,
+        emergency_contact_relationship: formData.emergencyContactRelationship || null,
+        mother_name: formData.motherName || null,
+        father_name: formData.fatherName || null,        primary_id_type: formData.primaryIdType || null,
+        id_number: formData.idNumber || null,
         age: formData.age ? parseInt(formData.age) : null,
-        senior_citizen: formData.specialClassifications.senior_citizen,person_with_disability: formData.specialClassifications.person_with_disability,
-        disability_type: formData.specialClassifications.disability_type || null,
-        indigenous_people: formData.specialClassifications.indigenous_people,
-        indigenous_group: formData.specialClassifications.indigenous_group || null,
-        four_ps_beneficiary: formData.specialClassifications.fourps_beneficiary,
-        four_ps_household_id: formData.specialClassifications.fourps_household_id || null
+        voter_status: formData.voterStatus,
+        precinct_number: formData.precinctNumber || null,
+        medical_conditions: formData.medicalConditions || null,
+        allergies: formData.allergies || null,
+        senior_citizen: formData.specialClassifications.seniorCitizen,
+        person_with_disability: formData.specialClassifications.personWithDisability,
+        disability_type: formData.specialClassifications.disabilityType || null,
+        indigenous_people: formData.specialClassifications.indigenousPeople,
+        indigenous_group: formData.specialClassifications.indigenousGroup || null,        four_ps_beneficiary: formData.specialClassifications.fourPsBeneficiary,
+        four_ps_household_id: formData.specialClassifications.fourPsHouseholdId || null
       };
 
       await apiService.createResident(residentData);
       
-      // Call the optional onSave callback if provided
       if (onSave) {
         onSave(residentData);
       }
@@ -248,7 +219,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         setError(err.response?.data?.message || 'Failed to create resident. Please try again.');
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -257,7 +228,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Add New Resident Profile</h1>
       </div>
-
+      
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
         {/* Error Message */}
         {error && (
@@ -277,10 +248,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="first_name"
-                value={formData.first_name}
+                name="firstName"
+                value={formData.firstName}
                 onChange={handleInputChange}
-                placeholder="Enter first name here..."
+                placeholder="Enter first name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -292,10 +263,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="last_name"
-                value={formData.last_name}
+                name="lastName"
+                value={formData.lastName}
                 onChange={handleInputChange}
-                placeholder="Enter last name here..."
+                placeholder="Enter last name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -307,10 +278,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="middle_name"
-                value={formData.middle_name}
+                name="middleName"
+                value={formData.middleName}
                 onChange={handleInputChange}
-                placeholder="N/A if not applicable"
+                placeholder="Enter middle name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -340,22 +311,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="date"
-                name="birth_date"
-                value={formData.birth_date}
+                name="birthDate"
+                value={formData.birthDate}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
-            </div>
-
-            <div>
+            </div>            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birth Place *
               </label>
               <input
                 type="text"
-                name="birth_place"
-                value={formData.birth_place}
+                name="birthPlace"
+                value={formData.birthPlace}
                 onChange={handleInputChange}
                 placeholder="Enter birth place"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -400,8 +369,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 Civil Status *
               </label>
               <select
-                name="civil_status"
-                value={formData.civil_status}
+                name="civilStatus"
+                value={formData.civilStatus}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
@@ -439,7 +408,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 name="religion"
                 value={formData.religion}
                 onChange={handleInputChange}
-                placeholder="Enter religion here..."
+                placeholder="Enter religion"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -453,12 +422,12 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                House/Unit Number
+                House Number
               </label>
               <input
                 type="text"
-                name="house_number"
-                value={formData.house_number}
+                name="houseNumber"
+                value={formData.houseNumber}
                 onChange={handleInputChange}
                 placeholder="e.g. 123, Blk 4 Lot 5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -504,8 +473,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               Complete Address *
             </label>
             <textarea
-              name="complete_address"
-              value={formData.complete_address}
+              name="completeAddress"
+              value={formData.completeAddress}
               onChange={handleInputChange}
               rows={3}
               placeholder="Enter complete address"
@@ -526,8 +495,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="tel"
-                name="mobile_number"
-                value={formData.mobile_number}
+                name="mobileNumber"
+                value={formData.mobileNumber}
                 onChange={handleInputChange}
                 placeholder="+63 XXX XXX XXXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -540,8 +509,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="tel"
-                name="telephone_number"
-                value={formData.telephone_number}
+                name="telephoneNumber"
+                value={formData.telephoneNumber}
                 onChange={handleInputChange}
                 placeholder="(02) XXXX-XXXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -554,8 +523,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="email"
-                name="email_address"
-                value={formData.email_address}
+                name="emailAddress"
+                value={formData.emailAddress}
                 onChange={handleInputChange}
                 placeholder="resident@gmail.com"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -577,9 +546,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    name="is_household_head"
+                    name="isHouseholdHead"
                     value="yes"
-                    checked={formData.is_household_head === 'yes'}
+                    checked={formData.isHouseholdHead === 'yes'}
                     onChange={handleInputChange}
                     className="mr-2"
                   />
@@ -588,9 +557,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 <label className="flex items-center">
                   <input
                     type="radio"
-                    name="is_household_head"
+                    name="isHouseholdHead"
                     value="no"
-                    checked={formData.is_household_head === 'no'}
+                    checked={formData.isHouseholdHead === 'no'}
                     onChange={handleInputChange}
                     className="mr-2"
                   />
@@ -599,26 +568,26 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </div>
             </div>
 
-            {formData.is_household_head === 'no' && (
+            {formData.isHouseholdHead === 'no' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Relationship to Household Head
                 </label>
                 <select
-                  name="relationship_to_head"
-                  value={formData.relationship_to_head}
+                  name="relationshipToHead"
+                  value={formData.relationshipToHead}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select Relationship</option>
-                  <option value="Spouse">Spouse</option>
-                  <option value="Child">Child</option>
-                  <option value="Parent">Parent</option>
-                  <option value="Sibling">Sibling</option>
-                  <option value="Grandparent">Grandparent</option>
-                  <option value="Grandchild">Grandchild</option>
-                  <option value="Other Relative">Other Relative</option>
-                  <option value="Non-relative">Non-relative</option>
+                  <option value="SPOUSE">Spouse</option>
+                  <option value="CHILD">Child</option>
+                  <option value="PARENT">Parent</option>
+                  <option value="SIBLING">Sibling</option>
+                  <option value="GRANDCHILD">Grandchild</option>
+                  <option value="GRANDPARENT">Grandparent</option>
+                  <option value="OTHER_RELATIVE">Other Relative</option>
+                  <option value="NON_RELATIVE">Non-Relative</option>
                 </select>
               </div>
             )}
@@ -632,6 +601,26 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Employment Status
+              </label>
+              <select
+                name="employmentStatus"
+                value={formData.employmentStatus}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Employment Status</option>
+                <option value="EMPLOYED">Employed</option>
+                <option value="UNEMPLOYED">Unemployed</option>
+                <option value="SELF_EMPLOYED">Self-Employed</option>
+                <option value="RETIRED">Retired</option>
+                <option value="STUDENT">Student</option>
+                <option value="OFW">OFW</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Occupation
               </label>
               <input
@@ -639,7 +628,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 name="occupation"
                 value={formData.occupation}
                 onChange={handleInputChange}
-                placeholder="e.g. Teacher, Engineer, Student"
+                placeholder="Enter occupation"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -653,7 +642,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 name="employer"
                 value={formData.employer}
                 onChange={handleInputChange}
-                placeholder="Company or organization name"
+                placeholder="Enter employer name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -664,32 +653,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="number"
-                name="monthly_income"
-                value={formData.monthly_income}
+                name="monthlyIncome"
+                value={formData.monthlyIncome}
                 onChange={handleInputChange}
                 placeholder="0.00"
+                min="0"
+                step="0.01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Employment Status
-              </label>
-              <select
-                name="employment_status"
-                value={formData.employment_status}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Status</option>
-                <option value="Employed">Employed</option>
-                <option value="Self-employed">Self-employed</option>
-                <option value="Unemployed">Unemployed</option>
-                <option value="Student">Student</option>
-                <option value="Retired">Retired</option>
-                <option value="Homemaker">Homemaker</option>
-              </select>
             </div>
 
             <div>
@@ -697,25 +668,24 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 Educational Attainment
               </label>
               <select
-                name="educational_attainment"
-                value={formData.educational_attainment}
+                name="educationalAttainment"
+                value={formData.educationalAttainment}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Select Education Level</option>
-                <option value="No Schooling">No Schooling</option>
-                <option value="Elementary">Elementary</option>
-                <option value="Elementary Graduate">Elementary Graduate</option>
-                <option value="High School">High School</option>
-                <option value="High School Graduate">High School Graduate</option>
-                <option value="Vocational">Vocational</option>
-                <option value="College">College</option>
-                <option value="College Graduate">College Graduate</option>
-                <option value="Post Graduate">Post Graduate</option>
+                <option value="">Select Educational Attainment</option>
+                <option value="NO_FORMAL_EDUCATION">No Formal Education</option>
+                <option value="ELEMENTARY_UNDERGRADUATE">Elementary Undergraduate</option>
+                <option value="ELEMENTARY_GRADUATE">Elementary Graduate</option>
+                <option value="HIGH_SCHOOL_UNDERGRADUATE">High School Undergraduate</option>
+                <option value="HIGH_SCHOOL_GRADUATE">High School Graduate</option>
+                <option value="VOCATIONAL">Vocational</option>
+                <option value="COLLEGE_UNDERGRADUATE">College Undergraduate</option>
+                <option value="COLLEGE_GRADUATE">College Graduate</option>
+                <option value="POST_GRADUATE">Post Graduate</option>
               </select>
             </div>
-          </div>
-        </div>
+          </div>        </div>
 
         {/* Family Information */}
         <div className="mb-8">
@@ -728,8 +698,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="mother_name"
-                value={formData.mother_name}
+                name="motherName"
+                value={formData.motherName}
                 onChange={handleInputChange}
                 placeholder="Mother's full name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -742,8 +712,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="father_name"
-                value={formData.father_name}
+                name="fatherName"
+                value={formData.fatherName}
                 onChange={handleInputChange}
                 placeholder="Father's full name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -763,8 +733,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="emergency_contact_name"
-                value={formData.emergency_contact_name}
+                name="emergencyContactName"
+                value={formData.emergencyContactName}
                 onChange={handleInputChange}
                 placeholder="Full name of emergency contact"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -777,8 +747,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="tel"
-                name="emergency_contact_number"
-                value={formData.emergency_contact_number}
+                name="emergencyContactNumber"
+                value={formData.emergencyContactNumber}
                 onChange={handleInputChange}
                 placeholder="+63 XXX XXX XXXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -791,17 +761,15 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="emergency_contact_relationship"
-                value={formData.emergency_contact_relationship}
+                name="emergencyContactRelationship"
+                value={formData.emergencyContactRelationship}
                 onChange={handleInputChange}
-                placeholder="e.g. Spouse, Sibling, Friend"
+                placeholder="e.g. Spouse, Parent, Sibling"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
-        </div>
-
-        {/* Government IDs & Documents */}
+        </div>        {/* Government IDs */}
         <div className="mb-8">
           <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Government IDs & Documents</h2>
           
@@ -811,8 +779,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 Primary ID Type
               </label>
               <select
-                name="primary_id_type"
-                value={formData.primary_id_type}
+                name="primaryIdType"
+                value={formData.primaryIdType}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
@@ -833,15 +801,15 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="id_number"
-                value={formData.id_number}
+                name="idNumber"
+                value={formData.idNumber}
                 onChange={handleInputChange}
                 placeholder="Enter ID Number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -849,8 +817,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="philhealth_number"
-                value={formData.philhealth_number}
+                name="philhealthNumber"
+                value={formData.philhealthNumber}
                 onChange={handleInputChange}
                 placeholder="XX-XXXXXXXXX-X"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -863,8 +831,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="sss_number"
-                value={formData.sss_number}
+                name="sssNumber"
+                value={formData.sssNumber}
                 onChange={handleInputChange}
                 placeholder="XX-XXXXXXX-X"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -877,8 +845,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="tin_number"
-                value={formData.tin_number}
+                name="tinNumber"
+                value={formData.tinNumber}
                 onChange={handleInputChange}
                 placeholder="XXX-XXX-XXX-XXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -891,8 +859,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="voters_id_number"
-                value={formData.voters_id_number}
+                name="votersIdNumber"
+                value={formData.votersIdNumber}
                 onChange={handleInputChange}
                 placeholder="XXXX-XXXX-XXXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -911,27 +879,28 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 Voter Status *
               </label>
               <select
-                name="voter_status"
-                value={formData.voter_status}
+                name="voterStatus"
+                value={formData.voterStatus}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
                 <option value="NOT_REGISTERED">Not Registered</option>
                 <option value="REGISTERED">Registered</option>
-                <option value="DEACTIVATED">Deactivated</option>
+                <option value="DECEASED">Deceased</option>
+                <option value="TRANSFERRED">Transferred</option>
               </select>
             </div>
 
-            {formData.voter_status === 'REGISTERED' && (
+            {formData.voterStatus === 'REGISTERED' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Precinct Number
                 </label>
                 <input
                   type="text"
-                  name="precinct_number"
-                  value={formData.precinct_number}
+                  name="precinctNumber"
+                  value={formData.precinctNumber}
                   onChange={handleInputChange}
                   placeholder="Enter precinct number"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -951,8 +920,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 Medical Conditions
               </label>
               <textarea
-                name="medical_conditions"
-                value={formData.medical_conditions}
+                name="medicalConditions"
+                value={formData.medicalConditions}
                 onChange={handleInputChange}
                 rows={3}
                 placeholder="List any medical conditions"
@@ -986,121 +955,103 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  name="senior_citizen"
-                  checked={formData.specialClassifications.senior_citizen}
+                  name="seniorCitizen"
+                  checked={formData.specialClassifications.seniorCitizen}
                   onChange={handleCheckboxChange}
                   className="mr-2"
                 />
                 Senior Citizen (60+)
               </label>
               
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="person_with_disability"
-                  checked={formData.specialClassifications.person_with_disability}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                Person with Disability
-              </label>
-
-              {formData.specialClassifications.person_with_disability && (
-                <div className="ml-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Disability Type
-                  </label>
+              <div>
+                <label className="flex items-center">
                   <input
-                    type="text"
-                    name="specialClassifications.disability_type"
-                    value={formData.specialClassifications.disability_type}
-                    onChange={handleInputChange}
-                    placeholder="Specify disability type"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="checkbox"
+                    name="personWithDisability"
+                    checked={formData.specialClassifications.personWithDisability}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
                   />
-                </div>
-              )}
+                  Person with Disability
+                </label>
+
+                {formData.specialClassifications.personWithDisability && (
+                  <div className="ml-6 mt-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Disability Type
+                    </label>
+                    <input
+                      type="text"
+                      name="disabilityType"
+                      value={formData.specialClassifications.disabilityType}
+                      onChange={handleSpecialFieldChange}
+                      placeholder="Specify disability type"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
               
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="indigenous_people"
-                  checked={formData.specialClassifications.indigenous_people}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                Indigenous People
-              </label>
-
-              {formData.specialClassifications.indigenous_people && (
-                <div className="ml-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Indigenous Group
-                  </label>
+              <div>
+                <label className="flex items-center">
                   <input
-                    type="text"
-                    name="specialClassifications.indigenous_group"
-                    value={formData.specialClassifications.indigenous_group}
-                    onChange={handleInputChange}
-                    placeholder="Specify indigenous group"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="checkbox"
+                    name="indigenousPeople"
+                    checked={formData.specialClassifications.indigenousPeople}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
                   />
-                </div>
-              )}
+                  Indigenous People
+                </label>
+
+                {formData.specialClassifications.indigenousPeople && (
+                  <div className="ml-6 mt-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Indigenous Group
+                    </label>
+                    <input
+                      type="text"
+                      name="indigenousGroup"
+                      value={formData.specialClassifications.indigenousGroup}
+                      onChange={handleSpecialFieldChange}
+                      placeholder="Specify indigenous group"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="fourps_beneficiary"
-                  checked={formData.specialClassifications.fourps_beneficiary}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                4Ps Beneficiary
-              </label>
-
-              {formData.specialClassifications.fourps_beneficiary && (
-                <div className="ml-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    4Ps Household ID
-                  </label>
+              <div>
+                <label className="flex items-center">
                   <input
-                    type="text"
-                    name="specialClassifications.fourps_household_id"
-                    value={formData.specialClassifications.fourps_household_id}
-                    onChange={handleInputChange}
-                    placeholder="Enter 4Ps Household ID"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="checkbox"
+                    name="fourPsBeneficiary"
+                    checked={formData.specialClassifications.fourPsBeneficiary}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
                   />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                  4Ps Beneficiary
+                </label>
 
-        {/* Profile Photo */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Profile Photo</h2>
-          
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-            <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 mb-2">Upload Profile Photo</p>
-            <p className="text-sm text-gray-500">Click to browse or drag and drop (Optional)</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-              className="hidden"
-              id="profilePhoto"
-            />
-            <label
-              htmlFor="profilePhoto"
-              className="cursor-pointer inline-block mt-4 px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-            >
-              Choose File
-            </label>
+                {formData.specialClassifications.fourPsBeneficiary && (
+                  <div className="ml-6 mt-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      4Ps Household ID
+                    </label>
+                    <input
+                      type="text"
+                      name="fourPsHouseholdId"
+                      value={formData.specialClassifications.fourPsHouseholdId}
+                      onChange={handleSpecialFieldChange}
+                      placeholder="Enter 4Ps Household ID"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1110,16 +1061,16 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
             type="button"
             onClick={onClose}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            disabled={isLoading}
+            disabled={loading}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? 'Registering...' : 'Register Resident'}
+            {loading ? 'Registering...' : 'Register Resident'}
           </button>
         </div>
       </form>

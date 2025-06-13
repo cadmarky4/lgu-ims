@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ResidentController extends Controller
 {
@@ -89,6 +91,7 @@ class ResidentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            // Basic Information
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
@@ -99,19 +102,35 @@ class ResidentController extends Controller
             'civil_status' => 'required|in:SINGLE,MARRIED,WIDOWED,DIVORCED,SEPARATED',
             'nationality' => 'required|string|max:100',
             'religion' => 'nullable|string|max:100',
+            'employment_status' => 'nullable|in:EMPLOYED,UNEMPLOYED,SELF_EMPLOYED,RETIRED,STUDENT,OFW',
+            'educational_attainment' => 'nullable|string',
+            // Contact Information
             'mobile_number' => 'nullable|string|max:20',
-            'telephone_number' => 'nullable|string|max:20',
+            'landline_number' => 'nullable|string|max:20',
             'email_address' => 'nullable|email|max:255',
-            'complete_address' => 'required|string',
+            'house_number' => 'nullable|string|max:50',
+            'street' => 'nullable|string|max:255',
             'purok' => 'nullable|string|max:100',
+            'complete_address' => 'required|string',
+            // Family Information
             'household_id' => 'nullable|exists:households,id',
             'is_household_head' => 'boolean',
             'relationship_to_head' => 'nullable|string|max:100',
-            'occupation' => 'nullable|string|max:255',
-            'employer' => 'nullable|string|max:255',
-            'monthly_income' => 'nullable|numeric|min:0',
-            'employment_status' => 'nullable|in:EMPLOYED,UNEMPLOYED,SELF_EMPLOYED,RETIRED,STUDENT,OFW',
-            'educational_attainment' => 'nullable|string',
+            'mother_name' => 'nullable|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            // Government IDs and Documents
+            'primary_id_type' => 'nullable|string|max:100',
+            'id_number' => 'nullable|string|max:100',
+            'philhealth_number' => 'nullable|string|max:50',
+            'sss_number' => 'nullable|string|max:50',
+            'tin_number' => 'nullable|string|max:50',
+            'voters_id_number' => 'nullable|string|max:50',
+            // Health & Classifications
+            'medical_conditions' => 'nullable|string',
+            'allergies' => 'nullable|string',
             'senior_citizen' => 'boolean',
             'person_with_disability' => 'boolean',
             'disability_type' => 'nullable|string|max:255',
@@ -119,8 +138,8 @@ class ResidentController extends Controller
             'indigenous_group' => 'nullable|string|max:255',
             'four_ps_beneficiary' => 'boolean',
             'four_ps_household_id' => 'nullable|string|max:50',
-            'voter_status' => 'required|in:REGISTERED,NOT_REGISTERED,DECEASED,TRANSFERRED',
-            'precinct_number' => 'nullable|string|max:20',
+            // Profile Photo
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -134,9 +153,20 @@ class ResidentController extends Controller
         try {
             DB::beginTransaction();
 
+            $validated = $validator->validated();
+
+            // Handle photo upload
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('residents/photos', 'public');
+                $validated['photo_path'] = $photoPath;
+            }
+
+            // Remove photo from validated data since we're using photo_path
+            unset($validated['photo']);
+
             $resident = Resident::create([
-                ...$validator->validated(),
-                'created_by' => auth()->id(),
+                ...$validated,
+                'created_by' => Auth::id(),
                 'status' => 'ACTIVE'
             ]);
 
@@ -155,6 +185,21 @@ class ResidentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // Delete uploaded photo if exists and creation failed
+            if (isset($validated['photo_path'])) {
+                Storage::disk('public')->delete($validated['photo_path']);
+            }
+            
+            // Handle duplicate entry errors
+            if (strpos($e->getMessage(), 'residents_name_birthdate_unique') !== false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A resident with the same name and birth date already exists',
+                    'error' => 'Duplicate resident record'
+                ], 422);
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create resident',
@@ -207,6 +252,7 @@ class ResidentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            // Basic Information
             'first_name' => 'sometimes|required|string|max:255',
             'last_name' => 'sometimes|required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
@@ -215,7 +261,46 @@ class ResidentController extends Controller
             'birth_place' => 'sometimes|required|string|max:255',
             'gender' => 'sometimes|required|in:MALE,FEMALE',
             'civil_status' => 'sometimes|required|in:SINGLE,MARRIED,WIDOWED,DIVORCED,SEPARATED',
-            // ... other validation rules similar to store method
+            'nationality' => 'sometimes|required|string|max:100',
+            'religion' => 'nullable|string|max:100',
+            'employment_status' => 'nullable|in:EMPLOYED,UNEMPLOYED,SELF_EMPLOYED,RETIRED,STUDENT,OFW',
+            'educational_attainment' => 'nullable|string',
+            // Contact Information
+            'mobile_number' => 'nullable|string|max:20',
+            'landline_number' => 'nullable|string|max:20',
+            'email_address' => 'nullable|email|max:255',
+            'house_number' => 'nullable|string|max:50',
+            'street' => 'nullable|string|max:255',
+            'purok' => 'nullable|string|max:100',
+            'complete_address' => 'sometimes|required|string',
+            // Family Information
+            'household_id' => 'nullable|exists:households,id',
+            'is_household_head' => 'boolean',
+            'relationship_to_head' => 'nullable|string|max:100',
+            'mother_name' => 'nullable|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            // Government IDs and Documents
+            'primary_id_type' => 'nullable|string|max:100',
+            'id_number' => 'nullable|string|max:100',
+            'philhealth_number' => 'nullable|string|max:50',
+            'sss_number' => 'nullable|string|max:50',
+            'tin_number' => 'nullable|string|max:50',
+            'voters_id_number' => 'nullable|string|max:50',
+            // Health & Classifications
+            'medical_conditions' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'senior_citizen' => 'boolean',
+            'person_with_disability' => 'boolean',
+            'disability_type' => 'nullable|string|max:255',
+            'indigenous_people' => 'boolean',
+            'indigenous_group' => 'nullable|string|max:255',
+            'four_ps_beneficiary' => 'boolean',
+            'four_ps_household_id' => 'nullable|string|max:50',
+            // Profile Photo
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -230,10 +315,25 @@ class ResidentController extends Controller
             DB::beginTransaction();
 
             $oldHouseholdId = $resident->household_id;
+            $validated = $validator->validated();
+
+            // Handle photo upload
+            if ($request->hasFile('photo')) {
+                // Delete old photo if exists
+                if ($resident->photo_path) {
+                    Storage::disk('public')->delete($resident->photo_path);
+                }
+                
+                $photoPath = $request->file('photo')->store('residents/photos', 'public');
+                $validated['photo_path'] = $photoPath;
+            }
+
+            // Remove photo from validated data since we're using photo_path
+            unset($validated['photo']);
             
             $resident->update([
-                ...$validator->validated(),
-                'updated_by' => auth()->id()
+                ...$validated,
+                'updated_by' => Auth::id()
             ]);
 
             // Update member counts for old and new households
@@ -258,6 +358,12 @@ class ResidentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // Delete uploaded photo if exists and update failed
+            if (isset($validated['photo_path'])) {
+                Storage::disk('public')->delete($validated['photo_path']);
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update resident',
@@ -292,6 +398,12 @@ class ResidentController extends Controller
             DB::beginTransaction();
 
             $householdId = $resident->household_id;
+            
+            // Delete photo if exists
+            if ($resident->photo_path) {
+                Storage::disk('public')->delete($resident->photo_path);
+            }
+            
             $resident->delete();
 
             // Update household member counts

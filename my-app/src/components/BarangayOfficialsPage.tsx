@@ -1,136 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter } from 'react-icons/fi';
 import EditBarangayOfficial from './EditBarangayOfficial';
+import { apiService } from '../services/api';
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All Active Officials');
   const [showEditForm, setShowEditForm] = useState(false);
   const [selectedOfficial, setSelectedOfficial] = useState(null);
+  const [officials, setOfficials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState({
+    total_officials: 0,
+    active_officials: 0,
+    committee_heads: 0,
+    upcoming_elections_days: 0
+  });
 
-  const officials = [
-    {
-      id: 1,
-      name: 'Dela Cruz, Juan',
-      position: 'Barangay Captain',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Health',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 2,
-      name: 'Jose, Felicity',
-      position: 'Secretary',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'On-Leave',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 3,
-      name: 'Dalia, Emily',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 4,
-      name: 'Diaz, Sebastian',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 5,
-      name: 'Sabaricos, Joe',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 6,
-      name: 'Orebio, David',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Inactive',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 7,
-      name: 'Fulvidar, Emerson',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'On-Leave',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 8,
-      name: 'Kiniliatis, Bebe',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 9,
-      name: 'Karaniwan, Pepe',
-      position: 'Kagawad',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 10,
-      name: 'Vicente, Biboy',
-      position: 'Tanod',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Active',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 11,
-      name: 'Manaloto, Toribio',
-      position: 'Tanod',
-      contact: '+639123456789',
-      term: '2022 - 2025',
-      status: 'Inactive',
-      committee: 'Education',
-      nationality: 'Filipino',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+  // Fetch officials data and statistics
+  useEffect(() => {
+    fetchOfficials();
+    fetchStatistics();
+  }, [currentPage, searchTerm, selectedFilter]);
+
+  const fetchStatistics = async () => {
+    try {
+      const data = await apiService.getBarangayOfficialStatistics();
+      setStats(data);
+    } catch (err) {
+      console.error('Error fetching barangay official statistics:', err);
     }
-  ];
+  };
+  const fetchOfficials = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getBarangayOfficials({
+        page: currentPage,
+        per_page: 15,
+        search: searchTerm,
+        is_active: selectedFilter === 'All Active Officials' ? true : undefined
+      });
+      setOfficials(response.data);
+      setTotalPages(response.last_page);
+      setTotalCount(response.total);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching officials:', err);
+      setError('Failed to load officials');
+      // Fallback to static data for demo
+      setOfficials([
+        {
+          id: 1,
+          name: 'Dela Cruz, Juan',
+          position: 'Barangay Captain',
+          contact: '+639123456789',
+          term: '2022 - 2025',
+          status: 'Active',
+          committee: 'Health',
+          nationality: 'Filipino',
+          photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+        },
+        {
+          id: 2,
+          name: 'Jose, Felicity',
+          position: 'Secretary',
+          contact: '+639123456789',
+          term: '2022 - 2025',
+          status: 'On-Leave',
+          committee: 'Education',
+          nationality: 'Filipino',
+          photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+        },
+        {
+          id: 3,
+          name: 'Dalia, Emily',
+          position: 'Kagawad',
+          contact: '+639123456789',
+          term: '2022 - 2025',
+          status: 'Active',
+          committee: 'Education',
+          nationality: 'Filipino',
+          photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+        },
+        {
+          id: 4,
+          name: 'Diaz, Sebastian',
+          position: 'Kagawad',
+          contact: '+639123456789',
+          term: '2022 - 2025',
+          status: 'Active',
+          committee: 'Education',
+          nationality: 'Filipino',
+          photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+        },
+        {
+          id: 5,
+          name: 'Sabaricos, Joe',
+          position: 'Kagawad',
+          contact: '+639123456789',
+          term: '2022 - 2025',
+          status: 'Active',
+          committee: 'Education',
+          nationality: 'Filipino',
+          photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteOfficial = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this official?')) {
+      try {
+        await apiService.deleteBarangayOfficial(id);
+        fetchOfficials(); // Refresh the list
+      } catch (err) {
+        console.error('Error deleting official:', err);
+        alert('Failed to delete official');
+      }
+    }
+  };
+
+  const handleEditOfficial = (official: any) => {
+    setSelectedOfficial(official);
+    setShowEditForm(true);
+  };
+
+  const handleSaveOfficial = (officialData: any) => {
+    console.log('Updated official data:', officialData);
+    setShowEditForm(false);
+    setSelectedOfficial(null);
+    fetchOfficials(); // Refresh the list
+  };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -157,21 +161,18 @@ const BarangayOfficialsPage: React.FC = () => {
     
     return matchesSearch && matchesFilter;
   });
-
   // Organizational chart data
   const captain = officials.find(official => official.position === 'Barangay Captain');
   const councilors = officials.filter(official => official.position === 'Kagawad').slice(0, 8);
 
-  const handleEditOfficial = (officialData: any) => {
-    console.log('Updated official data:', officialData);
-    // Here you would typically save to a database
-  };
-
   if (showEditForm) {
     return (
       <EditBarangayOfficial 
-        onClose={() => setShowEditForm(false)} 
-        onSave={handleEditOfficial}
+        onClose={() => {
+          setShowEditForm(false);
+          setSelectedOfficial(null);
+        }} 
+        onSave={handleSaveOfficial}
         official={selectedOfficial}
       />
     );
@@ -184,12 +185,11 @@ const BarangayOfficialsPage: React.FC = () => {
         {/* Officials Overview */}
         <div className="lg:col-span-2 bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">Officials Overview</h1>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+          <div className="grid grid-cols-2 gap-6">            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Officials</p>
-                  <p className="text-2xl font-bold text-gray-900">9 officials</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_officials || 0} officials</p>
                 </div>
                 <div className="text-blue-600">
                   <FiUsers className="w-8 h-8" />
@@ -200,8 +200,8 @@ const BarangayOfficialsPage: React.FC = () => {
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Upcoming Elections</p>
-                  <p className="text-2xl font-bold text-gray-900">1,051 days</p>
+                  <p className="text-sm text-gray-600 mb-1">Active Officials</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.active_officials || 0} active</p>
                 </div>
                 <div className="text-blue-600">
                   <FiUsers className="w-8 h-8" />
@@ -231,9 +231,7 @@ const BarangayOfficialsPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Officials List */}
+      </div>      {/* Officials List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-8">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">Officials List</h2>
@@ -274,82 +272,130 @@ const BarangayOfficialsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Loading/Error States */}
+        {loading && (
+          <div className="p-8 text-center">
+            <div className="text-gray-500">Loading officials...</div>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="p-8 text-center">
+            <div className="text-red-500 mb-2">Error: {error}</div>
+            <div className="text-sm text-gray-500">Showing fallback data</div>
+          </div>
+        )}
+
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Committee</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nationality</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOfficials.map((official) => (
-                <tr key={official.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <img
-                      src={official.photo}
-                      alt={official.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {official.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.position}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.contact}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.term}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official.status)}`}>
-                      {official.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.committee}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.nationality}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View official details"
-                      >
-                        <FiEye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-green-600 hover:text-green-900"
-                        title="Edit official"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete official"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {!loading && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Committee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nationality</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOfficials.map((official) => (
+                  <tr key={official.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <img
+                        src={official.photo}
+                        alt={official.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {official.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {official.position}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {official.contact}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {official.term}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official.status)}`}>
+                        {official.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {official.committee}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {official.nationality}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View official details"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-green-600 hover:text-green-900"
+                          title="Edit official"
+                          onClick={() => handleEditOfficial(official)}
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete official"
+                          onClick={() => handleDeleteOfficial(official.id)}
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * 15) + 1} to {Math.min(currentPage * 15, totalCount)} of {totalCount} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1 text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Organizational Chart */}
