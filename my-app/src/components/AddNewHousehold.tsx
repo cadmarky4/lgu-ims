@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiSearch } from 'react-icons/fi';
 
 interface AddNewHouseholdProps {
@@ -7,6 +7,16 @@ interface AddNewHouseholdProps {
 }
 
 const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {
+  // Loading and error states for API calls
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reference data from backend
+  const [barangays, setBarangays] = useState<any[]>([]);
+  const [residents, setResidents] = useState<any[]>([]);
+  const [filteredResidents, setFilteredResidents] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     householdId: 'Auto-generated',
     householdType: '',
@@ -52,10 +62,91 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch reference data on component mount
+  useEffect(() => {
+    const fetchReferenceData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // TODO: Backend developer - replace with actual endpoints
+        // Fetch barangays
+        // const barangayResponse = await fetch('/api/barangays');
+        // const barangayData = await barangayResponse.json();
+        // setBarangays(barangayData);
+
+        // Fetch residents for search functionality
+        // const residentsResponse = await fetch('/api/residents');
+        // const residentsData = await residentsResponse.json();
+        // setResidents(residentsData);
+
+        // For now, using mock data
+        setBarangays([
+          { id: 1, name: 'San Miguel', value: 'san-miguel' },
+          { id: 2, name: 'Poblacion', value: 'poblacion' },
+          { id: 3, name: 'Santo Domingo', value: 'santo-domingo' }
+        ]);
+
+        setResidents([
+          { id: 1, name: 'Maria Santos', phone: '+63-945-890-9999' },
+          { id: 2, name: 'Juan Dela Cruz', phone: '+63-917-123-4567' },
+          { id: 3, name: 'Ana Reyes', phone: '+63-922-987-6543' },
+          { id: 4, name: 'Roberto Garcia', phone: '+63-939-555-7890' }
+        ]);
+
+      } catch (err) {
+        setError('Failed to load reference data');
+        console.error('Error fetching reference data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReferenceData();
+  }, []);
+
+  // Filter residents based on search input
+  useEffect(() => {
+    if (formData.householdHeadSearch.trim()) {
+      const filtered = residents.filter(resident =>
+        resident.name.toLowerCase().includes(formData.householdHeadSearch.toLowerCase()) ||
+        resident.phone.includes(formData.householdHeadSearch)
+      );
+      setFilteredResidents(filtered);
+    } else {
+      setFilteredResidents([]);
+    }
+  }, [formData.householdHeadSearch, residents]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // TODO: Backend developer - replace with actual endpoint
+      // const response = await fetch('/api/households', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(formData)
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to create household');
+      // }
+
+      // const newHousehold = await response.json();
+      
+      // For now, using the existing client-side save
+      onSave(formData);
+      onClose();
+    } catch (err) {
+      setError('Failed to save household. Please try again.');
+      console.error('Error saving household:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddNewResident = () => {
@@ -68,6 +159,20 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">Loading reference data...</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Household Identification */}
@@ -122,11 +227,14 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
                 title="Select barangay"
+                disabled={isLoading}
               >
                 <option value="">Select Barangay</option>
-                <option value="san-miguel">San Miguel</option>
-                <option value="poblacion">Poblacion</option>
-                <option value="santo-domingo">Santo Domingo</option>
+                {barangays.map((barangay) => (
+                  <option key={barangay.id} value={barangay.value}>
+                    {barangay.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -196,7 +304,23 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   onChange={handleInputChange}
                   placeholder="Enter name, ID, or phone number"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  disabled={isLoading}
                 />
+                {/* Search Results Dropdown */}
+                {filteredResidents.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                    {filteredResidents.map((resident) => (
+                      <div
+                        key={resident.id}
+                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => setFormData(prev => ({ ...prev, householdHeadSearch: resident.name }))}
+                      >
+                        <p className="font-medium text-gray-900">{resident.name}</p>
+                        <p className="text-sm text-gray-600">{resident.phone}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -462,14 +586,22 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
             type="button"
             onClick={onClose}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            disabled={isLoading || isSubmitting}
           >
-            Save Household
+            {isSubmitting && (
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            <span>{isSubmitting ? 'Saving...' : 'Save Household'}</span>
           </button>
         </div>
       </form>

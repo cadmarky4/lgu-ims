@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from 'react-icons/fa';
 import AddNewResident from './AddNewResident';
@@ -7,6 +7,11 @@ import ViewResident from './ViewResident';
 import StatCard from './StatCard';
 
 const ResidentManagement: React.FC = () => {
+  // API integration states
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -14,104 +19,136 @@ const ResidentManagement: React.FC = () => {
   const [showViewForm, setShowViewForm] = useState(false);
   const [selectedResident, setSelectedResident] = useState<any>(null);
 
-  const [residents, setResidents] = useState([
-    {
-      id: 1,
-      name: 'Maria Santos',
-      age: 34,
-      gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 2,
-      name: 'Juan Dela Cruz',
-      age: 42,
-      gender: 'Male',
-      phone: '+63-917-123-4567',
-      email: 'juan.delacruz@yahoo.com',
-      address: 'Purok 2, Poblacion',
-      category: 'Regular',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 3,
-      name: 'Ana Reyes',
-      age: 28,
-      gender: 'Female',
-      phone: '+63-922-987-6543',
-      email: 'ana.reyes@outlook.com',
-      address: 'Purok 3, Santo Domingo',
-      category: '4Ps Beneficiary',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 4,
-      name: 'Roberto Garcia',
-      age: 55,
-      gender: 'Male',
-      phone: '+63-939-555-7890',
-      email: 'roberto.garcia@gmail.com',
-      address: 'Purok 1, Block 3, San Miguel',
-      category: 'Senior Citizen',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 5,
-      name: 'Carmen Lopez',
-      age: 31,
-      gender: 'Female',
-      phone: '+63-956-111-2222',
-      email: 'carmen.lopez@gmail.com',
-      address: 'Purok 4, Sitio Maligaya, Poblacion',
-      category: 'PWD',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 6,
-      name: 'Pedro Villanueva',
-      age: 39,
-      gender: 'Male',
-      phone: '+63-915-333-4444',
-      email: 'pedro.v@yahoo.com',
-      address: 'Purok 2, Block 1, Santo Domingo',
-      category: 'Regular',
-      status: 'Inactive',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 7,
-      name: 'Luz Mendoza',
-      age: 67,
-      gender: 'Female',
-      phone: '+63-928-777-8888',
-      email: 'luz.mendoza@hotmail.com',
-      address: 'Purok 3, Block 2, San Miguel',
-      category: 'Senior Citizen',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 8,
-      name: 'Miguel Torres',
-      age: 26,
-      gender: 'Male',
-      phone: '+63-943-999-0000',
-      email: 'miguel.torres@gmail.com',
-      address: 'Purok 1, Sitio Bagong Silang, Poblacion',
-      category: '4Ps Beneficiary',
-      status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    }
-  ]);
+  const [residents, setResidents] = useState<any[]>([]);
+
+  // Fetch residents on component mount
+  useEffect(() => {
+    const fetchResidents = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch('/api/residents');
+        // const data = await response.json();
+        // 
+        // if (response.ok) {
+        //   setResidents(data);
+        // } else {
+        //   throw new Error('Failed to fetch residents');
+        // }
+
+        // For now, using mock data
+        const mockResidents = [
+          {
+            id: 1,
+            name: 'Maria Santos',
+            age: 34,
+            gender: 'Female',
+            phone: '+63-945-890-9999',
+            email: 'maria.santos@gmail.com',
+            address: 'Purok 1, San Miguel',
+            category: 'Senior Citizen',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 2,
+            name: 'Juan Dela Cruz',
+            age: 42,
+            gender: 'Male',
+            phone: '+63-917-123-4567',
+            email: 'juan.delacruz@yahoo.com',
+            address: 'Purok 2, Poblacion',
+            category: 'Regular',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 3,
+            name: 'Ana Reyes',
+            age: 28,
+            gender: 'Female',
+            phone: '+63-922-987-6543',
+            email: 'ana.reyes@outlook.com',
+            address: 'Purok 3, Santo Domingo',
+            category: '4Ps Beneficiary',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 4,
+            name: 'Roberto Garcia',
+            age: 55,
+            gender: 'Male',
+            phone: '+63-939-555-7890',
+            email: 'roberto.garcia@gmail.com',
+            address: 'Purok 1, Block 3, San Miguel',
+            category: 'Senior Citizen',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 5,
+            name: 'Carmen Lopez',
+            age: 31,
+            gender: 'Female',
+            phone: '+63-956-111-2222',
+            email: 'carmen.lopez@gmail.com',
+            address: 'Purok 4, Sitio Maligaya, Poblacion',
+            category: 'PWD',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 6,
+            name: 'Pedro Villanueva',
+            age: 39,
+            gender: 'Male',
+            phone: '+63-915-333-4444',
+            email: 'pedro.v@yahoo.com',
+            address: 'Purok 2, Block 1, Santo Domingo',
+            category: 'Regular',
+            status: 'Inactive',
+            photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 7,
+            name: 'Luz Mendoza',
+            age: 67,
+            gender: 'Female',
+            phone: '+63-928-777-8888',
+            email: 'luz.mendoza@hotmail.com',
+            address: 'Purok 3, Block 2, San Miguel',
+            category: 'Senior Citizen',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          },
+          {
+            id: 8,
+            name: 'Miguel Torres',
+            age: 26,
+            gender: 'Male',
+            phone: '+63-943-999-0000',
+            email: 'miguel.torres@gmail.com',
+            address: 'Purok 1, Sitio Bagong Silang, Poblacion',
+            category: '4Ps Beneficiary',
+            status: 'Active',
+            photo: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+          }
+        ];
+
+        setResidents(mockResidents);
+
+      } catch (err) {
+        setError('Failed to load residents. Please try again.');
+        console.error('Error fetching residents:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchResidents();
+  }, []);
 
   const handleAddResident = (residentData: any) => {
     console.log('New resident data:', residentData);
@@ -173,10 +210,31 @@ const ResidentManagement: React.FC = () => {
     setShowViewForm(true);
   };
 
-  const handleDeleteResident = (residentId: number) => {
+  const handleDeleteResident = async (residentId: number) => {
     if (window.confirm('Are you sure you want to delete this resident? This action cannot be undone.')) {
-      setResidents(prev => prev.filter(resident => resident.id !== residentId));
-      console.log('Deleted resident with ID:', residentId);
+      setIsDeleting(residentId);
+      setError(null);
+      
+      try {
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch(`/api/residents/${residentId}`, {
+        //   method: 'DELETE'
+        // });
+        // 
+        // if (!response.ok) {
+        //   throw new Error('Failed to delete resident');
+        // }
+
+        // For now, using client-side delete
+        setResidents(prev => prev.filter(resident => resident.id !== residentId));
+        console.log('Deleted resident with ID:', residentId);
+
+      } catch (err) {
+        setError('Failed to delete resident. Please try again.');
+        console.error('Error deleting resident:', err);
+      } finally {
+        setIsDeleting(null);
+      }
     }
   };
 
@@ -220,6 +278,20 @@ const ResidentManagement: React.FC = () => {
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Resident Management</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">Loading residents...</p>
+        </div>
+      )}
 
       {/* Statistics Overview */}
       <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
@@ -342,11 +414,19 @@ const ResidentManagement: React.FC = () => {
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                         title="Delete resident"
                         onClick={() => handleDeleteResident(resident.id)}
+                        disabled={isDeleting === resident.id}
                       >
-                        <FiTrash2 className="w-4 h-4" />
+                        {isDeleting === resident.id ? (
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <FiTrash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>
