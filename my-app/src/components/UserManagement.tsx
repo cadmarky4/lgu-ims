@@ -197,7 +197,7 @@ const UserManagement: React.FC = () => {
             value={12} 
             icon={FaUserPlus}
           />
-        </div>
+              </div>
       </section>
 
       {/* Users Section */}
@@ -224,40 +224,40 @@ const UserManagement: React.FC = () => {
               <FiPlus className="w-4 h-4" />
               <span>Add New User</span>
             </button>
-          </div>
-
+            </div>
+            
           {/* Filters */}
-          <div className="flex gap-3">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+            <div className="flex gap-3">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              aria-label="Filter by role"
-            >
-              <option value="">All Roles</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-              <option value="ADMIN">Admin</option>
-              <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
-              <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
-              <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
-              <option value="KAGAWAD">Kagawad</option>
-              <option value="SK_CHAIRPERSON">SK Chairperson</option>
-              <option value="SK_KAGAWAD">SK Kagawad</option>
-              <option value="STAFF">Staff</option>
-              <option value="USER">User</option>
-            </select>
+                aria-label="Filter by role"
+              >
+                <option value="">All Roles</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
+                <option value="ADMIN">Admin</option>
+                <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
+                <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
+                <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
+                <option value="KAGAWAD">Kagawad</option>
+                <option value="SK_CHAIRPERSON">SK Chairperson</option>
+                <option value="SK_KAGAWAD">SK Kagawad</option>
+                <option value="STAFF">Staff</option>
+                <option value="USER">User</option>
+              </select>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              aria-label="Filter by status"
-            >
-              <option value="">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Pending">Pending</option>
-            </select>
+                aria-label="Filter by status"
+              >
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+              </select>
           </div>
         </div>
 
@@ -297,9 +297,9 @@ const UserManagement: React.FC = () => {
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
-                      {formatRoleName(user.role)}
-                    </span>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
+                        {formatRoleName(user.role)}
+                      </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.department}
@@ -359,7 +359,7 @@ const UserManagement: React.FC = () => {
               Showing 1 to {filteredUsers.length} of {users.length} results
             </div>
             <div className="flex items-center space-x-2">
-              <button 
+              <button
                 className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
@@ -377,9 +377,9 @@ const UserManagement: React.FC = () => {
                   onClick={() => setCurrentPage(page)}
                 >
                   {page}
-                </button>
+              </button>
               ))}
-              <button 
+              <button
                 className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300"
                 onClick={() => setCurrentPage(currentPage + 1)}
               >

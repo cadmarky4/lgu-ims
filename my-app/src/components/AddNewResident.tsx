@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX } from 'react-icons/fi';
 
 interface AddNewResidentProps {
@@ -7,19 +7,28 @@ interface AddNewResidentProps {
 }
 
 const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
-      const [formData, setFormData] = useState({
+  // Loading and error states for API calls
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reference data from backend
+  const [barangays, setBarangays] = useState<any[]>([]);
+  const [puroks, setPuroks] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
       // Basic Information
-      firstName: '',
-      lastName: '',
-      middleName: '',
-      suffix: '',
-      birthDate: '',
-      age: '',
+    firstName: '',
+    lastName: '',
+    middleName: '',
+    suffix: '',
+    birthDate: '',
+    age: '',
       birthPlace: '',
-      gender: '',
-      civilStatus: '',
+    gender: '',
+    civilStatus: '',
       nationality: 'Filipino',
-      religion: '',
+    religion: '',
       employmentStatus: '',
       educationalAttainment: '',
     // Contact Information
@@ -91,10 +100,76 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch reference data on component mount
+  useEffect(() => {
+    const fetchReferenceData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // TODO: Backend developer - replace with actual endpoints
+        // Fetch barangays
+        // const barangayResponse = await fetch('/api/barangays');
+        // const barangayData = await barangayResponse.json();
+        // setBarangays(barangayData);
+
+        // Fetch puroks  
+        // const purokResponse = await fetch('/api/puroks');
+        // const purokData = await purokResponse.json();
+        // setPuroks(purokData);
+
+        // For now, using mock data
+        setBarangays([
+          { id: 1, name: 'San Miguel' },
+          { id: 2, name: 'Poblacion' },
+          { id: 3, name: 'Santo Domingo' }
+        ]);
+        setPuroks([
+          { id: 1, name: 'Purok 1' },
+          { id: 2, name: 'Purok 2' },
+          { id: 3, name: 'Purok 3' },
+          { id: 4, name: 'Purok 4' }
+        ]);
+      } catch (err) {
+        setError('Failed to load reference data');
+        console.error('Error fetching reference data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReferenceData();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // TODO: Backend developer - replace with actual endpoint
+      // const response = await fetch('/api/residents', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(formData)
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to create resident');
+      // }
+
+      // const newResident = await response.json();
+      
+      // For now, using the existing client-side save
+      onSave(formData);
+      onClose();
+    } catch (err) {
+      setError('Failed to save resident. Please try again.');
+      console.error('Error saving resident:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -103,6 +178,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident Profile</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">Loading reference data...</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
@@ -321,7 +410,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-          </div>
+            </div>
         </section>
 
         {/* Contact Information */}
@@ -409,13 +498,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.purok}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                disabled={isLoading}
               >
                 <option value="">Select Purok</option>
-                <option value="Purok 1">Purok 1</option>
-                <option value="Purok 2">Purok 2</option>
-                <option value="Purok 3">Purok 3</option>
-                <option value="Purok 4">Purok 4</option>
-                <option value="Purok 5">Purok 5</option>
+                {puroks.map((purok) => (
+                  <option key={purok.id} value={purok.name}>
+                    {purok.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -689,7 +779,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>
+        </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -714,50 +804,50 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           <p className="text-sm text-gray-600 mb-4">Check all that apply:</p>
           
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="seniorCitizen"
-                  checked={formData.specialClassifications.seniorCitizen}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                Senior Citizen (60+)
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="personWithDisability"
-                  checked={formData.specialClassifications.personWithDisability}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                Person with Disability
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="seniorCitizen"
+                checked={formData.specialClassifications.seniorCitizen}
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
+              Senior Citizen (60+)
+            </label>
+            
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="personWithDisability"
+                checked={formData.specialClassifications.personWithDisability}
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
+              Person with Disability
+            </label>
+            
+            <label className="flex items-center">
+              <input
+                type="checkbox"
                   name="indigenousPeople"
                   checked={formData.specialClassifications.indigenousPeople}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
                 Indigenous People
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="fourPsBeneficiary"
-                  checked={formData.specialClassifications.fourPsBeneficiary}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                4Ps Beneficiary
-              </label>
+            </label>
+            
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="fourPsBeneficiary"
+                checked={formData.specialClassifications.fourPsBeneficiary}
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
+              4Ps Beneficiary
+            </label>
             </div>
 
             {/* Conditional Fields */}
@@ -766,14 +856,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Disability Type
                 </label>
-                <input
+              <input
                   type="text"
                   name="disabilityType"
                   value={formData.specialClassifications.disabilityType}
                   onChange={handleSpecialFieldChange}
                   placeholder="Specify type of disability..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                />
+              />
               </div>
             )}
 
@@ -781,7 +871,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Indigenous Group
-                </label>
+            </label>
                 <input
                   type="text"
                   name="indigenousGroup"
@@ -798,14 +888,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   4Ps Household ID
                 </label>
-                <input
+              <input
                   type="text"
                   name="fourPsHouseholdId"
                   value={formData.specialClassifications.fourPsHouseholdId}
                   onChange={handleSpecialFieldChange}
                   placeholder="Enter 4Ps Household ID..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                />
+              />
               </div>
             )}
           </div>
@@ -839,15 +929,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            disabled={isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            disabled={isSubmitting || isLoading}
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Register Resident
+            {isSubmitting && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
+            <span>{isSubmitting ? 'Saving...' : 'Register Resident'}</span>
           </button>
         </div>
       </form>
