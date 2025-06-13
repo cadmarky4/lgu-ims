@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from 'react-icons/fa';
 import AddNewResident from './AddNewResident';
+import EditResident from './EditResident';
+import ViewResident from './ViewResident';
 import StatCard from './StatCard';
 
 const ResidentManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewForm, setShowViewForm] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<any>(null);
 
-  const residents = [
+  const [residents, setResidents] = useState([
     {
       id: 1,
       name: 'Maria Santos',
@@ -24,93 +29,155 @@ const ResidentManagement: React.FC = () => {
     },
     {
       id: 2,
-      name: 'Maria Santos',
-      age: 34,
-      gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
+      name: 'Juan Dela Cruz',
+      age: 42,
+      gender: 'Male',
+      phone: '+63-917-123-4567',
+      email: 'juan.delacruz@yahoo.com',
+      address: 'Purok 2, Poblacion',
+      category: 'Regular',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 3,
-      name: 'Maria Santos',
-      age: 34,
+      name: 'Ana Reyes',
+      age: 28,
       gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
+      phone: '+63-922-987-6543',
+      email: 'ana.reyes@outlook.com',
+      address: 'Purok 3, Santo Domingo',
+      category: '4Ps Beneficiary',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 4,
-      name: 'Maria Santos',
-      age: 34,
-      gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
+      name: 'Roberto Garcia',
+      age: 55,
+      gender: 'Male',
+      phone: '+63-939-555-7890',
+      email: 'roberto.garcia@gmail.com',
+      address: 'Purok 1, Block 3, San Miguel',
       category: 'Senior Citizen',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 5,
-      name: 'Maria Santos',
-      age: 34,
+      name: 'Carmen Lopez',
+      age: 31,
       gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
+      phone: '+63-956-111-2222',
+      email: 'carmen.lopez@gmail.com',
+      address: 'Purok 4, Sitio Maligaya, Poblacion',
+      category: 'PWD',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 6,
-      name: 'Maria Santos',
-      age: 34,
-      gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
+      name: 'Pedro Villanueva',
+      age: 39,
+      gender: 'Male',
+      phone: '+63-915-333-4444',
+      email: 'pedro.v@yahoo.com',
+      address: 'Purok 2, Block 1, Santo Domingo',
+      category: 'Regular',
       status: 'Inactive',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 7,
-      name: 'Maria Santos',
-      age: 34,
+      name: 'Luz Mendoza',
+      age: 67,
       gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
+      phone: '+63-928-777-8888',
+      email: 'luz.mendoza@hotmail.com',
+      address: 'Purok 3, Block 2, San Miguel',
       category: 'Senior Citizen',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     },
     {
       id: 8,
-      name: 'Maria Santos',
-      age: 34,
-      gender: 'Female',
-      phone: '+63-945-890-9999',
-      email: 'maria.santos@gmail.com',
-      address: 'Purok 1, San Miguel',
-      category: 'Senior Citizen',
+      name: 'Miguel Torres',
+      age: 26,
+      gender: 'Male',
+      phone: '+63-943-999-0000',
+      email: 'miguel.torres@gmail.com',
+      address: 'Purok 1, Sitio Bagong Silang, Poblacion',
+      category: '4Ps Beneficiary',
       status: 'Active',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+      photo: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
     }
-  ];
+  ]);
 
   const handleAddResident = (residentData: any) => {
     console.log('New resident data:', residentData);
+    
+    // Create new resident object with proper structure
+    const newResident = {
+      id: residents.length + 1, // Simple ID generation
+      name: `${residentData.firstName} ${residentData.lastName}`,
+      age: parseInt(residentData.age) || 0,
+      gender: residentData.gender,
+      phone: residentData.mobileNumber,
+      email: residentData.emailAddress,
+      address: residentData.completeAddress,
+      category: residentData.specialClassifications?.seniorCitizen ? 'Senior Citizen' : 'Regular',
+      status: 'Active',
+      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+    };
+    
+    // Add to residents array
+    setResidents(prev => [...prev, newResident]);
+    
     // Here you would typically save to a database
+  };
+
+  const handleEditResident = (residentData: any) => {
+    console.log('Updated resident data:', residentData);
+    
+    // Update resident in the array
+    const updatedResident = {
+      id: residentData.id,
+      name: `${residentData.firstName} ${residentData.lastName}`,
+      age: parseInt(residentData.age) || 0,
+      gender: residentData.gender,
+      phone: residentData.mobileNumber,
+      email: residentData.emailAddress,
+      address: residentData.completeAddress,
+      category: residentData.specialClassifications?.seniorCitizen ? 'Senior Citizen' : 'Regular',
+      status: 'Active',
+      photo: selectedResident?.photo || 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+    };
+    
+    // Update the residents array
+    setResidents(prev => prev.map(resident => 
+      resident.id === residentData.id ? updatedResident : resident
+    ));
+    
+    // Here you would typically update the database
+    setShowEditForm(false);
+    setSelectedResident(null);
+  };
+
+  const openEditForm = (resident: any) => {
+    setSelectedResident(resident);
+    setShowEditForm(true);
+  };
+
+  const openViewForm = (resident: any) => {
+    setSelectedResident(resident);
+    setShowViewForm(true);
+  };
+
+  const handleDeleteResident = (residentId: number) => {
+    if (window.confirm('Are you sure you want to delete this resident? This action cannot be undone.')) {
+      setResidents(prev => prev.filter(resident => resident.id !== residentId));
+      console.log('Deleted resident with ID:', residentId);
+    }
   };
 
   if (showAddForm) {
@@ -118,6 +185,31 @@ const ResidentManagement: React.FC = () => {
       <AddNewResident 
         onClose={() => setShowAddForm(false)} 
         onSave={handleAddResident}
+      />
+    );
+  }
+
+  if (showEditForm && selectedResident) {
+    return (
+      <EditResident 
+        resident={selectedResident}
+        onClose={() => {
+          setShowEditForm(false);
+          setSelectedResident(null);
+        }} 
+        onSave={handleEditResident}
+      />
+    );
+  }
+
+  if (showViewForm && selectedResident) {
+    return (
+      <ViewResident 
+        resident={selectedResident}
+        onClose={() => {
+          setShowViewForm(false);
+          setSelectedResident(null);
+        }} 
       />
     );
   }
@@ -238,18 +330,21 @@ const ResidentManagement: React.FC = () => {
                       <button 
                         className="text-smblue-400 hover:text-smblue-300"
                         title="View resident details"
+                        onClick={() => openViewForm(resident)}
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
                         className="text-smblue-400 hover:text-smblue-300"
                         title="Edit resident"
+                        onClick={() => openEditForm(resident)}
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button 
                         className="text-red-600 hover:text-red-900"
                         title="Delete resident"
+                        onClick={() => handleDeleteResident(resident.id)}
                       >
                         <FiTrash2 className="w-4 h-4" />
                       </button>
