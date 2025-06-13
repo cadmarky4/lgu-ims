@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { FiFolder, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
 import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import AddNewProject from './AddNewProject';
+import EditProject from './EditProject'; // Import the EditProject component
 import StatCard from './StatCard';
 import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
-import ProjectPortfolio from './ProjectPortfolio'; // Import the new ProjectPortfolio component
+import ProjectPortfolio from './ProjectPortfolio';
 import { FaCircleCheck } from 'react-icons/fa6';
 
 const ProjectsAndPrograms: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const stats = [
     { title: 'Total Projects', value: '24', icon: FiFolder },
@@ -22,6 +25,29 @@ const ProjectsAndPrograms: React.FC = () => {
     console.log('New project data:', projectData);
     // Here you would typically save to a database
   };
+
+  const handleEditProject = (project: any) => {
+    setSelectedProject(project);
+    setShowEditForm(true);
+  };
+
+  const handleUpdateProject = (projectData: any) => {
+    console.log('Updated project data:', projectData);
+    // Here you would typically update the database
+  };
+
+  if (showEditForm && selectedProject) {
+    return (
+      <EditProject 
+        onClose={() => {
+          setShowEditForm(false);
+          setSelectedProject(null);
+        }} 
+        onSave={handleUpdateProject}
+        projectData={selectedProject}
+      />
+    );
+  }
 
   if (showAddForm) {
     return (
@@ -72,7 +98,10 @@ const ProjectsAndPrograms: React.FC = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Project Portfolio - Now using the separate component */}
-          <ProjectPortfolio onAddProject={() => setShowAddForm(true)} />
+          <ProjectPortfolio 
+            onAddProject={() => setShowAddForm(true)} 
+            onEditProject={handleEditProject}
+          />
         </div>
 
         {/* Right Sidebar */} 

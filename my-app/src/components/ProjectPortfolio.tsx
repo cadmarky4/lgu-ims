@@ -18,9 +18,10 @@ interface Project {
 
 interface ProjectPortfolioProps {
   onAddProject: () => void;
+  onEditProject: (project: Project) => void;
 }
 
-const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => {
+const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEditProject }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Projects');
   const [sortBy, setSortBy] = useState<'title' | 'status' | 'budget' | 'progress'>('title');
@@ -119,26 +120,26 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Active':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-100';
       case 'Pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-100';
       case 'Completed':
-        return 'bg-smblue-400 text-blue-100 border-blue-200';
+        return 'bg-blue-100 text-blue-800 border-blue-100';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-100';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-300 bg-red-50/30';
+        return 'border-l-red-200 bg-red-50/30';
       case 'medium':
-        return 'border-l-yellow-300 bg-yellow-50/30';
+        return 'border-l-yellow-200 bg-yellow-50/30';
       case 'low':
-        return 'border-l-green-300 bg-green-50/30';
+        return 'border-l-green-200 bg-green-50/30';
       default:
-        return 'border-l-gray-300 bg-gray-50/30';
+        return 'border-l-gray-200 bg-gray-50/30';
     }
   };
 
@@ -209,7 +210,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
         .animate-progress-bar { animation: progressBar 1s ease-out 0.5s both; }
       `}</style>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 animate-slide-in-up">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6 animate-slide-in-up">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900 border-l-4 border-smblue-400 pl-4 animate-fade-in-left">
@@ -217,7 +218,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
             </h2>
             <button 
               onClick={onAddProject}
-              className="bg-smblue-400 hover:bg-smblue-400/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
+              className="bg-smblue-400 hover:bg-smblue-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Project</span>
@@ -232,7 +233,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
               placeholder="Search projects by title, description, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
             />
           </div>
 
@@ -290,7 +291,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
           {displayedProjects.map((project, index) => (
             <div
               key={project.id}
-              className={`rounded-lg p-6 transition-all duration-200 shadow-md animate-slide-in-up border-l-4 ${getPriorityColor(project.priority)}`}
+              className={`rounded-lg p-6 transition-all duration-200 hover:shadow-md animate-slide-in-up border-l-4 ${getPriorityColor(project.priority)}`}
               style={{animationDelay: `${index * 100}ms`}}
             >
               <div className="flex justify-between items-start mb-4">
@@ -303,7 +304,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
                   </div>
                   
                   <div className="flex items-center space-x-4 mb-3">
-                    <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                    <span className="text-sm text-smblue-400 bg-blue-50 px-2 py-1 rounded-md">
                       {project.category}
                     </span>
                     <span className="text-sm text-gray-500 flex items-center">
@@ -320,6 +321,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <span className="text-lg font-semibold text-green-600 flex items-center">
+                        <FiDollarSign className="w-4 h-4 mr-1" />
                         {project.budget}
                       </span>
                       {project.progress !== null && (
@@ -331,10 +333,17 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200">
+                      <button 
+                        className="p-2 text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        title="View project details"
+                      >
                         <FiEye className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200">
+                      <button 
+                        onClick={() => onEditProject(project)}
+                        className="p-2 text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        title="Edit project"
+                      >
                         <FiEdit3 className="w-4 h-4" />
                       </button>
                     </div>
