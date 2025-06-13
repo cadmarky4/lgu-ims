@@ -1,7 +1,12 @@
-import { FiUser } from "react-icons/fi";
+import { FiUser, FiLogOut } from "react-icons/fi";
 import { BiSidebar } from "react-icons/bi";
 
-const Header = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
+interface HeaderProps {
+  onToggleSidebar: () => void;
+  onLogout?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onLogout, onToggleSidebar }) => {
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -55,11 +60,24 @@ const Header = ({ onToggleSidebar }: { onToggleSidebar: () => void }) => {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
-            <FiUser className="header-pre-mobile:mr-0 mr-2 w-5 h-5 flex justify-center" />
-            <span className="font-medium header-pre-mobile:hidden">
-              Ayevinna Hao
-            </span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
+              <FiUser className="header-pre-mobile:mr-0 mr-2 w-5 h-5 flex justify-center" />
+              <span className="font-medium header-pre-mobile:hidden">
+                Ayevinna Hao
+              </span>
+            </div>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex items-center space-x-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                title="Logout"
+              >
+                <FiLogOut className="w-5 h-5" />
+                <span className="font-medium">Logout</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

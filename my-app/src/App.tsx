@@ -8,6 +8,9 @@ import ProcessDocument from "./components/ProcessDocument";
 import BarangayOfficialsPage from "./components/BarangayOfficialsPage";
 import SettingsPage from "./components/SettingsPage";
 import ProjectsAndPrograms from "./components/ProjectsAndPrograms";
+import UserManagement from "./components/UserManagement";
+import LoginPage from "./components/LoginPage";
+import SignupPage from "./components/SignupPage";
 import ReportsPage from "./components/ReportsPage";
 import "./index.css";
 
@@ -17,11 +20,36 @@ function App() {
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 768px)").matches
   );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<"login" | "signup">("login");
 
   const handleMenuItemClick = (item: string) => {
     setActiveMenuItem(item);
     if (isMobile) setIsOpen(false);
   };
+
+  const handleLogin = (credentials: {
+    email: string;
+    password: string;
+    rememberMe: boolean;
+  }) => {
+    console.log("Login attempt:", credentials);
+    // Here you would typically validate credentials with backend
+    setIsAuthenticated(true);
+  };
+
+  const handleSignup = (userData: any) => {
+    console.log("Signup data:", userData);
+    // Here you would typically send to backend
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActiveMenuItem("dashboard");
+  };
+
+  // Show authentication pages if not logged in
 
   const handleSidebarToggle = () => {
     setIsOpen((prev) => !prev);
@@ -44,10 +72,28 @@ function App() {
     return () => mediaQuery.removeEventListener("change", handleMediaChange);
   }, []);
 
+  if (!isAuthenticated) {
+    if (authView === "login") {
+      return (
+        <LoginPage
+          onLogin={handleLogin}
+          onNavigateToSignup={() => setAuthView("signup")}
+        />
+      );
+    } else {
+      return (
+        <SignupPage
+          onSignup={handleSignup}
+          onNavigateToLogin={() => setAuthView("login")}
+        />
+      );
+    }
+  }
+
   return (
     // <div className="min-h-screen bg-gray-50">
     <>
-      <Header onToggleSidebar={handleSidebarToggle} />
+      <Header onToggleSidebar={handleSidebarToggle} onLogout={handleLogout} />
       <div className="bg-gray-50 flex mt-[81px] h-[calc(100vh-81px)] overflow-hidden">
         <Sidebar
           activeItem={activeMenuItem}
@@ -67,6 +113,7 @@ function App() {
           )}
           {activeMenuItem === "officials" && <BarangayOfficialsPage />}
           {activeMenuItem === "projects" && <ProjectsAndPrograms />}
+          {activeMenuItem === "users" && <UserManagement />}
           {activeMenuItem === "settings" && <SettingsPage />}
           {activeMenuItem === "reports" && <ReportsPage />}
           {activeMenuItem !== "dashboard" &&
@@ -79,6 +126,7 @@ function App() {
             activeMenuItem !== "certificate-residency" &&
             activeMenuItem !== "officials" &&
             activeMenuItem !== "projects" &&
+            activeMenuItem !== "users" &&
             activeMenuItem !== "settings" &&
             activeMenuItem !== "reports" && (
               <div className="p-6">

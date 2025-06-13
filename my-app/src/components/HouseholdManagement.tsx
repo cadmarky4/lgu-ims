@@ -76,10 +76,10 @@ const HouseholdManagement: React.FC = () => {
   ];
 
   const stats = [
-    { title: 'Total Households', value: '40,199', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: '4Ps Households', value: '2,345', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: 'Average Household Members', value: '3,239', icon: FiUsers, bgColor: 'bg-green-50' },
-    { title: 'Low Income', value: '7,199', icon: FiUsers, bgColor: 'bg-green-50' }
+    { title: 'Total Households', value: '40,199', icon: FiUsers },
+    { title: '4Ps Households', value: '2,345', icon: FiUsers },
+    { title: 'Average Household Members', value: '3,239', icon: FiUsers },
+    { title: 'Low Income', value: '7,199', icon: FiUsers }
   ];
 
   const filterOptions = [
@@ -141,7 +141,7 @@ const HouseholdManagement: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className={`${stat.bgColor} rounded-lg p-6 border border-gray-100`}>
+          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
