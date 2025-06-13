@@ -182,7 +182,7 @@ const RecentActivity: React.FC = () => {
             <button
               key={type}
               onClick={() => setFilter(type as any)}
-              className={`px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                 filter === type
                   ? 'bg-smblue-400/80 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -197,7 +197,7 @@ const RecentActivity: React.FC = () => {
           {displayedActivities.map((activity, index) => (
             <div
               key={activity.id}
-              className={`p-3 rounded-2xl border transition-all duration-200 transform hover:shadow-sm animate-slide-in-right cursor-pointer ${getActivityColor(activity.type)}`}
+              className={`p-3 rounded-2xl border transition-all duration-200 transform hover:shadow-sm animate-slide-in-right ${getActivityColor(activity.type)}`}
               style={{animationDelay: `${index * 100}ms`}}
             >
               <div className="flex items-start justify-between">
@@ -233,7 +233,7 @@ const RecentActivity: React.FC = () => {
           <div className="text-center pt-4 mt-4 border-t border-gray-100">
             <button 
               onClick={() => setShowAll(!showAll)}
-              className="text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
+              className="cursor-pointer text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
             >
               <span>{showAll ? 'Show Less' : `Show ${filteredActivities.length - 5} More`}</span>
               <FiChevronRight className={`w-4 h-4 transform transition-transform duration-200 ${showAll ? 'rotate-90' : ''}`} />

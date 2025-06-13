@@ -219,7 +219,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
             </h2>
             <button 
               onClick={onAddProject}
-              className="bg-smblue-400 hover:bg-smblue-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
+              className="bg-smblue-400 cursor-pointer hover:bg-smblue-400 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Project</span>
@@ -246,9 +246,9 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                     selectedCategory === category
-                      ? 'bg-smblue-400 text-white shadow-sm'
+                      ? 'bg-smblue-400/80 text-white shadow-sm'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -264,7 +264,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                 <button
                   key={field}
                   onClick={() => handleSort(field as any)}
-                  className={`px-3 py-1 text-sm rounded-md transition-all duration-200 flex items-center space-x-1 ${
+                  className={`px-3 py-1 text-sm rounded-md cursor-pointer transition-all duration-200 flex items-center space-x-1 ${
                     sortBy === field
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -338,11 +338,11 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                         className="p-2 text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
                         title="View project details"
                       >
-                        <FiEye className="w-4 h-4" />
+                        <FiEye className=" cursor-pointer w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => onEditProject(project)}
-                        className="p-2 text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        className="p-2 cursor-pointer text-gray-400 hover:text-smblue-400 hover:bg-blue-50 rounded-lg transition-all duration-200"
                         title="Edit project"
                       >
                         <FiEdit3 className="w-4 h-4" />
@@ -404,7 +404,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
             <div className="text-center pt-4 border-t border-gray-200">
               <button 
                 onClick={() => setShowAll(!showAll)}
-                className="text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
+                className="cursor-pointer text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
               >
                 <span>
                   {showAll 
