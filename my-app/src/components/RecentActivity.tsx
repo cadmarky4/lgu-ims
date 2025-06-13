@@ -182,7 +182,7 @@ const RecentActivity: React.FC = () => {
             <button
               key={type}
               onClick={() => setFilter(type as any)}
-              className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
+              className={`px-4 py-2 text-xs font-medium rounded-full transition-all duration-200 ${
                 filter === type
                   ? 'bg-smblue-400/80 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
