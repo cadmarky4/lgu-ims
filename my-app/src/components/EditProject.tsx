@@ -18,6 +18,15 @@ interface Milestone {
   date: string;
 }
 
+interface ActivityLog {
+  id: number;
+  activity: string;
+  user: string;
+  time: string;
+  type: 'status' | 'budget' | 'milestone' | 'team' | 'progress' | 'system' | 'note';
+  details: string;
+}
+
 const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData }) => {
   const [formData, setFormData] = useState({
     projectName: '',
@@ -51,6 +60,53 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
   ]);
 
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>(['member-1']);
+  
+  // Activity Log State
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>([
+    {
+      id: 1,
+      activity: 'Project status updated to Active',
+      user: 'Juan Dela Cruz',
+      time: '2 hours ago',
+      type: 'status',
+      details: 'Changed from Pending to Active'
+    },
+    {
+      id: 2,
+      activity: 'Budget breakdown updated',
+      user: 'Maria Santos',
+      time: '1 day ago',
+      type: 'budget',
+      details: 'Material & Supplies budget increased by ₱50,000'
+    },
+    {
+      id: 3,
+      activity: 'New milestone added',
+      user: 'Jose Reyes',
+      time: '3 days ago',
+      type: 'milestone',
+      details: 'Added "Site survey and assessment" milestone'
+    },
+    {
+      id: 4,
+      activity: 'Team member assigned',
+      user: 'Admin',
+      time: '5 days ago',
+      type: 'team',
+      details: 'Juan D. Cruz assigned as project manager'
+    },
+    {
+      id: 5,
+      activity: 'Project created',
+      user: 'System',
+      time: '1 week ago',
+      type: 'system',
+      details: 'Initial project setup completed'
+    }
+  ]);
+
+  const [newNote, setNewNote] = useState('');
+  const [originalFormData, setOriginalFormData] = useState({});
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -62,7 +118,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
   // Pre-fill form with existing project data
   useEffect(() => {
     if (projectData) {
-      setFormData({
+      const initialData = {
         projectName: projectData.title || '',
         category: projectData.category || '',
         projectDescription: projectData.description || '',
@@ -81,24 +137,92 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
         projectLocation: 'Specific location within the barangay',
         successMetrics: 'How will you measure the success of this project? (e.g. completion rate, beneficiary satisfaction, measurable outcomes)',
         potentialRisks: 'Identify potential risks, challenges, or obstacles and mitigation strategies'
-      });
+      };
+      setFormData(initialData);
+      setOriginalFormData(initialData); // Store original data for change tracking
     }
   }, [projectData]);
 
+  // Function to add activity log entry
+  const addActivityLog = (activity: string, type: ActivityLog['type'], details: string) => {
+    const newActivity: ActivityLog = {
+      id: Date.now(),
+      activity,
+      user: 'Current User', // In real app, this would be the logged-in user
+      time: 'Just now',
+      type,
+      details
+    };
+    setActivityLog(prev => [newActivity, ...prev]);
+  };
+
+  // Function to add manual note
+  const addNote = () => {
+    if (newNote.trim()) {
+      addActivityLog('Manual note added', 'note', newNote.trim());
+      setNewNote('');
+    }
+  };
+
+  // Track form changes and log them
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    const oldValue = (formData as any)[name];
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Log the change if it's different from original
+    if (oldValue !== value && (originalFormData as any)[name] !== value) {
+      let activityType: ActivityLog['type'] = 'system';
+      let activityDescription = '';
+      
+      switch (name) {
+        case 'currentStatus':
+          activityType = 'status';
+          activityDescription = `Project status changed to ${value}`;
+          break;
+        case 'progressPercentage':
+          activityType = 'progress';
+          activityDescription = `Progress updated to ${value}%`;
+          break;
+        case 'totalBudget':
+        case 'amountSpent':
+          activityType = 'budget';
+          activityDescription = `${name === 'totalBudget' ? 'Total budget' : 'Amount spent'} updated`;
+          break;
+        case 'projectManager':
+          activityType = 'team';
+          activityDescription = `Project manager changed to ${value}`;
+          break;
+        default:
+          activityDescription = `${name.replace(/([A-Z])/g, ' $1').toLowerCase()} updated`;
+      }
+      
+      if (oldValue && oldValue !== value) {
+        addActivityLog(activityDescription, activityType, `Changed from "${oldValue}" to "${value}"`);
+      }
+    }
   };
 
   const handleBudgetChange = (id: string, field: 'name' | 'amount', value: string) => {
+    const oldItem = budgetBreakdown.find(item => item.id === id);
     setBudgetBreakdown(prev => 
       prev.map(item => 
         item.id === id ? { ...item, [field]: value } : item
       )
     );
+    
+    // Log budget breakdown changes
+    if (oldItem && oldItem[field] !== value) {
+      addActivityLog(
+        `Budget item ${field} updated`,
+        'budget',
+        `${oldItem.name || 'Budget item'} ${field} changed from "${oldItem[field]}" to "${value}"`
+      );
+    }
   };
 
   const addBudgetItem = () => {
@@ -107,33 +231,63 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
       ...prev,
       { id: newId, name: '', amount: '000' }
     ]);
+    addActivityLog('New budget item added', 'budget', 'Added new budget breakdown item');
   };
 
   const removeBudgetItem = (id: string) => {
+    const itemToRemove = budgetBreakdown.find(item => item.id === id);
     setBudgetBreakdown(prev => prev.filter(item => item.id !== id));
+    if (itemToRemove) {
+      addActivityLog('Budget item removed', 'budget', `Removed "${itemToRemove.name}" from budget breakdown`);
+    }
   };
 
   const addMilestone = () => {
     setMilestones([...milestones, { description: '', date: '' }]);
+    addActivityLog('New milestone added', 'milestone', 'Added new project milestone');
   };
 
   const updateMilestone = (index: number, field: string, value: string) => {
+    const oldMilestone = milestones[index];
     const updated = milestones.map((milestone, i) => 
       i === index ? { ...milestone, [field]: value } : milestone
     );
     setMilestones(updated);
+    
+    // Log milestone changes
+    if (oldMilestone && oldMilestone[field as keyof Milestone] !== value) {
+      addActivityLog(
+        `Milestone ${field} updated`,
+        'milestone',
+        `Milestone ${field} changed from "${oldMilestone[field as keyof Milestone]}" to "${value}"`
+      );
+    }
   };
 
   const removeMilestone = (index: number) => {
+    const milestoneToRemove = milestones[index];
     setMilestones(prev => prev.filter((_, i) => i !== index));
+    addActivityLog('Milestone removed', 'milestone', `Removed milestone: "${milestoneToRemove.description}"`);
   };
 
   const toggleTeamMember = (memberId: string) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    const isCurrentlySelected = selectedTeamMembers.includes(memberId);
+    
     setSelectedTeamMembers(prev => 
       prev.includes(memberId) 
         ? prev.filter(id => id !== memberId)
         : [...prev, memberId]
     );
+    
+    // Log team member changes
+    if (member) {
+      addActivityLog(
+        `Team member ${isCurrentlySelected ? 'removed' : 'added'}`,
+        'team',
+        `${member.name} ${isCurrentlySelected ? 'removed from' : 'added to'} project team`
+      );
+    }
   };
 
   const selectAllVisible = () => {
@@ -185,7 +339,75 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-slide-in-up" style={{animationDelay: '0.1s'}}>
-          {/* Basic Information */}
+          {/* Activity Log Section */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Project Activity Log</h2>
+            
+            <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto animate-slide-in-right" style={{animationDelay: '0.2s'}}>
+              <div className="space-y-4">
+                {activityLog.map((log, index) => (
+                  <div
+                    key={log.id}
+                    className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200 animate-slide-in-right"
+                    style={{animationDelay: `${0.3 + index * 0.1}s`}}
+                  >
+                    <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
+                      log.type === 'status' ? 'bg-green-500' :
+                      log.type === 'budget' ? 'bg-blue-500' :
+                      log.type === 'milestone' ? 'bg-purple-500' :
+                      log.type === 'team' ? 'bg-orange-500' :
+                      log.type === 'progress' ? 'bg-indigo-500' :
+                      log.type === 'note' ? 'bg-yellow-500' :
+                      'bg-gray-400'
+                    }`}></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-gray-900">{log.activity}</p>
+                        <span className="text-xs text-gray-500">{log.time}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-1">{log.details}</p>
+                      <p className="text-xs text-gray-500">by {log.user}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Add Note Section */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Activity Note
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Add a note about project changes or updates..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                    onKeyPress={(e) => e.key === 'Enter' && addNote()}
+                  />
+                  <button
+                    type="button"
+                    onClick={addNote}
+                    disabled={!newNote.trim()}
+                    className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-400/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    Add Note
+                  </button>
+                </div>
+              </div>
+              
+              {/* View All Activity Button */}
+              <div className="text-center mt-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium transition-colors duration-200"
+                >
+                  View Full Activity History ({activityLog.length} total)
+                </button>
+              </div>
+            </div>
+          </div>
           <div className="mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Basic Information</h2>
             
@@ -248,7 +470,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Project Status and Progress</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="animate-slide-in-right" style={{animationDelay: '0.5s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.2s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Status
                 </label>
@@ -266,7 +488,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 </select>
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '0.6s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.3s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Progress Percentage
                 </label>
@@ -287,7 +509,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             </div>
 
             {/* Visual Progress */}
-            <div className="animate-slide-in-right" style={{animationDelay: '0.7s'}}>
+            <div className="animate-slide-in-right" style={{animationDelay: '1.4s'}}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Visual Progress
               </label>
@@ -309,7 +531,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Timeline and Priority</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="animate-slide-in-right" style={{animationDelay: '0.8s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.5s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Start Date *
                 </label>
@@ -323,7 +545,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 />
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '0.9s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.6s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   End Date *
                 </label>
@@ -337,7 +559,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 />
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '1.0s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.7s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Priority Level *
                 </label>
@@ -362,7 +584,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             </div>
 
             {/* Define Project Milestones */}
-            <div className="animate-slide-in-right" style={{animationDelay: '1.1s'}}>
+            <div className="animate-slide-in-right" style={{animationDelay: '1.8s'}}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Define Project Milestones *
               </label>
@@ -415,7 +637,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Budget Information</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="animate-slide-in-right" style={{animationDelay: '1.2s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '1.9s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Total Budget *
                 </label>
@@ -433,7 +655,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 </div>
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '1.3s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '2.0s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Funding Source *
                 </label>
@@ -453,7 +675,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 </select>
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '1.4s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '2.1s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Amount Spent
                 </label>
@@ -472,7 +694,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             </div>
 
             {/* Budget Breakdown */}
-            <div className="animate-slide-in-right" style={{animationDelay: '1.5s'}}>
+            <div className="animate-slide-in-right" style={{animationDelay: '2.2s'}}>
               <label className="block text-sm font-medium text-gray-700 mb-4">
                 Budget Breakdown
               </label>
@@ -531,7 +753,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Project Team & Stakeholders</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="animate-slide-in-right" style={{animationDelay: '1.6s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '2.3s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Project Manager *
                 </label>
@@ -550,7 +772,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 </select>
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '1.7s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '2.4s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Expected Beneficiaries
                 </label>
@@ -566,7 +788,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             </div>
 
             {/* Team Members */}
-            <div className="animate-slide-in-right" style={{animationDelay: '1.8s'}}>
+            <div className="animate-slide-in-right" style={{animationDelay: '2.5s'}}>
               <label className="block text-sm font-medium text-gray-700 mb-4">
                 Team Members
               </label>
@@ -613,7 +835,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                         ? 'border-smblue-400 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
-                    style={{animationDelay: `${1.9 + index * 0.1}s`}}
+                    style={{animationDelay: `${2.6 + index * 0.1}s`}}
                   >
                     <div className="flex items-center space-x-3">
                       <img
@@ -632,7 +854,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             </div>
 
             {/* Key Stakeholders */}
-            <div className="mt-6 animate-slide-in-right" style={{animationDelay: '2.7s'}}>
+            <div className="mt-6 animate-slide-in-right" style={{animationDelay: '3.4s'}}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Key Stakeholders
               </label>
@@ -651,7 +873,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Additional Information</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="animate-slide-in-right" style={{animationDelay: '2.8s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '3.5s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Project Documents
                 </label>
@@ -666,7 +888,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 </div>
               </div>
 
-              <div className="animate-slide-in-right" style={{animationDelay: '2.9s'}}>
+              <div className="animate-slide-in-right" style={{animationDelay: '3.6s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Project Location
                 </label>
@@ -679,7 +901,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 />
               </div>
 
-              <div className="md:col-span-2 animate-slide-in-right" style={{animationDelay: '3.0s'}}>
+              <div className="md:col-span-2 animate-slide-in-right" style={{animationDelay: '3.7s'}}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Success Metrics
                 </label>
@@ -695,7 +917,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
           </div>
 
           {/* Potential Risks & Challenges */}
-          <div className="mb-8 animate-slide-in-right" style={{animationDelay: '3.1s'}}>
+          <div className="mb-8 animate-slide-in-right" style={{animationDelay: '3.8s'}}>
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Potential Risks & Challenges</h2>
             
             <textarea
@@ -708,7 +930,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 animate-slide-in-right" style={{animationDelay: '3.2s'}}>
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 animate-slide-in-right" style={{animationDelay: '3.9s'}}>
             <button
               type="button"
               onClick={onClose}
