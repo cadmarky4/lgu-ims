@@ -53,8 +53,8 @@ const BarangayOfficials: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
         Barangay Officials
       </h3>
 

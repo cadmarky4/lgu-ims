@@ -5,58 +5,54 @@ import QuickActions from './QuickActions';
 import Notifications from './Notifications';
 import BarangayOfficials from './BarangayOfficials';
 import { FiUsers, FiHome, FiUserCheck, FiFileText, FiTrendingUp, FiAlertTriangle } from 'react-icons/fi';
+import { FaUsers, FaHouseUser, FaStamp, FaPen, FaClipboardList, FaUserCheck } from 'react-icons/fa';
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Page Header */}
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Dashboard</h1>
+      </div>
+
       {/* Statistics Overview */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">Statistics Overview</h2>
-        <div className="grid grid-cols-3 gap-6">
+      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          Statistics Overview
+        </h3>
+        <div className="grid grid-cols-3 gap-4">
           <StatCard 
-            title="Total Residents:" 
-            value="40,199" 
-            icon={FiUsers}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            title="Total Residents" 
+            value={40199} 
+            icon={FaUsers}
           />
           <StatCard 
             title="Total Household" 
-            value="20,148" 
-            icon={FiHome}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            value={20148} 
+            icon={FaHouseUser}
           />
           <StatCard 
             title="Active Barangay Officials" 
-            value="20" 
-            icon={FiUserCheck}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            value={20} 
+            icon={FaUserCheck}
           />
           <StatCard 
             title="Total Blotter Cases" 
-            value="5" 
-            icon={FiAlertTriangle}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            value={5} 
+            icon={FaPen}
           />
           <StatCard 
             title="Total Issued Clearance" 
-            value="3" 
-            icon={FiFileText}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            value={3} 
+            icon={FaStamp}
           />
           <StatCard 
             title="Ongoing Projects" 
-            value="1" 
-            icon={FiTrendingUp}
-            iconColor="text-blue-600"
-            bgColor="bg-green-50"
+            value={1} 
+            icon={FaClipboardList}
           />
         </div>
-      </div>
+      </section>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -77,7 +73,7 @@ const Dashboard: React.FC = () => {
           <BarangayOfficials />
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

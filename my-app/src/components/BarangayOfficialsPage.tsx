@@ -179,6 +179,11 @@ const BarangayOfficialsPage: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 pl-0">Officials Overview</h1>
+      </div>
+
       {/* Top Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Officials Overview */}

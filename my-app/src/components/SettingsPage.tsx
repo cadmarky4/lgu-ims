@@ -57,8 +57,9 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 pl-0">Settings</h1>
       </div>
 
       {/* Tabs */}

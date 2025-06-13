@@ -5,29 +5,23 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: IconType;
-  iconColor?: string;
-  bgColor?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
   title, 
   value, 
-  icon: Icon, 
-  iconColor = 'text-blue-600',
-  bgColor = 'bg-blue-50'
+  icon: Icon
 }) => {
   return (
-    <div className="stat-card">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-        </div>
-        <div className={`p-3 rounded-lg ${bgColor}`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
-        </div>
-      </div>
-    </div>
+    <article className="flex p-4 bg-stats-card rounded-xl justify-between items-center">
+      <section className="flex flex-col gap-1.5">
+        <h5 className="text-sm text-smblue-400">{title}</h5>
+        <h2 className="text-2xl font-bold">
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </h2>
+      </section>
+      <Icon className="text-2xl text-smblue-400" />
+    </article>
   );
 };
 

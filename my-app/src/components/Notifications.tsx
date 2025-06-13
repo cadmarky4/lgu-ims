@@ -29,8 +29,8 @@ const Notifications: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
         Notifications
       </h3>
       
@@ -39,7 +39,7 @@ const Notifications: React.FC = () => {
           <div key={notification.id} className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
             <div className="flex items-start space-x-3">
               <div className={`w-2 h-2 rounded-full mt-2 ${
-                notification.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                notification.type === 'success' ? 'bg-green-500' : 'bg-smblue-400'
               }`}></div>
               <p className="text-sm text-gray-700 flex-1">
                 {notification.message}
