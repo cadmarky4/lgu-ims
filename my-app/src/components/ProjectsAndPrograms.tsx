@@ -4,6 +4,8 @@ import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-ic
 import AddNewProject from './AddNewProject';
 import EditProject from './EditProject';
 import ViewProject from './ViewProject';
+import ProjectQuickActions from './ProjectQuickActions';
+import SelectProject from './SelectProject';
 import StatCard from './StatCard';
 import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
@@ -14,6 +16,7 @@ const ProjectsAndPrograms: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showSelectProjectModal, setShowSelectProjectModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const stats = [
@@ -37,6 +40,16 @@ const ProjectsAndPrograms: React.FC = () => {
     console.log('Viewing project:', project); // Debug log
     setSelectedProject(project);
     setShowViewModal(true);
+  };
+
+  const handleUpdateProjectClick = () => {
+    setShowSelectProjectModal(true);
+  };
+
+  const handleSelectProjectForEdit = (project: any) => {
+    setSelectedProject(project);
+    setShowSelectProjectModal(false);
+    setShowEditForm(true);
   };
 
   const handleUpdateProject = (projectData: any) => {
@@ -115,6 +128,12 @@ const ProjectsAndPrograms: React.FC = () => {
 
         {/* Right Sidebar */} 
         <div className="lg:col-span-1 space-y-6">
+          {/* Project Quick Actions */}
+          <ProjectQuickActions 
+            onUpdateProject={handleUpdateProjectClick}
+            onAddProject={() => setShowAddForm(true)}
+          />
+
           {/* Project Calendar */}
           <Calendar />
 
@@ -122,6 +141,13 @@ const ProjectsAndPrograms: React.FC = () => {
           <RecentActivity />
         </div>
       </div>
+
+      {/* SelectProject Modal */}
+      <SelectProject 
+        isOpen={showSelectProjectModal}
+        onClose={() => setShowSelectProjectModal(false)}
+        onSelectProject={handleSelectProjectForEdit}
+      />
 
       {/* ViewProject Modal */}
       {selectedProject && (
