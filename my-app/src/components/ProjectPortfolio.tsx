@@ -321,7 +321,6 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <span className="text-lg font-semibold text-green-600 flex items-center">
-                        <FiDollarSign className="w-4 h-4 mr-1" />
                         {project.budget}
                       </span>
                       {project.progress !== null && (
