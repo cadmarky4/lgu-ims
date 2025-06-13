@@ -121,7 +121,7 @@ const Calendar = () => {
             .animate-pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
             .animate-subtle-pulse { animation: subtlePulse 2s ease-in-out infinite; }
         `}</style>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
         <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-smblue-400 pl-4">
             Project Calendar
@@ -131,14 +131,14 @@ const Calendar = () => {
         <div className="flex justify-between items-center mb-4">
             <button 
             onClick={handlePrevMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-150 transform hover:scale-102 active:scale-98"
+            className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
             >
             <FiChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
             <h4 className="font-medium text-gray-900 animate-fade-in">{currentMonth}</h4>
             <button 
             onClick={handleNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-150 transform hover:scale-102 active:scale-98"
+            className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
             >
             <FiChevronRight className="w-5 h-5 text-gray-600" />
             </button>
@@ -198,14 +198,14 @@ const Calendar = () => {
       {/* Modal for Agenda with Professional Animations */}
       {showModal && (
         <div className="fixed inset-0  bg-[rgba(0,0,0,0.1)]  bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden animate-modal-slide-in">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden animate-modal-slide-in">
             <div className="bg-gradient-to-r from-smblue-400 to-smblue-400 text-white p-4 flex justify-between items-center animate-slide-down">
               <h3 className="text-lg font-semibold animate-slide-right">
                 {selectedDate && `${monthNames[currentDate.getMonth()]} ${selectedDate.day}, ${currentDate.getFullYear()}`}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-150 transform hover:scale-102 active:scale-98"
+                className="p-2 hover:bg-white/10 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
               >
                 <FiX className="w-5 h-5" />
               </button>
@@ -244,7 +244,7 @@ const Calendar = () => {
             <div className="border-t p-4 bg-gray-50/50">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full bg-smblue-400 text-white py-3 px-4 rounded-lg hover:bg-smblue-400 transition-all duration-150 transform hover:scale-[1.005] active:scale-[0.995] shadow-sm hover:shadow-md"
+                className="w-full bg-smblue-400 text-white py-3 px-4 rounded-2xl hover:bg-smblue-400 transition-all duration-150 transform hover:scale-[1.005] active:scale-[0.995] shadow-sm hover:shadow-md"
               >
                 Close
               </button>
