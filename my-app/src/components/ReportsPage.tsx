@@ -220,7 +220,7 @@ export default function ReportsPage() {
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {statisticsOverviewData.map((stat, index) => (
             <article
               key={index}
