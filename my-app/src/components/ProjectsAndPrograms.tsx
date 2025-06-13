@@ -3,6 +3,7 @@ import { FiSearch, FiPlus, FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChe
 import { FaFolder, FaCheckCircle, FaSpinner, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import AddNewProject from './AddNewProject';
 import StatCard from './StatCard';
+import Calendar from './Calendar'; // Import the Calendar component
 import { FaCircleCheck } from 'react-icons/fa6';
 
 const ProjectsAndPrograms: React.FC = () => {
@@ -95,11 +96,6 @@ const ProjectsAndPrograms: React.FC = () => {
     
     return matchesSearch && matchesCategory;
   });
-
-  // Calendar data for June 2025
-  const currentMonth = 'June 2025';
-  const calendarDays = Array.from({ length: 30 }, (_, i) => i + 1);
-  const startingDay = 0; // Sunday (0-6)
 
   const handleAddProject = (projectData: any) => {
     console.log('New project data:', projectData);
@@ -248,50 +244,10 @@ const ProjectsAndPrograms: React.FC = () => {
           </div>
         </div>
 
-
         {/* Right Sidebar */} 
         <div className="lg:col-span-1 space-y-6">
-          {/* Project Calendar */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Project Calendar</h3>
-            </div>
-            
-            <div className="flex justify-between items-center mb-4">
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <FiChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <h4 className="font-medium text-gray-900">{currentMonth}</h4>
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <FiChevronRight className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-                <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-            
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: startingDay }, (_, i) => (
-                <div key={`empty-${i}`} className="p-2"></div>
-              ))}
-              {calendarDays.map((day) => (
-                <button
-                  key={day}
-                  className={`p-2 text-sm text-center hover:bg-blue-50 rounded ${
-                    day === 10 ? 'bg-blue-600 text-white' : 'text-gray-700'
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-          </div> 
+          {/* Project Calendar - Replace the commented calendar with the imported Calendar component */}
+          <Calendar />
 
           {/* Recent Activity */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
@@ -315,4 +271,4 @@ const ProjectsAndPrograms: React.FC = () => {
   );
 };
 
-export default ProjectsAndPrograms; 
+export default ProjectsAndPrograms;
