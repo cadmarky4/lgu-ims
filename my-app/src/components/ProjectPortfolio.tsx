@@ -394,7 +394,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject }) => 
             <div className="text-center pt-4 border-t border-gray-200">
               <button 
                 onClick={() => setShowAll(!showAll)}
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 px-4 py-2 rounded-lg hover:bg-blue-50"
+                className="text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
               >
                 <span>
                   {showAll 

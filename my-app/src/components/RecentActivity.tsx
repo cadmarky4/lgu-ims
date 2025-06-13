@@ -95,7 +95,7 @@ const RecentActivity: React.FC = () => {
       case 'completed':
         return 'border-green-200 bg-green-50/30 hover:bg-green-50/50';
       case 'submitted':
-        return 'border-smblue-200 bg-blue-50/30 hover:bg-smblue-400/50';
+        return 'border-smblue-200 bg-blue-50/30 hover:bg-blue-50/50';
       case 'approved':
         return 'border-purple-200 bg-purple-50/30 hover:bg-purple-50/50';
       case 'started':
