@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { FiSearch, FiPlus, FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChevronLeft, FiChevronRight, FiLayers } from 'react-icons/fi';
+import { FaFolder, FaCheckCircle, FaSpinner, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import AddNewProject from './AddNewProject';
+import StatCard from './StatCard';
+import { FaCircleCheck } from 'react-icons/fa6';
 
 const ProjectsAndPrograms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,7 +89,7 @@ const ProjectsAndPrograms: React.FC = () => {
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
+                        project.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = selectedCategory === 'All Projects' || project.category === selectedCategory;
     
@@ -113,28 +116,40 @@ const ProjectsAndPrograms: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Projects & Programs</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Projects and Programs</h1>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className="text-blue-600">
-                <stat.icon className="w-8 h-8" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Statistics Overview */}
+      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          Statistics Overview
+        </h3>
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard 
+            title="Total Projects" 
+            value={24} 
+            icon={FaFolder}
+          />
+          <StatCard 
+            title="Completed Projects" 
+            value={12} 
+            icon={FaCircleCheck}
+          />
+          <StatCard 
+            title="Active Projects" 
+            value={8} 
+            icon={FaHourglassHalf}
+          />
+          <StatCard 
+            title="Total Budget" 
+            value={2420100} 
+            icon={FaDollarSign}
+          />
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -233,7 +248,8 @@ const ProjectsAndPrograms: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Sidebar */}
+
+        {/* Right Sidebar */} 
         <div className="lg:col-span-1 space-y-6">
           {/* Project Calendar */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
@@ -275,7 +291,7 @@ const ProjectsAndPrograms: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </div> 
 
           {/* Recent Activity */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
@@ -295,7 +311,7 @@ const ProjectsAndPrograms: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 
