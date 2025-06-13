@@ -56,21 +56,21 @@ const SettingsPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Settings</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Settings</h1>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-8">
+      <div className="flex space-x-1 mb-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
               activeTab === tab.id
-                ? 'bg-blue-600 text-white'
+                ? 'bg-smblue-400 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -80,11 +80,12 @@ const SettingsPage: React.FC = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* General Information Tab */}
         {activeTab === 'general' && (
           <div>
-                          <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">General Information</h2>
+            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">General Information</h2>
+            <div className="border-b border-gray-200 mb-6"></div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
@@ -96,7 +97,7 @@ const SettingsPage: React.FC = () => {
                   name="barangay"
                   value={formData.barangay}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -109,7 +110,7 @@ const SettingsPage: React.FC = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -122,7 +123,7 @@ const SettingsPage: React.FC = () => {
                   name="province"
                   value={formData.province}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -135,7 +136,7 @@ const SettingsPage: React.FC = () => {
                   name="region"
                   value={formData.region}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -147,7 +148,7 @@ const SettingsPage: React.FC = () => {
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   title="Select type"
                 >
                   <option value="">Select type</option>
@@ -166,7 +167,7 @@ const SettingsPage: React.FC = () => {
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -179,7 +180,7 @@ const SettingsPage: React.FC = () => {
                   name="emailAddress"
                   value={formData.emailAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -192,7 +193,7 @@ const SettingsPage: React.FC = () => {
                   name="openingHours"
                   value={formData.openingHours}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -205,7 +206,7 @@ const SettingsPage: React.FC = () => {
                   name="closingHours"
                   value={formData.closingHours}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -218,7 +219,7 @@ const SettingsPage: React.FC = () => {
                   name="primaryLanguage"
                   value={formData.primaryLanguage}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -231,7 +232,7 @@ const SettingsPage: React.FC = () => {
                   name="secondaryLanguage"
                   value={formData.secondaryLanguage}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
@@ -241,7 +242,8 @@ const SettingsPage: React.FC = () => {
         {/* Privacy and Security Tab */}
         {activeTab === 'privacy' && (
           <div>
-                          <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Privacy and Security</h2>
+            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">Privacy and Security</h2>
+            <div className="border-b border-gray-200 mb-6"></div>
             
             {/* Authentication and Authorization */}
             <div className="mb-8">
@@ -256,7 +258,7 @@ const SettingsPage: React.FC = () => {
                     name="sessionTimeout"
                     value={formData.sessionTimeout}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   />
                 </div>
 
@@ -269,7 +271,7 @@ const SettingsPage: React.FC = () => {
                     name="maxLoginAttempts"
                     value={formData.maxLoginAttempts}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   />
                 </div>
               </div>
@@ -288,7 +290,7 @@ const SettingsPage: React.FC = () => {
                     name="dataRetention"
                     value={formData.dataRetention}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   />
                 </div>
 
@@ -300,7 +302,7 @@ const SettingsPage: React.FC = () => {
                     name="backupFrequency"
                     value={formData.backupFrequency}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                     title="Select backup frequency"
                   >
                     <option value="Daily">Daily</option>
@@ -316,7 +318,8 @@ const SettingsPage: React.FC = () => {
         {/* System Tab */}
         {activeTab === 'system' && (
           <div>
-                          <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">System</h2>
+            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">System</h2>
+            <div className="border-b border-gray-200 mb-6"></div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -328,7 +331,7 @@ const SettingsPage: React.FC = () => {
                   name="systemName"
                   value={formData.systemName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -341,7 +344,7 @@ const SettingsPage: React.FC = () => {
                   name="versionNumber"
                   value={formData.versionNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
@@ -352,13 +355,13 @@ const SettingsPage: React.FC = () => {
         <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
           <button
             type="button"
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 text-white rounded-lg transition-colors"
           >
             Save Changes
           </button>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

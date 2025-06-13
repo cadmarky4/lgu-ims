@@ -63,16 +63,17 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New Household Profile</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Household Identification */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Household Identification</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Identification</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -84,7 +85,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="householdId"
                 value={formData.householdId}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 readOnly
               />
             </div>
@@ -97,7 +98,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="householdType"
                 value={formData.householdType}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
                 title="Select household type"
               >
@@ -118,7 +119,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="barangay"
                 value={formData.barangay}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
                 title="Select barangay"
               >
@@ -139,7 +140,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 value={formData.streetSitio}
                 onChange={handleInputChange}
                 placeholder="Enter street or sitio name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
@@ -154,7 +155,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 value={formData.houseNumber}
                 onChange={handleInputChange}
                 placeholder="Enter house number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
@@ -169,16 +170,17 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 onChange={handleInputChange}
                 placeholder="Enter complete household address"
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Household Head Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Household Head Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Head Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="space-y-4">
             <div>
@@ -193,7 +195,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   value={formData.householdHeadSearch}
                   onChange={handleInputChange}
                   placeholder="Enter name, ID, or phone number"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
@@ -209,18 +211,19 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <button
                 type="button"
                 onClick={handleAddNewResident}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
               >
                 <FiPlus className="w-4 h-4" />
                 <span>Add New Resident</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Household Members */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Household Members</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Members</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="space-y-4">
             <div>
@@ -235,7 +238,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                   value={formData.memberSearch}
                   onChange={handleInputChange}
                   placeholder="Enter name, ID, or phone number"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
@@ -251,18 +254,19 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <button
                 type="button"
                 onClick={handleAddNewResident}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
               >
                 <FiPlus className="w-4 h-4" />
                 <span>Add New Resident</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Socioeconomic Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Socioeconomic Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Socioeconomic Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
@@ -273,7 +277,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="monthlyIncome"
                 value={formData.monthlyIncome}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Select income range"
               >
                 <option value="">Select Income Range</option>
@@ -293,7 +297,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="primaryIncomeSource"
                 value={formData.primaryIncomeSource}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Select primary income source"
               >
                 <option value="">e.g. Employment, Business, Agriculture</option>
@@ -309,7 +313,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Monthly Household Income (Check all that apply)
+              Household Benefits (Check all that apply)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center">
@@ -353,11 +357,12 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               </label>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Housing Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Housing Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Housing Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
@@ -368,7 +373,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="houseType"
                 value={formData.houseType}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Select house type"
               >
                 <option value="">Select House Type</option>
@@ -388,7 +393,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 name="ownershipStatus"
                 value={formData.ownershipStatus}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Select ownership status"
               >
                 <option value="">Select Ownership</option>
@@ -402,7 +407,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Monthly Household Income (Check all that apply)
+              Housing Benefits (Check all that apply)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center">
@@ -446,7 +451,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               </label>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -459,13 +464,13 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
           >
             Save Household
           </button>
         </div>
       </form>
-    </div>
+    </main>
   );
 };
 

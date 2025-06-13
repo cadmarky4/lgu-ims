@@ -40,15 +40,16 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Edit Barangay Official</h1>
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Edit Barangay Official</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Basic Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Profile Photo */}
@@ -62,7 +63,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 </div>
                 <button
                   type="button"
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-smblue-400 hover:text-smblue-300 text-sm font-medium"
                 >
                   Upload Profile Photo
                 </button>
@@ -79,7 +80,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="prefix"
                   value={formData.prefix}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   title="Select prefix"
                 >
                   <option value="Mr.">Mr.</option>
@@ -99,7 +100,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>
@@ -113,7 +114,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="middleName"
                   value={formData.middleName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>
@@ -127,7 +128,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>
@@ -140,7 +141,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   title="Select gender"
                   required
                 >
@@ -158,7 +159,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="birthDate"
                   value={formData.birthDate}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -171,7 +172,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>
@@ -185,7 +186,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="emailAddress"
                   value={formData.emailAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>
@@ -199,7 +200,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="completeAddress"
                   value={formData.completeAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
 
@@ -211,7 +212,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="civilStatus"
                   value={formData.civilStatus}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   title="Select civil status"
                 >
                   <option value="Single">Single</option>
@@ -230,16 +231,17 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="educationalBackground"
                   value={formData.educationalBackground}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Term Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Term Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Term Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
@@ -250,7 +252,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="committeeAssignment"
                 value={formData.committeeAssignment}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Select committee assignment"
               >
                 <option value="Health">Health</option>
@@ -274,7 +276,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="termStart"
                 value={formData.termStart}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -287,11 +289,11 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="termEnd"
                 value={formData.termEnd}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -304,13 +306,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 text-white rounded-lg transition-colors"
           >
             Save Changes
           </button>
         </div>
       </form>
-    </div>
+    </main>
   );
 };
 

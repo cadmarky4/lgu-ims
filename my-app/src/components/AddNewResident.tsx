@@ -7,42 +7,61 @@ interface AddNewResidentProps {
 }
 
 const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    middleName: '',
-    suffix: '',
-    birthDate: '',
-    age: '',
-    gender: '',
-    civilStatus: '',
-    religion: '',
-    houseNumber: '',
-    street: '',
-    purok: '',
+      const [formData, setFormData] = useState({
+      // Basic Information
+      firstName: '',
+      lastName: '',
+      middleName: '',
+      suffix: '',
+      birthDate: '',
+      age: '',
+      birthPlace: '',
+      gender: '',
+      civilStatus: '',
+      nationality: 'Filipino',
+      religion: '',
+      employmentStatus: '',
+      educationalAttainment: '',
+    // Contact Information
     mobileNumber: '',
     landlineNumber: '',
     emailAddress: '',
+    houseNumber: '',
+    street: '',
+    purok: '',
+    completeAddress: '',
+    // Family Information
+    householdId: '',
     isHouseholdHead: '',
+    relationshipToHead: '',
     motherName: '',
     fatherName: '',
     emergencyContactName: '',
     emergencyContactNumber: '',
+    emergencyContactRelationship: '',
+    // Government IDs & Documents
     primaryIdType: '',
     idNumber: '',
-    philsysNumber: '',
-    tin: '',
+    philhealthNumber: '',
+    sssNumber: '',
+    tinNumber: '',
+    votersIdNumber: '',
+    // Health & Medical Information
+    medicalConditions: '',
+    allergies: '',
+    // Special Classifications
     specialClassifications: {
       seniorCitizen: false,
       personWithDisability: false,
-      soloParent: false,
+      disabilityType: '',
+      indigenousPeople: false,
+      indigenousGroup: '',
       fourPsBeneficiary: false,
-      indigent: false,
-      ofw: false
+      fourPsHouseholdId: ''
     }
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -61,6 +80,17 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     }));
   };
 
+  const handleSpecialFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      specialClassifications: {
+        ...prev.specialClassifications,
+        [name]: value
+      }
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -68,18 +98,19 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New Resident Profile</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident Profile</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 First Name *
@@ -90,7 +121,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 placeholder="Enter first name here..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
@@ -105,7 +136,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.lastName}
                 onChange={handleInputChange}
                 placeholder="Enter last name here..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
@@ -120,19 +151,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.middleName}
                 onChange={handleInputChange}
                 placeholder="N/A if not applicable"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="suffix" className="block text-sm font-medium text-gray-700 mb-2">
                 Suffix
               </label>
               <select
+                id="suffix"
                 name="suffix"
                 value={formData.suffix}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               >
                 <option value="">Select Suffix</option>
                 <option value="Jr.">Jr.</option>
@@ -152,7 +184,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 name="birthDate"
                 value={formData.birthDate}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
@@ -167,48 +199,81 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.age}
                 onChange={handleInputChange}
                 placeholder="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 readOnly
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Birth Place *
+              </label>
+              <input
+                type="text"
+                name="birthPlace"
+                value={formData.birthPlace}
+                onChange={handleInputChange}
+                placeholder="Enter birth place..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
                 Gender *
               </label>
               <select
+                id="gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               >
                 <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="civilStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                Civil Status *
+              </label>
+              <select
+                id="civilStatus"
+                name="civilStatus"
+                value={formData.civilStatus}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                required
+              >
+                <option value="">Select Civil Status</option>
+                <option value="SINGLE">Single</option>
+                <option value="MARRIED">Married</option>
+                <option value="WIDOWED">Widowed</option>
+                <option value="DIVORCED">Divorced</option>
+                <option value="SEPARATED">Separated</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Civil Status *
+                Nationality *
               </label>
-              <select
-                name="civilStatus"
-                value={formData.civilStatus}
+              <input
+                type="text"
+                name="nationality"
+                value={formData.nationality}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter nationality..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
-              >
-                <option value="">Select Civil Status</option>
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-                <option value="Divorced">Divorced</option>
-                <option value="Widowed">Widowed</option>
-              </select>
+              />
             </div>
 
-            <div className="md:col-span-1">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Religion
               </label>
@@ -218,69 +283,56 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.religion}
                 onChange={handleInputChange}
                 placeholder="Enter religion here..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Information</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                House/Unit Number *
-              </label>
-              <input
-                type="text"
-                name="houseNumber"
-                value={formData.houseNumber}
-                onChange={handleInputChange}
-                placeholder="e.g. 123, Blk 4 Lot 5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Street
-              </label>
-              <input
-                type="text"
-                name="street"
-                value={formData.street}
-                onChange={handleInputChange}
-                placeholder="e.g. Rizal Street"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purok *
+              <label htmlFor="employmentStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                Employment Status
               </label>
               <select
-                name="purok"
-                value={formData.purok}
+                id="employmentStatus"
+                name="employmentStatus"
+                value={formData.employmentStatus}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               >
-                <option value="">Select Purok</option>
-                <option value="Purok 1">Purok 1</option>
-                <option value="Purok 2">Purok 2</option>
-                <option value="Purok 3">Purok 3</option>
-                <option value="Purok 4">Purok 4</option>
-                <option value="Purok 5">Purok 5</option>
+                <option value="">Select Employment Status</option>
+                <option value="EMPLOYED">Employed</option>
+                <option value="UNEMPLOYED">Unemployed</option>
+                <option value="SELF_EMPLOYED">Self Employed</option>
+                <option value="RETIRED">Retired</option>
+                <option value="STUDENT">Student</option>
+                <option value="OFW">OFW</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mobile Number *
+                Educational Attainment
+              </label>
+              <input
+                type="text"
+                name="educationalAttainment"
+                value={formData.educationalAttainment}
+                onChange={handleInputChange}
+                placeholder="e.g. High School Graduate, College Graduate..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Information */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Contact Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mobile Number
               </label>
               <input
                 type="tel"
@@ -288,8 +340,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.mobileNumber}
                 onChange={handleInputChange}
                 placeholder="+63 XXX XXX XXXX"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -303,7 +354,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.landlineNumber}
                 onChange={handleInputChange}
                 placeholder="(02) XXXX-XXXX"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -317,15 +368,78 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.emailAddress}
                 onChange={handleInputChange}
                 placeholder="resident@gmail.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                House/Unit Number
+              </label>
+              <input
+                type="text"
+                name="houseNumber"
+                value={formData.houseNumber}
+                onChange={handleInputChange}
+                placeholder="e.g. 123, Blk 4 Lot 5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Street
+              </label>
+              <input
+                type="text"
+                name="street"
+                value={formData.street}
+                onChange={handleInputChange}
+                placeholder="e.g. Rizal Street"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Purok
+              </label>
+              <select
+                name="purok"
+                value={formData.purok}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              >
+                <option value="">Select Purok</option>
+                <option value="Purok 1">Purok 1</option>
+                <option value="Purok 2">Purok 2</option>
+                <option value="Purok 3">Purok 3</option>
+                <option value="Purok 4">Purok 4</option>
+                <option value="Purok 5">Purok 5</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Complete Address *
+              </label>
+              <textarea
+                name="completeAddress"
+                value={formData.completeAddress}
+                onChange={handleInputChange}
+                placeholder="Enter complete address..."
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                required
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Family Information */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Family Information</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Family Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -357,7 +471,35 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Household ID
+              </label>
+              <input
+                type="text"
+                name="householdId"
+                value={formData.householdId}
+                onChange={handleInputChange}
+                placeholder="Enter household ID if applicable"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Relationship to Head
+              </label>
+              <input
+                type="text"
+                name="relationshipToHead"
+                value={formData.relationshipToHead}
+                onChange={handleInputChange}
+                placeholder="e.g. Son, Daughter, Spouse..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -368,7 +510,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.motherName}
                 onChange={handleInputChange}
                 placeholder="Search existing residents or enter new"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -382,7 +524,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.fatherName}
                 onChange={handleInputChange}
                 placeholder="Search existing residents or enter new"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -396,7 +538,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.emergencyContactName}
                 onChange={handleInputChange}
                 placeholder="Full Name of emergency contact"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
@@ -409,28 +551,42 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 name="emergencyContactNumber"
                 value={formData.emergencyContactNumber}
                 onChange={handleInputChange}
-                placeholder="resident@gmail.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="+63 XXX XXX XXXX"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Emergency Contact Relationship
+              </label>
+              <input
+                type="text"
+                name="emergencyContactRelationship"
+                value={formData.emergencyContactRelationship}
+                onChange={handleInputChange}
+                placeholder="e.g. Sibling, Friend, Relative..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Government IDs & Documents */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Government IDs & Documents</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Government IDs & Documents</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Primary ID Type *
+                Primary ID Type
               </label>
               <select
                 name="primaryIdType"
                 value={formData.primaryIdType}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               >
                 <option value="">Select ID Type</option>
                 <option value="National ID">National ID</option>
@@ -445,7 +601,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ID Number *
+                ID Number
               </label>
               <input
                 type="text"
@@ -453,118 +609,212 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 value={formData.idNumber}
                 onChange={handleInputChange}
                 placeholder="Enter ID Number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PhilSys Number (PSN)
+                PhilHealth Number
               </label>
               <input
                 type="text"
-                name="philsysNumber"
-                value={formData.philsysNumber}
+                name="philhealthNumber"
+                value={formData.philhealthNumber}
                 onChange={handleInputChange}
-                placeholder="XXXX-XXXX-XXXX"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="XX-XXXXXXXXX-X"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                TIN
+                SSS Number
               </label>
               <input
                 type="text"
-                name="tin"
-                value={formData.tin}
+                name="sssNumber"
+                value={formData.sssNumber}
+                onChange={handleInputChange}
+                placeholder="XX-XXXXXXX-X"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                TIN Number
+              </label>
+              <input
+                type="text"
+                name="tinNumber"
+                value={formData.tinNumber}
                 onChange={handleInputChange}
                 placeholder="XXX-XXX-XXX-XXX"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voter's ID Number
+              </label>
+              <input
+                type="text"
+                name="votersIdNumber"
+                value={formData.votersIdNumber}
+                onChange={handleInputChange}
+                placeholder="Enter Voter's ID Number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Health & Medical Information */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Health & Medical Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medical Conditions
+              </label>
+              <textarea
+                name="medicalConditions"
+                value={formData.medicalConditions}
+                onChange={handleInputChange}
+                placeholder="List any medical conditions, medications, or health concerns..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Allergies
+              </label>
+              <textarea
+                name="allergies"
+                value={formData.allergies}
+                onChange={handleInputChange}
+                placeholder="List any known allergies (food, medication, environmental)..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+          </div>
+        </section>
 
         {/* Special Classifications */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Special Classifications</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Special Classifications</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           <p className="text-sm text-gray-600 mb-4">Check all that apply:</p>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="seniorCitizen"
-                checked={formData.specialClassifications.seniorCitizen}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              Senior Citizen (60+)
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="personWithDisability"
-                checked={formData.specialClassifications.personWithDisability}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              Person with Disability
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="soloParent"
-                checked={formData.specialClassifications.soloParent}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              Solo Parent
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="fourPsBeneficiary"
-                checked={formData.specialClassifications.fourPsBeneficiary}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              4Ps Beneficiary
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="indigent"
-                checked={formData.specialClassifications.indigent}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              Indigent
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                name="ofw"
-                checked={formData.specialClassifications.ofw}
-                onChange={handleCheckboxChange}
-                className="mr-2"
-              />
-              OFW
-            </label>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="seniorCitizen"
+                  checked={formData.specialClassifications.seniorCitizen}
+                  onChange={handleCheckboxChange}
+                  className="mr-2"
+                />
+                Senior Citizen (60+)
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="personWithDisability"
+                  checked={formData.specialClassifications.personWithDisability}
+                  onChange={handleCheckboxChange}
+                  className="mr-2"
+                />
+                Person with Disability
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="indigenousPeople"
+                  checked={formData.specialClassifications.indigenousPeople}
+                  onChange={handleCheckboxChange}
+                  className="mr-2"
+                />
+                Indigenous People
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="fourPsBeneficiary"
+                  checked={formData.specialClassifications.fourPsBeneficiary}
+                  onChange={handleCheckboxChange}
+                  className="mr-2"
+                />
+                4Ps Beneficiary
+              </label>
+            </div>
+
+            {/* Conditional Fields */}
+            {formData.specialClassifications.personWithDisability && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Disability Type
+                </label>
+                <input
+                  type="text"
+                  name="disabilityType"
+                  value={formData.specialClassifications.disabilityType}
+                  onChange={handleSpecialFieldChange}
+                  placeholder="Specify type of disability..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                />
+              </div>
+            )}
+
+            {formData.specialClassifications.indigenousPeople && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Indigenous Group
+                </label>
+                <input
+                  type="text"
+                  name="indigenousGroup"
+                  value={formData.specialClassifications.indigenousGroup}
+                  onChange={handleSpecialFieldChange}
+                  placeholder="Specify indigenous group..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                />
+              </div>
+            )}
+
+            {formData.specialClassifications.fourPsBeneficiary && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  4Ps Household ID
+                </label>
+                <input
+                  type="text"
+                  name="fourPsHouseholdId"
+                  value={formData.specialClassifications.fourPsHouseholdId}
+                  onChange={handleSpecialFieldChange}
+                  placeholder="Enter 4Ps Household ID..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                />
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
         {/* Profile Photo */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Profile Photo</h2>
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Profile Photo</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
             <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -582,7 +832,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
             >
             </label>
           </div>
-        </div>
+        </section>
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
@@ -595,13 +845,13 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
           >
             Register Resident
           </button>
         </div>
       </form>
-    </div>
+    </main>
   );
 };
 

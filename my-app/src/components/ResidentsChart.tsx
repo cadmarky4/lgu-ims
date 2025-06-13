@@ -37,6 +37,7 @@ const ResidentsChart: React.FC = () => {
                 outerRadius={100}
                 fill="#367096"
                 label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
+                animationDuration={1000}
               >
                 {ageGroupData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -52,7 +53,7 @@ const ResidentsChart: React.FC = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Legend */}
         <div className="flex-1 flex flex-col gap-4">
           <h4 className="font-medium text-gray-900 mb-2">Legend:</h4>
@@ -76,7 +77,7 @@ const ResidentsChart: React.FC = () => {
                 </span>
                 <span className="text-xs text-gray-500">
                   {item.value.toLocaleString()} residents
-                </span>
+              </span>
               </div>
             </div>
           ))}

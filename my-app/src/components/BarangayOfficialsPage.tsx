@@ -178,17 +178,17 @@ const BarangayOfficialsPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 pl-0">Officials Overview</h1>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Barangay Officials</h1>
       </div>
 
       {/* Top Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Officials Overview */}
-        <div className="lg:col-span-2 bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
-          <h1 className="text-xl font-semibold text-gray-900 mb-6 border-l-4 border-blue-600 pl-4">Officials Overview</h1>
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">Officials Overview</h3>
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ const BarangayOfficialsPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-1">Total Officials</p>
                   <p className="text-2xl font-bold text-gray-900">9 officials</p>
                 </div>
-                <div className="text-blue-600">
+                <div className="text-smblue-400">
                   <FiUsers className="w-8 h-8" />
                 </div>
               </div>
@@ -208,7 +208,7 @@ const BarangayOfficialsPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-1">Upcoming Elections</p>
                   <p className="text-2xl font-bold text-gray-900">1,051 days</p>
                 </div>
-                <div className="text-blue-600">
+                <div className="text-smblue-400">
                   <FiUsers className="w-8 h-8" />
                 </div>
               </div>
@@ -217,20 +217,20 @@ const BarangayOfficialsPage: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-blue-600 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-white mb-6 border-l-4 border-white border-opacity-30 pl-4">Quick Actions</h2>
+        <div className="bg-smblue-400 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-white border-opacity-30 pl-4">Quick Actions</h3>
           <div className="space-y-4">
             <button 
               onClick={() => {
                 console.log('Update Officers button clicked');
                 setShowEditForm(true);
               }}
-              className="w-full bg-blue-500 hover:bg-blue-400 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-md"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
             >
               <FiUsers className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
             </button>
-            <button className="w-full bg-blue-500 hover:bg-blue-400 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-md">
+            <button className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm">
               <FiFileText className="w-5 h-5 text-white" />
               <span className="font-medium text-white">File Leave</span>
             </button>
@@ -239,9 +239,9 @@ const BarangayOfficialsPage: React.FC = () => {
       </div>
 
       {/* Officials List */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-8">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-blue-600 pl-4">Officials List</h2>
+          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Officials List</h3>
           
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -253,7 +253,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 placeholder="Search Officials..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
             
@@ -262,7 +262,7 @@ const BarangayOfficialsPage: React.FC = () => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 title="Filter officials"
               >
                 <option value="All Active Officials">All Active Officials</option>
@@ -273,7 +273,7 @@ const BarangayOfficialsPage: React.FC = () => {
               
               <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
                 <FiFilter className="w-4 h-4" />
-                <span>Advance Filter</span>
+                <span>Advanced Filter</span>
               </button>
             </div>
           </div>
@@ -284,14 +284,12 @@ const BarangayOfficialsPage: React.FC = () => {
           <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Official</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Committee</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nationality</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -299,14 +297,17 @@ const BarangayOfficialsPage: React.FC = () => {
               {filteredOfficials.map((official) => (
                 <tr key={official.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <img
-                      src={official.photo}
-                      alt={official.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {official.name}
+                    <div className="flex items-center">
+                      <img
+                        src={official.photo}
+                        alt={official.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{official.name}</div>
+                        <div className="text-sm text-gray-500">{official.nationality}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {official.position}
@@ -325,19 +326,16 @@ const BarangayOfficialsPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {official.committee}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.nationality}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="View official details"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-green-600 hover:text-green-900"
+                        className="text-smblue-400 hover:text-smblue-300"
                         title="Edit official"
                       >
                         <FiEdit className="w-4 h-4" />
@@ -355,12 +353,12 @@ const BarangayOfficialsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       {/* Organizational Chart */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 border-l-4 border-blue-600 pl-4">Organizational Chart</h2>
+          <h3 className="text-lg font-semibold text-darktext border-l-4 border-smblue-400 pl-4">Organizational Chart</h3>
         </div>
         
         <div className="p-8">
@@ -402,8 +400,8 @@ const BarangayOfficialsPage: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

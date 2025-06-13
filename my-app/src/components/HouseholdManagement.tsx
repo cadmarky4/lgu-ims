@@ -159,7 +159,7 @@ const HouseholdManagement: React.FC = () => {
             value={7199} 
             icon={FaDollarSign}
           />
-        </div>
+              </div>
       </section>
 
       {/* Households Section */}
@@ -208,7 +208,7 @@ const HouseholdManagement: React.FC = () => {
             </select>
 
             {/* Advanced Filter Toggle */}
-            <button
+            <button 
               onClick={() => setShowAdvanceFilter(!showAdvanceFilter)}
               className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
             >
