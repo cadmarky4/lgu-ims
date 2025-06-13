@@ -18,7 +18,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     memberSearch: '',
     monthlyIncome: '',
     primaryIncomeSource: '',
-    householdBenefits: {
+    householdClassification: {
       fourPsBeneficiary: false,
       indigentFamily: false,
       hasSeniorCitizen: false,
@@ -26,12 +26,12 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     },
     houseType: '',
     ownershipStatus: '',
-    housingBenefits: {
-      fourPsBeneficiary: false,
-      indigentFamily: false,
-      hasSeniorCitizen: false,
-      hasPwdMember: false
-    }
+    utilitiesAccess: {
+      electricity: false,
+      waterSupply: false,
+      internetAccess: false
+    },
+    remarks: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -42,12 +42,12 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     }));
   };
 
-  const handleCheckboxChange = (section: 'householdBenefits' | 'housingBenefits', field: string) => {
+  const handleCheckboxChange = (section: 'householdClassification' | 'utilitiesAccess', field: string) => {
     setFormData(prev => ({
       ...prev,
       [section]: {
         ...prev[section],
-        [field]: !prev[section][field as keyof typeof prev[section]]
+        [field]: !(prev[section] as any)[field]
       }
     }));
   };
@@ -293,34 +293,27 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Primary Income Source
               </label>
-              <select
+              <input
+                type="text"
                 name="primaryIncomeSource"
                 value={formData.primaryIncomeSource}
                 onChange={handleInputChange}
+                placeholder="e.g. Employment, Business, Agriculture"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                title="Select primary income source"
-              >
-                <option value="">e.g. Employment, Business, Agriculture</option>
-                <option value="employment">Employment</option>
-                <option value="business">Business</option>
-                <option value="agriculture">Agriculture</option>
-                <option value="remittance">Remittance</option>
-                <option value="pension">Pension</option>
-                <option value="other">Other</option>
-              </select>
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Household Benefits (Check all that apply)
+              Household Classification
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.householdBenefits.fourPsBeneficiary}
-                  onChange={() => handleCheckboxChange('householdBenefits', 'fourPsBeneficiary')}
+                  checked={formData.householdClassification.fourPsBeneficiary}
+                  onChange={() => handleCheckboxChange('householdClassification', 'fourPsBeneficiary')}
                   className="mr-2"
                 />
                 4Ps Beneficiary
@@ -329,8 +322,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.householdBenefits.indigentFamily}
-                  onChange={() => handleCheckboxChange('householdBenefits', 'indigentFamily')}
+                  checked={formData.householdClassification.indigentFamily}
+                  onChange={() => handleCheckboxChange('householdClassification', 'indigentFamily')}
                   className="mr-2"
                 />
                 Indigent Family
@@ -339,8 +332,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.householdBenefits.hasSeniorCitizen}
-                  onChange={() => handleCheckboxChange('householdBenefits', 'hasSeniorCitizen')}
+                  checked={formData.householdClassification.hasSeniorCitizen}
+                  onChange={() => handleCheckboxChange('householdClassification', 'hasSeniorCitizen')}
                   className="mr-2"
                 />
                 Has Senior Citizen
@@ -349,8 +342,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.householdBenefits.hasPwdMember}
-                  onChange={() => handleCheckboxChange('householdBenefits', 'hasPwdMember')}
+                  checked={formData.householdClassification.hasPwdMember}
+                  onChange={() => handleCheckboxChange('householdClassification', 'hasPwdMember')}
                   className="mr-2"
                 />
                 Has PWD member
@@ -407,49 +400,59 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Housing Benefits (Check all that apply)
+              Utilities access
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.housingBenefits.fourPsBeneficiary}
-                  onChange={() => handleCheckboxChange('housingBenefits', 'fourPsBeneficiary')}
+                  checked={formData.utilitiesAccess.electricity}
+                  onChange={() => handleCheckboxChange('utilitiesAccess', 'electricity')}
                   className="mr-2"
                 />
-                4Ps Beneficiary
+                Electricity
               </label>
               
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.housingBenefits.indigentFamily}
-                  onChange={() => handleCheckboxChange('housingBenefits', 'indigentFamily')}
+                  checked={formData.utilitiesAccess.waterSupply}
+                  onChange={() => handleCheckboxChange('utilitiesAccess', 'waterSupply')}
                   className="mr-2"
                 />
-                Indigent Family
+                Water Supply
               </label>
               
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.housingBenefits.hasSeniorCitizen}
-                  onChange={() => handleCheckboxChange('housingBenefits', 'hasSeniorCitizen')}
+                  checked={formData.utilitiesAccess.internetAccess}
+                  onChange={() => handleCheckboxChange('utilitiesAccess', 'internetAccess')}
                   className="mr-2"
                 />
-                Has Senior Citizen
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.housingBenefits.hasPwdMember}
-                  onChange={() => handleCheckboxChange('housingBenefits', 'hasPwdMember')}
-                  className="mr-2"
-                />
-                Has PWD member
+                Internet Access
               </label>
             </div>
+          </div>
+        </section>
+
+        {/* Remarks */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Remarks</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Additional Notes or Comments
+            </label>
+            <textarea
+              name="remarks"
+              value={formData.remarks}
+              onChange={handleInputChange}
+              placeholder="Enter any additional information, notes, or special circumstances about this household..."
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+            />
           </div>
         </section>
 
