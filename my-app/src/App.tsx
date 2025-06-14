@@ -13,6 +13,11 @@ import Dashboard from "./components/Dashboard";
 import ResidentManagement from "./components/ResidentManagement";
 import HouseholdManagement from "./components/HouseholdManagement";
 import ProcessDocument from "./components/ProcessDocument";
+import BarangayClearanceForm from "./components/BarangayClearanceForm";
+import BusinessPermitForm from "./components/BusinessPermitForm";
+import CertificateOfIndigencyForm from "./components/CertificateOfIndigencyForm";
+import CertificateOfResidencyForm from "./components/CertificateOfResidencyForm";
+import DocumentQueue from "./components/DocumentQueue";
 import BarangayOfficialsPage from "./components/BarangayOfficialsPage";
 import SettingsPage from "./components/SettingsPage";
 import ProjectsAndPrograms from "./components/ProjectsAndPrograms";
@@ -94,20 +99,24 @@ const AppLayout: React.FC = () => {
               element={<ProcessDocument onNavigate={handleMenuItemClick} />}
             />
             <Route
+              path="/document-queue"
+              element={<DocumentQueue onNavigate={handleMenuItemClick} />}
+            />
+            <Route
               path="/barangay-clearance"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<BarangayClearanceForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/business-permit"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<BusinessPermitForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/certificate-indigency"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<CertificateOfIndigencyForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/certificate-residency"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<CertificateOfResidencyForm onNavigate={handleMenuItemClick} />}
             />
             <Route path="/officials" element={<BarangayOfficialsPage />} />
             <Route path="/projects" element={<ProjectsAndPrograms />} />
