@@ -155,64 +155,74 @@ export default function ReportsPage() {
     // <div className="p-6 bg-smblue-50 min-h-screen">
 
     // AI BG
-    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+    <main className="@container/main p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Reports</h1>
+      </div>
+
       {/* Filter options */}
-      <section className="w-full rounded-2xl flex items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border">
-        <div className="flex flex-col gap-1">
-          <h4>Year</h4>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="min-w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
-            title="Filter year"
-          >
-            {yearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
+      <section className="@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border">
+        {/* Dropdowns */}
+        <section className="grid grid-cols-2 @lg/filter:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <h4>Year</h4>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
+              title="Filter year"
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <h4>Quarter</h4>
-          <select
-            value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(e.target.value)}
-            className="min-w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
-            title="Filter quarter"
-          >
-            {quarterOptions.map((quarter) => (
-              <option key={quarter} value={quarter}>
-                {quarter}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="flex flex-col gap-1">
+            <h4>Quarter</h4>
+            <select
+              value={selectedQuarter}
+              onChange={(e) => setSelectedQuarter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
+              title="Filter quarter"
+            >
+              {quarterOptions.map((quarter) => (
+                <option key={quarter} value={quarter}>
+                  {quarter}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <h4>Purok/Sitio</h4>
-          <select
-            value={selectedPurok}
-            onChange={(e) => setSelectedPurok(e.target.value)}
-            className="min-w-36 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
-            title="Filter purok"
-          >
-            {purokOptions.map((purok) => (
-              <option key={purok} value={purok}>
-                {purok}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="col-span-2 @lg/filter:col-span-1 flex flex-col gap-1">
+            <h4>Purok/Sitio</h4>
+            <select
+              value={selectedPurok}
+              onChange={(e) => setSelectedPurok(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
+              title="Filter purok"
+            >
+              {purokOptions.map((purok) => (
+                <option key={purok} value={purok}>
+                  {purok}
+                </option>
+              ))}
+            </select>
+          </div>
+        </section>
 
-        <button className="min-w-36 text-center text-white bg-smblue-400 hover:bg-smblue-300 px-3 py-2 cursor-pointer rounded-lg h-10">
-          Filter Reports
-        </button>
-        <button className="min-w-36 gap-2 flex justify-center items-center text-center text-smblue-400 hover:bg-smblue-400/20 border-smblue-400 border px-3 py-2 cursor-pointer rounded-lg h-10">
-          <FiDownload />
-          Export Report
-        </button>
+        {/* Buttons */}
+        <section className="@sm/filter:grid-cols-2 grid grid-cols-1 gap-4">
+          <button className="text-center text-white bg-smblue-400 hover:bg-smblue-300 px-3 py-2 cursor-pointer rounded-lg h-10">
+            Filter Reports
+          </button>
+          <button className="gap-2 flex justify-center items-center text-center text-smblue-400 hover:bg-smblue-400/20 border-smblue-400 border px-3 py-2 cursor-pointer rounded-lg h-10">
+            <FiDownload />
+            Export Report
+          </button>
+        </section>
       </section>
 
       {/* Stats overview */}
@@ -220,7 +230,7 @@ export default function ReportsPage() {
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @xl/main:grid-cols-3 gap-4">
           {statisticsOverviewData.map((stat, index) => (
             <article
               key={index}
@@ -239,7 +249,7 @@ export default function ReportsPage() {
       </section>
 
       {/* Population stats */}
-      <section className="grid grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 @xl/main:grid-cols-2 gap-4">
         <article className="w-full flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Age Group Distribution
@@ -264,16 +274,9 @@ export default function ReportsPage() {
       </section>
 
       {/* Financial data and Population Dist by Purok/Sitio */}
-      <section className="min-h-[450px] w-full grid grid-cols-[2fr_3fr_2fr] gap-4">
-        <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
-            Population Distribution by Purok/Sitio
-          </h3>
-
-          <ResponsiveBarGraph data={populationDistributionByPurokData} />
-        </article>
-
-        <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
+      <section className="min-h-[450px] w-full grid gap-4 grid-cols-2 @4xl/main:grid-cols-[2fr_3fr_2fr]">
+        {/* Tailwind is mobile-first, i may have to keep reminding myself that :) */}
+        <article className="@4xl/main:flex @4xl/main:flex-col shadow-sm rounded-2xl border col-span-2 border-gray-100 p-6 bg-white @4xl/main:order-1 @4xl/main:col-span-1">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Monthly Revenue Collection
           </h3>
@@ -281,7 +284,15 @@ export default function ReportsPage() {
           <ResponsiveAreaChart data={revenueData} />
         </article>
 
-        <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
+        <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white col-span-2 min-h-[450px] @xl/main:col-span-1">
+          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+            Population Distribution by Purok/Sitio
+          </h3>
+
+          <ResponsiveBarGraph data={populationDistributionByPurokData} />
+        </article>
+
+        <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white min-h-[450px] col-span-2 @4xl/main:order-3 @xl/main:col-span-1">
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
             Document Types Issued
           </h3>

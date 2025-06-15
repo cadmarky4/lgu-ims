@@ -42,7 +42,9 @@ export default function HorizontalStackedBarChart({
             }}
           >
             {showPercentage && (
-              <span className="font-bold">{item.percentage}%</span>
+              <span className="text-sm @xl/main:text-base font-bold">
+                {item.percentage}%
+              </span>
             )}
           </div>
         ))}

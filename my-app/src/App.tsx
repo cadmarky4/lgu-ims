@@ -26,7 +26,7 @@ import "./index.css";
 const AppLayout: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
-    window.matchMedia("(max-width: 768px)").matches
+    window.matchMedia("(max-width: 767px)").matches
   );
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
@@ -54,7 +54,7 @@ const AppLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
 
     const handleMediaChange = (event: MediaQueryListEvent) => {
       setIsMobile(event.matches);

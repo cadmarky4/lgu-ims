@@ -49,21 +49,6 @@ const Header: React.FC<HeaderProps> = ({
           >
             <BiSidebar fontSize={24} />
           </button>
-          {/* <div className="hidden md:flex w-12 h-12 rounded-full items-center justify-center overflow-hidden">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-green-600 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <h1 className="text-xl font-bold text-gray-900">
-              Barangay San Miguel
-            </h1>
-            <p className="text-sm text-gray-500">
-              Information Management System
-            </p>
-          </div> */}
         </div>
 
         {/* Welcome Section and User Profile */}
