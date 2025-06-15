@@ -19,6 +19,8 @@ const Header: React.FC<HeaderProps> = ({
   const isDateShortened = width < 576;
   const isDateShortenedEvenMore = width < 440;
 
+  console.log(width);
+
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: isDateShortenedEvenMore
       ? "narrow"
@@ -52,9 +54,7 @@ const Header: React.FC<HeaderProps> = ({
           : isSidebarExpanded
           ? "w-[calc(100vw-288px)] left-72"
           : "w-screen left-0"
-      } top-0 z-50 bg-white shadow-sm border-b border-gray-200 ${
-        isDateShortenedEvenMore ? "px-4" : "px-6"
-      } py-4`}
+      } top-0 z-50 bg-white shadow-sm border-b border-gray-200 px-4 py-4`}
     >
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
