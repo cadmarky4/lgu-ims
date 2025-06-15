@@ -1,6 +1,7 @@
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { BiSidebar } from "react-icons/bi";
 import { useContainerWidth } from "../custom-hooks/useContainerWidth";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -19,9 +20,9 @@ const Header: React.FC<HeaderProps> = ({
   const isDateShortened = width < 576;
   const isDateShortenedEvenMore = width < 440;
 
-  console.log(width);
+  const [now, setNow] = useState(new Date());
 
-  const currentDate = new Date().toLocaleDateString("en-US", {
+  const currentDate = now.toLocaleDateString("en-US", {
     weekday: isDateShortenedEvenMore
       ? "narrow"
       : isDateShortened
@@ -36,12 +37,20 @@ const Header: React.FC<HeaderProps> = ({
     day: "numeric",
   });
 
-  const currentTime = new Date().toLocaleTimeString("en-US", {
+  const currentTime = now.toLocaleTimeString("en-US", {
     hour12: true,
     hour: "2-digit",
     minute: "2-digit",
     second: isDateShortenedEvenMore ? undefined : "2-digit",
   });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval); // Clean up on unmount
+  }, []);
 
   return (
     <header
