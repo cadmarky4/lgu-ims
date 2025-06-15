@@ -1,5 +1,6 @@
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { BiSidebar } from "react-icons/bi";
+import { useContainerWidth } from "../custom-hooks/useContainerWidth";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -14,10 +15,22 @@ const Header: React.FC<HeaderProps> = ({
   isSidebarExpanded,
   isMobile,
 }) => {
+  const [containerRef, width] = useContainerWidth();
+  const isDateShortened = width < 576;
+  const isDateShortenedEvenMore = width < 440;
+
   const currentDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
+    weekday: isDateShortenedEvenMore
+      ? "narrow"
+      : isDateShortened
+      ? "short"
+      : "long",
+    year: isDateShortenedEvenMore ? "2-digit" : "numeric",
+    month: isDateShortenedEvenMore
+      ? "2-digit"
+      : isDateShortened
+      ? "short"
+      : "long",
     day: "numeric",
   });
 
@@ -25,12 +38,13 @@ const Header: React.FC<HeaderProps> = ({
     hour12: true,
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
+    second: isDateShortenedEvenMore ? undefined : "2-digit",
   });
 
   return (
     <header
-      className={`fixed transition-all duration-200 ${
+      ref={containerRef}
+      className={`@container/header fixed transition-all duration-200 max-h-[81px] ${
         !isSidebarExpanded && !isMobile
           ? "w-[calc(100vw-64px)] left-16"
           : isSidebarExpanded && isMobile
@@ -38,7 +52,9 @@ const Header: React.FC<HeaderProps> = ({
           : isSidebarExpanded
           ? "w-[calc(100vw-288px)] left-72"
           : "w-screen left-0"
-      } top-0 z-50 bg-white shadow-sm border-b border-gray-200 px-6 py-4`}
+      } top-0 z-50 bg-white shadow-sm border-b border-gray-200 ${
+        isDateShortenedEvenMore ? "px-4" : "px-6"
+      } py-4`}
     >
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
@@ -53,19 +69,19 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Welcome Section and User Profile */}
         <div className="flex items-center space-x-6">
-          <div className="text-right">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="max-w-[330px] text-right">
+            <h2 className="truncate text-lg font-semibold text-gray-900">
               Welcome, Juan
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="truncate text-sm text-gray-500">
               {currentDate.toUpperCase()} | {currentTime.toUpperCase()}
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
-              <FiUser className="header-pre-mobile:mr-0 mr-2 w-5 h-5 flex justify-center" />
-              <span className="font-medium header-pre-mobile:hidden">
+            <div className="max-w-56 flex justify-center items-center space-x-2 bg-smblue-400 text-white px-4 py-2 rounded-lg">
+              <FiUser className="header-pre-mobile:mr-0 mr-0 @2xl/header:mr-2 w-5 h-5 flex justify-center" />
+              <span className="truncate font-medium hidden @2xl/header:inline">
                 Ayevinna Hao
               </span>
             </div>
@@ -76,8 +92,10 @@ const Header: React.FC<HeaderProps> = ({
                 className="flex items-center space-x-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
                 title="Logout"
               >
-                <FiLogOut className="w-5 h-5" />
-                <span className="font-medium">Logout</span>
+                <FiLogOut className="w-5 h-5 mr-0 @3xl/header:mr-2" />
+                <span className="font-medium hidden @3xl/header:inline">
+                  Logout
+                </span>
               </button>
             )}
           </div>
