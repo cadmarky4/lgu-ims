@@ -26,12 +26,13 @@ import LoginPage from "./components/LoginPage";
 import SignupPage from "./components/SignupPage";
 import ReportsPage from "./components/ReportsPage";
 import "./index.css";
+import HelpDeskPage from "./components/HelpDeskPage";
 
 // Main App Layout Component
 const AppLayout: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
-    window.matchMedia("(max-width: 768px)").matches
+    window.matchMedia("(max-width: 767px)").matches
   );
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
@@ -59,7 +60,7 @@ const AppLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
 
     const handleMediaChange = (event: MediaQueryListEvent) => {
       setIsMobile(event.matches);
@@ -125,19 +126,7 @@ const AppLayout: React.FC = () => {
             <Route path="/reports" element={<ReportsPage />} />
 
             {/* Help desk routes */}
-            <Route
-              path="/helpdesk"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Help Desk
-                  </h2>
-                  <p className="text-gray-600">
-                    Help desk main page. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
+            <Route path="/helpdesk" element={<HelpDeskPage />} />
             <Route
               path="/appointments"
               element={
