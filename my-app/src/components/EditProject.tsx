@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FiUpload, FiX, FiCalendar, FiPlus } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, X, Calendar, Plus, MessageCircle, Eye, EyeOff } from 'lucide-react';
 
 interface EditProjectProps {
   onClose: () => void;
@@ -25,6 +25,14 @@ interface ActivityLog {
   time: string;
   type: 'status' | 'budget' | 'milestone' | 'team' | 'progress' | 'system' | 'note';
   details: string;
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  file: File;
 }
 
 const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData }) => {
@@ -107,6 +115,11 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
 
   const [newNote, setNewNote] = useState('');
   const [originalFormData, setOriginalFormData] = useState({});
+  const [showActivityLog, setShowActivityLog] = useState(false);
+  const [showRecentOnly, setShowRecentOnly] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -139,16 +152,74 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
         potentialRisks: 'Identify potential risks, challenges, or obstacles and mitigation strategies'
       };
       setFormData(initialData);
-      setOriginalFormData(initialData); // Store original data for change tracking
+      setOriginalFormData(initialData);
     }
   }, [projectData]);
+
+  // File upload handlers
+  const handleFiles = (files: FileList) => {
+    const newFiles: UploadedFile[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const id = Date.now().toString() + i;
+      
+      newFiles.push({
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file
+      });
+    }
+    
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   // Function to add activity log entry
   const addActivityLog = (activity: string, type: ActivityLog['type'], details: string) => {
     const newActivity: ActivityLog = {
       id: Date.now(),
       activity,
-      user: 'Current User', // In real app, this would be the logged-in user
+      user: 'Current User',
       time: 'Just now',
       type,
       details
@@ -215,7 +286,6 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
       )
     );
     
-    // Log budget breakdown changes
     if (oldItem && oldItem[field] !== value) {
       addActivityLog(
         `Budget item ${field} updated`,
@@ -254,7 +324,6 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
     );
     setMilestones(updated);
     
-    // Log milestone changes
     if (oldMilestone && oldMilestone[field as keyof Milestone] !== value) {
       addActivityLog(
         `Milestone ${field} updated`,
@@ -280,7 +349,6 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
         : [...prev, memberId]
     );
     
-    // Log team member changes
     if (member) {
       addActivityLog(
         `Team member ${isCurrentlySelected ? 'removed' : 'added'}`,
@@ -311,6 +379,8 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
     // Empty function as requested - backend developer will handle the submission
   };
 
+  const displayedActivities = showRecentOnly ? activityLog.slice(0, 3) : activityLog;
+
   return (
     <>
       <style>{`
@@ -327,9 +397,18 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
           to { transform: translateX(0); opacity: 1; }
         }
         
-        .animate-slide-in-up { animation: slideInUp 0.4s ease-out; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+        .animate-slide-in-up { 
+          opacity: 0;
+          animation: slideInUp 0.4s ease-out forwards; 
+        }
+        .animate-fade-in { 
+          opacity: 0;
+          animation: fadeIn 0.3s ease-out forwards; 
+        }
+        .animate-slide-in-right { 
+          opacity: 0;
+          animation: slideInRight 0.3s ease-out forwards; 
+        }
       `}</style>
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
@@ -338,20 +417,69 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
           <h1 className="text-2xl font-bold text-gray-900 pl-0">Update Project Information</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-slide-in-up" style={{animationDelay: '0.1s'}}>
-          {/* Activity Log Section */}
-          <div className="mb-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Project Activity Log</h2>
-            
-            <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto animate-slide-in-right" style={{animationDelay: '0.2s'}}>
-              <div className="space-y-4">
-                {activityLog.map((log, index) => (
-                  <div
-                    key={log.id}
-                    className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200 animate-slide-in-right"
-                    style={{animationDelay: `${0.3 + index * 0.1}s`}}
-                  >
-                    <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-slide-in-up" style={{animationDelay: '0.1s'}}>
+          {/* Improved Activity Log Section */}
+          <div className="mb-6 pb-6 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900 flex items-center space-x-2">
+                <MessageCircle className="w-5 h-5 text-smblue-400" />
+                <span>Project Activity</span>
+                <span className="bg-smblue-100 text-smblue-800 text-xs px-2 py-1 rounded-full">
+                  {activityLog.length} updates
+                </span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowActivityLog(!showActivityLog)}
+                className="flex items-center space-x-2 text-smblue-400 hover:text-smblue-400/90 text-sm font-medium transition-colors duration-200 cursor-pointer"
+              >
+                {showActivityLog ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>{showActivityLog ? 'Hide Details' : 'View Details'}</span>
+              </button>
+            </div>
+
+            {/* Quick Add Note - Always Visible */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quick Note
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Add a note about project changes or updates..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  onKeyPress={(e) => e.key === 'Enter' && addNote()}
+                />
+                <button
+                  type="button"
+                  onClick={addNote}
+                  disabled={!newNote.trim()}
+                  className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-400/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Activity Preview - Always Visible */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700">Recent Activity</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowRecentOnly(!showRecentOnly)}
+                  className="text-xs text-smblue-400 hover:text-smblue-400/90 transition-colors duration-200 cursor-pointer"
+                >
+                  {showRecentOnly ? `Show All (${activityLog.length})` : 'Show Recent Only'}
+                </button>
+              </div>
+              
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {displayedActivities.map((log) => (
+                  <div key={log.id} className="flex items-center space-x-3 p-2 bg-white rounded border border-gray-100">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                       log.type === 'status' ? 'bg-green-500' :
                       log.type === 'budget' ? 'bg-blue-500' :
                       log.type === 'milestone' ? 'bg-purple-500' :
@@ -361,53 +489,50 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                       'bg-gray-400'
                     }`}></div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium text-gray-900">{log.activity}</p>
-                        <span className="text-xs text-gray-500">{log.time}</span>
-                      </div>
-                      <p className="text-xs text-gray-600 mb-1">{log.details}</p>
-                      <p className="text-xs text-gray-500">by {log.user}</p>
+                      <p className="text-xs font-medium text-gray-900 truncate">{log.activity}</p>
+                      <p className="text-xs text-gray-500">{log.time} by {log.user}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              
-              {/* Add Note Section */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Add Activity Note
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Add a note about project changes or updates..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
-                    onKeyPress={(e) => e.key === 'Enter' && addNote()}
-                  />
-                  <button
-                    type="button"
-                    onClick={addNote}
-                    disabled={!newNote.trim()}
-                    className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-400/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
-                  >
-                    Add Note
-                  </button>
+            </div>
+
+            {/* Detailed Activity Log - Expandable */}
+            {showActivityLog && (
+              <div className="mt-4 pt-4 border-t border-gray-200 animate-slide-in-up">
+                <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                  <div className="space-y-3">
+                    {activityLog.map((log, index) => (
+                      <div
+                        key={log.id}
+                        className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200"
+                      >
+                        <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${
+                          log.type === 'status' ? 'bg-green-500' :
+                          log.type === 'budget' ? 'bg-blue-500' :
+                          log.type === 'milestone' ? 'bg-purple-500' :
+                          log.type === 'team' ? 'bg-orange-500' :
+                          log.type === 'progress' ? 'bg-indigo-500' :
+                          log.type === 'note' ? 'bg-yellow-500' :
+                          'bg-gray-400'
+                        }`}></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-sm font-medium text-gray-900">{log.activity}</p>
+                            <span className="text-xs text-gray-500">{log.time}</span>
+                          </div>
+                          <p className="text-xs text-gray-600 mb-1">{log.details}</p>
+                          <p className="text-xs text-gray-500">by {log.user}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              
-              {/* View All Activity Button */}
-              <div className="text-center mt-4 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium transition-colors duration-200"
-                >
-                  View Full Activity History ({activityLog.length} total)
-                </button>
-              </div>
-            </div>
+            )}
           </div>
+
+          {/* Basic Information */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Basic Information</h2>
             
@@ -435,7 +560,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select category"
                   required
                 >
@@ -478,7 +603,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="currentStatus"
                   value={formData.currentStatus}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select status"
                 >
                   <option value="Pending">Pending</option>
@@ -540,7 +665,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   required
                 />
               </div>
@@ -554,7 +679,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   required
                 />
               </div>
@@ -569,7 +694,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                       key={priority}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, priorityLevel: priority }))}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
                         formData.priorityLevel === priority
                           ? priority === 'High' ? 'bg-red-100 text-red-800' : 
                             priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
@@ -605,15 +730,15 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                         type="date"
                         value={milestone.date}
                         onChange={(e) => updateMilestone(index, 'date', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                       />
                       {milestones.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeMilestone(index)}
-                          className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200"
+                          className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer"
                         >
-                          <FiX className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -623,9 +748,9 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 <button
                   type="button"
                   onClick={addMilestone}
-                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
                 >
-                  <FiPlus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Add New Item</span>
                 </button>
               </div>
@@ -663,7 +788,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="fundingSource"
                   value={formData.fundingSource}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select funding source"
                   required
                 >
@@ -720,10 +845,10 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                       <button
                         type="button"
                         onClick={() => removeBudgetItem(item.id)}
-                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200"
+                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer"
                         disabled={budgetBreakdown.length === 1}
                       >
-                        <FiX className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -732,9 +857,9 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 <button
                   type="button"
                   onClick={addBudgetItem}
-                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
                 >
-                  <FiPlus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Add New Item</span>
                 </button>
 
@@ -761,7 +886,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="projectManager"
                   value={formData.projectManager}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select project manager"
                   required
                 >
@@ -798,7 +923,7 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   name="teamDepartment"
                   value={formData.teamDepartment}
                   onChange={handleInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select department"
                 >
                   <option value="All Departments">All Departments</option>
@@ -811,14 +936,14 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                   <button
                     type="button"
                     onClick={selectAllVisible}
-                    className="px-3 py-2 bg-smblue-400 text-white rounded-lg text-sm hover:bg-smblue-400/90 transition-all duration-200"
+                    className="px-3 py-2 bg-smblue-400 text-white rounded-lg text-sm hover:bg-smblue-400/90 transition-all duration-200 cursor-pointer"
                   >
                     Select All Visible
                   </button>
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-all duration-200"
+                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer"
                   >
                     Clear All
                   </button>
@@ -877,15 +1002,66 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Project Documents
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
-                  <FiUpload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
+                    dragActive 
+                      ? 'border-smblue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-smblue-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">
-                    <button type="button" className="text-smblue-400 hover:text-smblue-400/90 font-medium transition-colors duration-200">
+                    <span className="text-smblue-400 hover:text-smblue-400/90 font-medium transition-colors duration-200">
                       Choose Files
-                    </button> 
+                    </span> 
                     <span> to browse or drag and drop</span>
                   </p>
+                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)</p>
                 </div>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+
+                {/* Uploaded Files Display */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Uploaded Files:</h4>
+                    {uploadedFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-smblue-100 rounded flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-smblue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(file.id);
+                          }}
+                          className="text-red-400 hover:text-red-600 p-1 rounded transition-colors duration-200 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="animate-slide-in-right" style={{animationDelay: '3.6s'}}>
@@ -934,18 +1110,19 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md"
+              type="button"
+              onClick={handleSubmit}
+              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer"
             >
               Update Project
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </>
   );

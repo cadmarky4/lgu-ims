@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiX, FiCalendar, FiUsers, FiDollarSign, FiTrendingUp, FiMapPin, FiFlag, FiClock, FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
+import { X, Calendar, Users, DollarSign, TrendingUp, MapPin, Flag, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface Project {
   id: number;
@@ -54,18 +54,18 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Active':
-        return <FiTrendingUp className="w-4 h-4" />;
+        return <TrendingUp className="w-4 h-4" />;
       case 'Pending':
-        return <FiClock className="w-4 h-4" />;
+        return <Clock className="w-4 h-4" />;
       case 'Completed':
-        return <FiCheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="w-4 h-4" />;
       default:
-        return <FiAlertTriangle className="w-4 h-4" />;
+        return <AlertTriangle className="w-4 h-4" />;
     }
   };
 
   const getPriorityIcon = (priority: string) => {
-    return <FiFlag className="w-4 h-4" />;
+    return <Flag className="w-4 h-4" />;
   };
 
   // Sample additional data for the project view
@@ -110,15 +110,24 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
           to { width: var(--progress-width); }
         }
         
-        .animate-modal-fade-in { animation: modalFadeIn 0.3s ease-out; }
-        .animate-modal-slide-in { animation: modalSlideIn 0.4s ease-out; }
-        .animate-slide-in-up { animation: slideInUp 0.4s ease-out; }
+        .animate-modal-fade-in { 
+          opacity: 0;
+          animation: modalFadeIn 0.3s ease-out forwards; 
+        }
+        .animate-modal-slide-in { 
+          opacity: 0;
+          animation: modalSlideIn 0.4s ease-out forwards; 
+        }
+        .animate-slide-in-up { 
+          opacity: 0;
+          animation: slideInUp 0.4s ease-out forwards; 
+        }
         .animate-progress-grow { animation: progressBarGrow 1.5s ease-out 0.5s both; }
       `}</style>
 
       {/* Modal Backdrop */}
       <div 
-        className="fixed inset-0 bg-[rgba(0,0,0,0.2)] flex items-center justify-center z-50 p-4 animate-modal-fade-in"
+        className="fixed inset-0  bg-[rgba(0,0,0,0.2)] flex items-center justify-center z-50 p-4 animate-modal-fade-in"
         onClick={onClose}
       >
         {/* Modal Content */}
@@ -127,8 +136,8 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-smblue-400 to-smblue-400/80 text-white p-6 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+          <div className="bg-gradient-to-r from-smblue-400 to-smblue-300 text-white p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-smblue-400 to-smblue-300"></div>
             <div className="relative z-10 flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
@@ -141,9 +150,9 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer"
               >
-                <FiX className="w-6 h-6" />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -236,7 +245,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                   <ul className="space-y-2">
                     {projectDetails.risks.map((risk, index) => (
                       <li key={index} className="flex items-start space-x-2 text-gray-600">
-                        <FiAlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                         <span>{risk}</span>
                       </li>
                     ))}
@@ -253,7 +262,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-start space-x-3">
-                      <FiMapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Location</p>
                         <p className="text-sm text-gray-600">{projectDetails.location}</p>
@@ -261,7 +270,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <FiUsers className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Users className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Project Manager</p>
                         <p className="text-sm text-gray-600">{projectDetails.projectManager}</p>
@@ -269,7 +278,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <FiUsers className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Users className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Team Size</p>
                         <p className="text-sm text-gray-600">{project.teamSize} members</p>
@@ -277,7 +286,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <FiUsers className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Users className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Expected Beneficiaries</p>
                         <p className="text-sm text-gray-600">{projectDetails.expectedBeneficiaries}</p>
@@ -285,7 +294,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <FiCalendar className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Timeline</p>
                         <p className="text-sm text-gray-600">
@@ -296,7 +305,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
                     </div>
 
                     <div className="flex items-start space-x-3">
-                      <FiClock className="w-5 h-5 text-gray-400 mt-0.5" />
+                      <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Last Updated</p>
                         <p className="text-sm text-gray-600">{project.lastUpdated}</p>
@@ -350,7 +359,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
           <div className="border-t p-4 bg-gray-50 flex justify-end">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:shadow-md"
+              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer"
             >
               Close
             </button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiChevronLeft, FiChevronRight, FiX, FiCalendar } from 'react-icons/fi';
+import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon } from 'lucide-react';
 
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -133,14 +133,14 @@ const Calendar = () => {
             onClick={handlePrevMonth}
             className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
             >
-            <FiChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
             <h4 className="font-medium text-gray-900 animate-fade-in">{currentMonth}</h4>
             <button 
             onClick={handleNextMonth}
             className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
             >
-            <FiChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
         </div>
 
@@ -172,7 +172,7 @@ const Calendar = () => {
                 onClick={() => handleDateClick(day)}
                 className={`p-2 h-12 text-sm text-center rounded transition-all duration-200 transform hover:scale-102 active:scale-98 hover:shadow-sm animate-fade-in-scale relative ${
                     isToday(day) 
-                        ? 'bg-smblue-400 text-white hover:bg-smblue-400 shadow-md animate-pulse-slow' 
+                        ? 'bg-smblue-400 text-white hover:bg-smblue-500 shadow-md animate-pulse-slow' 
                         : 'text-gray-700 hover:bg-gray-50'
                 }`}
                 style={{animationDelay: `${day * 15}ms`}}
@@ -195,11 +195,11 @@ const Calendar = () => {
         </div>
     </div>
 
-      {/* Modal for Agenda with Professional Animations */}
+      {/* Modal for Agenda with Professional Animations - FIXED */}
       {showModal && (
-        <div className="fixed inset-0  bg-[rgba(0,0,0,0.1)]  bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden animate-modal-slide-in">
-            <div className="bg-gradient-to-r from-smblue-400 to-smblue-400 text-white p-4 flex justify-between items-center animate-slide-down">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in" style={{ minHeight: '100vh', height: '100%' }}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden animate-modal-slide-in">
+            <div className="bg-gradient-to-r from-smblue-400 to-smblue-300 text-white p-4 flex justify-between items-center animate-slide-down">
               <h3 className="text-lg font-semibold animate-slide-right">
                 {selectedDate && `${monthNames[currentDate.getMonth()]} ${selectedDate.day}, ${currentDate.getFullYear()}`}
               </h3>
@@ -207,11 +207,11 @@ const Calendar = () => {
                 onClick={() => setShowModal(false)}
                 className="p-2 hover:bg-white/10 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
               >
-                <FiX className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-4 overflow-y-auto max-h-[60vh]">
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
               {selectedDate && selectedDate.agendas.length > 0 ? (
                 <div className="space-y-3">
                   {selectedDate.agendas.map((agenda, index) => (
@@ -219,7 +219,11 @@ const Calendar = () => {
                       key={agenda.id}
                       className="border-l-4 pl-4 py-3 transform hover:scale-[1.005] transition-all duration-150 hover:shadow-sm rounded-r animate-slide-up bg-gray-50/30"
                       style={{ 
-                        borderColor: agenda.color.replace('bg-', '#').replace('500', ''),
+                        borderColor: agenda.color.includes('blue') ? '#93c5fd' :
+                                  agenda.color.includes('green') ? '#6ee7b7' :
+                                  agenda.color.includes('purple') ? '#c4b5fd' :
+                                  agenda.color.includes('yellow') ? '#fde68a' :
+                                  agenda.color.includes('red') ? '#fca5a5' : '#93c5fd',
                         animationDelay: `${index * 80}ms`
                       }}
                     >
@@ -231,9 +235,7 @@ const Calendar = () => {
               ) : (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <CalendarIcon className="w-8 h-8 text-gray-400" />
                   </div>
                   <p className="text-gray-500 text-sm font-medium">No agenda items for this day</p>
                   <p className="text-gray-400 text-xs mt-1">Click dates with indicators to view events</p>
@@ -244,7 +246,7 @@ const Calendar = () => {
             <div className="border-t p-4 bg-gray-50/50">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full bg-smblue-400 text-white py-3 px-4 rounded-2xl hover:bg-smblue-400 transition-all duration-150 transform hover:scale-[1.005] active:scale-[0.995] shadow-sm hover:shadow-md"
+                className="w-full bg-smblue-400 text-white py-3 px-4 rounded-2xl hover:bg-smblue-500 transition-all duration-150 transform hover:scale-[1.005] active:scale-[0.995] shadow-sm hover:shadow-md"
               >
                 Close
               </button>

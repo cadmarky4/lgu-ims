@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FiUpload, FiX, FiCalendar, FiPlus } from 'react-icons/fi';
+import React, { useState, useRef } from 'react';
+import { Upload, X, Calendar, Plus } from 'lucide-react';
 
 interface AddNewProjectProps {
   onClose: () => void;
@@ -10,6 +10,14 @@ interface BudgetItem {
   id: string;
   name: string;
   amount: string;
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  file: File;
 }
 
 const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
@@ -42,6 +50,9 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
   ]);
 
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -113,6 +124,64 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
     }, 0);
   };
 
+  // File upload handlers
+  const handleFiles = (files: FileList) => {
+    const newFiles: UploadedFile[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const id = Date.now().toString() + i;
+      
+      newFiles.push({
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file
+      });
+    }
+    
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Empty function as requested - backend developer will handle the submission
@@ -127,16 +196,25 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
         }
         @keyframes fadeIn {
           from { opacity: 0; }
-          to { opacity: 1; }
+          to { transform: translateY(0); opacity: 1; }
         }
         @keyframes slideInRight {
           from { transform: translateX(20px); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
         }
         
-        .animate-slide-in-up { animation: slideInUp 0.4s ease-out; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        .animate-slide-in-right { animation: slideInRight 0.3s ease-out; }
+        .animate-slide-in-up { 
+          opacity: 0;
+          animation: slideInUp 0.4s ease-out forwards; 
+        }
+        .animate-fade-in { 
+          opacity: 0;
+          animation: fadeIn 0.3s ease-out forwards; 
+        }
+        .animate-slide-in-right { 
+          opacity: 0;
+          animation: slideInRight 0.3s ease-out forwards; 
+        }
       `}</style>
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
@@ -174,7 +252,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select category"
                   required
                 >
@@ -219,7 +297,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   value={formData.startDate}
                   onChange={handleInputChange}
                   placeholder="dd/mm/yyyy"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   required
                 />
               </div>
@@ -234,7 +312,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   value={formData.endDate}
                   onChange={handleInputChange}
                   placeholder="dd/mm/yyyy"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   required
                 />
               </div>
@@ -249,7 +327,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                       key={priority}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, priorityLevel: priority }))}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
                         formData.priorityLevel === priority
                           ? priority === 'High' ? 'bg-red-100 text-red-800' : 
                             priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
@@ -285,7 +363,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                       placeholder="dd/mm/yyyy"
                       value={milestone.date}
                       onChange={(e) => updateMilestone(index, 'date', e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                     />
                   </div>
                 ))}
@@ -293,9 +371,9 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={addMilestone}
-                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
                 >
-                  <FiPlus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Add New Item</span>
                 </button>
               </div>
@@ -330,7 +408,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   name="fundingSource"
                   value={formData.fundingSource}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select funding source"
                   required
                 >
@@ -370,10 +448,10 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                       <button
                         type="button"
                         onClick={() => removeBudgetItem(item.id)}
-                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200"
+                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer"
                         disabled={budgetBreakdown.length === 1}
                       >
-                        <FiX className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -382,9 +460,9 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={addBudgetItem}
-                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
                 >
-                  <FiPlus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Add New Item</span>
                 </button>
 
@@ -411,7 +489,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   name="projectManager"
                   value={formData.projectManager}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select project manager"
                   required
                 >
@@ -448,7 +526,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   name="teamDepartment"
                   value={formData.teamDepartment}
                   onChange={handleInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
                   title="Select department"
                 >
                   <option value="All Departments">All Departments</option>
@@ -461,14 +539,14 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                   <button
                     type="button"
                     onClick={selectAllVisible}
-                    className="px-3 py-2 bg-smblue-400 text-white rounded-lg text-sm hover:bg-smblue-400/90 transition-all duration-200"
+                    className="px-3 py-2 bg-smblue-400 text-white rounded-lg text-sm hover:bg-smblue-400/90 transition-all duration-200 cursor-pointer"
                   >
                     Select All Visible
                   </button>
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-all duration-200"
+                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer"
                   >
                     Clear All
                   </button>
@@ -528,15 +606,66 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Project Documents
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
-                  <FiUpload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
+                    dragActive 
+                      ? 'border-smblue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-smblue-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">
-                    <button type="button" className="text-smblue-400 hover:text-blue-700 font-medium transition-colors duration-200">
+                    <span className="text-smblue-400 hover:text-blue-700 font-medium transition-colors duration-200">
                       Choose Files
-                    </button> 
+                    </span> 
                     <span> to browse or drag and drop</span>
                   </p>
+                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)</p>
                 </div>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+
+                {/* Uploaded Files Display */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Uploaded Files:</h4>
+                    {uploadedFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-smblue-100 rounded flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-smblue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(file.id);
+                          }}
+                          className="text-red-400 hover:text-red-600 p-1 rounded transition-colors duration-200 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="animate-slide-in-right" style={{animationDelay: '2.5s'}}>
@@ -588,13 +717,13 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md"
+              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer"
             >
               Submit Project
             </button>
