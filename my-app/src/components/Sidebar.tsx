@@ -202,6 +202,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (e.button === 1 || e.button === 2) return;
 
     if (item.hasSubmenu) {
+      // Check if this is a double-click or if the menu is already expanded
+      if (e.detail === 2 || (expandedMenus.includes(item.id) && (isExpanded || isMobile))) {
+        // Navigate to the main page on double-click or if submenu is already open and clicked again
+        e.preventDefault();
+        onItemClick(item.id);
+        return;
+      }
+
       e.preventDefault();
 
       if (isExpanded || isMobile) {
