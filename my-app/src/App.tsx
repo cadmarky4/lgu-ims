@@ -15,6 +15,11 @@ import Dashboard from "./components/Dashboard";
 import ResidentManagement from "./components/ResidentManagement";
 import HouseholdManagement from "./components/HouseholdManagement";
 import ProcessDocument from "./components/ProcessDocument";
+import BarangayClearanceForm from "./components/BarangayClearanceForm";
+import BusinessPermitForm from "./components/BusinessPermitForm";
+import CertificateOfIndigencyForm from "./components/CertificateOfIndigencyForm";
+import CertificateOfResidencyForm from "./components/CertificateOfResidencyForm";
+import DocumentQueue from "./components/DocumentQueue";
 import BarangayOfficialsPage from "./components/BarangayOfficialsPage";
 import SettingsPage from "./components/SettingsPage";
 import ProjectsAndPrograms from "./components/ProjectsAndPrograms";
@@ -23,12 +28,13 @@ import LoginPage from "./components/LoginPage";
 import SignupPage from "./components/SignupPage";
 import ReportsPage from "./components/ReportsPage";
 import "./index.css";
+import HelpDeskPage from "./components/HelpDeskPage";
 
 // Main App Layout Component
 const AppLayout: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(
-    window.matchMedia("(max-width: 768px)").matches
+    window.matchMedia("(max-width: 767px)").matches
   );
   const { logout } = useAuth();
 
@@ -55,7 +61,7 @@ const AppLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
 
     const handleMediaChange = (event: MediaQueryListEvent) => {
       setIsMobile(event.matches);
@@ -94,20 +100,24 @@ const AppLayout: React.FC = () => {
               element={<ProcessDocument onNavigate={handleMenuItemClick} />}
             />
             <Route
+              path="/document-queue"
+              element={<DocumentQueue onNavigate={handleMenuItemClick} />}
+            />
+            <Route
               path="/barangay-clearance"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<BarangayClearanceForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/business-permit"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<BusinessPermitForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/certificate-indigency"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<CertificateOfIndigencyForm onNavigate={handleMenuItemClick} />}
             />
             <Route
               path="/certificate-residency"
-              element={<ProcessDocument onNavigate={handleMenuItemClick} />}
+              element={<CertificateOfResidencyForm onNavigate={handleMenuItemClick} />}
             />
             <Route path="/officials" element={<BarangayOfficialsPage />} />
             <Route path="/projects" element={<ProjectsAndPrograms />} />
@@ -116,19 +126,7 @@ const AppLayout: React.FC = () => {
             <Route path="/reports" element={<ReportsPage />} />
 
             {/* Help desk routes */}
-            <Route
-              path="/helpdesk"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Help Desk
-                  </h2>
-                  <p className="text-gray-600">
-                    Help desk main page. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
+            <Route path="/helpdesk" element={<HelpDeskPage />} />
             <Route
               path="/appointments"
               element={
