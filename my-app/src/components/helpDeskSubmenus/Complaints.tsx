@@ -1,0 +1,488 @@
+import React, { useState } from "react";
+import { AlertCircle, User, CheckCircle, Info } from "lucide-react";
+
+interface ComplaintFormData {
+  // Personal Information
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+
+  // Complaint Details
+  complaintCategory: string;
+  department: string;
+  subject: string;
+  description: string;
+  location: string;
+
+  // Additional Information
+  urgency: "low" | "medium" | "high" | "critical";
+  anonymous: boolean;
+  attachments: string;
+}
+
+const ComplaintsPage: React.FC = () => {
+  const [formData, setFormData] = useState<ComplaintFormData>({
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    complaintCategory: "",
+    department: "",
+    subject: "",
+    description: "",
+    location: "",
+    urgency: "medium",
+    anonymous: false,
+    attachments: "",
+  });
+
+  const [submitted, setSubmitted] = useState<boolean>(false);
+
+  const complaintCategories: string[] = [
+    "Public Services",
+    "Infrastructure",
+    "Health and Sanitation",
+    "Education",
+    "Social Welfare",
+    "Environmental Concerns",
+    "Public Safety",
+    "Government Services",
+    "Corruption/Misconduct",
+    "Other",
+  ];
+
+  const departments: string[] = [
+    "Mayor's Office",
+    "Engineering Department",
+    "Health Department",
+    "Social Welfare",
+    "Treasury",
+    "Human Resources",
+    "Environmental Management",
+    "Public Safety",
+    "Education",
+    "General Services",
+  ];
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ): void => {
+    const { name, value, type } = e.target;
+
+    if (type === "checkbox") {
+      const target = e.target as HTMLInputElement;
+      setFormData({
+        ...formData,
+        [name]: target.checked,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleSubmit = (): void => {
+    // Validate required fields
+    if (!formData.anonymous && (!formData.fullName || !formData.phone)) {
+      alert(
+        "Please provide your name and contact number, or choose to submit anonymously."
+      );
+      return;
+    }
+
+    if (
+      !formData.complaintCategory ||
+      !formData.subject ||
+      !formData.description
+    ) {
+      alert("Please fill in all required complaint details.");
+      return;
+    }
+
+    console.log("Complaint submitted:", formData);
+    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitted(false);
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        complaintCategory: "",
+        department: "",
+        subject: "",
+        description: "",
+        location: "",
+        urgency: "medium",
+        anonymous: false,
+        attachments: "",
+      });
+    }, 3000);
+  };
+
+  const generateReferenceNumber = (): string => {
+    return Math.random().toString(36).substr(2, 9).toUpperCase();
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+          <AlertCircle className="h-8 w-8 mr-3 text-orange-600" />
+          Process Complaint
+        </h1>
+        <p className="text-gray-600">
+          Log and manage complaints received from residents regarding government
+          services and facilities.
+        </p>
+      </div>
+
+      {/* Information Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start">
+          <Info className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900">
+              Processing Guidelines
+            </h3>
+            <ul className="text-sm text-blue-800 mt-1 space-y-1">
+              <li>• Verify complainant details before processing</li>
+              <li>• Document all relevant information accurately</li>
+              <li>• Assign to appropriate department for action</li>
+              <li>• Update status regularly until resolution</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {submitted ? (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
+          <CheckCircle className="h-6 w-6 text-green-600" />
+          <div>
+            <h3 className="text-lg font-semibold text-green-900">
+              Complaint Logged Successfully!
+            </h3>
+            <p className="text-green-700">
+              The complaint has been recorded. Reference number: #
+              {generateReferenceNumber()}
+            </p>
+            <p className="text-green-700 text-sm mt-1">
+              Assigned department will process this complaint within 3-5
+              business days.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          {/* Anonymous Option */}
+          <div className="mb-6 bg-gray-50 rounded-lg p-4">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                name="anonymous"
+                checked={formData.anonymous}
+                onChange={handleChange}
+                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-gray-700">
+                Submit this complaint anonymously
+              </span>
+            </label>
+            <p className="text-sm text-gray-500 mt-1 ml-6">
+              Your identity will be kept confidential
+            </p>
+          </div>
+
+          {/* Personal Information */}
+          {!formData.anonymous && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Complainant Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Complaint Details */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Complaint Details
+            </h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Complaint Category *
+                  </label>
+                  <select
+                    name="complaintCategory"
+                    value={formData.complaintCategory}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">Select a category</option>
+                    {complaintCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Department/Office
+                  </label>
+                  <select
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">Select if applicable</option>
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject/Title *
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  placeholder="Brief description of your complaint"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Detailed Description *
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Please provide a detailed description of your complaint. Include what happened, when it happened, who was involved, and any other relevant information..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location (if applicable)
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="Where did this issue occur?"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Urgency Level *
+                </label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="urgency"
+                      value="low"
+                      checked={formData.urgency === "low"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-gray-700">Low</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="urgency"
+                      value="medium"
+                      checked={formData.urgency === "medium"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-gray-700">Medium</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="urgency"
+                      value="high"
+                      checked={formData.urgency === "high"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-gray-700">High</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="urgency"
+                      value="critical"
+                      checked={formData.urgency === "critical"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-gray-700">Critical</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supporting Documents/Evidence
+                </label>
+                <textarea
+                  name="attachments"
+                  value={formData.attachments}
+                  onChange={handleChange}
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Describe any photos, documents, or evidence you have. You may be asked to provide these later."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">* Required fields</p>
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center"
+            >
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Submit Complaint
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Process Timeline */}
+      <div className="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">
+          Complaint Process Timeline
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-start">
+            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+              1
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">Submission</p>
+              <p className="text-sm text-gray-600">
+                Your complaint is received and logged in our system
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+              2
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">Review (1-2 days)</p>
+              <p className="text-sm text-gray-600">
+                Complaint is reviewed and assigned to the appropriate department
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+              3
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">
+                Investigation (3-5 days)
+              </p>
+              <p className="text-sm text-gray-600">
+                Department investigates the complaint and gathers information
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+              4
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">Resolution</p>
+              <p className="text-sm text-gray-600">
+                Action is taken and you are notified of the outcome
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ComplaintsPage;

@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Plus,
+  Minus,
   Filter,
   Clock,
-  User,
   AlertCircle,
   CheckCircle,
   Eye,
   Edit,
   Calendar,
   FileText,
-  Phone,
-  Mail,
-  MessageSquare,
-  ChevronDown,
   Download,
-  BarChart3,
+  ChevronRight,
+  Shield,
+  Lightbulb,
+  Calendar as CalendarCheck,
 } from "lucide-react";
 
 // Type definitions
@@ -24,32 +23,22 @@ interface Ticket {
   id: string;
   title: string;
   description: string;
-  category: TicketCategory;
+  type: TicketType;
   priority: TicketPriority;
   status: TicketStatus;
   submittedBy: string;
   submittedDate: string;
   assignedTo: string;
-  department: Department;
-  contactInfo: string;
-  phone?: string;
-}
-
-interface NewTicketForm {
-  title: string;
-  description: string;
-  category: TicketCategory;
-  priority: TicketPriority;
-  department: Department;
-  contactInfo: string;
-  phone: string;
+  department: string;
+  referenceNumber: string;
 }
 
 interface TicketStats {
   total: number;
-  open: number;
+  pending: number;
   inProgress: number;
   resolved: number;
+  closed: number;
 }
 
 interface TabItem {
@@ -66,112 +55,103 @@ interface StatCard {
   bgColor: string;
 }
 
+interface TicketTypeOption {
+  type: TicketType;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  color: string;
+}
+
 // Union types for better type safety
-type TicketCategory = "Technical" | "Training" | "System" | "Feature Request";
+type TicketType = "Appointment" | "Blotter" | "Complaint" | "Suggestion";
 type TicketPriority = "High" | "Medium" | "Low";
-type TicketStatus = "Open" | "In Progress" | "Resolved" | "Under Review";
-type Department =
-  | "Process Document"
-  | "Resident Management"
-  | "Projects & Programs"
-  | "Administration";
-type TabKey = "all" | "open" | "inprogress" | "resolved";
-type SortOption = "date" | "priority" | "title" | "status";
+type TicketStatus = "Pending" | "In Progress" | "Resolved" | "Closed";
+type TabKey = "all" | "pending" | "inprogress" | "resolved" | "closed";
 
 // Color mapping types
 type PriorityColorMap = Record<TicketPriority, string>;
 type StatusColorMap = Record<TicketStatus, string>;
+type TypeColorMap = Record<TicketType, string>;
 
 const HelpDeskPage: React.FC = () => {
   // State with proper typing
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
-  const [showNewTicketForm, setShowNewTicketForm] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<SortOption>("date");
+  const [showTicketDropdown, setShowTicketDropdown] = useState<boolean>(false);
   const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
+  const [editingStatus, setEditingStatus] = useState<string | null>(null);
 
   // Mock data with proper typing
   const [tickets, setTickets] = useState<Ticket[]>([
     {
       id: "TKT-001",
-      title: "Barangay Certificate System Not Working",
+      title: "Business Permit Appointment Request",
       description:
-        "Residents cannot generate barangay certificates online. System shows error message.",
-      category: "Technical",
-      priority: "High",
-      status: "Open",
+        "Resident requested appointment for business permit renewal. Scheduled for next week.",
+      type: "Appointment",
+      priority: "Medium",
+      status: "Pending",
       submittedBy: "Maria Santos",
       submittedDate: "2025-06-14",
-      assignedTo: "IT Support Team",
-      department: "Process Document",
-      contactInfo: "maria.santos@email.com",
-      phone: "+63 912 345 6789",
+      assignedTo: "Business Permits Office",
+      department: "Business Permits and Licensing",
+      referenceNumber: "APT-2025-0614-001",
     },
     {
       id: "TKT-002",
-      title: "Request for Additional Staff Training",
+      title: "Noise Disturbance Report",
       description:
-        "Need training on new resident management system features for barangay staff.",
-      category: "Training",
-      priority: "Medium",
+        "Blotter report filed regarding noise complaint in Barangay Zone 3. Requires mediation.",
+      type: "Blotter",
+      priority: "High",
       status: "In Progress",
       submittedBy: "Juan Dela Cruz",
       submittedDate: "2025-06-13",
-      assignedTo: "Training Department",
-      department: "Resident Management",
-      contactInfo: "juan.delacruz@sanmiguel.gov.ph",
-      phone: "+63 917 123 4567",
+      assignedTo: "Barangay Peace and Order Committee",
+      department: "Peace and Order",
+      referenceNumber: "BLT-2025-0613-001",
     },
     {
       id: "TKT-003",
-      title: "Budget Report Generation Issue",
+      title: "Street Light Malfunction",
       description:
-        "Unable to generate quarterly budget reports for projects and programs.",
-      category: "System",
+        "Complaint about non-functioning street lights on Main Street. Affects public safety.",
+      type: "Complaint",
       priority: "High",
       status: "Resolved",
       submittedBy: "Ana Rodriguez",
       submittedDate: "2025-06-12",
-      assignedTo: "System Administrator",
-      department: "Projects & Programs",
-      contactInfo: "ana.rodriguez@sanmiguel.gov.ph",
-      phone: "+63 905 987 6543",
+      assignedTo: "Engineering Department",
+      department: "Infrastructure",
+      referenceNumber: "CMP-2025-0612-001",
     },
     {
       id: "TKT-004",
-      title: "New Feature Request: Mobile App",
+      title: "Community Garden Project Proposal",
       description:
-        "Request for mobile application to allow residents to access services on their phones.",
-      category: "Feature Request",
+        "Suggestion for establishing a community garden in the vacant lot near the health center.",
+      type: "Suggestion",
       priority: "Low",
-      status: "Under Review",
-      submittedBy: "Barangay Captain Office",
+      status: "Pending",
+      submittedBy: "Community Leaders",
       submittedDate: "2025-06-11",
-      assignedTo: "Development Team",
-      department: "Administration",
-      contactInfo: "captain@sanmiguel.gov.ph",
-      phone: "+63 920 111 2222",
+      assignedTo: "Planning Committee",
+      department: "Community Development",
+      referenceNumber: "SUG-2025-0611-001",
     },
   ]);
-
-  const [newTicket, setNewTicket] = useState<NewTicketForm>({
-    title: "",
-    description: "",
-    category: "Technical",
-    priority: "Medium",
-    department: "Process Document",
-    contactInfo: "",
-    phone: "",
-  });
 
   // Statistics calculation with proper typing
   const stats: TicketStats = {
     total: tickets.length,
-    open: tickets.filter((t: Ticket) => t.status === "Open").length,
+    pending: tickets.filter((t: Ticket) => t.status === "Pending").length,
     inProgress: tickets.filter((t: Ticket) => t.status === "In Progress")
       .length,
     resolved: tickets.filter((t: Ticket) => t.status === "Resolved").length,
+    closed: tickets.filter((t: Ticket) => t.status === "Closed").length,
   };
 
   // Color mapping objects with proper typing
@@ -182,32 +162,64 @@ const HelpDeskPage: React.FC = () => {
   };
 
   const statusColors: StatusColorMap = {
-    Open: "bg-blue-100 text-blue-800 border-blue-200",
-    "In Progress": "bg-orange-100 text-orange-800 border-orange-200",
+    Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    "In Progress": "bg-blue-100 text-blue-800 border-blue-200",
     Resolved: "bg-green-100 text-green-800 border-green-200",
-    "Under Review": "bg-purple-100 text-purple-800 border-purple-200",
+    Closed: "bg-gray-100 text-gray-800 border-gray-200",
   };
 
-  // Properly typed arrays for form options
-  const categoryOptions: TicketCategory[] = [
-    "Technical",
-    "Training",
-    "System",
-    "Feature Request",
+  const typeColors: TypeColorMap = {
+    Appointment: "bg-blue-100 text-blue-800 border-blue-200",
+    Blotter: "bg-red-100 text-red-800 border-red-200",
+    Complaint: "bg-orange-100 text-orange-800 border-orange-200",
+    Suggestion: "bg-purple-100 text-purple-800 border-purple-200",
+  };
+
+  // Ticket type options configuration
+  const ticketTypeOptions: TicketTypeOption[] = [
+    {
+      type: "Appointment",
+      label: "Process Appointment",
+      description: "Schedule resident appointments",
+      icon: CalendarCheck,
+      href: "/appointments",
+      color: "text-blue-600",
+    },
+    {
+      type: "Blotter",
+      label: "File Blotter Report",
+      description: "Document incidents and disputes",
+      icon: Shield,
+      href: "/blotter",
+      color: "text-red-600",
+    },
+    {
+      type: "Complaint",
+      label: "Log Complaint",
+      description: "Record service complaints",
+      icon: AlertCircle,
+      href: "/complaints",
+      color: "text-orange-600",
+    },
+    {
+      type: "Suggestion",
+      label: "Submit Suggestion",
+      description: "Process improvement ideas",
+      icon: Lightbulb,
+      href: "/suggestions",
+      color: "text-purple-600",
+    },
   ];
-  const priorityOptions: TicketPriority[] = ["Low", "Medium", "High"];
-  const departmentOptions: Department[] = [
-    "Process Document",
-    "Resident Management",
-    "Projects & Programs",
-    "Administration",
+
+  const statusOptions: TicketStatus[] = [
+    "Pending",
+    "In Progress",
+    "Resolved",
+    "Closed",
   ];
   const statusFilterOptions: (TicketStatus | "all")[] = [
     "all",
-    "Open",
-    "In Progress",
-    "Resolved",
-    "Under Review",
+    ...statusOptions,
   ];
 
   // Filter and search tickets with proper typing
@@ -215,13 +227,15 @@ const HelpDeskPage: React.FC = () => {
     const matchesSearch: boolean =
       ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
+      ticket.submittedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.referenceNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesTab: boolean =
       activeTab === "all" ||
-      (activeTab === "open" && ticket.status === "Open") ||
+      (activeTab === "pending" && ticket.status === "Pending") ||
       (activeTab === "inprogress" && ticket.status === "In Progress") ||
-      (activeTab === "resolved" && ticket.status === "Resolved");
+      (activeTab === "resolved" && ticket.status === "Resolved") ||
+      (activeTab === "closed" && ticket.status === "Closed");
 
     const matchesFilter: boolean =
       filterStatus === "all" || ticket.status === filterStatus;
@@ -240,56 +254,34 @@ const HelpDeskPage: React.FC = () => {
     return statusColors[status] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
+  const getTypeColor = (type: TicketType): string => {
+    return typeColors[type] || "bg-gray-100 text-gray-800 border-gray-200";
+  };
+
   // Event handlers with proper typing
-  const handleNewTicketSubmit = (): void => {
-    if (
-      !newTicket.title.trim() ||
-      !newTicket.description.trim() ||
-      !newTicket.contactInfo.trim()
-    ) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    const ticket: Ticket = {
-      ...newTicket,
-      id: `TKT-${String(tickets.length + 1).padStart(3, "0")}`,
-      status: "Open",
-      submittedBy: "Current User",
-      submittedDate: new Date().toISOString().split("T")[0],
-      assignedTo: "Unassigned",
-    };
-
-    setTickets((prevTickets: Ticket[]) => [...prevTickets, ticket]);
-    setNewTicket({
-      title: "",
-      description: "",
-      category: "Technical",
-      priority: "Medium",
-      department: "Process Document",
-      contactInfo: "",
-      phone: "",
-    });
-    setShowNewTicketForm(false);
-  };
-
-  const handleInputChange = (
-    field: keyof NewTicketForm,
-    value: string
-  ): void => {
-    setNewTicket((prev) => ({ ...prev, [field]: value }));
-  };
-
   const toggleTicketDetails = (ticketId: string): void => {
     setSelectedTicket(selectedTicket === ticketId ? null : ticketId);
+  };
+
+  const handleStatusChange = (
+    ticketId: string,
+    newStatus: TicketStatus
+  ): void => {
+    setTickets((prevTickets) =>
+      prevTickets.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
+      )
+    );
+    setEditingStatus(null);
   };
 
   // Tab configuration with proper typing
   const tabs: TabItem[] = [
     { key: "all", label: "All Tickets", count: stats.total },
-    { key: "open", label: "Open", count: stats.open },
+    { key: "pending", label: "Pending", count: stats.pending },
     { key: "inprogress", label: "In Progress", count: stats.inProgress },
     { key: "resolved", label: "Resolved", count: stats.resolved },
+    { key: "closed", label: "Closed", count: stats.closed },
   ];
 
   // Statistics cards configuration with proper typing
@@ -302,18 +294,18 @@ const HelpDeskPage: React.FC = () => {
       bgColor: "bg-smblue-100",
     },
     {
-      title: "Open Tickets",
-      value: stats.open,
-      icon: AlertCircle,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      title: "Pending Review",
+      value: stats.pending,
+      icon: Clock,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-100",
     },
     {
       title: "In Progress",
       value: stats.inProgress,
-      icon: Clock,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
+      icon: AlertCircle,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
     },
     {
       title: "Resolved",
@@ -330,20 +322,62 @@ const HelpDeskPage: React.FC = () => {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Help Desk</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Help Desk Management
+            </h1>
             <p className="text-gray-600 mt-1">
-              Manage support tickets and system requests
+              Process and track resident service requests
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => setShowNewTicketForm(!showNewTicketForm)}
-              className="cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              New Ticket
-            </button>
-            <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <div className="relative">
+              <button
+                onClick={() => setShowTicketDropdown(!showTicketDropdown)}
+                className="cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                {showTicketDropdown ? (
+                  <Minus className="w-4 h-4" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                Create New Ticket
+              </button>
+
+              {showTicketDropdown && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                  <div className="p-2">
+                    {ticketTypeOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <a
+                          key={option.type}
+                          href={option.href}
+                          className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                          onClick={() => setShowTicketDropdown(false)}
+                        >
+                          <div
+                            className={`p-2 bg-gray-100 rounded-lg ${option.color}`}
+                          >
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {option.label}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {option.description}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 mt-3" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button className="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
               <Download className="w-4 h-4" />
               Export Report
             </button>
@@ -378,164 +412,6 @@ const HelpDeskPage: React.FC = () => {
         })}
       </div>
 
-      {/* New Ticket Form */}
-      {showNewTicketForm && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Create New Ticket
-          </h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={newTicket.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("title", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                  placeholder="Enter ticket title"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Department
-                </label>
-                <select
-                  value={newTicket.department}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleInputChange(
-                      "department",
-                      e.target.value as Department
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                >
-                  {departmentOptions.map((dept: Department) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={newTicket.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  handleInputChange("description", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent h-24"
-                placeholder="Describe the issue or request in detail"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={newTicket.category}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleInputChange(
-                      "category",
-                      e.target.value as TicketCategory
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                >
-                  {categoryOptions.map((category: TicketCategory) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={newTicket.priority}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleInputChange(
-                      "priority",
-                      e.target.value as TicketPriority
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                >
-                  {priorityOptions.map((priority: TicketPriority) => (
-                    <option key={priority} value={priority}>
-                      {priority}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Email *
-                </label>
-                <input
-                  type="email"
-                  value={newTicket.contactInfo}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("contactInfo", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                  placeholder="email@example.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number (Optional)
-                </label>
-                <input
-                  type="tel"
-                  value={newTicket.phone}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange("phone", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
-                  placeholder="+63 XXX XXX XXXX"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowNewTicketForm(false)}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleNewTicketSubmit}
-                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Create Ticket
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Filters and Search */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -545,7 +421,7 @@ const HelpDeskPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search tickets by title, description, or submitter..."
+                placeholder="Search by title, submitter, or reference number..."
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setSearchTerm(e.target.value)
@@ -596,7 +472,7 @@ const HelpDeskPage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            Ticket Portfolio ({filteredTickets.length} tickets)
+            Active Tickets ({filteredTickets.length})
           </h3>
         </div>
 
@@ -623,7 +499,7 @@ const HelpDeskPage: React.FC = () => {
                             {ticket.title}
                           </h4>
                           <span className="text-sm text-gray-500">
-                            #{ticket.id}
+                            {ticket.referenceNumber}
                           </span>
                         </div>
                         <p className="text-gray-600 text-sm mb-3">
@@ -632,27 +508,54 @@ const HelpDeskPage: React.FC = () => {
 
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                           <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full border ${getTypeColor(
+                              ticket.type
+                            )}`}
+                          >
+                            {ticket.type}
+                          </span>
+                          <span
                             className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
                               ticket.priority
                             )}`}
                           >
                             {ticket.priority} Priority
                           </span>
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                              ticket.status
-                            )}`}
-                          >
-                            {ticket.status}
-                          </span>
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                            {ticket.category}
-                          </span>
+                          {editingStatus === ticket.id ? (
+                            <select
+                              value={ticket.status}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  ticket.id,
+                                  e.target.value as TicketStatus
+                                )
+                              }
+                              onBlur={() => setEditingStatus(null)}
+                              className="px-2 py-1 text-xs font-medium rounded-full border focus:ring-2 focus:ring-smblue-400"
+                              autoFocus
+                            >
+                              {statusOptions.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full border cursor-pointer ${getStatusColor(
+                                ticket.status
+                              )}`}
+                              onClick={() => setEditingStatus(ticket.id)}
+                              title="Click to change status"
+                            >
+                              {ticket.status}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
+                            <span className="font-medium">Submitted by:</span>
                             {ticket.submittedBy}
                           </div>
                           <div className="flex items-center gap-1">
@@ -660,8 +563,8 @@ const HelpDeskPage: React.FC = () => {
                             {ticket.submittedDate}
                           </div>
                           <div className="flex items-center gap-1">
-                            <MessageSquare className="w-4 h-4" />
-                            {ticket.department}
+                            <span className="font-medium">Assigned to:</span>
+                            {ticket.assignedTo}
                           </div>
                         </div>
                       </div>
@@ -691,36 +594,40 @@ const HelpDeskPage: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <div>
                         <h5 className="font-medium text-gray-900 mb-3">
-                          Contact Information
+                          Department Information
                         </h5>
                         <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span>{ticket.contactInfo}</span>
+                          <div>
+                            <span className="text-gray-500">Department:</span>
+                            <span className="ml-2 font-medium">
+                              {ticket.department}
+                            </span>
                           </div>
-                          {ticket.phone && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span>{ticket.phone}</span>
-                            </div>
-                          )}
+                          <div>
+                            <span className="text-gray-500">Ticket ID:</span>
+                            <span className="ml-2 font-medium">
+                              {ticket.id}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div>
                         <h5 className="font-medium text-gray-900 mb-3">
-                          Assignment Details
+                          Processing Information
                         </h5>
                         <div className="space-y-2 text-sm">
                           <div>
-                            <span className="text-gray-500">Assigned to:</span>
+                            <span className="text-gray-500">
+                              Current Handler:
+                            </span>
                             <span className="ml-2 font-medium">
                               {ticket.assignedTo}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-500">Department:</span>
+                            <span className="text-gray-500">Last Updated:</span>
                             <span className="ml-2 font-medium">
-                              {ticket.department}
+                              {ticket.submittedDate}
                             </span>
                           </div>
                         </div>

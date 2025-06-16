@@ -27,6 +27,10 @@ import SignupPage from "./components/SignupPage";
 import ReportsPage from "./components/ReportsPage";
 import "./index.css";
 import HelpDeskPage from "./components/HelpDeskPage";
+import Appointments from "./components/helpDeskSubmenus/Appointments";
+import Blotter from "./components/helpDeskSubmenus/Blotter";
+import Complaints from "./components/helpDeskSubmenus/Complaints";
+import Suggestions from "./components/helpDeskSubmenus/Suggestions";
 
 // Main App Layout Component
 const AppLayout: React.FC = () => {
@@ -105,7 +109,9 @@ const AppLayout: React.FC = () => {
             />
             <Route
               path="/barangay-clearance"
-              element={<BarangayClearanceForm onNavigate={handleMenuItemClick} />}
+              element={
+                <BarangayClearanceForm onNavigate={handleMenuItemClick} />
+              }
             />
             <Route
               path="/business-permit"
@@ -113,11 +119,15 @@ const AppLayout: React.FC = () => {
             />
             <Route
               path="/certificate-indigency"
-              element={<CertificateOfIndigencyForm onNavigate={handleMenuItemClick} />}
+              element={
+                <CertificateOfIndigencyForm onNavigate={handleMenuItemClick} />
+              }
             />
             <Route
               path="/certificate-residency"
-              element={<CertificateOfResidencyForm onNavigate={handleMenuItemClick} />}
+              element={
+                <CertificateOfResidencyForm onNavigate={handleMenuItemClick} />
+              }
             />
             <Route path="/officials" element={<BarangayOfficialsPage />} />
             <Route path="/projects" element={<ProjectsAndPrograms />} />
@@ -127,58 +137,10 @@ const AppLayout: React.FC = () => {
 
             {/* Help desk routes */}
             <Route path="/helpdesk" element={<HelpDeskPage />} />
-            <Route
-              path="/appointments"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Appointments
-                  </h2>
-                  <p className="text-gray-600">
-                    Appointments management. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
-            <Route
-              path="/blotter"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Blotter
-                  </h2>
-                  <p className="text-gray-600">
-                    Blotter records. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
-            <Route
-              path="/complaints"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Complaints
-                  </h2>
-                  <p className="text-gray-600">
-                    Complaints management. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
-            <Route
-              path="/suggestions"
-              element={
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Suggestions
-                  </h2>
-                  <p className="text-gray-600">
-                    Suggestions box. Content will be implemented here.
-                  </p>
-                </div>
-              }
-            />
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/blotter" element={<Blotter />} />
+            <Route path="/complaints" element={<Complaints />} />
+            <Route path="/suggestions" element={<Suggestions />} />
 
             {/* Catch all route for undefined paths */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
