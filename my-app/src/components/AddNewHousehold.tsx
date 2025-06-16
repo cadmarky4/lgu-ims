@@ -1,23 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiSearch } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import { HouseholdsService } from '../services/households.service';
+import { ResidentsService } from '../services/residents.service';
+import { type HouseholdFormData, type Resident, type Barangay } from '../services/types';
+
+// Common relationship options
+const RELATIONSHIP_OPTIONS = [
+  'Spouse',
+  'Child',
+  'Parent',
+  'Sibling',
+  'Grandparent',
+  'Grandchild',
+  'In-law',
+  'Cousin',
+  'Nephew/Niece',
+  'Uncle/Aunt',
+  'Other Relative',
+  'Non-relative'
+];
 
 interface AddNewHouseholdProps {
   onClose: () => void;
-  onSave: (householdData: any) => void;
+  onSave: (householdData: HouseholdFormData) => void;
 }
 
 const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {
+  // Refs for dropdown click-outside detection
+  const headSearchRef = useRef<HTMLDivElement>(null);
+  const memberSearchRef = useRef<HTMLDivElement>(null);
+
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reference data from backend
-  const [barangays, setBarangays] = useState<any[]>([]);
-  const [residents, setResidents] = useState<any[]>([]);
-  const [filteredResidents, setFilteredResidents] = useState<any[]>([]);
+  // Services
+  const householdsService = new HouseholdsService();
+  const residentsService = new ResidentsService();
 
-  const [formData, setFormData] = useState({
+  // Reference data from backend
+  const [barangays, setBarangays] = useState<Barangay[]>([]);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [filteredResidents, setFilteredResidents] = useState<Resident[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<Resident[]>([]);
+  const [isSearchingResidents, setIsSearchingResidents] = useState(false);
+  const [isSearchingMembers, setIsSearchingMembers] = useState(false);  // Dropdown visibility states
+  const [showHeadDropdown, setShowHeadDropdown] = useState(false);
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+
+  // Error and notification states  
+  const [isErrorInfo, setIsErrorInfo] = useState(false); // To distinguish between error and info messages
+
+  const [formData, setFormData] = useState<HouseholdFormData>({
     householdId: 'Auto-generated',
     householdType: '',
     barangay: '',
@@ -41,7 +76,8 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       waterSupply: false,
       internetAccess: false
     },
-    remarks: ''
+    remarks: '',
+    members: []
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -60,7 +96,22 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         [field]: !(prev[section] as any)[field]
       }
     }));
-  };
+  };  // Click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (headSearchRef.current && !headSearchRef.current.contains(event.target as Node)) {
+        setShowHeadDropdown(false);
+      }
+      if (memberSearchRef.current && !memberSearchRef.current.contains(event.target as Node)) {
+        setShowMemberDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fetch reference data on component mount
   useEffect(() => {
@@ -68,30 +119,13 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       setIsLoading(true);
       setError(null);
       try {
-        // TODO: Backend developer - replace with actual endpoints
         // Fetch barangays
-        // const barangayResponse = await fetch('/api/barangays');
-        // const barangayData = await barangayResponse.json();
-        // setBarangays(barangayData);
+        const barangayData = await householdsService.getBarangays();
+        setBarangays(barangayData);
 
-        // Fetch residents for search functionality
-        // const residentsResponse = await fetch('/api/residents');
-        // const residentsData = await residentsResponse.json();
-        // setResidents(residentsData);
-
-        // For now, using mock data
-        setBarangays([
-          { id: 1, name: 'San Miguel', value: 'san-miguel' },
-          { id: 2, name: 'Poblacion', value: 'poblacion' },
-          { id: 3, name: 'Santo Domingo', value: 'santo-domingo' }
-        ]);
-
-        setResidents([
-          { id: 1, name: 'Maria Santos', phone: '+63-945-890-9999' },
-          { id: 2, name: 'Juan Dela Cruz', phone: '+63-917-123-4567' },
-          { id: 3, name: 'Ana Reyes', phone: '+63-922-987-6543' },
-          { id: 4, name: 'Roberto Garcia', phone: '+63-939-555-7890' }
-        ]);
+        // Fetch initial list of residents for search functionality
+        const residentsData = await residentsService.getResidents({ per_page: 100 });
+        setResidents(residentsData.data);
 
       } catch (err) {
         setError('Failed to load reference data');
@@ -102,55 +136,193 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     };
 
     fetchReferenceData();
-  }, []);
-
-  // Filter residents based on search input
+  }, []);  // Filter residents based on search input using backend search
   useEffect(() => {
-    if (formData.householdHeadSearch.trim()) {
-      const filtered = residents.filter(resident =>
-        resident.name.toLowerCase().includes(formData.householdHeadSearch.toLowerCase()) ||
-        resident.phone.includes(formData.householdHeadSearch)
-      );
-      setFilteredResidents(filtered);
-    } else {
-      setFilteredResidents([]);
-    }
-  }, [formData.householdHeadSearch, residents]);
+    const searchResidents = async () => {
+      if (formData.householdHeadSearch.trim()) {
+        setIsSearchingResidents(true);
+        try {
+          // Use backend search for better performance and accuracy
+          const searchResults = await residentsService.searchResidents(formData.householdHeadSearch, 10);
+          setFilteredResidents(searchResults);
+          setShowHeadDropdown(searchResults.length > 0);
+        } catch (err) {
+          console.error('Error searching residents:', err);
+          // Fallback to local search if backend search fails
+          const filtered = residents.filter(resident => {
+            const fullName = `${resident.first_name} ${resident.last_name}`.toLowerCase();
+            const searchTerm = formData.householdHeadSearch.toLowerCase();
+            return fullName.includes(searchTerm) ||
+              (resident.mobile_number && resident.mobile_number.includes(formData.householdHeadSearch));
+          });
+          setFilteredResidents(filtered);
+          setShowHeadDropdown(filtered.length > 0);
+        } finally {
+          setIsSearchingResidents(false);
+        }
+      } else {
+        setFilteredResidents([]);
+        setIsSearchingResidents(false);
+        setShowHeadDropdown(false);
+      }
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    // Debounce the search to avoid too many API calls
+    const timeoutId = setTimeout(searchResidents, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.householdHeadSearch, residents, residentsService]);  // Filter members based on search input using backend search
+  useEffect(() => {
+    const searchMembers = async () => {
+      console.log('Member search effect triggered, search term:', formData.memberSearch);
+      if (formData.memberSearch.trim()) {
+        setIsSearchingMembers(true);
+        try {
+          // Use backend search for better performance and accuracy
+          const searchResults = await residentsService.searchResidents(formData.memberSearch, 10);
+          console.log('Backend search results:', searchResults);
+
+          // Filter out already selected members and head
+          const availableResidents = searchResults.filter(resident =>
+            resident.id !== formData.headResidentId &&
+            !formData.members?.some(member => member.residentId === resident.id)
+          );
+          console.log('Available residents after filtering:', availableResidents);
+
+          setFilteredMembers(availableResidents);
+          setShowMemberDropdown(availableResidents.length > 0);
+        } catch (err) {
+          console.error('Error searching members:', err);
+          // Fallback to local search if backend search fails
+          const filtered = residents.filter(resident => {
+            const fullName = `${resident.first_name} ${resident.last_name}`.toLowerCase();
+            const searchTerm = formData.memberSearch.toLowerCase();
+            return (fullName.includes(searchTerm) ||
+              (resident.mobile_number && resident.mobile_number.includes(formData.memberSearch))) &&
+              resident.id !== formData.headResidentId &&
+              !formData.members?.some(member => member.residentId === resident.id);
+          });
+          console.log('Fallback search results:', filtered);
+          setFilteredMembers(filtered);
+          setShowMemberDropdown(filtered.length > 0);
+        } finally {
+          setIsSearchingMembers(false);
+        }
+      } else {
+        setFilteredMembers([]);
+        setIsSearchingMembers(false);
+        setShowMemberDropdown(false);
+      }
+    };
+
+    // Debounce the search to avoid too many API calls    // Debounce the search to avoid too many API calls
+    const timeoutId = setTimeout(searchMembers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.memberSearch, formData.headResidentId, formData.members, residents, residentsService]); const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    setIsErrorInfo(false);
+
+    // Validation: Ensure household head is selected
+    if (!formData.headResidentId) {
+      setIsErrorInfo(false);
+      setError('Please select a household head before saving.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    console.log('Form submission - formData:', formData);
+    console.log('Members to be sent:', formData.members);
 
     try {
-      // TODO: Backend developer - replace with actual endpoint
-      // const response = await fetch('/api/households', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Failed to create household');
-      // }
-
-      // const newHousehold = await response.json();
-      
-      // For now, using the existing client-side save
-      onSave(formData);
+      // Use the service to create household
+      const result = await householdsService.createHousehold(formData);
+      console.log('Household created successfully:', result);
+      onSave(formData); // Still call onSave for parent component to refresh list
       onClose();
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Error creating household:', err);
+      setIsErrorInfo(false);
       setError('Failed to save household. Please try again.');
-      console.error('Error saving household:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const handleAddNewResident = () => {
     console.log('Add new resident clicked');
+  };  // Helper functions for managing members
+  const addMemberToHousehold = (resident: Resident, relationship: string) => {
+    console.log('addMemberToHousehold called with:', { resident, relationship });
+
+    if (!relationship.trim()) {
+      setError('Please specify the relationship to household head');
+      return;
+    }    // Validation: Check if this person is already the household head
+    if (formData.headResidentId === resident.id) {
+      setIsErrorInfo(false);
+      setError(`${resident.first_name} ${resident.last_name} is already selected as the household head and cannot be added as a member.`);
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        setError(null);
+        setIsErrorInfo(false);
+      }, 5000);
+      return;
+    }
+
+    // Validation: Check if this person is already a member
+    if (formData.members?.some(member => member.residentId === resident.id)) {
+      setIsErrorInfo(false);
+      setError(`${resident.first_name} ${resident.last_name} is already a member of this household.`);
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        setError(null);
+        setIsErrorInfo(false);
+      }, 5000);
+      return;
+    }
+
+    const newMember = {
+      residentId: resident.id,
+      relationship: relationship.trim()
+    };
+
+    console.log('Adding new member:', newMember);
+
+    setFormData(prev => {
+      const updatedData = {
+        ...prev,
+        members: [...(prev.members || []), newMember],
+        memberSearch: '', // Clear search after adding
+      };
+      console.log('Updated formData members:', updatedData.members);
+      return updatedData;
+    });
+
+    setShowMemberDropdown(false);
+    setError(null);
+  };
+  const removeMemberFromHousehold = (residentId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      members: prev.members?.filter(member => member.residentId !== residentId) || []
+    }));
+  };
+
+  // Update member relationship
+  const updateMemberRelationship = (residentId: number, newRelationship: string) => {
+    setFormData(prev => ({
+      ...prev,
+      members: prev.members?.map(member =>
+        member.residentId === residentId
+          ? { ...member, relationship: newRelationship }
+          : member
+      ) || []
+    }));
+  };
+
+  // Get resident details for display
+  const getResidentById = (id: number): Resident | undefined => {
+    return residents.find(resident => resident.id === id);
   };
 
   return (
@@ -158,12 +330,14 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
-      </div>
-
-      {/* Error Display */}
+      </div>      {/* Error/Info Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-red-800 text-sm">{error}</p>
+        <div className={`border rounded-lg p-4 mb-4 ${isErrorInfo
+          ? 'bg-blue-50 border-blue-200'
+          : 'bg-red-50 border-red-200'
+          }`}>
+          <p className={`text-sm ${isErrorInfo ? 'text-blue-800' : 'text-red-800'
+            }`}>{error}</p>
         </div>
       )}
 
@@ -179,7 +353,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Identification</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -194,7 +368,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 readOnly
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Household Type *
@@ -220,22 +394,14 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Barangay *
               </label>
-              <select
+              <input
+                type="text"
                 name="barangay"
                 value={formData.barangay}
                 onChange={handleInputChange}
+                placeholder="Enter barangay name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                required
-                title="Select barangay"
-                disabled={isLoading}
-              >
-                <option value="">Select Barangay</option>
-                {barangays.map((barangay) => (
-                  <option key={barangay.id} value={barangay.value}>
-                    {barangay.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
@@ -289,40 +455,158 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Head Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Existing Resident as Head
-              </label>
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  name="householdHeadSearch"
-                  value={formData.householdHeadSearch}
-                  onChange={handleInputChange}
-                  placeholder="Enter name, ID, or phone number"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                  disabled={isLoading}
-                />
-                {/* Search Results Dropdown */}
-                {filteredResidents.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                    {filteredResidents.map((resident) => (
-                      <div
-                        key={resident.id}
-                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        onClick={() => setFormData(prev => ({ ...prev, householdHeadSearch: resident.name }))}
-                      >
-                        <p className="font-medium text-gray-900">{resident.name}</p>
-                        <p className="text-sm text-gray-600">{resident.phone}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+
+          <div className="space-y-4">            <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search Existing Resident as Head
+            </label>
+            <div className="relative" ref={headSearchRef}>
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />                <input
+                type="text"
+                name="householdHeadSearch"
+                value={formData.householdHeadSearch}
+                onChange={handleInputChange}
+                onFocus={() => {
+                  if (formData.householdHeadSearch.trim() && filteredResidents.length > 0) {
+                    setShowHeadDropdown(true);
+                  }
+                }}
+                placeholder="Enter name, ID, or phone number"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                disabled={isLoading}
+              />
+
+              {/* Loading indicator for search */}
+              {isSearchingResidents && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-smblue-400"></div>
+                </div>
+              )}
+
+              {/* Search Results Dropdown */}
+              {showHeadDropdown && filteredResidents.length > 0 && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                  {filteredResidents.map((resident) => (
+                    <div
+                      key={resident.id}
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const fullName = `${resident.first_name} ${resident.last_name}`;
+
+                        // Check if this person is already a member and remove them
+                        const isCurrentMember = formData.members?.some(member => member.residentId === resident.id);
+
+                        setFormData(prev => ({
+                          ...prev,
+                          householdHeadSearch: fullName,
+                          headResidentId: resident.id,
+                          // Remove from members if they were already added as a member
+                          members: isCurrentMember
+                            ? prev.members?.filter(member => member.residentId !== resident.id) || []
+                            : prev.members || []
+                        }));
+
+                        setShowHeadDropdown(false);
+                        // Show notification if person was removed from members
+                        if (isCurrentMember) {
+                          console.log(`${fullName} was removed from household members as they are now the household head`);
+                          setIsErrorInfo(true);
+                          setError(`${fullName} was moved from household members to household head.`);
+                          // Clear notification after 3 seconds
+                          setTimeout(() => {
+                            setError(null);
+                            setIsErrorInfo(false);
+                          }, 3000);
+                        } else {
+                          // Clear any existing errors
+                          setError(null);
+                          setIsErrorInfo(false);
+                        }
+                      }}
+                    >
+                      <p className="font-medium text-gray-900">{`${resident.first_name} ${resident.last_name}`}</p>
+                      <p className="text-sm text-gray-600">{resident.mobile_number || 'No phone'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* No results message */}
+              {showHeadDropdown && formData.householdHeadSearch.trim() && !isSearchingResidents && filteredResidents.length === 0 && (
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                  <p className="text-gray-500 text-sm">No residents found matching "{formData.householdHeadSearch}"</p>
+                </div>
+              )}
             </div>
+          </div>            {/* Selected Household Head Preview */}
+            {formData.headResidentId && (
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">Selected Household Head:</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Contact
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Role
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {(() => {
+                        const headResident = getResidentById(formData.headResidentId);
+                        return (
+                          <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {headResident ? `${headResident.first_name} ${headResident.last_name}` : formData.householdHeadSearch || 'Unknown Resident'}
+                              </div>
+                              {headResident?.id && (
+                                <div className="text-sm text-gray-500">ID: {headResident.id}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {headResident?.mobile_number || 'No contact'}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                Household Head
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    householdHeadSearch: '',
+                                    headResidentId: undefined
+                                  }));
+                                }}
+                                className="text-red-600 hover:text-red-900 hover:bg-red-100 p-1 rounded"
+                                title="Remove household head"
+                              >
+                                <FiX className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <div className="text-center">
               <span className="text-gray-500 font-medium">OR</span>
@@ -342,30 +626,135 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               </button>
             </div>
           </div>
-        </section>
-
-        {/* Household Members */}
+        </section>        {/* Household Members */}
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Members</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Add Members from Residents
               </label>
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
+              <div className="relative" ref={memberSearchRef}>
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />                <input
                   type="text"
                   name="memberSearch"
                   value={formData.memberSearch}
                   onChange={handleInputChange}
-                  placeholder="Enter name, ID, or phone number"
+                  onFocus={() => {
+                    console.log('Member search focused, current value:', formData.memberSearch);
+                    if (formData.memberSearch.trim()) {
+                      setShowMemberDropdown(true);
+                    }
+                  }}
+                  placeholder="Enter name, ID, or phone number to search for members"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
+
+                {/* Loading indicator for member search */}
+                {isSearchingMembers && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-smblue-400"></div>
+                  </div>
+                )}
+
+                {/* Search Results Dropdown for members */}
+                {showMemberDropdown && filteredMembers.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                    {filteredMembers.map((resident) => (
+                      <div
+                        key={resident.id}
+                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Adding member:', resident);
+                          setShowMemberDropdown(false);
+                          // Add member with default relationship that can be edited later
+                          addMemberToHousehold(resident, 'Child');
+                        }}
+                      >
+                        <p className="font-medium text-gray-900">{`${resident.first_name} ${resident.last_name}`}</p>
+                        <p className="text-sm text-gray-600">{resident.mobile_number || 'No phone'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* No results message for members */}
+                {showMemberDropdown && formData.memberSearch.trim() && !isSearchingMembers && filteredMembers.length === 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                    <p className="text-gray-500 text-sm">No available residents found matching "{formData.memberSearch}"</p>
+                  </div>)}
               </div>
-            </div>
+            </div>            {/* Display added members */}
+            {formData.members && formData.members.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">Household Members:</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Contact
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Relationship to Head
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {formData.members.map((member, index) => {
+                        const resident = getResidentById(member.residentId);
+                        return (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {resident ? `${resident.first_name} ${resident.last_name}` : 'Unknown Resident'}
+                              </div>
+                              {resident?.id && (
+                                <div className="text-sm text-gray-500">ID: {resident.id}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {resident?.mobile_number || 'No contact'}
+                              </div>
+                            </td>                            <td className="px-4 py-3 whitespace-nowrap">
+                              <select
+                                value={member.relationship}
+                                onChange={(e) => updateMemberRelationship(member.residentId, e.target.value)}
+                                className="text-sm bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                              >
+                                {RELATIONSHIP_OPTIONS.map(option => (
+                                  <option key={option} value={option}>{option}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                              <button
+                                type="button"
+                                onClick={() => removeMemberFromHousehold(member.residentId)}
+                                className="text-red-600 hover:text-red-900 hover:bg-red-100 p-1 rounded"
+                                title="Remove member"
+                              >
+                                <FiX className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <div className="text-center">
               <span className="text-gray-500 font-medium">OR</span>
@@ -391,7 +780,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Socioeconomic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -442,7 +831,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
                 4Ps Beneficiary
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -452,7 +841,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
                 Indigent Family
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -462,7 +851,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
                 Has Senior Citizen
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -480,7 +869,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Housing Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -536,7 +925,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
                 Electricity
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -546,7 +935,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                 />
                 Water Supply
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -564,7 +953,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Remarks</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Additional Notes or Comments
@@ -577,7 +966,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
             />
-        </div>
+          </div>
         </section>
 
         {/* Form Actions */}
@@ -609,4 +998,4 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
   );
 };
 
-export default AddNewHousehold; 
+export default AddNewHousehold;

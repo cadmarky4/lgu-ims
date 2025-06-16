@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Schemas\UserSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,50 +15,32 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Get fillable fields from schema
      */
-    protected $fillable = [
-        'username',
-        'email',
-        'password',
-        'first_name',
-        'last_name',
-        'middle_name',
-        'is_active',
-        'is_verified',
-        'last_login_at',
-    ];
+    protected $fillable;
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Get hidden fields from schema
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden;
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Get casts from schema
      */
-    protected function casts(): array
+    protected $casts;
+
+    public function __construct(array $attributes = [])
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'last_login_at' => 'datetime',
-            'is_active' => 'boolean',
-            'is_verified' => 'boolean',
-            'password' => 'hashed',
-        ];
+        // Set fillable, hidden, and casts from schema
+        $this->fillable = UserSchema::getFillableFields();
+        $this->hidden = UserSchema::getHiddenFields();
+        $this->casts = UserSchema::getCasts();
+        
+        parent::__construct($attributes);
     }
 
     /**
-     * Get the user's full name.
+     * Computed attributes
      */
     public function getFullNameAttribute(): string
     {
@@ -132,5 +114,28 @@ class User extends Authenticatable
     public function appointments()
     {
         return $this->hasMany(Appointment::class, 'assigned_official');
+    }
+
+    /**
+     * Scopes
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeVerified($query)
+    {
+        return $query->where('is_verified', true);
+    }
+
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    public function scopeByDepartment($query, $department)
+    {
+        return $query->where('department', $department);
     }
 }

@@ -5,7 +5,7 @@ import AddNewResident from "./AddNewResident";
 import EditResident from "./EditResident";
 import ViewResident from "./ViewResident";
 import StatCard from "./StatCard";
-import { apiService } from "../services/api";
+import { residentsService } from "../services";
 
 const ResidentManagement: React.FC = () => {
   // API integration states
@@ -51,119 +51,145 @@ const ResidentManagement: React.FC = () => {
 
     return () => clearTimeout(delayedSearch);
   }, [searchTerm]);
-
   const loadResidents = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await apiService.getResidents({
+      const response = await residentsService.getResidents({
         page: currentPage,
         per_page: 15,
         search: searchTerm,
       });
-      setResidents(response.data);
+
+      console.log("Residents loaded successfully:", response);
+      
+      // Map the backend data to the expected format
+      const mappedResidents = response.data.map((resident: any) => ({
+        id: resident.id,
+        name: `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}${resident.suffix ? ', ' + resident.suffix : ''}`,
+        age: resident.age || (resident.birth_date ? new Date().getFullYear() - new Date(resident.birth_date).getFullYear() : 0),
+        gender: resident.gender === 'MALE' ? 'Male' : 'Female',
+        phone: resident.mobile_number || resident.telephone_number || 'N/A',
+        email: resident.email_address || 'N/A',
+        address: resident.complete_address || 'N/A',
+        category: getResidentCategory(resident),
+        status: resident.status,
+        // Keep original resident data for editing
+        originalData: resident,
+      }));
+      
+      setResidents(mappedResidents);
       setPagination({
         current_page: response.current_page,
         last_page: response.last_page,
         per_page: response.per_page,
         total: response.total,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load residents:", error);
-      // Keep the mock data as fallback
-      setResidents([
-        {
-          id: 1,
-          name: "Maria Santos",
-          age: 34,
-          gender: "Female",
-          phone: "+63-945-890-9999",
-          email: "maria.santos@gmail.com",
-          address: "Purok 1, San Miguel",
-          category: "Senior Citizen",
-          status: "Active",
-          photo:
-            "https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80",
-        },
-        // ... other mock residents
-      ]);
+      setError("Failed to load residents. Please try again.");
+      // Clear residents on error
+      setResidents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadStatistics = async () => {
+  // Helper function to determine resident category
+  const getResidentCategory = (resident: any): string => {
+    const categories = [];
+    if (resident.senior_citizen) categories.push("Senior Citizen");
+    if (resident.person_with_disability) categories.push("PWD");
+    if (resident.four_ps_beneficiary) categories.push("4Ps");
+    if (resident.is_household_head) categories.push("Household Head");
+    if (resident.indigenous_people) categories.push("Indigenous");
+    
+    return categories.length > 0 ? categories.join(", ") : "Regular";
+  };  const loadStatistics = async () => {
     try {
-      const stats = await apiService.getResidentStatistics();
-      setStatistics(stats);
+      const stats = await residentsService.getStatistics();
+      
+      setStatistics({
+        total_residents: stats.total_residents || 0,
+        pwd_count: stats.pwd_count || stats.persons_with_disability || 0,
+        senior_citizens: stats.senior_citizens || 0,
+        children_count: stats.children_count || stats.residents_by_age_group?.children || 0,
+      });
     } catch (error) {
       console.error("Failed to load statistics:", error);
-      // Keep fallback values
+      setError("Failed to load statistics.");
+      // Keep current values as fallback
     }
   };
-
   const handleAddResident = async (residentData: any) => {
-    setLoading(true);
+    setIsLoading(true);
+    setError(null);
     try {
-      await apiService.createResident(residentData);
-      console.log("New resident created successfully");
+      const newResident = await residentsService.createResident(residentData);
+      console.log("New resident created successfully:", newResident);
+      
       // Reload residents to get updated data
       await loadResidents();
       await loadStatistics();
       setShowAddForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create resident:", error);
-      // Handle error (show notification, etc.)
+      setError(error.message || "Failed to create resident. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleEditResident = async (residentData: any) => {
-    setLoading(true);
+    setIsLoading(true);
+    setError(null);
     try {
-      await apiService.updateResident(residentData.id, residentData);
-      console.log("Resident updated successfully");
+      const updatedResident = await residentsService.updateResident(residentData.id, residentData);
+      console.log("Resident updated successfully:", updatedResident);
+      
       // Reload residents to get updated data
       await loadResidents();
       await loadStatistics();
       setShowEditForm(false);
       setSelectedResident(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update resident:", error);
-      // Handle error (show notification, etc.)
+      setError(error.message || "Failed to update resident. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
   const openEditForm = (resident: any) => {
-    setSelectedResident(resident);
+    // Pass the original backend data for editing
+    setSelectedResident(resident.originalData || resident);
     setShowEditForm(true);
   };
 
   const openViewForm = (resident: any) => {
-    setSelectedResident(resident);
+    // Pass the original backend data for viewing
+    setSelectedResident(resident.originalData || resident);
     setShowViewForm(true);
   };
-
   const handleDeleteResident = async (residentId: number) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this resident? This action cannot be undone."
+        "Are you sure you want to deactivate this resident? This will change their status to inactive."
       )
     ) {
-      setLoading(true);
+      setIsDeleting(residentId);
+      setError(null);
       try {
-        await apiService.deleteResident(residentId);
-        console.log("Resident deleted successfully");
+        await residentsService.deleteResident(residentId);
+        console.log("Resident deactivated successfully");
+        
         // Reload residents to get updated data
         await loadResidents();
         await loadStatistics();
-      } catch (error) {
-        console.error("Failed to delete resident:", error);
-        // Handle error (show notification, etc.)
+      } catch (error: any) {
+        console.error("Failed to deactivate resident:", error);
+        setError(error.message || "Failed to deactivate resident. Please try again.");
       } finally {
-        setLoading(false);
+        setIsDeleting(null);
       }
     }
   };
@@ -334,7 +360,7 @@ const ResidentManagement: React.FC = () => {
                           <img
                             src={
                               resident.photo ||
-                              "https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80"
+                              "https://placehold.co/80"
                             }
                             alt={
                               resident.name ||
@@ -351,7 +377,7 @@ const ResidentManagement: React.FC = () => {
                               {resident.age ||
                                 (resident.birth_date
                                   ? new Date().getFullYear() -
-                                    new Date(resident.birth_date).getFullYear()
+                                  new Date(resident.birth_date).getFullYear()
                                   : "N/A")}{" "}
                               years old, {resident.gender}
                             </div>
@@ -374,11 +400,10 @@ const ResidentManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            resident.status === "Active" || resident.is_active
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${resident.status === "Active" || resident.is_active
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {resident.status ||
                             (resident.is_active ? "Active" : "Inactive")}
@@ -399,14 +424,17 @@ const ResidentManagement: React.FC = () => {
                             onClick={() => openEditForm(resident)}
                           >
                             <FiEdit className="w-4 h-4" />
-                          </button>
-                          <button
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete resident"
+                          </button>                          <button
+                            className={`text-red-600 hover:text-red-900 ${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={isDeleting === resident.id ? "Deactivating..." : "Deactivate resident"}
                             onClick={() => handleDeleteResident(resident.id)}
-                            disabled={loading}
+                            disabled={isDeleting === resident.id || isLoading}
                           >
-                            <FiTrash2 className="w-4 h-4" />
+                            {isDeleting === resident.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            ) : (
+                              <FiTrash2 className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -446,11 +474,10 @@ const ResidentManagement: React.FC = () => {
                   return (
                     <button
                       key={pageNum}
-                      className={`px-3 py-1 text-sm rounded ${
-                        isCurrentPage
+                      className={`px-3 py-1 text-sm rounded ${isCurrentPage
                           ? "bg-smblue-400 text-white"
                           : "text-gray-700 hover:bg-gray-100"
-                      }`}
+                        }`}
                       onClick={() => setCurrentPage(pageNum)}
                       disabled={loading}
                     >

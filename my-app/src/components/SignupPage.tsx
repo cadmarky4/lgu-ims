@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-interface SignupPageProps {
-  onSignup: (userData: any) => void;
-  onNavigateToLogin: () => void;
-}
-
-const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) => {
+const SignupPage: React.FC = () => {
+  const { register, isLoading } = useAuth();
+  const [error, setError] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     middleName: '',
-    position: '',
+    role: '',
     department: '',
+    position: '',
     employeeId: '',
     email: '',
     phone: '',
@@ -20,7 +21,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
     confirmPassword: '',
     agreeToTerms: false
   });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = 'checked' in e.target ? e.target.checked : false;
@@ -28,19 +28,57 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    // Clear errors when user starts typing
+    if (error) setError('');
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setValidationErrors({});
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
     if (!formData.agreeToTerms) {
-      alert('Please agree to the terms and conditions!');
+      setError('Please agree to the terms and conditions!');
       return;
     }
-    onSignup(formData);
+    
+    try {
+      // Map frontend field names to backend field names
+      const backendData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        middle_name: formData.middleName,
+        role: formData.role,
+        department: formData.department,
+        position: formData.position,
+        employee_id: formData.employeeId,
+        phone: formData.phone,
+      };
+      
+      await register(backendData);
+      // Navigation will be handled by ProtectedRoute
+    } catch (err: any) {
+      if (err.message === 'Validation errors' && err.errors) {
+        setValidationErrors(err.errors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Registration failed');
+      }
+    }
   };
 
   return (
@@ -68,11 +106,16 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
           <h1 className="text-3xl font-bold text-gray-800 mb-2">BARANGAY SAN MIGUEL</h1>
           <p className="text-gray-600 text-lg">Information Management System</p>
           <div className="w-16 h-px bg-gray-400 mx-auto mt-4"></div>
-        </div>
-
-        {/* Signup Form */}
+        </div>        {/* Signup Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-sm bg-opacity-95">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Create Account</h2>
+          
+          {/* Error Messages */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name Fields */}
@@ -120,9 +163,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder="Middle name (optional)"
               />
-            </div>
-
-            {/* Employee ID and Position */}
+            </div>            {/* Employee ID and Role */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -134,41 +175,52 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
                   value={formData.employeeId}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Employee ID"
-                  required
+                  placeholder="Employee ID (optional)"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Position
+                  Role *
                 </label>
                 <select
-                  name="position"
-                  value={formData.position}
+                  name="role"
+                  value={formData.role}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  aria-label="Select Position"
+                  aria-label="Select Role"
                   required
                 >
-                  <option value="">Select Position</option>
-                  <option value="Barangay Captain">Barangay Captain</option>
-                  <option value="Barangay Kagawad">Barangay Kagawad</option>
-                  <option value="Barangay Secretary">Barangay Secretary</option>
-                  <option value="Barangay Treasurer">Barangay Treasurer</option>
-                  <option value="SK Chairperson">SK Chairperson</option>
-                  <option value="Records Officer">Records Officer</option>
-                  <option value="Administrative Assistant">Administrative Assistant</option>
-                  <option value="Data Encoder">Data Encoder</option>
-                  <option value="IT Support">IT Support</option>
-                  <option value="Other">Other</option>
+                  <option value="">Select Role</option>
+                  <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
+                  <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
+                  <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
+                  <option value="KAGAWAD">Kagawad</option>
+                  <option value="SK_CHAIRPERSON">SK Chairperson</option>
+                  <option value="SK_KAGAWAD">SK Kagawad</option>
+                  <option value="ADMIN">Administrator</option>
+                  <option value="STAFF">Staff</option>
+                  <option value="USER">General User</option>
                 </select>
               </div>
             </div>
 
-            {/* Department */}
+            {/* Position */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department/Office
+                Position/Job Title
+              </label>
+              <input
+                type="text"
+                name="position"
+                value={formData.position}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="e.g., Administrative Assistant, Records Officer"
+              />
+            </div>            {/* Department */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department/Office *
               </label>
               <select
                 name="department"
@@ -179,15 +231,15 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
                 required
               >
                 <option value="">Select Department</option>
-                <option value="Barangay Council">Barangay Council</option>
-                <option value="Administrative Office">Administrative Office</option>
-                <option value="Records Management">Records Management</option>
-                <option value="Permit and Licensing">Permit and Licensing</option>
-                <option value="Social Services">Social Services</option>
-                <option value="Public Safety">Public Safety</option>
-                <option value="Environment and Sanitation">Environment and Sanitation</option>
+                <option value="Executive Office">Executive Office</option>
+                <option value="Secretary Office">Secretary Office</option>
+                <option value="Treasury Office">Treasury Office</option>
+                <option value="Council">Council</option>
+                <option value="SK Office">SK Office</option>
+                <option value="Records Office">Records Office</option>
+                <option value="Administration">Administration</option>
+                <option value="General Staff">General Staff</option>
                 <option value="IT Department">IT Department</option>
-                <option value="Finance Office">Finance Office</option>
               </select>
             </div>
 
@@ -285,14 +337,23 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
               <label className="ml-2 block text-sm text-gray-700">
                 I agree to the <button type="button" className="text-blue-600 hover:text-blue-800">Terms and Conditions</button>
               </label>
-            </div>
-
-            {/* Signup Button */}
+            </div>            {/* Signup Button */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg disabled:cursor-not-allowed"
             >
-              Create Account
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating Account...
+                </span>
+              ) : (
+                'Create Account'
+              )}
             </button>
 
             {/* Divider */}
@@ -306,13 +367,12 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onNavigateToLogin }) 
             </div>
 
             {/* Back to Login Button */}
-            <button
-              type="button"
-              onClick={onNavigateToLogin}
-              className="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 transition-colors duration-200"
+            <Link
+              to="/login"
+              className="w-full bg-white hover:bg-gray-50 text-blue-600 font-medium py-3 px-4 rounded-lg border border-blue-600 transition-colors duration-200 text-center block"
             >
               Already have an account? Sign In
-            </button>
+            </Link>
           </form>
         </div>
 

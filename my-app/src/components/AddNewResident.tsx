@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { FiUpload } from "react-icons/fi";
-import { apiService } from "../services/api";
+import { residentsService } from "../services";
+import { 
+  type ResidentFormData, 
+  type Resident, 
+  type Purok
+} from "../services/types";
 
 interface AddNewResidentProps {
   onClose: () => void;
-  onSave: (residentData: any) => void;
+  onSave: (residentData: Resident) => void;
 }
 
 const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
@@ -13,10 +18,13 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
-  const [duplicateResidents, setDuplicateResidents] = useState<any[]>([]);
+  const [duplicateResidents, setDuplicateResidents] = useState<Resident[]>([]);
+  
   // Reference data from backend
-  const [puroks, setPuroks] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
+  const [puroks, setPuroks] = useState<Purok[]>([]);
+  
+  // Initialize form data with proper typing
+  const [formData, setFormData] = useState<ResidentFormData>({
     // Basic Information
     firstName: "",
     lastName: "",
@@ -38,11 +46,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     houseNumber: "",
     street: "",
     purok: "",
-    completeAddress: "",
-    // Family Information
-    householdId: "",
-    isHouseholdHead: "",
-    relationshipToHead: "",
+    completeAddress: "",    // Family Information - household relationship fields removed
+    // These will be managed by the Household module
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -54,8 +59,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     philhealthNumber: "",
     sssNumber: "",
     tinNumber: "",
-    votersIdNumber: "",
-    // Required fields that were missing
+    votersIdNumber: "",    // Required fields that were missing
     occupation: "",
     employer: "",
     monthlyIncome: "",
@@ -87,6 +91,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       [name]: value,
     }));
   };
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData((prev) => ({
@@ -110,6 +115,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       },
     }));
   };
+
   // Auto-calculate age when birth date changes
   useEffect(() => {
     if (formData.birthDate) {
@@ -134,7 +140,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     const checkDuplicates = async () => {
       if (formData.firstName && formData.lastName && formData.birthDate) {
         try {
-          const duplicates = await apiService.checkDuplicateResident(
+          const duplicates = await residentsService.checkDuplicate(
             formData.firstName,
             formData.lastName,
             formData.birthDate
@@ -157,7 +163,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
     const delayedCheck = setTimeout(checkDuplicates, 1000);
     return () => clearTimeout(delayedCheck);
-  }, [formData.firstName, formData.lastName, formData.birthDate]); // Fetch reference data on component mount
+  }, [formData.firstName, formData.lastName, formData.birthDate]);
+
+  // Fetch reference data on component mount
   useEffect(() => {
     const fetchReferenceData = async () => {
       setIsLoading(true);
@@ -187,82 +195,18 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
     fetchReferenceData();
   }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Transform form data to match backend API expectations
-      const residentData = {
-        // Basic Information
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        middle_name: formData.middleName || null,
-        suffix: formData.suffix || null,
-        birth_date: formData.birthDate,
-        birth_place: formData.birthPlace,
-        gender: formData.gender,
-        civil_status: formData.civilStatus,
-        nationality: formData.nationality,
-        religion: formData.religion || null,
-        employment_status: formData.employmentStatus || null,
-        educational_attainment: formData.educationalAttainment || null,
-
-        // Contact Information
-        mobile_number: formData.mobileNumber || null,
-        telephone_number: formData.landlineNumber || null,
-        email_address: formData.emailAddress || null,
-        complete_address: formData.completeAddress,
-        house_number: formData.houseNumber || null,
-        street: formData.street || null,
-        purok: formData.purok || null,
-
-        // Family Information
-        household_id: formData.householdId || null,
-        is_household_head: formData.isHouseholdHead === "yes",
-        relationship_to_head: formData.relationshipToHead || null,
-        emergency_contact_name: formData.emergencyContactName || null,
-        emergency_contact_number: formData.emergencyContactNumber || null,
-        emergency_contact_relationship:
-          formData.emergencyContactRelationship || null,
-        // Government IDs
-        philhealth_number: formData.philhealthNumber || null,
-        sss_number: formData.sssNumber || null,
-        tin_number: formData.tinNumber || null,
-        voters_id_number: formData.votersIdNumber || null,
-        voter_status: formData.voterStatus || "NOT_REGISTERED",
-        precinct_number: formData.precinctNumber || null,
-
-        // Employment Information
-        occupation: formData.occupation || null,
-        employer: formData.employer || null,
-        monthly_income: formData.monthlyIncome
-          ? parseFloat(formData.monthlyIncome)
-          : null,
-
-        // Health & Medical
-        medical_conditions: formData.medicalConditions || null,
-        allergies: formData.allergies || null,
-
-        // Special Classifications
-        senior_citizen: formData.specialClassifications.seniorCitizen,
-        person_with_disability:
-          formData.specialClassifications.personWithDisability,
-        disability_type: formData.specialClassifications.disabilityType || null,
-        indigenous_people: formData.specialClassifications.indigenousPeople,
-        indigenous_group:
-          formData.specialClassifications.indigenousGroup || null,
-        four_ps_beneficiary: formData.specialClassifications.fourPsBeneficiary,
-        four_ps_household_id:
-          formData.specialClassifications.fourPsHouseholdId || null,
-
-        // Default values
-        status: "ACTIVE",
-      };
+      // Use the service's transform method to convert form data to API format
+      const residentData = residentsService.transformFormDataToApiFormat(formData);
 
       // Use the API service to create the resident
-      const newResident = await apiService.createResident(residentData);
+      const newResident = await residentsService.createResident(residentData);
 
       console.log("New resident created successfully:", newResident);
 
@@ -272,15 +216,36 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     } catch (err: any) {
       console.error("Error saving resident:", err);
 
-      // Handle validation errors
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(`Validation failed: ${errorMessages.join(", ")}`);
+      // Handle different types of errors
+      if (err.message) {
+        try {
+          // Try to parse JSON error message
+          const errorData = JSON.parse(err.message);
+          if (errorData.errors) {
+            const errorMessages = Object.values(errorData.errors).flat();
+            setError(`Validation failed: ${errorMessages.join(", ")}`);
+          } else {
+            setError(errorData.message || "Failed to save resident");
+          }
+        } catch {
+          // If not JSON, use the message as is
+          setError(err.message);
+        }
       } else {
-        setError(err.message || "Failed to save resident. Please try again.");
+        setError("Failed to save resident. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // File upload handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Store file for later upload after resident is created
+      // You might want to add this to state if needed
+      console.log("File selected:", file.name);
     }
   };
 
@@ -291,13 +256,15 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         <h1 className="text-2xl font-bold text-darktext pl-0">
           Add New Resident Profile
         </h1>
-      </div>{" "}
+      </div>
+      
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
+      
       {/* Duplicate Warning */}
       {duplicateWarning && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -321,12 +288,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           )}
         </div>
       )}
+      
       {/* Loading State */}
       {isLoading && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
+      
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
@@ -535,7 +504,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 <option value="STUDENT">Student</option>
                 <option value="OFW">OFW</option>
               </select>
-            </div>{" "}
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Educational Attainment
@@ -561,8 +530,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 placeholder="e.g. Teacher, Engineer, Farmer..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>
-            <div>
+            </div>            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Employer
               </label>
@@ -577,14 +545,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Income
+                Monthly Income (PHP)
               </label>
               <input
                 type="number"
                 name="monthlyIncome"
                 value={formData.monthlyIncome}
                 onChange={handleInputChange}
-                placeholder="0.00"
+                placeholder="Enter monthly income..."
                 min="0"
                 step="0.01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
@@ -712,68 +680,11 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Family Information
-          </h2>
-          <div className="border-b border-gray-200 mb-6"></div>
+          </h2>          <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Are you the household head? *
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="yes"
-                  checked={formData.isHouseholdHead === "yes"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="no"
-                  checked={formData.isHouseholdHead === "no"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
-          </div>
+          {/* Household relationship fields removed - managed by Household module */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Household ID
-              </label>
-              <input
-                type="text"
-                name="householdId"
-                value={formData.householdId}
-                onChange={handleInputChange}
-                placeholder="Enter household ID if applicable"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Relationship to Head
-              </label>
-              <input
-                type="text"
-                name="relationshipToHead"
-                value={formData.relationshipToHead}
-                onChange={handleInputChange}
-                placeholder="e.g. Son, Daughter, Spouse..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -925,7 +836,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
                 placeholder="XXX-XXX-XXX-XXX"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>{" "}
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Voter's ID Number
@@ -1134,6 +1045,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
               accept="image/*"
               className="hidden"
               id="profilePhoto"
+              onChange={handleFileUpload}
             />
             <label htmlFor="profilePhoto" className="cursor-pointer"></label>
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,6 +7,8 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -28,7 +30,7 @@ const AppLayout: React.FC = () => {
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 768px)").matches
   );
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const { logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,10 +45,9 @@ const AppLayout: React.FC = () => {
     navigate(`/${item}`);
     if (isMobile) setIsOpen(false);
   };
-
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    navigate("/login");
+    logout();
+    // No need to navigate here since logout() handles the redirect
   };
 
   const handleSidebarToggle = () => {
@@ -82,8 +83,7 @@ const AppLayout: React.FC = () => {
           onItemClick={handleMenuItemClick}
           isExpanded={isOpen}
           isMobile={isMobile}
-        />
-        <main className="flex-1 mt-[81px] h-[calc(100vh-81px)] overflow-y-auto">
+        />        <main className="flex-1 mt-[81px] h-[calc(100vh-81px)] overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -193,45 +193,40 @@ const AppLayout: React.FC = () => {
 
 // Main App Component with Authentication
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [authView, setAuthView] = useState<"login" | "signup">("login");
-
-  const handleLogin = (credentials: {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-  }) => {
-    console.log("Login attempt:", credentials);
-    setIsAuthenticated(true);
-  };
-
-  const handleSignup = (userData: any) => {
-    console.log("Signup data:", userData);
-    setIsAuthenticated(true);
-  };
-
-  if (!isAuthenticated) {
-    if (authView === "login") {
-      return (
-        <LoginPage
-          onLogin={handleLogin}
-          onNavigateToSignup={() => setAuthView("signup")}
-        />
-      );
-    } else {
-      return (
-        <SignupPage
-          onSignup={handleSignup}
-          onNavigateToLogin={() => setAuthView("login")}
-        />
-      );
-    }
-  }
-
   return (
-    <Router>
-      <AppLayout />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public routes - only accessible when NOT authenticated */}
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute requireAuth={false}>
+                <LoginPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <ProtectedRoute requireAuth={false}>
+                <SignupPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - only accessible when authenticated */}
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute requireAuth={true}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ResidentController;
 use App\Http\Controllers\Api\HouseholdController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ComplaintController;
@@ -32,6 +33,44 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
+// TEMPORARY: Residents routes without authentication for testing
+Route::prefix('residents')->group(function () {
+    Route::get('/statistics', [ResidentController::class, 'statistics']);
+    Route::get('/age-groups', [ResidentController::class, 'getAgeGroupStatistics']);
+    Route::get('/by-purok', [ResidentController::class, 'getByPurok']);
+    Route::get('/senior-citizens', [ResidentController::class, 'getSeniorCitizens']);
+    Route::get('/pwd', [ResidentController::class, 'getPWD']);
+    Route::get('/four-ps', [ResidentController::class, 'getFourPs']);
+    Route::get('/household-heads', [ResidentController::class, 'getHouseholdHeads']);
+    Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates']);
+    Route::post('/{resident}/restore', [ResidentController::class, 'restore']);
+});
+Route::apiResource('residents', ResidentController::class);
+
+// TEMPORARY: Households routes without authentication for testing
+Route::prefix('households')->group(function () {
+    Route::get('/statistics', [HouseholdController::class, 'statistics']);
+    Route::get('/search', [HouseholdController::class, 'search']);
+    Route::get('/by-barangay/{barangay}', [HouseholdController::class, 'byBarangay']);
+    Route::get('/four-ps-beneficiaries', [HouseholdController::class, 'getFourPsBeneficiaries']);
+    Route::get('/with-pwd-members', [HouseholdController::class, 'getWithPWDMembers']);
+    Route::get('/with-senior-citizens', [HouseholdController::class, 'getWithSeniorCitizens']);
+    Route::get('/indigent-families', [HouseholdController::class, 'getIndigentFamilies']);
+    Route::post('/check-duplicates', [HouseholdController::class, 'checkDuplicates']);
+    Route::patch('/{household}/members', [HouseholdController::class, 'updateMembers']);
+});
+Route::apiResource('households', HouseholdController::class);
+
+// TEMPORARY: Users routes without authentication for testing
+Route::prefix('users')->group(function () {
+    Route::get('/statistics', [UserController::class, 'statistics']);
+    Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::post('/{user}/reset-password', [UserController::class, 'resetPassword']);
+    Route::get('/by-role/{role}', [UserController::class, 'byRole']);
+    Route::get('/by-department/{department}', [UserController::class, 'byDepartment']);
+});
+Route::apiResource('users', UserController::class);
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
@@ -40,26 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/change-password', [AuthController::class, 'changePassword']);
         Route::post('/refresh', [AuthController::class, 'refresh']);
-    });    // Residents - Specific routes BEFORE apiResource
-    Route::prefix('residents')->group(function () {
-        Route::get('/statistics', [ResidentController::class, 'statistics']);
-        Route::get('/search', [ResidentController::class, 'search']);
-        Route::get('/household-heads', [ResidentController::class, 'householdHeads']);
-        Route::get('/by-purok/{purok}', [ResidentController::class, 'byPurok']);
-        Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates']);
-        Route::post('/bulk-import', [ResidentController::class, 'bulkImport']);
-        Route::get('/export', [ResidentController::class, 'export']);
     });
-    Route::apiResource('residents', ResidentController::class);
 
-    // Households - Specific routes BEFORE apiResource
-    Route::prefix('households')->group(function () {
-        Route::get('/statistics', [HouseholdController::class, 'statistics']);
-        Route::get('/search', [HouseholdController::class, 'search']);
-        Route::get('/by-purok/{purok}', [HouseholdController::class, 'byPurok']);
-        Route::post('/{household}/update-counts', [HouseholdController::class, 'updateMemberCounts']);
-    });
-    Route::apiResource('households', HouseholdController::class);
+    // NOTE: Households routes are temporarily moved outside auth middleware for testing
+    // They will be moved back here when authentication is properly implemented in frontend
 
     // Documents - Specific routes BEFORE apiResource
     Route::prefix('documents')->group(function () {

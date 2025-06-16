@@ -1,114 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiLock, FiPower } from 'react-icons/fi';
 import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
 import AddNewUser from './AddNewUser';
+import EditUser from './EditUser';
+import ViewUser from './ViewUser';
+import ResetPassword from './ResetPassword';
 import StatCard from './StatCard';
+import { UsersService } from '../services/users.service';
+import type { User, UserParams } from '../services/types';
 
 const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewForm, setShowViewForm] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+    // Service integration state
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    per_page: 15
+  });
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    admins: 0,
+    newThisMonth: 0
+  });
+  
+  const usersService = new UsersService();
+  // Fetch users data
+  useEffect(() => {
+    fetchUsers();
+    fetchStats();
+  }, [currentPage, searchTerm, roleFilter, statusFilter]);
 
-  const users = [
-    {
-      id: 1,
-      firstName: 'Juan',
-      lastName: 'Dela Cruz',
-      email: 'juan.delacruz@barangay.gov.ph',
-      username: 'jdelacruz',
-      role: 'ADMIN',
-      department: 'Administration',
-      status: 'Active',
-      lastLogin: '2024-01-15 09:30 AM',
-      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 2,
-      firstName: 'Maria',
-      lastName: 'Santos',
-      email: 'maria.santos@barangay.gov.ph',
-      username: 'msantos',
-      role: 'BARANGAY_SECRETARY',
-      department: 'Secretary Office',
-      status: 'Active',
-      lastLogin: '2024-01-15 08:45 AM',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 3,
-      firstName: 'Roberto',
-      lastName: 'Garcia',
-      email: 'roberto.garcia@barangay.gov.ph',
-      username: 'rgarcia',
-      role: 'BARANGAY_CAPTAIN',
-      department: 'Executive Office',
-      status: 'Active',
-      lastLogin: '2024-01-14 04:20 PM',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 4,
-      firstName: 'Ana',
-      lastName: 'Rodriguez',
-      email: 'ana.rodriguez@barangay.gov.ph',
-      username: 'arodriguez',
-      role: 'STAFF',
-      department: 'Records Office',
-      status: 'Active',
-      lastLogin: '2024-01-15 07:15 AM',
-      photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 5,
-      firstName: 'Carlos',
-      lastName: 'Mendoza',
-      email: 'carlos.mendoza@barangay.gov.ph',
-      username: 'cmendoza',
-      role: 'KAGAWAD',
-      department: 'Council',
-      status: 'Inactive',
-      lastLogin: '2024-01-10 11:30 AM',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 6,
-      firstName: 'Sofia',
-      lastName: 'Reyes',
-      email: 'sofia.reyes@barangay.gov.ph',
-      username: 'sreyes',
-      role: 'BARANGAY_TREASURER',
-      department: 'Treasury Office',
-      status: 'Active',
-      lastLogin: '2024-01-15 10:00 AM',
-      photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 7,
-      firstName: 'Miguel',
-      lastName: 'Torres',
-      email: 'miguel.torres@barangay.gov.ph',
-      username: 'mtorres',
-      role: 'USER',
-      department: 'General Staff',
-      status: 'Pending',
-      lastLogin: 'Never logged in',
-      photo: 'https://images.unsplash.com/photo-1522075469751-3847ee75b94e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
-    },
-    {
-      id: 8,
-      firstName: 'Isabella',
-      lastName: 'Cruz',
-      email: 'isabella.cruz@barangay.gov.ph',
-      username: 'icruz',
-      role: 'SK_CHAIRPERSON',
-      department: 'SK Office',
-      status: 'Active',
-      lastLogin: '2024-01-15 06:45 AM',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80'
+  // Reset page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
     }
-  ];
+  }, [searchTerm, roleFilter, statusFilter]);const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params: UserParams = {
+        page: currentPage,
+        per_page: 15,
+        search: searchTerm || undefined,
+        role: roleFilter || undefined,
+        is_active: statusFilter === 'Active' ? true : statusFilter === 'Inactive' ? false : undefined,
+      };
+
+      console.log('Fetching users with params:', params);
+      const response = await usersService.getUsers(params);
+      console.log('Users response:', response);
+      
+      // Ensure we always set an array
+      setUsers(Array.isArray(response.data) ? response.data : []);
+      
+      // Update pagination state
+      setPagination({
+        total: response.total || 0,
+        current_page: response.current_page || 1,
+        last_page: response.last_page || 1,
+        per_page: 15
+      });
+    } catch (err: any) {
+      console.error('Error fetching users:', err);
+      
+      // Check if it's a network error (backend not running)
+      if (err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
+        setError('Cannot connect to server. Please make sure the backend is running on http://127.0.0.1:8000');
+      } else {
+        setError(err.message || 'Failed to fetch users');
+      }
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchStats = async () => {
+    try {
+      const statsResponse = await usersService.getUserStatistics();
+      console.log('Stats response:', statsResponse);
+      
+      // Map backend response to frontend expected format
+      setStats({
+        total: statsResponse.total || 0,
+        active: statsResponse.active || 0,
+        admins: statsResponse.admins || 0,
+        newThisMonth: statsResponse.newThisMonth || 0
+      });
+    } catch (err: any) {
+      console.error('Failed to fetch user statistics:', err);
+      // Set default values on error
+      setStats({
+        total: 0,
+        active: 0,
+        admins: 0,
+        newThisMonth: 0
+      });
+    }
+  };
 
   const getRoleBadgeColor = (role: string) => {
     const colors: { [key: string]: string } = {
@@ -126,75 +129,167 @@ const UserManagement: React.FC = () => {
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      'Active': 'bg-green-100 text-green-800',
-      'Inactive': 'bg-red-100 text-red-800',
-      'Pending': 'bg-yellow-100 text-yellow-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+  const getStatusBadgeColor = (isActive: boolean) => {
+    return isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  };
+  const getStatusText = (isActive: boolean) => {
+    return isActive ? 'Active' : 'Inactive';
   };
 
   const formatRoleName = (role: string) => {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
-
-  const handleAddUser = (userData: any) => {
-    console.log('New user data:', userData);
-    // Here you would typically save to a database
+  const handleAddUser = async (userData: any) => {
+    await handleUserSaved(userData);
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === '' || user.role === roleFilter;
-    const matchesStatus = statusFilter === '' || user.status === statusFilter;
+  const handleDeleteUser = async (userId: number) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
     
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+    try {
+      setError(null);
+      await usersService.deleteUser(userId);
+      await fetchUsers();
+      await fetchStats();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete user');
+    }
+  };
+  const handleToggleStatus = async (userId: number) => {
+    try {
+      setError(null);
+      await usersService.toggleUserStatus(userId);
+      await fetchUsers();
+      await fetchStats();
+    } catch (err: any) {
+      setError(err.message || 'Failed to toggle user status');
+    }
+  };
 
+  const handleViewUser = (userId: number) => {
+    setSelectedUserId(userId);
+    setShowViewForm(true);
+  };
+
+  const handleEditUser = (userId: number) => {
+    setSelectedUserId(userId);
+    setShowEditForm(true);
+  };
+  const handleResetPassword = (userId: number, userName: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
+    setShowResetPassword(true);
+  };
+  const handleCloseModals = () => {
+    setShowAddForm(false);
+    setShowEditForm(false);
+    setShowViewForm(false);
+    setShowResetPassword(false);
+    setSelectedUserId(null);
+    setSelectedUserName('');
+  };
+  const handleUserSaved = async (user: any) => {
+    console.log('User saved:', user);
+    // Refresh the users list
+    await fetchUsers();
+    await fetchStats();
+    handleCloseModals();
+  };
+
+  const handlePasswordResetSuccess = async () => {
+    alert('Password reset successfully!');
+    handleCloseModals();
+  };
+  const filteredUsers = useMemo(() => {
+    if (!Array.isArray(users)) {
+      console.warn('Users is not an array:', users);
+      return [];
+    }
+    
+    // Since we're doing server-side filtering via the API, 
+    // we don't need to filter again on the frontend
+    // The API already returns filtered results based on search, role, and status
+    return users;
+  }, [users]);
   if (showAddForm) {
     return (
       <AddNewUser 
-        onClose={() => setShowAddForm(false)} 
+        onClose={handleCloseModals} 
         onSave={handleAddUser}
+      />
+    );
+  }
+
+  if (showEditForm && selectedUserId) {
+    return (
+      <EditUser 
+        userId={selectedUserId}
+        onClose={handleCloseModals} 
+        onSave={handleUserSaved}
+      />
+    );
+  }
+  if (showViewForm && selectedUserId) {
+    return (
+      <ViewUser 
+        userId={selectedUserId}
+        onClose={handleCloseModals}
+        onEdit={() => {
+          setShowViewForm(false);
+          setShowEditForm(true);
+        }}
+      />
+    );
+  }
+
+  if (showResetPassword && selectedUserId) {
+    return (
+      <ResetPassword 
+        userId={selectedUserId}
+        userName={selectedUserName}
+        onClose={handleCloseModals}
+        onSuccess={handlePasswordResetSuccess}
       />
     );
   }
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      {/* Page Header */}
-      <div className="mb-2">
+      {/* Page Header */}      <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">User Management</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Statistics Overview */}
       <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4">          
           <StatCard 
             title="Total Users" 
-            value={156} 
+            value={stats.total} 
             icon={FaUsers}
           />
           <StatCard 
             title="Active Users" 
-            value={142} 
+            value={stats.active} 
             icon={FaUserCheck}
           />
           <StatCard 
             title="Administrators" 
-            value={8} 
+            value={stats.admins} 
             icon={FaShieldAlt}
           />
           <StatCard 
             title="New This Month" 
-            value={12} 
+            value={stats.newThisMonth} 
             icon={FaUserPlus}
           />
               </div>
@@ -274,114 +369,151 @@ const UserManagement: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        src={user.photo}
-                        alt={`${user.firstName} ${user.lastName}`}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.firstName} {user.lastName}
+            </thead>            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-red-500">
+                    {error}
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <img
+                          src="https://placehold.co/80"
+                          alt={`${user.first_name} ${user.last_name}`}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.first_name} {user.last_name}
+                          </div>
+                          <div className="text-sm text-gray-500">@{user.username}</div>
                         </div>
-                        <div className="text-sm text-gray-500">@{user.username}</div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{user.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
                         {formatRoleName(user.role)}
                       </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.department}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.lastLogin}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        className="text-smblue-400 hover:text-smblue-300"
-                        title="View user details"
-                      >
-                        <FiEye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-smblue-400 hover:text-smblue-300"
-                        title="Edit user"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-yellow-600 hover:text-yellow-900"
-                        title="Reset password"
-                      >
-                        <FiLock className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-orange-600 hover:text-orange-900"
-                        title="Toggle status"
-                      >
-                        <FiPower className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete user"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {user.department}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(user.is_active)}`}>
+                        {getStatusText(user.is_active)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never logged in'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">                        <button 
+                          className="text-smblue-400 hover:text-smblue-300"
+                          title="View user details"
+                          onClick={() => handleViewUser(user.id)}
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-smblue-400 hover:text-smblue-300"
+                          title="Edit user"
+                          onClick={() => handleEditUser(user.id)}
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>                        <button 
+                          className="text-yellow-600 hover:text-yellow-900"
+                          title="Reset password"
+                          onClick={() => handleResetPassword(user.id, `${user.first_name} ${user.last_name}`)}
+                        >
+                          <FiLock className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-orange-600 hover:text-orange-900"
+                          title="Toggle status"
+                          onClick={() => handleToggleStatus(user.id)}
+                        >
+                          <FiPower className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete user"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
+        </div>        {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing 1 to {filteredUsers.length} of {users.length} results
+              Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of {pagination.total} results
             </div>
             <div className="flex items-center space-x-2">
               <button
-                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || loading}
               >
                 Previous
               </button>
-              {[1, 2, 3, 4].map((page) => (
-                <button
-                  key={page}
-                  className={`px-3 py-1 text-sm rounded ${
-                    currentPage === page
-                      ? 'bg-smblue-400 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-              </button>
-              ))}
+              
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                let pageNum;
+                if (pagination.last_page <= 5) {
+                  pageNum = i + 1;
+                } else {
+                  const start = Math.max(1, currentPage - 2);
+                  const end = Math.min(pagination.last_page, start + 4);
+                  pageNum = start + i;
+                  if (pageNum > end) return null;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    className={`px-3 py-1 text-sm rounded ${
+                      currentPage === pageNum
+                        ? 'bg-smblue-400 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => setCurrentPage(pageNum)}
+                    disabled={loading}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
               <button
-                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300 disabled:opacity-50"
                 onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= pagination.last_page || loading}
               >
                 Next
               </button>

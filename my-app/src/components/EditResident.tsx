@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload } from 'react-icons/fi';
+import { residentsService } from '../services';
+import {
+  type Resident,
+  type ResidentFormData,
+  type Purok,
+} from '../services/types';
 
 interface EditResidentProps {
-  resident: any;
+  resident: Resident;
   onClose: () => void;
-  onSave: (residentData: any) => void;
+  onSave: (residentData: Resident) => void;
 }
 
 const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }) => {
@@ -15,62 +21,76 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
   const [error, setError] = useState<string | null>(null);
 
   // Reference data from backend
-  const [barangays, setBarangays] = useState<any[]>([]);
-  const [puroks, setPuroks] = useState<any[]>([]);
+  const [puroks, setPuroks] = useState<Purok[]>([]);
 
-  const [formData, setFormData] = useState({
-    // Basic Information
-    firstName: resident.name?.split(' ')[0] || '',
-    lastName: resident.name?.split(' ').slice(-1)[0] || '',
-    middleName: '',
-    suffix: '',
-    birthDate: '',
-    age: resident.age?.toString() || '',
-    birthPlace: '',
-    gender: resident.gender || '',
-    civilStatus: '',
-    nationality: 'Filipino',
-    religion: '',
-    employmentStatus: '',
-    educationalAttainment: '',
-    // Contact Information
-    mobileNumber: resident.phone || '',
-    landlineNumber: '',
-    emailAddress: resident.email || '',
-    houseNumber: '',
-    street: '',
-    purok: '',
-    completeAddress: resident.address || '',
-    // Family Information
-    householdId: '',
-    isHouseholdHead: '',
-    relationshipToHead: '',
-    motherName: '',
-    fatherName: '',
-    emergencyContactName: '',
-    emergencyContactNumber: '',
-    emergencyContactRelationship: '',
-    // Government IDs & Documents
-    primaryIdType: '',
-    idNumber: '',
-    philhealthNumber: '',
-    sssNumber: '',
-    tinNumber: '',
-    votersIdNumber: '',
-    // Health & Medical Information
-    medicalConditions: '',
-    allergies: '',
-    // Special Classifications
-    specialClassifications: {
-      seniorCitizen: resident.category === 'Senior Citizen',
-      personWithDisability: false,
-      disabilityType: '',
-      indigenousPeople: false,
-      indigenousGroup: '',
-      fourPsBeneficiary: false,
-      fourPsHouseholdId: ''
-    }
-  });
+  // Helper function to convert API resident data to form data
+  const convertResidentToFormData = (residentData: Resident): ResidentFormData => {
+    return {
+      // Basic Information
+      firstName: residentData.first_name || '',
+      lastName: residentData.last_name || '',
+      middleName: residentData.middle_name || '',
+      suffix: residentData.suffix || '',
+      birthDate: residentData.birth_date || '',
+      age: residentData.age?.toString() || '',
+      birthPlace: residentData.birth_place || '',
+      gender: residentData.gender || '',
+      civilStatus: residentData.civil_status || '',
+      nationality: residentData.nationality || 'Filipino',
+      religion: residentData.religion || '',
+      employmentStatus: residentData.employment_status || '',
+      educationalAttainment: residentData.educational_attainment || '',
+
+      // Contact Information
+      mobileNumber: residentData.mobile_number || '',
+      landlineNumber: residentData.telephone_number || '',
+      emailAddress: residentData.email_address || '',
+      houseNumber: residentData.house_number || '',
+      street: residentData.street || '',
+      purok: residentData.purok || '',
+      completeAddress: residentData.complete_address || '',
+      // Family Information - household relationship fields removed
+      // These will be managed by the Household module
+      motherName: residentData.mother_name || '',
+      fatherName: residentData.father_name || '',
+      emergencyContactName: residentData.emergency_contact_name || '',
+      emergencyContactNumber: residentData.emergency_contact_number || '',
+      emergencyContactRelationship: residentData.emergency_contact_relationship || '',
+
+      // Government IDs & Documents
+      primaryIdType: residentData.primary_id_type || '',
+      idNumber: residentData.id_number || '',
+      philhealthNumber: residentData.philhealth_number || '',
+      sssNumber: residentData.sss_number || '',
+      tinNumber: residentData.tin_number || '',
+      votersIdNumber: residentData.voters_id_number || '',
+      voterStatus: residentData.voter_status || 'NOT_REGISTERED',
+      precinctNumber: residentData.precinct_number || '',      // Employment Information
+      occupation: residentData.occupation || '',
+      employer: residentData.employer || '',
+      monthlyIncome: (residentData as any).monthly_income?.toString() || '',
+
+      // Health & Medical Information
+      medicalConditions: residentData.medical_conditions || '',
+      allergies: residentData.allergies || '',
+
+      // Special Classifications
+      specialClassifications: {
+        seniorCitizen: residentData.senior_citizen || false,
+        personWithDisability: residentData.person_with_disability || false,
+        disabilityType: residentData.disability_type || '',
+        indigenousPeople: residentData.indigenous_people || false,
+        indigenousGroup: residentData.indigenous_group || '',
+        fourPsBeneficiary: residentData.four_ps_beneficiary || false,
+        fourPsHouseholdId: residentData.four_ps_household_id || ''
+      }
+    };
+  };
+
+  // Initialize form data with resident data
+  const [formData, setFormData] = useState<ResidentFormData>(
+    convertResidentToFormData(resident)
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -102,29 +122,38 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
     }));
   };
 
+  // Auto-calculate age when birth date changes
+  useEffect(() => {
+    if (formData.birthDate) {
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      setFormData((prev) => ({ ...prev, age: age.toString() }));
+    }
+  }, [formData.birthDate]);
+
   // Fetch reference data and fresh resident data on component mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Fetch reference data
-        // TODO: Backend developer - replace with actual endpoints
-        // const barangayResponse = await fetch('/api/barangays');
-        // const barangayData = await barangayResponse.json();
-        // setBarangays(barangayData);
-
-        // const purokResponse = await fetch('/api/puroks');
-        // const purokData = await purokResponse.json();
-        // setPuroks(purokData);
+        // Future API calls would be:
+        // const purokResponse = await apiService.getPuroks();
+        // setPuroks(purokResponse);
 
         // For now, using mock data
-        setBarangays([
-          { id: 1, name: 'San Miguel' },
-          { id: 2, name: 'Poblacion' },
-          { id: 3, name: 'Santo Domingo' }
-        ]);
         setPuroks([
           { id: 1, name: 'Purok 1' },
           { id: 2, name: 'Purok 2' },
@@ -134,26 +163,15 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
 
         // Fetch fresh resident data
         setIsFetchingResident(true);
-        // TODO: Backend developer - replace with actual endpoint
-        // const residentResponse = await fetch(`/api/residents/${resident.id}`);
-        // const residentData = await residentResponse.json();
-        
-        // Update form data with fresh resident data
-        // setFormData(prev => ({
-        //   ...prev,
-        //   firstName: residentData.firstName || '',
-        //   lastName: residentData.lastName || '',
-        //   middleName: residentData.middleName || '',
-        //   age: residentData.age?.toString() || '',
-        //   gender: residentData.gender || '',
-        //   mobileNumber: residentData.mobileNumber || '',
-        //   emailAddress: residentData.emailAddress || '',
-        //   completeAddress: residentData.completeAddress || '',
-        //   // ... map all other fields from fresh data
-        // }));
-
+        try {
+          const freshResident = await residentsService.getResident(resident.id);
+          setFormData(convertResidentToFormData(freshResident));
+        } catch (err) {
+          console.error('Failed to fetch resident data:', err);
+          // Continue with existing data if fetch fails
+        }
       } catch (err) {
-        setError('Failed to load data');
+        setError('Failed to load reference data');
         console.error('Error fetching data:', err);
       } finally {
         setIsLoading(false);
@@ -170,29 +188,59 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
     setError(null);
 
     try {
-      // TODO: Backend developer - replace with actual endpoint
-      // const response = await fetch(`/api/residents/${resident.id}`, {
-      //   method: 'PUT', // or 'PATCH' depending on your API design
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
+      // Use the service's transform method to convert form data to API format
+      const updateData = residentsService.transformFormDataToApiFormat(formData);
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to update resident');
-      // }
+      // Remove the status field as it shouldn't be updated through this form
+      delete (updateData as any).status;
 
-      // const updatedResident = await response.json();
-      
-      // For now, using the existing client-side save
-      onSave({ ...formData, id: resident.id });
+      // Use the API service to update the resident
+      const updatedResident = await residentsService.updateResident(
+        resident.id,
+        updateData
+      );
+
+      console.log('Resident updated successfully:', updatedResident);
+
+      // Call the parent component's onSave callback
+      onSave(updatedResident);
       onClose();
-    } catch (err) {
-      setError('Failed to update resident. Please try again.');
+    } catch (err: any) {
       console.error('Error updating resident:', err);
+
+      // Handle different types of errors
+      if (err.message) {
+        try {
+          // Try to parse JSON error message
+          const errorData = JSON.parse(err.message);
+          if (errorData.errors) {
+            const errorMessages = Object.values(errorData.errors).flat();
+            setError(`Validation failed: ${errorMessages.join(', ')}`);
+          } else {
+            setError(errorData.message || 'Failed to update resident');
+          }
+        } catch {
+          // If not JSON, use the message as is
+          setError(err.message);
+        }
+      } else {
+        setError('Failed to update resident. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // File upload handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && resident.id) {
+      try {
+        await residentsService.uploadProfilePhoto(resident.id, file);
+        // You might want to refresh the resident data after upload
+      } catch (err) {
+        console.error('Failed to upload profile photo:', err);
+      }
     }
   };
 
@@ -224,7 +272,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,7 +288,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Last Name *
@@ -292,6 +340,19 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Household ID
+              </label>
+              <input
+                type="text"
+                value={resident.household?.household_number || 'No Household Assigned'}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                placeholder="No Household Assigned"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birth Date *
               </label>
               <input
@@ -313,9 +374,9 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 name="age"
                 value={formData.age}
                 onChange={handleInputChange}
-                placeholder="Enter age here..."
+                placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                required
+                readOnly
               />
             </div>
 
@@ -347,8 +408,8 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 required
               >
                 <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
               </select>
             </div>
 
@@ -436,6 +497,48 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Occupation
+              </label>
+              <input
+                type="text"
+                name="occupation"
+                value={formData.occupation}
+                onChange={handleInputChange}
+                placeholder="e.g. Teacher, Engineer, Farmer..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Employer
+              </label>
+              <input
+                type="text"
+                name="employer"
+                value={formData.employer}
+                onChange={handleInputChange}
+                placeholder="Name of employer/company..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Monthly Income (PHP)
+              </label>
+              <input
+                type="number"
+                name="monthlyIncome"
+                value={formData.monthlyIncome}
+                onChange={handleInputChange}
+                placeholder="Enter monthly income..."
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
           </div>
         </section>
 
@@ -443,7 +546,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Contact Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -554,68 +657,11 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
 
         {/* Family Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Family Information</h2>
-          <div className="border-b border-gray-200 mb-6"></div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Are you the household head? *
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="yes"
-                  checked={formData.isHouseholdHead === 'yes'}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="no"
-                  checked={formData.isHouseholdHead === 'no'}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
-          </div>
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Family Information</h2>          <div className="border-b border-gray-200 mb-6"></div>
+
+          {/* Household relationship fields removed - managed by Household module */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Household ID
-              </label>
-              <input
-                type="text"
-                name="householdId"
-                value={formData.householdId}
-                onChange={handleInputChange}
-                placeholder="Enter household ID if applicable"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Relationship to Head
-              </label>
-              <input
-                type="text"
-                name="relationshipToHead"
-                value={formData.relationshipToHead}
-                onChange={handleInputChange}
-                placeholder="e.g. Son, Daughter, Spouse..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -692,7 +738,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Government IDs & Documents</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -784,6 +830,38 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voter Status *
+              </label>
+              <select
+                name="voterStatus"
+                value={formData.voterStatus}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                required
+              >
+                <option value="NOT_REGISTERED">Not Registered</option>
+                <option value="REGISTERED">Registered</option>
+                <option value="DECEASED">Deceased</option>
+                <option value="TRANSFERRED">Transferred</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Precinct Number
+              </label>
+              <input
+                type="text"
+                name="precinctNumber"
+                value={formData.precinctNumber}
+                onChange={handleInputChange}
+                placeholder="Enter precinct number..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
           </div>
         </section>
 
@@ -791,7 +869,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Health & Medical Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -828,7 +906,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Special Classifications</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           <p className="text-sm text-gray-600 mb-4">Check all that apply:</p>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <label className="flex items-center">
@@ -841,7 +919,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 />
                 Senior Citizen (60+)
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -852,7 +930,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 />
                 Person with Disability
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -863,7 +941,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
                 />
                 Indigenous People
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -931,7 +1009,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Profile Photo</h2>
           <div className="border-b border-gray-200 mb-6"></div>
-          
+
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
             <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-600 mb-2">Upload Profile Photo</p>
@@ -941,6 +1019,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
               accept="image/*"
               className="hidden"
               id="profilePhoto"
+              onChange={handleFileUpload}
             />
             <label
               htmlFor="profilePhoto"

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FiX } from 'react-icons/fi';
+import { UsersService } from '../services/users.service';
+import type { UserFormData } from '../services/types';
 
 interface AddNewUserProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
     middleName: '',
     email: '',
     username: '',
+    phone: '',
     role: '',
     department: '',
     position: '',
@@ -23,6 +25,11 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
     sendCredentials: true,
     notes: ''
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const usersService = new UsersService();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -38,12 +45,30 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
         [name]: value
       }));
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    setError(null);
+    setIsLoading(true);
+
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Create user via API (service will handle transformation)
+      const newUser = await usersService.createUser(formData);
+      
+      // Call parent callback with success
+      onSave(newUser);
+      onClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create user');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const generatePassword = () => {
@@ -64,9 +89,14 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New User Account</h1>
-      </div>
+      </div>      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
         <div className="mb-8">
           <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Basic Information</h2>
@@ -150,9 +180,7 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
-            </div>
-
-            <div>
+            </div>            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Username *
               </label>
@@ -162,6 +190,21 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
                 value={formData.username}
                 onChange={handleInputChange}
                 placeholder="Enter username..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="Enter phone number..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -340,12 +383,12 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </button>          <button
             type="submit"
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            disabled={isLoading}
+            className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
-            Create User Account
+            {isLoading ? 'Creating...' : 'Create User Account'}
           </button>
         </div>
       </form>
