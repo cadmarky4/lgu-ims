@@ -39,10 +39,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     street: "",
     purok: "",
     completeAddress: "",
-    // Family Information
-    householdId: "",
-    isHouseholdHead: "",
-    relationshipToHead: "",
+            // Family Information
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -219,9 +216,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         purok: formData.purok || null,
 
         // Family Information
-        household_id: formData.householdId || null,
-        is_household_head: formData.isHouseholdHead === "yes",
-        relationship_to_head: formData.relationshipToHead || null,
         emergency_contact_name: formData.emergencyContactName || null,
         emergency_contact_number: formData.emergencyContactNumber || null,
         emergency_contact_relationship:
@@ -715,64 +709,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Are you the household head? *
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="yes"
-                  checked={formData.isHouseholdHead === "yes"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="no"
-                  checked={formData.isHouseholdHead === "no"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Household ID
-              </label>
-              <input
-                type="text"
-                name="householdId"
-                value={formData.householdId}
-                onChange={handleInputChange}
-                placeholder="Enter household ID if applicable"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Relationship to Head
-              </label>
-              <input
-                type="text"
-                name="relationshipToHead"
-                value={formData.relationshipToHead}
-                onChange={handleInputChange}
-                placeholder="e.g. Son, Daughter, Spouse..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

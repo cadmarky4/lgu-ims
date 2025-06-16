@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
 
 interface AddNewHouseholdProps {
   onClose: () => void;
@@ -25,7 +25,6 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     houseNumber: '',
     completeAddress: '',
     householdHeadSearch: '',
-    memberSearch: '',
     monthlyIncome: '',
     primaryIncomeSource: '',
     householdClassification: {
@@ -43,6 +42,41 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     },
     remarks: ''
   });
+
+  // Household members state
+  const [householdMembers, setHouseholdMembers] = useState<any[]>([]);
+  const [selectedHouseholdHead, setSelectedHouseholdHead] = useState<any>(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+  const [selectedMemberResident, setSelectedMemberResident] = useState<any>(null);
+  const [memberRelationship, setMemberRelationship] = useState('');
+
+  const relationshipOptions = [
+    'Spouse',
+    'Son',
+    'Daughter',
+    'Father',
+    'Mother',
+    'Brother',
+    'Sister',
+    'Grandson',
+    'Granddaughter',
+    'Grandfather',
+    'Grandmother',
+    'Uncle',
+    'Aunt',
+    'Nephew',
+    'Niece',
+    'Cousin',
+    'Son-in-law',
+    'Daughter-in-law',
+    'Father-in-law',
+    'Mother-in-law',
+    'Brother-in-law',
+    'Sister-in-law',
+    'Other'
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -138,8 +172,16 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
       // const newHousehold = await response.json();
       
+      // Include household members in the data
+      const householdData = {
+        ...formData,
+        householdHead: selectedHouseholdHead,
+        members: householdMembers,
+        totalMembers: householdMembers.length + (selectedHouseholdHead ? 1 : 0)
+      };
+
       // For now, using the existing client-side save
-      onSave(formData);
+      onSave(householdData);
       onClose();
     } catch (err) {
       setError('Failed to save household. Please try again.');
@@ -151,6 +193,65 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 
   const handleAddNewResident = () => {
     console.log('Add new resident clicked');
+  };
+
+  // Member search functionality
+  useEffect(() => {
+    if (memberSearchTerm.trim()) {
+      const filtered = residents.filter(resident =>
+        resident.name.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+        resident.phone.includes(memberSearchTerm)
+      ).filter(resident => 
+        // Exclude household head and existing members
+        resident.id !== selectedHouseholdHead?.id &&
+        !householdMembers.some(member => member.resident.id === resident.id)
+      );
+      setMemberSearchResults(filtered);
+    } else {
+      setMemberSearchResults([]);
+    }
+  }, [memberSearchTerm, residents, selectedHouseholdHead, householdMembers]);
+
+  const handleSelectHouseholdHead = (resident: any) => {
+    setSelectedHouseholdHead(resident);
+    setFormData(prev => ({ ...prev, householdHeadSearch: resident.name }));
+    setFilteredResidents([]);
+  };
+
+  const handleAddMember = () => {
+    if (!selectedMemberResident || !memberRelationship) {
+      setError('Please select a resident and relationship');
+      return;
+    }
+
+    const newMember = {
+      id: Date.now(),
+      resident: selectedMemberResident,
+      relationship_to_head: memberRelationship,
+      is_household_head: false
+    };
+
+    setHouseholdMembers(prev => [...prev, newMember]);
+    
+    // Reset member form
+    setSelectedMemberResident(null);
+    setMemberRelationship('');
+    setMemberSearchTerm('');
+    setMemberSearchResults([]);
+    setShowAddMember(false);
+    setError(null);
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    if (window.confirm('Are you sure you want to remove this member?')) {
+      setHouseholdMembers(prev => prev.filter(member => member.id !== memberId));
+    }
+  };
+
+  const handleSelectMemberResident = (resident: any) => {
+    setSelectedMemberResident(resident);
+    setMemberSearchTerm(resident.name);
+    setMemberSearchResults([]);
   };
 
   return (
@@ -313,7 +414,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
                       <div
                         key={resident.id}
                         className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        onClick={() => setFormData(prev => ({ ...prev, householdHeadSearch: resident.name }))}
+                        onClick={() => handleSelectHouseholdHead(resident)}
                       >
                         <p className="font-medium text-gray-900">{resident.name}</p>
                         <p className="text-sm text-gray-600">{resident.phone}</p>
@@ -349,42 +450,182 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Members</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Members from Residents
-              </label>
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  name="memberSearch"
-                  value={formData.memberSearch}
-                  onChange={handleInputChange}
-                  placeholder="Enter name, ID, or phone number"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                />
+          {/* Household Head Display */}
+          {selectedHouseholdHead && (
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <h4 className="font-medium text-blue-900 mb-2">Household Head</h4>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-blue-800">{selectedHouseholdHead.name}</p>
+                  <p className="text-sm text-blue-600">{selectedHouseholdHead.phone}</p>
+                </div>
+                <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  HEAD
+                </span>
               </div>
             </div>
+          )}
 
-            <div className="text-center">
-              <span className="text-gray-500 font-medium">OR</span>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add New Resident as Member
-              </label>
-              <button
-                type="button"
-                onClick={handleAddNewResident}
-                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                <FiPlus className="w-4 h-4" />
-                <span>Add New Resident</span>
-              </button>
-            </div>
+          {/* Add Member Button */}
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-600">
+              {householdMembers.length} member{householdMembers.length !== 1 ? 's' : ''} added
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAddMember(true)}
+              disabled={!selectedHouseholdHead}
+              className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>Add Member</span>
+            </button>
           </div>
+
+          {!selectedHouseholdHead && (
+            <div className="bg-yellow-50 rounded-lg p-4 mb-4">
+              <p className="text-yellow-800 text-sm">
+                <strong>Note:</strong> Please select a household head first before adding members.
+              </p>
+            </div>
+          )}
+
+          {/* Add Member Form */}
+          {showAddMember && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <h4 className="font-medium text-gray-900 mb-4">Add New Member</h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Resident
+                  </label>
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={memberSearchTerm}
+                      onChange={(e) => setMemberSearchTerm(e.target.value)}
+                      placeholder="Search by name or phone number"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    />
+                    
+                    {/* Member Search Results */}
+                    {memberSearchResults.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        {memberSearchResults.map((resident) => (
+                          <div
+                            key={resident.id}
+                            className={`px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                              selectedMemberResident?.id === resident.id ? 'bg-smblue-50' : ''
+                            }`}
+                            onClick={() => handleSelectMemberResident(resident)}
+                          >
+                            <p className="font-medium text-gray-900">{resident.name}</p>
+                            <p className="text-sm text-gray-600">{resident.phone}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedMemberResident && (
+                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                    <p className="font-medium text-gray-900">
+                      Selected: {selectedMemberResident.name}
+                    </p>
+                    <p className="text-sm text-gray-600">{selectedMemberResident.phone}</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Relationship to Household Head *
+                  </label>
+                  <select
+                    value={memberRelationship}
+                    onChange={(e) => setMemberRelationship(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    required
+                  >
+                    <option value="">Select Relationship</option>
+                    {relationshipOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleAddMember}
+                    disabled={!selectedMemberResident || !memberRelationship}
+                    className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Member
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddMember(false);
+                      setSelectedMemberResident(null);
+                      setMemberRelationship('');
+                      setMemberSearchTerm('');
+                      setMemberSearchResults([]);
+                      setError(null);
+                    }}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Members Table */}
+          {householdMembers.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Phone</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Relationship</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {householdMembers.map((member) => (
+                    <tr key={member.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <p className="font-medium text-gray-900">{member.resident.name}</p>
+                      </td>
+                      <td className="py-3 px-4 text-gray-700">
+                        {member.resident.phone}
+                      </td>
+                      <td className="py-3 px-4 text-gray-700">
+                        {member.relationship_to_head}
+                      </td>
+                      <td className="py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Remove member"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Socioeconomic Information */}
