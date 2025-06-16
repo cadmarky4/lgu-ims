@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 
 interface AddNewHouseholdProps {
   onClose: () => void;
@@ -10,7 +10,23 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   // Reference data from backend
   const [barangays, setBarangays] = useState<any[]>([]);
@@ -78,6 +94,54 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     'Other'
   ];
 
+  // Load draft data from localStorage
+  const loadDraftData = () => {
+    try {
+      const savedDraft = localStorage.getItem('householdDraft');
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        setFormData(draftData.formData || draftData);
+        if (draftData.selectedHouseholdHead) {
+          setSelectedHouseholdHead(draftData.selectedHouseholdHead);
+        }
+        if (draftData.householdMembers) {
+          setHouseholdMembers(draftData.householdMembers);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load draft data:', error);
+    }
+  };
+
+  // Save draft to localStorage
+  const handleSaveDraft = () => {
+    setIsSavingDraft(true);
+    try {
+      const draftData = {
+        formData,
+        selectedHouseholdHead,
+        householdMembers
+      };
+      localStorage.setItem('householdDraft', JSON.stringify(draftData));
+      setError(null);
+      showToast('Draft saved successfully!', 'success');
+    } catch (error) {
+      showToast('Failed to save draft. Please try again.', 'error');
+      console.error('Failed to save draft:', error);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Clear draft from localStorage
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem('householdDraft');
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -136,6 +200,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
     };
 
     fetchReferenceData();
+    loadDraftData();
   }, []);
 
   // Filter residents based on search input
@@ -179,6 +244,12 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         members: householdMembers,
         totalMembers: householdMembers.length + (selectedHouseholdHead ? 1 : 0)
       };
+
+      // Clear the draft since household was successfully created
+      clearDraft();
+      
+      // Show success toast
+      showToast('Household created successfully!', 'success');
 
       // For now, using the existing client-side save
       onSave(householdData);
@@ -259,6 +330,11 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
+        {localStorage.getItem('householdDraft') && (
+          <p className="text-sm text-gray-600 mt-1">
+            📝 Draft data loaded from previous session
+          </p>
+        )}
       </div>
 
       {/* Error Display */}
@@ -822,30 +898,69 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
         </section>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            disabled={isSubmitting}
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            disabled={isLoading || isSubmitting}
-          >
-            {isSubmitting && (
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+            {isSavingDraft && (
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSubmitting ? 'Saving...' : 'Save Household'}</span>
+            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
           </button>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              disabled={isLoading || isSubmitting}
+            >
+              {isSubmitting && (
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              <span>{isSubmitting ? 'Saving...' : 'Save Household'}</span>
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
