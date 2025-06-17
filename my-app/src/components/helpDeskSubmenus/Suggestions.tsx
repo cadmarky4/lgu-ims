@@ -158,7 +158,7 @@ const SuggestionsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="@container/main p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
           <Lightbulb className="h-8 w-8 mr-3 text-yellow-500" />
@@ -228,7 +228,7 @@ const SuggestionsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-lg rounded-lg p-6">
+        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
           {/* Personal Information */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -494,11 +494,11 @@ const SuggestionsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors duration-200 flex items-center"
+              className="px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex justify-center items-center"
             >
               <Send className="h-5 w-5 mr-2" />
               Submit Suggestion
@@ -508,7 +508,7 @@ const SuggestionsPage: React.FC = () => {
       )}
 
       {/* Tips Section */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6">
         <div className="bg-blue-50 rounded-lg p-6">
           <Target className="h-8 w-8 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 mb-2">Be Specific</h3>

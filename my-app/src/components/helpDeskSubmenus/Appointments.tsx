@@ -109,7 +109,7 @@ const AppointmentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="@container/main p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Process Appointment Request
@@ -134,7 +134,7 @@ const AppointmentsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-lg rounded-lg p-6">
+        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
           {/* Personal Information */}
           <div className="col-span-2">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -346,11 +346,11 @@ const AppointmentsPage: React.FC = () => {
             />
           </div>
 
-          <div className="mt-6 flex items-center justify-betweenflex flex-col gap-2 sm:flex-row sm:items-center justify-between">
+          <div className="flex-col @lg/main-form:flex-row mt-6 flex gap-2 @lg/main-form:items-center justify-between">
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
+              className="@lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
             >
               <Calendar className="h-5 w-5 mr-2" />
               Submit Appointment Request
@@ -360,7 +360,7 @@ const AppointmentsPage: React.FC = () => {
       )}
 
       {/* Information Cards */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6">
         <div className="bg-blue-50 rounded-lg p-6">
           <Clock className="h-8 w-8 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 mb-2">Office Hours</h3>

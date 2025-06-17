@@ -178,7 +178,7 @@ const ComplaintsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-lg rounded-lg p-6">
+        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
           {/* Anonymous Option */}
           <div className="mb-6 bg-gray-50 rounded-lg p-4">
             <label
@@ -390,7 +390,7 @@ const ComplaintsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Urgency Level *
                 </label>
-                <div className="flex space-x-4">
+                <div className="flex flex-col @sm/main-form:flex-row @sm/main-form:space-x-4">
                   <label htmlFor="urgency-low" className="flex items-center">
                     <input
                       type="radio"
@@ -465,11 +465,11 @@ const ComplaintsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center"
+              className="px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 flex justify-center items-center"
             >
               <AlertCircle className="h-5 w-5 mr-2" />
               Submit Complaint
@@ -485,7 +485,7 @@ const ComplaintsPage: React.FC = () => {
         </h3>
         <div className="space-y-3">
           <div className="flex items-start">
-            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+            <div className="bg-orange-600 text-white rounded-full min-w-8 min-h-8 flex items-center justify-center text-sm font-semibold mr-3">
               1
             </div>
             <div>
@@ -496,7 +496,7 @@ const ComplaintsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-start">
-            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+            <div className="bg-orange-600 text-white rounded-full min-w-8 min-h-8 flex items-center justify-center text-sm font-semibold mr-3">
               2
             </div>
             <div>
@@ -507,7 +507,7 @@ const ComplaintsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-start">
-            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+            <div className="bg-orange-600 text-white rounded-full min-w-8 min-h-8 flex items-center justify-center text-sm font-semibold mr-3">
               3
             </div>
             <div>
@@ -520,7 +520,7 @@ const ComplaintsPage: React.FC = () => {
             </div>
           </div>
           <div className="flex items-start">
-            <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-3">
+            <div className="bg-orange-600 text-white rounded-full min-w-8 min-h-8 flex items-center justify-center text-sm font-semibold mr-3">
               4
             </div>
             <div>

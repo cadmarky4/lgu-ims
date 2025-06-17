@@ -841,7 +841,7 @@ const HelpDeskPage: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <h4 className="font-semibold text-gray-900">
                             {ticket.title}
                           </h4>

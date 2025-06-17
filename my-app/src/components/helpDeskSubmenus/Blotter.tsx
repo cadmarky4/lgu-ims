@@ -432,7 +432,7 @@ const BlotterPage: React.FC = () => {
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center"
+              className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors duration-200 flex justify-center items-center"
             >
               <Shield className="h-5 w-5 mr-2" />
               Submit Blotter Report
