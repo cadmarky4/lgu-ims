@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -15,7 +16,11 @@ import {
   ChevronRight,
   Shield,
   Lightbulb,
-  Calendar as CalendarCheck,
+  Calendar as CalendarIcon,
+  X,
+  Save,
+  Phone,
+  Mail,
 } from "lucide-react";
 
 // Type definitions
@@ -31,6 +36,20 @@ interface Ticket {
   assignedTo: string;
   department: string;
   referenceNumber: string;
+  // Type-specific fields
+  appointmentDate?: string;
+  appointmentTime?: string;
+  purpose?: string;
+  incidentType?: string;
+  incidentDate?: string;
+  incidentLocation?: string;
+  respondentName?: string;
+  complaintCategory?: string;
+  urgency?: string;
+  suggestionCategory?: string;
+  expectedBenefits?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 interface TicketStats {
@@ -79,10 +98,12 @@ const HelpDeskPage: React.FC = () => {
   // State with proper typing
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [showTicketDropdown, setShowTicketDropdown] = useState<boolean>(false);
-  const [filterStatus, setFilterStatus] = useState<TicketStatus | "all">("all");
   const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [editedTicket, setEditedTicket] = useState<Ticket | null>(null);
 
   // Mock data with proper typing
   const [tickets, setTickets] = useState<Ticket[]>([
@@ -99,6 +120,11 @@ const HelpDeskPage: React.FC = () => {
       assignedTo: "Business Permits Office",
       department: "Business Permits and Licensing",
       referenceNumber: "APT-2025-0614-001",
+      appointmentDate: "2025-06-21",
+      appointmentTime: "10:00 AM",
+      purpose: "Business permit renewal for retail store",
+      contactEmail: "maria.santos@email.com",
+      contactPhone: "+63 912 345 6789",
     },
     {
       id: "TKT-002",
@@ -113,6 +139,12 @@ const HelpDeskPage: React.FC = () => {
       assignedTo: "Barangay Peace and Order Committee",
       department: "Peace and Order",
       referenceNumber: "BLT-2025-0613-001",
+      incidentType: "Noise Complaint",
+      incidentDate: "2025-06-13",
+      incidentLocation: "123 Main St, Barangay Zone 3",
+      respondentName: "Pedro Gonzales",
+      contactEmail: "juan.delacruz@email.com",
+      contactPhone: "+63 917 123 4567",
     },
     {
       id: "TKT-003",
@@ -127,6 +159,10 @@ const HelpDeskPage: React.FC = () => {
       assignedTo: "Engineering Department",
       department: "Infrastructure",
       referenceNumber: "CMP-2025-0612-001",
+      complaintCategory: "Infrastructure",
+      urgency: "High",
+      contactEmail: "ana.rodriguez@email.com",
+      contactPhone: "+63 905 987 6543",
     },
     {
       id: "TKT-004",
@@ -141,6 +177,11 @@ const HelpDeskPage: React.FC = () => {
       assignedTo: "Planning Committee",
       department: "Community Development",
       referenceNumber: "SUG-2025-0611-001",
+      suggestionCategory: "Environmental Protection",
+      expectedBenefits:
+        "Promotes community engagement, provides fresh produce, beautifies the area",
+      contactEmail: "community.leaders@email.com",
+      contactPhone: "+63 920 111 2222",
     },
   ]);
 
@@ -181,7 +222,7 @@ const HelpDeskPage: React.FC = () => {
       type: "Appointment",
       label: "Process Appointment",
       description: "Schedule resident appointments",
-      icon: CalendarCheck,
+      icon: CalendarIcon,
       href: "/appointments",
       color: "text-blue-600",
     },
@@ -217,10 +258,7 @@ const HelpDeskPage: React.FC = () => {
     "Resolved",
     "Closed",
   ];
-  const statusFilterOptions: (TicketStatus | "all")[] = [
-    "all",
-    ...statusOptions,
-  ];
+  const priorityOptions: TicketPriority[] = ["High", "Medium", "Low"];
 
   // Filter and search tickets with proper typing
   const filteredTickets: Ticket[] = tickets.filter((ticket: Ticket) => {
@@ -237,10 +275,7 @@ const HelpDeskPage: React.FC = () => {
       (activeTab === "resolved" && ticket.status === "Resolved") ||
       (activeTab === "closed" && ticket.status === "Closed");
 
-    const matchesFilter: boolean =
-      filterStatus === "all" || ticket.status === filterStatus;
-
-    return matchesSearch && matchesTab && matchesFilter;
+    return matchesSearch && matchesTab;
   });
 
   // Helper functions with proper typing
@@ -258,11 +293,6 @@ const HelpDeskPage: React.FC = () => {
     return typeColors[type] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
-  // Event handlers with proper typing
-  const toggleTicketDetails = (ticketId: string): void => {
-    setSelectedTicket(selectedTicket === ticketId ? null : ticketId);
-  };
-
   const handleStatusChange = (
     ticketId: string,
     newStatus: TicketStatus
@@ -273,6 +303,317 @@ const HelpDeskPage: React.FC = () => {
       )
     );
     setEditingStatus(null);
+  };
+
+  const openModal = (ticket: Ticket, editMode: boolean = false): void => {
+    setModalTicket(ticket);
+    setEditedTicket({ ...ticket });
+    setIsEditMode(editMode);
+    setShowModal(true);
+  };
+
+  const closeModal = (): void => {
+    setShowModal(false);
+    setModalTicket(null);
+    setEditedTicket(null);
+    setIsEditMode(false);
+  };
+
+  const handleEditChange = (field: keyof Ticket, value: any): void => {
+    if (editedTicket) {
+      setEditedTicket({ ...editedTicket, [field]: value });
+    }
+  };
+
+  const saveChanges = (): void => {
+    if (editedTicket) {
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
+          ticket.id === editedTicket.id ? editedTicket : ticket
+        )
+      );
+      closeModal();
+    }
+  };
+
+  // Modal content based on ticket type
+  const renderModalContent = () => {
+    if (!modalTicket || !editedTicket) return null;
+
+    const commonFields = (
+      <>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            {isEditMode ? (
+              <select
+                value={editedTicket.status}
+                onChange={(e) =>
+                  handleEditChange("status", e.target.value as TicketStatus)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+              >
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span
+                className={`inline-block px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(
+                  modalTicket.status
+                )}`}
+              >
+                {modalTicket.status}
+              </span>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Priority
+            </label>
+            {isEditMode ? (
+              <select
+                value={editedTicket.priority}
+                onChange={(e) =>
+                  handleEditChange("priority", e.target.value as TicketPriority)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+              >
+                {priorityOptions.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span
+                className={`inline-block px-3 py-1 text-sm font-medium rounded-full border ${getPriorityColor(
+                  modalTicket.priority
+                )}`}
+              >
+                {modalTicket.priority}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Assigned To
+          </label>
+          {isEditMode ? (
+            <input
+              type="text"
+              value={editedTicket.assignedTo}
+              onChange={(e) => handleEditChange("assignedTo", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+            />
+          ) : (
+            <p className="text-gray-900">{modalTicket.assignedTo}</p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          {isEditMode ? (
+            <textarea
+              value={editedTicket.description}
+              onChange={(e) => handleEditChange("description", e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+            />
+          ) : (
+            <p className="text-gray-900">{modalTicket.description}</p>
+          )}
+        </div>
+      </>
+    );
+
+    switch (modalTicket.type) {
+      case "Appointment":
+        return (
+          <>
+            {commonFields}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Appointment Date
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="date"
+                    value={editedTicket.appointmentDate || ""}
+                    onChange={(e) =>
+                      handleEditChange("appointmentDate", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+                  />
+                ) : (
+                  <p className="text-gray-900">
+                    {modalTicket.appointmentDate || "Not set"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Appointment Time
+                </label>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={editedTicket.appointmentTime || ""}
+                    onChange={(e) =>
+                      handleEditChange("appointmentTime", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+                  />
+                ) : (
+                  <p className="text-gray-900">
+                    {modalTicket.appointmentTime || "Not set"}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Purpose
+              </label>
+              {isEditMode ? (
+                <textarea
+                  value={editedTicket.purpose || ""}
+                  onChange={(e) => handleEditChange("purpose", e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+                />
+              ) : (
+                <p className="text-gray-900">
+                  {modalTicket.purpose || "Not specified"}
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      case "Blotter":
+        return (
+          <>
+            {commonFields}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Incident Type
+                </label>
+                <p className="text-gray-900">
+                  {modalTicket.incidentType || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Incident Date
+                </label>
+                <p className="text-gray-900">
+                  {modalTicket.incidentDate || "Not specified"}
+                </p>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Incident Location
+              </label>
+              <p className="text-gray-900">
+                {modalTicket.incidentLocation || "Not specified"}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Respondent Name
+              </label>
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={editedTicket.respondentName || ""}
+                  onChange={(e) =>
+                    handleEditChange("respondentName", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+                />
+              ) : (
+                <p className="text-gray-900">
+                  {modalTicket.respondentName || "Not specified"}
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      case "Complaint":
+        return (
+          <>
+            {commonFields}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <p className="text-gray-900">
+                  {modalTicket.complaintCategory || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Urgency
+                </label>
+                <p className="text-gray-900">
+                  {modalTicket.urgency || "Not specified"}
+                </p>
+              </div>
+            </div>
+          </>
+        );
+
+      case "Suggestion":
+        return (
+          <>
+            {commonFields}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <p className="text-gray-900">
+                {modalTicket.suggestionCategory || "Not specified"}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Expected Benefits
+              </label>
+              {isEditMode ? (
+                <textarea
+                  value={editedTicket.expectedBenefits || ""}
+                  onChange={(e) =>
+                    handleEditChange("expectedBenefits", e.target.value)
+                  }
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400"
+                />
+              ) : (
+                <p className="text-gray-900">
+                  {modalTicket.expectedBenefits || "Not specified"}
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      default:
+        return commonFields;
+    }
   };
 
   // Tab configuration with proper typing
@@ -333,7 +674,7 @@ const HelpDeskPage: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setShowTicketDropdown(!showTicketDropdown)}
-                className="cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 {showTicketDropdown ? (
                   <Minus className="w-4 h-4" />
@@ -349,9 +690,9 @@ const HelpDeskPage: React.FC = () => {
                     {ticketTypeOptions.map((option) => {
                       const IconComponent = option.icon;
                       return (
-                        <a
+                        <Link
                           key={option.type}
-                          href={option.href}
+                          to={option.href}
                           className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                           onClick={() => setShowTicketDropdown(false)}
                         >
@@ -369,7 +710,7 @@ const HelpDeskPage: React.FC = () => {
                             </p>
                           </div>
                           <ChevronRight className="w-4 h-4 text-gray-400 mt-3" />
-                        </a>
+                        </Link>
                       );
                     })}
                   </div>
@@ -377,7 +718,7 @@ const HelpDeskPage: React.FC = () => {
               )}
             </div>
 
-            <button className="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
               <Download className="w-4 h-4" />
               Export Report
             </button>
@@ -435,15 +776,18 @@ const HelpDeskPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-500" />
             <select
-              value={filterStatus}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setFilterStatus(e.target.value as TicketStatus | "all")
-              }
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as TabKey)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
             >
-              {statusFilterOptions.map((status: TicketStatus | "all") => (
+              {/* {statusFilterOptions.map((status: TicketStatus | "all") => (
                 <option key={status} value={status}>
                   {status === "all" ? "All Status" : status}
+                </option>
+              ))} */}
+              {tabs.map((status: TabItem) => (
+                <option key={status.key} value={status.key}>
+                  {status.label}
                 </option>
               ))}
             </select>
@@ -455,7 +799,10 @@ const HelpDeskPage: React.FC = () => {
           {tabs.map((tab: TabItem) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                setActiveTab(tab.key);
+                console.log(filteredTickets);
+              }}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                 activeTab === tab.key
                   ? "border-smblue-400 text-smblue-400 bg-smblue-50"
@@ -573,13 +920,14 @@ const HelpDeskPage: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => toggleTicketDetails(ticket.id)}
+                      onClick={() => openModal(ticket, false)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => openModal(ticket, true)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Edit Ticket"
                     >
@@ -587,59 +935,123 @@ const HelpDeskPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* Expanded Details */}
-                {selectedTicket === ticket.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div>
-                        <h5 className="font-medium text-gray-900 mb-3">
-                          Department Information
-                        </h5>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="text-gray-500">Department:</span>
-                            <span className="ml-2 font-medium">
-                              {ticket.department}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Ticket ID:</span>
-                            <span className="ml-2 font-medium">
-                              {ticket.id}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <h5 className="font-medium text-gray-900 mb-3">
-                          Processing Information
-                        </h5>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="text-gray-500">
-                              Current Handler:
-                            </span>
-                            <span className="ml-2 font-medium">
-                              {ticket.assignedTo}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Last Updated:</span>
-                            <span className="ml-2 font-medium">
-                              {ticket.submittedDate}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ))
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && modalTicket && (
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {modalTicket.title}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {modalTicket.referenceNumber}
+                  </p>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className={`px-3 py-1 text-sm font-medium rounded-full border ${getTypeColor(
+                      modalTicket.type
+                    )}`}
+                  >
+                    {modalTicket.type}
+                  </span>
+                  <span className="text-sm text-gray-500">•</span>
+                  <span className="text-sm text-gray-500">
+                    Submitted by {modalTicket.submittedBy}
+                  </span>
+                  <span className="text-sm text-gray-500">•</span>
+                  <span className="text-sm text-gray-500">
+                    {modalTicket.submittedDate}
+                  </span>
+                </div>
+              </div>
+
+              {renderModalContent()}
+
+              {/* Contact Information */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-3">
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {modalTicket.contactEmail && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {modalTicket.contactEmail}
+                      </span>
+                    </div>
+                  )}
+                  {modalTicket.contactPhone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {modalTicket.contactPhone}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-3">
+                {isEditMode ? (
+                  <>
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveChanges}
+                      className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Ticket
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

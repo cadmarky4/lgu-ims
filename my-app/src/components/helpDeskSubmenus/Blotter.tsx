@@ -160,10 +160,14 @@ const BlotterPage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="first-name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Full Name *
                 </label>
                 <input
+                  id="first-name"
                   type="text"
                   name="complainantName"
                   value={formData.complainantName}
@@ -172,10 +176,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="contact-number"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Contact Number *
                 </label>
                 <input
+                  id="contact-number"
                   type="tel"
                   name="complainantContact"
                   value={formData.complainantContact}
@@ -183,11 +191,15 @@ const BlotterPage: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div>
+                <label
+                  htmlFor="complete-address"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Complete Address *
                 </label>
                 <input
+                  id="complete-address"
                   type="text"
                   name="complainantAddress"
                   value={formData.complainantAddress}
@@ -196,10 +208,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email-address"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
+                  id="email-address"
                   type="email"
                   name="complainantEmail"
                   value={formData.complainantEmail}
