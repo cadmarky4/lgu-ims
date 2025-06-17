@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Schemas\HouseholdSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,55 +10,24 @@ class Household extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'household_number',
-        'head_resident_id',
-        'house_number',
-        'street',
-        'purok',
-        'barangay',
-        'municipality',
-        'province',
-        'zip_code',
-        'complete_address',
-        'total_members',
-        'male_members',
-        'female_members',
-        'senior_citizens',
-        'pwd_members',
-        'children_under_5',
-        'school_age_children',
-        'estimated_monthly_income',
-        'income_classification',
-        'four_ps_beneficiary',
-        'four_ps_household_id',
-        'house_ownership',
-        'house_type',
-        'roof_material',
-        'wall_material',
-        'number_of_rooms',
-        'has_electricity',
-        'has_water_supply',
-        'water_source',
-        'has_toilet',
-        'toilet_type',
-        'government_programs',
-        'livelihood_programs',
-        'health_programs',
-        'status',
-        'remarks',
-        'created_by',
-        'updated_by',
-    ];
-
-    protected $casts = [
-        'estimated_monthly_income' => 'decimal:2',
-        'four_ps_beneficiary' => 'boolean',
-        'has_electricity' => 'boolean',
-        'has_water_supply' => 'boolean',
-        'has_toilet' => 'boolean',
-        'government_programs' => 'array',
-    ];
+    /**
+     * Get fillable fields from schema
+     */
+    protected $fillable;
+    
+    /**
+     * Get casts from schema
+     */
+    protected $casts;
+    
+    public function __construct(array $attributes = [])
+    {
+        // Set fillable and casts from schema
+        $this->fillable = HouseholdSchema::getFillableFields();
+        $this->casts = HouseholdSchema::getCasts();
+        
+        parent::__construct($attributes);
+    }
 
     /**
      * Relationships
@@ -69,7 +39,22 @@ class Household extends Model
 
     public function members()
     {
-        return $this->hasMany(Resident::class);
+        return $this->hasMany(Resident::class, 'household_id');
+    }
+
+    public function allResidents()
+    {
+        return $this->hasMany(Resident::class, 'household_id');
+    }
+
+    public function nonHeadMembers()
+    {
+        return $this->hasMany(Resident::class, 'household_id')->where('is_household_head', false);
+    }
+
+    public function membersIncludingHead()
+    {
+        return $this->hasMany(Resident::class, 'household_id');
     }
 
     public function createdBy()
@@ -85,39 +70,38 @@ class Household extends Model
     /**
      * Scopes
      */
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'ACTIVE');
-    }
-
     public function scopeFourPs($query)
     {
         return $query->where('four_ps_beneficiary', true);
     }
 
-    public function scopeByPurok($query, $purok)
+    public function scopeIndigent($query)
     {
-        return $query->where('purok', $purok);
+        return $query->where('indigent_family', true);
     }
 
-    /**
-     * Helper methods
-     */
-    public function updateMemberCounts()
+    public function scopeWithSeniorCitizen($query)
     {
-        $members = $this->members;
-        
-        $this->update([
-            'total_members' => $members->count(),
-            'male_members' => $members->where('gender', 'MALE')->count(),
-            'female_members' => $members->where('gender', 'FEMALE')->count(),
-            'senior_citizens' => $members->where('senior_citizen', true)->count(),
-            'pwd_members' => $members->where('person_with_disability', true)->count(),
-            'children_under_5' => $members->where('birth_date', '>', now()->subYears(5))->count(),
-            'school_age_children' => $members->whereBetween('birth_date', [
-                now()->subYears(18),
-                now()->subYears(5)
-            ])->count(),
-        ]);
+        return $query->where('has_senior_citizen', true);
+    }
+
+    public function scopeWithPwd($query)
+    {
+        return $query->where('has_pwd_member', true);
+    }
+
+    public function scopeByBarangay($query, $barangay)
+    {
+        return $query->where('barangay', $barangay);
+    }
+
+    public function scopeByHouseType($query, $houseType)
+    {
+        return $query->where('house_type', $houseType);
+    }
+
+    public function scopeByOwnershipStatus($query, $ownershipStatus)
+    {
+        return $query->where('ownership_status', $ownershipStatus);
     }
 }

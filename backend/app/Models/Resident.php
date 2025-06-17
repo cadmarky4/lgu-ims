@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Schemas\ResidentSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,69 +10,24 @@ class Resident extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'first_name',
-        'last_name',
-        'middle_name',
-        'suffix',
-        'birth_date',
-        'birth_place',
-        'gender',
-        'civil_status',
-        'nationality',
-        'religion',
-        'mobile_number',
-        'telephone_number',
-        'email_address',
-        'house_number',
-        'street',
-        'purok',
-        'barangay',
-        'municipality',
-        'province',
-        'zip_code',
-        'complete_address',
-        'philhealth_number',
-        'sss_number',
-        'tin_number',
-        'voters_id_number',
-        'household_id',
-        'is_household_head',
-        'relationship_to_head',
-        'occupation',
-        'employer',
-        'monthly_income',
-        'employment_status',
-        'educational_attainment',
-        'senior_citizen',
-        'person_with_disability',
-        'disability_type',
-        'indigenous_people',
-        'indigenous_group',
-        'four_ps_beneficiary',
-        'four_ps_household_id',
-        'voter_status',
-        'precinct_number',
-        'medical_conditions',
-        'allergies',
-        'emergency_contact_name',
-        'emergency_contact_number',
-        'emergency_contact_relationship',
-        'status',
-        'remarks',
-        'created_by',
-        'updated_by',
-    ];
-
-    protected $casts = [
-        'birth_date' => 'date',
-        'monthly_income' => 'decimal:2',
-        'is_household_head' => 'boolean',
-        'senior_citizen' => 'boolean',
-        'person_with_disability' => 'boolean',
-        'indigenous_people' => 'boolean',
-        'four_ps_beneficiary' => 'boolean',
-    ];
+    /**
+     * Get fillable fields from schema
+     */
+    protected $fillable;
+    
+    /**
+     * Get casts from schema
+     */
+    protected $casts;
+    
+    public function __construct(array $attributes = [])
+    {
+        // Set fillable and casts from schema
+        $this->fillable = ResidentSchema::getFillableFields();
+        $this->casts = ResidentSchema::getCasts();
+        
+        parent::__construct($attributes);
+    }
 
     /**
      * Computed attributes
@@ -85,7 +41,12 @@ class Resident extends Model
 
     public function getAgeAttribute(): int
     {
-        return $this->birth_date->age;
+        // If age is stored in database, use it; otherwise compute from birth_date
+        if (isset($this->attributes['age']) && $this->attributes['age'] !== null) {
+            return (int) $this->attributes['age'];
+        }
+        
+        return $this->birth_date ? $this->birth_date->age : 0;
     }
 
     /**
@@ -172,5 +133,20 @@ class Resident extends Model
     public function scopeByPurok($query, $purok)
     {
         return $query->where('purok', $purok);
+    }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Auto-calculate age when creating or updating
+        static::saving(function ($resident) {
+            if ($resident->birth_date) {
+                $resident->age = $resident->birth_date->age;
+            }
+        });
     }
 }
