@@ -1,6 +1,6 @@
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { BiSidebar } from "react-icons/bi";
-import { useContainerWidth } from "../custom-hooks/useContainerWidth";
+import { useContainerWidth } from "../../custom-hooks/useContainerWidth";
 import { useEffect, useState } from "react";
 
 interface HeaderProps {

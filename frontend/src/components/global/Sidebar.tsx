@@ -273,7 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const handleSubmenuClick = (e: React.MouseEvent, subItemId: string) => {
+  const handleSubmenuClick = (e: React.MouseEvent, itemId: string, subItemId: string) => {
     // Allow right-click and middle-click to work naturally for links
     if (e.button === 1 || e.button === 2) return;
 
@@ -281,7 +281,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     e.preventDefault();
 
     // Navigate first
-    onItemClick(subItemId);
+    onItemClick(itemId + "/" + subItemId);
 
     // Only close submenu if sidebar is collapsed, keep it open when expanded
     if (!isExpanded && !isMobile) {
@@ -426,8 +426,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {item.submenu?.map((subItem) => (
                     <div key={subItem.id} className="relative">
                       <Link
-                        to={`/${subItem.id}`}
-                        onClick={(e) => handleSubmenuClick(e, subItem.id)}
+                        to={`/${item.id}/${subItem.id}`}
+                        // onClick={(e) => handleSubmenuClick(e, item.id, subItem.id)}
                         className={`flex items-center ${
                           !isMobile && !isExpanded ? "px-3" : "pl-6 pr-4"
                         } py-2 text-sm w-full text-left rounded-md transition-colors cursor-pointer relative ${
