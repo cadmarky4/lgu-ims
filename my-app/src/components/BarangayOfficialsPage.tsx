@@ -6,6 +6,7 @@ const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All Active Officials');
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showOfficerSelection, setShowOfficerSelection] = useState(false);
   const [selectedOfficial, setSelectedOfficial] = useState(null);
 
   const officials = [
@@ -167,6 +168,12 @@ const BarangayOfficialsPage: React.FC = () => {
     // Here you would typically save to a database
   };
 
+  const handleSelectOfficerToEdit = (official: any) => {
+    setSelectedOfficial(official);
+    setShowOfficerSelection(false);
+    setShowEditForm(true);
+  };
+
   if (showEditForm) {
     return (
       <EditBarangayOfficial 
@@ -174,6 +181,90 @@ const BarangayOfficialsPage: React.FC = () => {
         onSave={handleEditOfficial}
         official={selectedOfficial}
       />
+    );
+  }
+
+  // Officer Selection Modal
+  if (showOfficerSelection) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+        {/* Header */}
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-darktext pl-0">Select Officer to Edit</h1>
+          <p className="text-sm text-gray-600 mt-1">Choose which barangay official you want to update</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search for an official to edit..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+            />
+          </div>
+        </div>
+
+        {/* Officials Grid */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
+            Available Officials ({filteredOfficials.length})
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredOfficials.map((official) => (
+              <div
+                key={official.id}
+                onClick={() => handleSelectOfficerToEdit(official)}
+                className="border border-gray-200 rounded-lg p-4 hover:border-smblue-400 hover:shadow-md transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={official.photo}
+                    alt={official.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 group-hover:text-smblue-400 transition-colors">
+                      {official.name}
+                    </h4>
+                    <p className="text-sm text-gray-600">{official.position}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official.status)}`}>
+                        {official.status}
+                      </span>
+                      <span className="text-xs text-gray-500">{official.committee}</span>
+                    </div>
+                  </div>
+                  <div className="text-gray-400 group-hover:text-smblue-400 transition-colors">
+                    <FiEdit className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredOfficials.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <FiUsers className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No officials found matching your search.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Back Button */}
+        <div className="flex justify-start">
+          <button
+            onClick={() => setShowOfficerSelection(false)}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Back to Officials Page
+          </button>
+        </div>
+      </main>
     );
   }
 
@@ -223,7 +314,7 @@ const BarangayOfficialsPage: React.FC = () => {
             <button 
               onClick={() => {
                 console.log('Update Officers button clicked');
-                setShowEditForm(true);
+                setShowOfficerSelection(true);
               }}
               className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
             >

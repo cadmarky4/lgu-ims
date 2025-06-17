@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { FiUpload } from "react-icons/fi";
+import { FiUpload, FiCheck, FiX } from "react-icons/fi";
 import { residentsService } from "../services";
-import { 
-  type ResidentFormData, 
-  type Resident, 
+import {
+  type ResidentFormData,
+  type Resident,
   type Purok
 } from "../services/types";
 
@@ -16,13 +16,27 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [duplicateResidents, setDuplicateResidents] = useState<Resident[]>([]);
-  
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+
   // Reference data from backend
   const [puroks, setPuroks] = useState<Purok[]>([]);
-  
+
   // Initialize form data with proper typing
   const [formData, setFormData] = useState<ResidentFormData>({
     // Basic Information
@@ -46,8 +60,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     houseNumber: "",
     street: "",
     purok: "",
-    completeAddress: "",    // Family Information - household relationship fields removed
-    // These will be managed by the Household module
+    completeAddress: "",
+    // Family Information
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -59,7 +73,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     philhealthNumber: "",
     sssNumber: "",
     tinNumber: "",
-    votersIdNumber: "",    // Required fields that were missing
+    votersIdNumber: "",
     occupation: "",
     employer: "",
     monthlyIncome: "",
@@ -194,8 +208,45 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     };
 
     fetchReferenceData();
+    loadDraftData();
   }, []);
 
+  // Load draft data from localStorage
+  const loadDraftData = () => {
+    try {
+      const savedDraft = localStorage.getItem('residentDraft');
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        setFormData(draftData);
+      }
+    } catch (error) {
+      console.error('Failed to load draft data:', error);
+    }
+  };
+
+  // Save draft to localStorage
+  const handleSaveDraft = () => {
+    setIsSavingDraft(true);
+    try {
+      localStorage.setItem('residentDraft', JSON.stringify(formData));
+      setError(null);
+      showToast('Draft saved successfully!', 'success');
+    } catch (error) {
+      showToast('Failed to save draft. Please try again.', 'error');
+      console.error('Failed to save draft:', error);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Clear draft from localStorage
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem('residentDraft');
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -210,14 +261,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
       console.log("New resident created successfully:", newResident);
 
+      // Clear the draft since resident was successfully created
+      clearDraft();
+
+      // Show success toast
+      showToast('Resident registered successfully!', 'success');
+
       // Call the parent component's onSave callback
       onSave(newResident);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error saving resident:", err);
 
       // Handle different types of errors
-      if (err.message) {
+      if (err instanceof Error) {
         try {
           // Try to parse JSON error message
           const errorData = JSON.parse(err.message);
@@ -256,15 +313,19 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         <h1 className="text-2xl font-bold text-darktext pl-0">
           Add New Resident Profile
         </h1>
-      </div>
-      
+        {localStorage.getItem('residentDraft') && (
+          <p className="text-sm text-gray-600 mt-1">
+            📝 Draft data loaded from previous session
+          </p>
+        )}
+      </div>{" "}
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
-      
+
       {/* Duplicate Warning */}
       {duplicateWarning && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -288,14 +349,14 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           )}
         </div>
       )}
-      
+
       {/* Loading State */}
       {isLoading && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
-      
+
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
@@ -680,11 +741,12 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Family Information
-          </h2>          <div className="border-b border-gray-200 mb-6"></div>
+          </h2>
 
-          {/* Household relationship fields removed - managed by Household module */}
+          <div className="border-b border-gray-200 mb-6"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -1052,27 +1114,65 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         </section>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {isSubmitting && (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            {isSavingDraft && (
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
+            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
           </button>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isSubmitting && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
+              <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${toast.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+            }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

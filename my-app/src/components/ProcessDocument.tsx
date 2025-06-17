@@ -36,7 +36,7 @@ interface DocumentStats {
   total: number;
 }
 
-const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
+const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>([]);
   const [stats, setStats] = useState<DocumentStats>({
@@ -54,7 +54,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('ALL');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
-  const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -98,10 +98,15 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getDocuments();
+      const response = await documentsService.getDocuments();
       setDocuments(response.data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch documents');
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,7 +114,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
 
   const fetchDocumentStats = async () => {
     try {
-      const response = await apiService.getDocumentStatistics();
+      const response = await documentsService.getDocumentStatistics();
       setStats(response);
     } catch (err) {
       console.error('Failed to fetch document statistics:', err);
@@ -247,30 +252,38 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     setFilteredDocuments(filtered);
   };
 
-  const handleProcessDocument = async (documentId: number, action: string, data?: any) => {
+  const handleProcessDocument = async (documentId: number, action: string, data?: {
+    notes?: string;
+    certifying_official?: string;
+  }) => {
     try {
       let response;
       switch (action) {
         case 'approve':
-          response = await apiService.approveDocument(documentId, data);
+          response = await documentsService.approveDocument(documentId, data);
           break;
         case 'reject':
-          response = await apiService.rejectDocument(documentId, data);
+          response = await documentsService.rejectDocument(documentId, data);
           break;
         case 'release':
-          response = await apiService.releaseDocument(documentId, data);
+          response = await documentsService.releaseDocument(documentId, data);
           break;
         default:
           throw new Error('Invalid action');
       }
+
+      console.log('Document processed successfully:', response);
 
       // Refresh data
       await fetchDocuments();
       await fetchDocumentStats();
       setShowProcessModal(false);
       setSelectedDocument(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to process document');
+    } catch (err) {
+      console.error('Error processing document:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      }
     }
   };
 
@@ -445,16 +458,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowNewRequestModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
-            >
-              <FiPlus className="w-4 h-4" />
-              New Request
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -641,23 +645,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
         />
       )}
 
-      {/* New Request Modal */}
-      {showNewRequestModal && (
-        <NewDocumentRequestModal
-          onClose={() => setShowNewRequestModal(false)}
-          onSubmit={async (requestData) => {
-            try {
-              await apiService.createDocument(requestData);
-              await fetchDocuments();
-              await fetchDocumentStats();
-              setShowNewRequestModal(false);
-            } catch (err: any) {
-              setError(err.message || 'Failed to create document request');
-            }
-          }}
-          documentTypes={documentTypes}
-        />
-      )}
+
     </div>
   );
 };
@@ -666,7 +654,10 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
 const ProcessDocumentModal: React.FC<{
   document: DocumentRequest;
   onClose: () => void;
-  onProcess: (id: number, action: string, data?: any) => void;
+  onProcess: (id: number, action: string, data?: {
+    notes?: string;
+    certifying_official?: string;
+  }) => void;
 }> = ({ document, onClose, onProcess }) => {
   const [action, setAction] = useState<'approve' | 'reject' | 'release'>('approve');
   const [notes, setNotes] = useState('');
@@ -712,7 +703,7 @@ const ProcessDocumentModal: React.FC<{
             </label>
             <select
               value={action}
-              onChange={(e) => setAction(e.target.value as any)}
+              onChange={(e) => setAction(e.target.value as 'approve' | 'reject' | 'release')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               disabled={processing}
             >
@@ -778,173 +769,6 @@ const ProcessDocumentModal: React.FC<{
   );
 };
 
-// New Document Request Modal Component
-const NewDocumentRequestModal: React.FC<{
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-  documentTypes: Array<{ value: string; label: string; fee: number }>;
-}> = ({ onClose, onSubmit, documentTypes }) => {
-  const [formData, setFormData] = useState({
-    resident_id: '',
-    document_type: '',
-    purpose: '',
-    processing_fee: 0,
-    notes: ''
-  });
-  const [residents, setResidents] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchResidents();
-    }
-  }, [searchTerm]);
-
-  const searchResidents = async () => {
-    try {
-      const response = await apiService.getResidents({ search: searchTerm, per_page: 10 });
-      setResidents(response.data);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
-    }
-  };
-
-  const handleDocumentTypeChange = (type: string) => {
-    const docType = documentTypes.find(dt => dt.value === type);
-    setFormData(prev => ({
-      ...prev,
-      document_type: type,
-      processing_fee: docType ? docType.fee : 0
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await onSubmit(formData);
-    setLoading(false);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          New Document Request
-        </h3>
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search Resident *
-                </label>
-                <input
-                  type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-            {residents.length > 0 && (
-              <div className="mt-2 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
-                {residents.map((resident) => (
-                  <div
-                    key={resident.id}
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, resident_id: resident.id }));
-                      setSearchTerm(`${resident.first_name} ${resident.last_name}`);
-                      setResidents([]);
-                    }}
-                    className="p-2 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="font-medium">{resident.first_name} {resident.last_name}</div>
-                    <div className="text-sm text-gray-500">{resident.complete_address}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-              </div>
-
-          <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-              Document Type *
-                </label>
-                <select
-              value={formData.document_type}
-              onChange={(e) => handleDocumentTypeChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            >
-              <option value="">Select Document Type</option>
-              {documentTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label} {type.fee === 0 ? '(FREE)' : `(₱${type.fee})`}
-                </option>
-              ))}
-                </select>
-              </div>
-
-          <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-              Purpose *
-                </label>
-                <input
-              type="text"
-              value={formData.purpose}
-              onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
-              placeholder="Purpose of the document request"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-                />
-              </div>
-
-          <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-              Processing Fee
-                </label>
-            <div className="text-lg font-bold text-smblue-400">
-              {formData.processing_fee === 0 ? 'FREE' : `₱${formData.processing_fee}`}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Additional notes or requirements"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-            />
-        </div>
-
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          <button
-              type="submit"
-              disabled={loading || !formData.resident_id || !formData.document_type}
-              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 flex items-center space-x-2"
-          >
-              {loading && (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              )}
-              <span>{loading ? 'Creating...' : 'Create Request'}</span>
-          </button>
-        </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 export default ProcessDocument; 
