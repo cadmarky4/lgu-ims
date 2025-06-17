@@ -72,11 +72,11 @@ const SignupPage: React.FC = () => {
       
       await register(backendData);
       // Navigation will be handled by ProtectedRoute
-    } catch (err: any) {
-      if (err.message === 'Validation errors' && err.errors) {
+    } catch (err: unknown) {
+      if ((err instanceof Error ? err.message : 'Unknown error') === 'Validation errors' && err.errors) {
         setValidationErrors(err.errors);
       } else {
-        setError(err instanceof Error ? err.message : 'Registration failed');
+        setError(err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Registration failed');
       }
     }
   };
@@ -388,3 +388,4 @@ const SignupPage: React.FC = () => {
 };
 
 export default SignupPage; 
+

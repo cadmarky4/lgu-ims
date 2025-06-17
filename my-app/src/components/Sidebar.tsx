@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     // Calculate position
     let top = rect.top;
-    let left = rect.right + 8; // Add small gap
+    const left = rect.right + 8; // Add small gap
 
     // Ensure submenu doesn't go above header
     if (top < headerHeight) {
@@ -445,3 +445,4 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 export default Sidebar;
+

@@ -1,12 +1,12 @@
 import { BaseApiService } from './api';
+import { type PaginatedResponse, type Barangay } from './types';
 import {
-  type PaginatedResponse,
   type Household,
   type HouseholdFormData,
   type CreateHouseholdRequest,
   type HouseholdStatistics,
-  type Barangay
-} from './types';
+  type HouseholdType
+} from './household.types';
 
 interface HouseholdParams {
   page?: number;
@@ -31,7 +31,7 @@ export class HouseholdsService extends BaseApiService {  /**
       `${formData.houseNumber} ${formData.streetSitio}, ${formData.barangay}`.trim();
 
     const request: CreateHouseholdRequest = {
-      household_type: formData.householdType as any,
+      household_type: formData.householdType as HouseholdType,
       head_resident_id: formData.headResidentId,
       house_number: formData.houseNumber,
       street_sitio: formData.streetSitio,
@@ -99,30 +99,46 @@ export class HouseholdsService extends BaseApiService {  /**
 
       if (response.errors && Object.keys(response.errors).length > 0) {
         const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as any).response = {
+        (error as Error).response = {
           data: { errors: response.errors }
         };
         throw error;
       }
 
       throw new Error(JSON.stringify(response) || 'Failed to create household');
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.response && error.response.data) {
         throw error;
       }
 
       const wrappedError = new Error(error.message || 'Failed to create household');
-      (wrappedError as any).response = {
+      (wrappedError as Error).response = {
         data: { errors: { general: ['Server error occurred'] } }
       };
       throw wrappedError;
     }
   }
-
   async updateHousehold(id: number, householdData: Partial<HouseholdFormData>): Promise<Household> {
-    try {
-      // Convert partial form data to API format for updates
-      const requestData = householdData as any; // For now, handle conversion case-by-case
+    try {      // Convert partial form data to API format for updates
+      const requestData: Partial<CreateHouseholdRequest> = {
+        household_type: householdData.householdType as HouseholdType,
+        house_number: householdData.houseNumber,
+        street_sitio: householdData.streetSitio,
+        barangay: householdData.barangay,
+        complete_address: householdData.completeAddress,
+        monthly_income: householdData.monthlyIncome || undefined,
+        primary_income_source: householdData.primaryIncomeSource,
+        four_ps_beneficiary: householdData.householdClassification?.fourPsBeneficiary || false,
+        indigent_family: householdData.householdClassification?.indigentFamily || false,
+        has_senior_citizen: householdData.householdClassification?.hasSeniorCitizen || false,
+        has_pwd_member: householdData.householdClassification?.hasPwdMember || false,
+        house_type: householdData.houseType || undefined,
+        ownership_status: householdData.ownershipStatus || undefined,
+        has_electricity: householdData.utilitiesAccess?.electricity || false,
+        has_water_supply: householdData.utilitiesAccess?.waterSupply || false,
+        has_internet_access: householdData.utilitiesAccess?.internetAccess || false,
+        remarks: householdData.remarks
+      };
 
       const response = await this.request(`/households/${id}`, {
         method: 'PUT',
@@ -135,20 +151,20 @@ export class HouseholdsService extends BaseApiService {  /**
 
       if (response.errors && Object.keys(response.errors).length > 0) {
         const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as any).response = {
+        (error as Error).response = {
           data: { errors: response.errors }
         };
         throw error;
       }
 
       throw new Error(JSON.stringify(response) || `Failed to update household #${id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.response && error.response.data) {
         throw error;
       }
 
       const wrappedError = new Error(error.message || `Failed to update household #${id}`);
-      (wrappedError as any).response = {
+      (wrappedError as Error).response = {
         data: { errors: { general: ['Server error occurred'] } }
       };
       throw wrappedError;
@@ -217,20 +233,20 @@ export class HouseholdsService extends BaseApiService {  /**
 
       if (response.errors && Object.keys(response.errors).length > 0) {
         const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as any).response = {
+        (error as Error).response = {
           data: { errors: response.errors }
         };
         throw error;
       }
 
       throw new Error(JSON.stringify(response) || `Failed to update household members`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.response && error.response.data) {
         throw error;
       }
 
       const wrappedError = new Error(error.message || `Failed to update household members`);
-      (wrappedError as any).response = {
+      (wrappedError as Error).response = {
         data: { errors: { general: ['Server error occurred'] } }
       };
       throw wrappedError;
@@ -249,3 +265,4 @@ export class HouseholdsService extends BaseApiService {  /**
     ];
   }
 }
+

@@ -208,8 +208,8 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       // await apiService.createDocument(documentData);
       
       setStep(3);
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit request');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to submit request');
     } finally {
       setSubmitting(false);
     }
@@ -653,3 +653,4 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
 };
 
 export default CertificateOfResidencyForm;
+

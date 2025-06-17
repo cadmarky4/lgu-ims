@@ -29,7 +29,7 @@ const LoginPage: React.FC = () => {
       await login(formData);
       // Navigation will be handled by ProtectedRoute
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Login failed');
     }
   };
 
@@ -174,3 +174,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage; 
+

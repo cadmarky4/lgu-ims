@@ -58,8 +58,8 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
         sendCredentials: false,
         notes: user.notes || ''
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to load user data');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to load user data');
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
 
       const updatedUser = await usersService.updateUser(userId, updateData);
       onSave(updatedUser);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating user:', err);
       
       if (err.response?.data?.errors) {
@@ -145,7 +145,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
         const errorMessages = Object.values(validationErrors).flat();
         setError(errorMessages.join(', '));
       } else {
-        setError(err.message || 'Failed to update user');
+        setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to update user');
       }
     } finally {
       setSaving(false);
@@ -447,3 +447,4 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
 };
 
 export default EditUser;
+

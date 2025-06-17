@@ -426,3 +426,4 @@ const ViewResident: React.FC<ViewResidentProps> = ({ resident, onClose }) => {
 };
 
 export default ViewResident;
+

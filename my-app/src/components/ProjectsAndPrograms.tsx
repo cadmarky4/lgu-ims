@@ -17,7 +17,7 @@ const ProjectsAndPrograms: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showSelectProjectModal, setShowSelectProjectModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<unknown>(null);
 
   const stats = [
     { title: 'Total Projects', value: '24', icon: FiFolder },
@@ -31,12 +31,12 @@ const ProjectsAndPrograms: React.FC = () => {
     // Here you would typically save to a database
   };
 
-  const handleEditProject = (project: any) => {
+  const handleEditProject = (project: unknown) => {
     setSelectedProject(project);
     setShowEditForm(true);
   };
 
-  const handleViewProject = (project: any) => {
+  const handleViewProject = (project: unknown) => {
     console.log('Viewing project:', project); // Debug log
     setSelectedProject(project);
     setShowViewModal(true);
@@ -46,7 +46,7 @@ const ProjectsAndPrograms: React.FC = () => {
     setShowSelectProjectModal(true);
   };
 
-  const handleSelectProjectForEdit = (project: any) => {
+  const handleSelectProjectForEdit = (project: unknown) => {
     setSelectedProject(project);
     setShowSelectProjectModal(false);
     setShowEditForm(true);
@@ -166,3 +166,4 @@ const ProjectsAndPrograms: React.FC = () => {
 };
 
 export default ProjectsAndPrograms;
+

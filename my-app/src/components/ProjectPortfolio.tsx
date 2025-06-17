@@ -423,3 +423,4 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
 };
 
 export default ProjectPortfolio;
+

@@ -78,3 +78,4 @@ export default function ResponsivePieChart({
     </section>
   );
 }
+

@@ -13,14 +13,14 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
   householdHead, 
   onMembersUpdate 
 }) => {
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
+  const [selectedResident, setSelectedResident] = useState<unknown>(null);
   const [relationship, setRelationship] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<unknown[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const relationshipOptions = [
@@ -90,7 +90,7 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
       });
       
       // Filter out the household head and existing members
-      const filteredResults = results.filter((resident: any) => 
+      const filteredResults = results.filter((resident: unknown) => 
         resident.id !== householdHead?.id &&
         !members.some((member: any) => member.resident_id === resident.id)
       );
@@ -304,3 +304,4 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
 };
 
 export default HouseholdMembers; 
+

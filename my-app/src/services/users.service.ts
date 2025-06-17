@@ -1,4 +1,5 @@
 import { BaseApiService } from './api';
+import { type PaginatedResponse } from './types';
 import { 
   type User, 
   type UserFormData, 
@@ -21,14 +22,12 @@ export class UsersService extends BaseApiService {
             queryParams.append(key, value.toString());
           }
         });
-      }
-
-      const response = await this.request(`/users?${queryParams.toString()}`);
+      }      const response = await this.request(`/users?${queryParams.toString()}`);
         // Handle Laravel pagination structure
       if (response.data) {
         // Check if it's Laravel pagination format
-        if ((response.data as any).data && Array.isArray((response.data as any).data)) {
-          const paginatedData = response.data as any;
+        if (typeof response.data === 'object' && 'data' in response.data && Array.isArray(response.data.data)) {
+          const paginatedData = response.data as PaginatedResponse<User>;
           return {
             data: paginatedData.data,
             total: paginatedData.total || 0,
@@ -48,9 +47,10 @@ export class UsersService extends BaseApiService {
       }
 
       throw new Error('Invalid response format');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch users:', error);
-      throw new Error(error.message || 'Failed to fetch users');
+      const message = error instanceof Error ? error.message : 'Failed to fetch users';
+      throw new Error(message);
     }
   }
 
@@ -66,7 +66,7 @@ export class UsersService extends BaseApiService {
       }
 
       throw new Error('User not found');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to fetch user ${id}:`, error);
       throw new Error(error.message || 'Failed to fetch user');
     }
@@ -90,20 +90,20 @@ export class UsersService extends BaseApiService {
 
       if (response.errors && Object.keys(response.errors).length > 0) {
         const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as any).response = {
+        (error as Error).response = {
           data: { errors: response.errors }
         };
         throw error;
       }
 
       throw new Error(JSON.stringify(response) || 'Failed to create user');
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.response && error.response.data) {
         throw error;
       }
 
       const wrappedError = new Error(error.message || 'Failed to create user');
-      (wrappedError as any).response = {
+      (wrappedError as Error).response = {
         data: { message: error.message || 'Failed to create user' }
       };
       throw wrappedError;
@@ -128,20 +128,20 @@ export class UsersService extends BaseApiService {
 
       if (response.errors && Object.keys(response.errors).length > 0) {
         const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as any).response = {
+        (error as Error).response = {
           data: { errors: response.errors }
         };
         throw error;
       }
 
       throw new Error(JSON.stringify(response) || `Failed to update user #${id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.response && error.response.data) {
         throw error;
       }
 
       const wrappedError = new Error(error.message || `Failed to update user #${id}`);
-      (wrappedError as any).response = {
+      (wrappedError as Error).response = {
         data: { message: error.message || `Failed to update user #${id}` }
       };
       throw wrappedError;
@@ -156,7 +156,7 @@ export class UsersService extends BaseApiService {
       await this.request(`/users/${id}`, {
         method: 'DELETE',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to delete user ${id}:`, error);
       throw new Error(error.message || 'Failed to delete user');
     }
@@ -176,7 +176,7 @@ export class UsersService extends BaseApiService {
       }
 
       throw new Error('Failed to toggle user status');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to toggle status for user ${id}:`, error);
       throw new Error(error.message || 'Failed to toggle user status');
     }
@@ -194,7 +194,7 @@ export class UsersService extends BaseApiService {
           password_confirmation: newPassword
         }),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to reset password for user ${id}:`, error);
       throw new Error(error.message || 'Failed to reset password');
     }
@@ -212,7 +212,7 @@ export class UsersService extends BaseApiService {
       }
 
       return [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to fetch users by role ${role}:`, error);
       throw new Error(error.message || 'Failed to fetch users by role');
     }
@@ -230,7 +230,7 @@ export class UsersService extends BaseApiService {
       }
 
       return [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Failed to fetch users by department ${department}:`, error);
       throw new Error(error.message || 'Failed to fetch users by department');
     }
@@ -259,7 +259,7 @@ export class UsersService extends BaseApiService {
       }
 
       throw new Error('Invalid statistics response');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch user statistics:', error);
       // Return default values on error
       return {
@@ -338,3 +338,4 @@ export class UsersService extends BaseApiService {
     };
   }
 }
+

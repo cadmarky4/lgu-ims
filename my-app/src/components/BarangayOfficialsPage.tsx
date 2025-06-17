@@ -168,7 +168,7 @@ const BarangayOfficialsPage: React.FC = () => {
     // Here you would typically save to a database
   };
 
-  const handleSelectOfficerToEdit = (official: any) => {
+  const handleSelectOfficerToEdit = (official: unknown) => {
     setSelectedOfficial(official);
     setShowOfficerSelection(false);
     setShowEditForm(true);
@@ -497,3 +497,4 @@ const BarangayOfficialsPage: React.FC = () => {
 };
 
 export default BarangayOfficialsPage; 
+

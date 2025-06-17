@@ -75,14 +75,14 @@ const UserManagement: React.FC = () => {
         last_page: response.last_page || 1,
         per_page: 15
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching users:', err);
       
       // Check if it's a network error (backend not running)
-      if (err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
+      if ((err instanceof Error ? err.message : 'Unknown error')?.includes('fetch') || (err instanceof Error ? err.message : 'Unknown error')?.includes('Failed to fetch')) {
         setError('Cannot connect to server. Please make sure the backend is running on http://127.0.0.1:8000');
       } else {
-        setError(err.message || 'Failed to fetch users');
+        setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to fetch users');
       }
       setUsers([]);
     } finally {
@@ -101,7 +101,7 @@ const UserManagement: React.FC = () => {
         admins: statsResponse.admins || 0,
         newThisMonth: statsResponse.newThisMonth || 0
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch user statistics:', err);
       // Set default values on error
       setStats({
@@ -151,8 +151,8 @@ const UserManagement: React.FC = () => {
       await usersService.deleteUser(userId);
       await fetchUsers();
       await fetchStats();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete user');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to delete user');
     }
   };
   const handleToggleStatus = async (userId: number) => {
@@ -161,8 +161,8 @@ const UserManagement: React.FC = () => {
       await usersService.toggleUserStatus(userId);
       await fetchUsers();
       await fetchStats();
-    } catch (err: any) {
-      setError(err.message || 'Failed to toggle user status');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to toggle user status');
     }
   };
 
@@ -188,7 +188,7 @@ const UserManagement: React.FC = () => {
     setSelectedUserId(null);
     setSelectedUserName('');
   };
-  const handleUserSaved = async (user: any) => {
+  const handleUserSaved = async (user: unknown) => {
     console.log('User saved:', user);
     // Refresh the users list
     await fetchUsers();
@@ -526,3 +526,4 @@ const UserManagement: React.FC = () => {
 };
 
 export default UserManagement; 
+

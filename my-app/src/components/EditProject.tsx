@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FiUpload, FiX, FiCalendar, FiPlus } from 'react-icons/fi';
+import { FiUpload, FiX, FiPlus } from 'react-icons/fi';
+import type { Project, UpdateProjectData } from '../services/project.types';
 
 interface EditProjectProps {
   onClose: () => void;
-  onSave: (projectData: any) => void;
-  projectData: any; // The existing project data to edit
+  onSave: (projectData: UpdateProjectData) => void;
+  projectData: Project; // The existing project data to edit
 }
 
 interface BudgetItem {
@@ -952,3 +953,4 @@ const EditProject: React.FC<EditProjectProps> = ({ onClose, onSave, projectData 
 };
 
 export default EditProject;
+

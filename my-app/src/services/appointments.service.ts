@@ -162,3 +162,4 @@ export class AppointmentsService extends BaseApiService {
     throw new Error(JSON.stringify(response) || 'Failed to get upcoming appointments');
   }
 }
+

@@ -283,3 +283,4 @@ export class ResidentsService extends BaseApiService {
 }
 
 // ===== TYPES TO ADD TO types.ts =====
+

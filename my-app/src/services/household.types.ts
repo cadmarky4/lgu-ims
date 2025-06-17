@@ -149,3 +149,4 @@ export interface HouseholdStatistics {
     with_internet_access: number;
   };
 }
+

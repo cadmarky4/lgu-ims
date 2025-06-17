@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiPlus, FiSearch, FiX, FiCheck, FiTrash2 } from 'react-icons/fi';
 import { HouseholdsService } from '../services/households.service';
 import { ResidentsService } from '../services/residents.service';
-import { type HouseholdFormData, type Resident, type Barangay } from '../services/types';
+import { type HouseholdFormData } from '../services/household.types';
+import { type Resident } from '../services/resident.types';
+import { type Barangay } from '../services/types';
 
 // Common relationship options
 const RELATIONSHIP_OPTIONS = [
@@ -1364,3 +1366,4 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
 };
 
 export default AddNewHousehold;
+

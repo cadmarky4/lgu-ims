@@ -103,3 +103,4 @@ export interface AppointmentStatistics {
   average_completion_time: number; // in minutes
   completion_rate: number; // percentage
 }
+

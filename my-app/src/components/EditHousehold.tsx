@@ -278,7 +278,7 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 
       await onSave(householdData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update household');
+      setError(err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Failed to update household');
     } finally {
       setIsSubmitting(false);
     }
@@ -797,3 +797,4 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 };
 
 export default EditHousehold;
+

@@ -77,7 +77,7 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
       });
       
       // Mock priority data since API might not have it
-      const itemsWithPriority = response.data.map((item: any) => ({
+      const itemsWithPriority = response.data.map((item: unknown) => ({
         ...item,
         priority: Math.random() > 0.7 ? 'HIGH' : Math.random() > 0.5 ? 'NORMAL' : 'LOW',
         estimated_completion: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -324,3 +324,4 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
 };
 
 export default DocumentQueue; 
+

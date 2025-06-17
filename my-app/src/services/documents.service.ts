@@ -12,8 +12,7 @@ import {
   type ApproveDocumentData,
   type RejectDocumentData,
   type DocumentTracking,
-  type TrackingTimelineItem,
-  type DocumentParams
+  type TrackingTimelineItem
 } from './document.types';
 
 export class DocumentsService extends BaseApiService {
@@ -278,9 +277,7 @@ export class DocumentsService extends BaseApiService {
         return bValue.localeCompare(aValue);
       }
       return aValue.localeCompare(bValue);
-    });
-
-    // Apply pagination
+    });    // Apply pagination
     const page = filters?.page || 1;
     const perPage = filters?.per_page || 15;
     const startIndex = (page - 1) * perPage;
@@ -288,23 +285,25 @@ export class DocumentsService extends BaseApiService {
     const paginatedDocuments = filteredDocuments.slice(startIndex, endIndex);
 
     return {
-      success: true,
-      data: {
-        data: paginatedDocuments,
-        current_page: page,
-        last_page: Math.ceil(filteredDocuments.length / perPage),
-        per_page: perPage,
-        total: filteredDocuments.length,
-        from: startIndex + 1,
-        to: Math.min(endIndex, filteredDocuments.length)
-      },
-      message: 'Documents retrieved successfully'
+      data: paginatedDocuments,
+      current_page: page,
+      last_page: Math.ceil(filteredDocuments.length / perPage),
+      per_page: perPage,
+      total: filteredDocuments.length,
+      first_page_url: '',
+      from: startIndex + 1,
+      last_page_url: '',
+      links: [],
+      next_page_url: null,
+      path: '',
+      prev_page_url: null,
+      to: Math.min(endIndex, filteredDocuments.length)
     };
   }
   /**
    * Create a new document request
    */
-  async createDocument(data: CreateDocumentData): Promise<DocumentApiResponse<DocumentRequest>> {
+  async createDocument(data: CreateDocumentData): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(500);
 
     const newDocument: DocumentRequest = {
@@ -350,7 +349,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Get a specific document by ID
    */
-  async getDocument(id: number): Promise<DocumentApiResponse<DocumentRequest>> {
+  async getDocument(id: number): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(200);
 
     const document = this.mockDocuments.find(doc => doc.id === id);
@@ -373,7 +372,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Update a document
    */
-  async updateDocument(id: number, data: UpdateDocumentData): Promise<DocumentApiResponse<DocumentRequest>> {
+  async updateDocument(id: number, data: UpdateDocumentData): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(400);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -404,7 +403,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Delete a document
    */
-  async deleteDocument(id: number): Promise<DocumentApiResponse<null>> {
+  async deleteDocument(id: number): Promise<ApiResponse<null>> {
     await this.delay(300);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -498,7 +497,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Search documents
    */
-  async searchDocuments(query: string, perPage: number = 15): Promise<DocumentApiResponse<DocumentPaginatedResponse<DocumentRequest>>> {
+  async searchDocuments(query: string, perPage: number = 15): Promise<ApiResponse<PaginatedResponse<DocumentRequest>>> {
     await this.delay(400);
 
     const searchResults = this.mockDocuments.filter(doc =>
@@ -526,7 +525,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Get documents by type
    */
-  async getDocumentsByType(type: string): Promise<DocumentApiResponse<DocumentPaginatedResponse<DocumentRequest>>> {
+  async getDocumentsByType(type: string): Promise<ApiResponse<PaginatedResponse<DocumentRequest>>> {
     await this.delay(300);
 
     const documentsOfType = this.mockDocuments.filter(doc => 
@@ -551,7 +550,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Approve a document
    */
-  async approveDocument(id: number, data?: ApproveDocumentData): Promise<DocumentApiResponse<DocumentRequest>> {
+  async approveDocument(id: number, data?: ApproveDocumentData): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(500);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -599,7 +598,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Reject a document
    */
-  async rejectDocument(id: number, data: RejectDocumentData): Promise<DocumentApiResponse<DocumentRequest>> {
+  async rejectDocument(id: number, data: RejectDocumentData): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(400);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -638,7 +637,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Release a document
    */
-  async releaseDocument(id: number, data?: { notes?: string; certifying_official?: string }): Promise<DocumentApiResponse<DocumentRequest>> {
+  async releaseDocument(id: number, data?: { notes?: string; certifying_official?: string }): Promise<ApiResponse<DocumentRequest>> {
     await this.delay(400);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -686,7 +685,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Track a document
    */
-  async trackDocument(id: number): Promise<DocumentApiResponse<DocumentTracking>> {
+  async trackDocument(id: number): Promise<ApiResponse<DocumentTracking>> {
     await this.delay(300);
 
     const document = this.mockDocuments.find(doc => doc.id === id);
@@ -764,7 +763,7 @@ export class DocumentsService extends BaseApiService {
   /**
    * Generate QR code for a document
    */
-  async generateQR(id: number): Promise<DocumentApiResponse<{ qr_code: string }>> {
+  async generateQR(id: number): Promise<ApiResponse<{ qr_code: string }>> {
     await this.delay(300);
 
     const documentIndex = this.mockDocuments.findIndex(doc => doc.id === id);
@@ -798,3 +797,4 @@ export class DocumentsService extends BaseApiService {
 // Export a singleton instance
 export const documentsService = new DocumentsService();
 export default documentsService;
+

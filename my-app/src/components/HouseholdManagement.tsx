@@ -20,10 +20,10 @@ const HouseholdManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewForm, setShowViewForm] = useState(false);
-  const [selectedHousehold, setSelectedHousehold] = useState<any>(null);
+  const [selectedHousehold, setSelectedHousehold] = useState<unknown>(null);
 
   // Data states
-  const [households, setHouseholds] = useState<any[]>([]);
+  const [households, setHouseholds] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState({
     total_households: 0,
@@ -97,7 +97,7 @@ const HouseholdManagement: React.FC = () => {
         per_page: response.per_page,
         total: response.total,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load households:", error);
       setError("Failed to load households. Please try again.");
       // Clear households on error
@@ -143,7 +143,7 @@ const HouseholdManagement: React.FC = () => {
       await loadHouseholds();
       await loadStatistics();
       setShowAddForm(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to create household:", error);
       setError(error.message || "Failed to create household. Please try again.");
     } finally {
@@ -171,7 +171,7 @@ const HouseholdManagement: React.FC = () => {
       await loadStatistics();
       setShowEditForm(false);
       setSelectedHousehold(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update household:", error);
       setError(error.message || "Failed to update household. Please try again.");
     } finally {
@@ -179,13 +179,13 @@ const HouseholdManagement: React.FC = () => {
     }
   };
 
-  const openEditForm = (household: any) => {
+  const openEditForm = (household: unknown) => {
     // Pass the original backend data for editing
     setSelectedHousehold(household.originalData || household);
     setShowEditForm(true);
   };
 
-  const openViewForm = (household: any) => {
+  const openViewForm = (household: unknown) => {
     // Pass the original backend data for viewing
     setSelectedHousehold(household.originalData || household);
     setShowViewForm(true);
@@ -206,7 +206,7 @@ const HouseholdManagement: React.FC = () => {
         // Reload households to get updated data
         await loadHouseholds();
         await loadStatistics();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to delete household:", error);
         setError(error.message || "Failed to delete household. Please try again.");
       } finally {
@@ -534,3 +534,4 @@ const HouseholdManagement: React.FC = () => {
 };
 
 export default HouseholdManagement;
+

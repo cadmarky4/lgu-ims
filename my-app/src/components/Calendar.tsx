@@ -1,13 +1,26 @@
 import React, { useState } from 'react';
-import { FiChevronLeft, FiChevronRight, FiX, FiCalendar } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
+
+interface AgendaItem {
+  id: number;
+  title: string;
+  time: string;
+  color: string;
+}
+
+interface SelectedDate {
+  day: number;
+  dateKey: string;
+  agendas: AgendaItem[];
+}
 
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<{day: number, dateKey: string, agendas: any[]} | null>(null);
+    const [selectedDate, setSelectedDate] = useState<SelectedDate | null>(null);
     const [showModal, setShowModal] = useState(false);
 
   // Sample agenda data - you can replace this with your actual data
-    const agendaData: {[key: string]: any[]} = {
+    const agendaData: {[key: string]: AgendaItem[]} = {
     '2025-06-05': [
         { id: 1, title: 'Progress with Street Enhancement Lighting Program', time: '10:00 AM', color: 'bg-smblue-400' },
         { id: 2, title: 'Review project milestones', time: '2:00 PM', color: 'bg-green-500' }
@@ -257,3 +270,4 @@ const Calendar = () => {
 };
 
 export default Calendar;
+

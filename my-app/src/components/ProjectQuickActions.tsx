@@ -98,3 +98,4 @@ const ProjectQuickActions: React.FC<ProjectQuickActionsProps> = ({ onUpdateProje
 };
 
 export default ProjectQuickActions;
+

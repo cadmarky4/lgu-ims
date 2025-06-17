@@ -321,3 +321,4 @@ const ViewHousehold: React.FC<ViewHouseholdProps> = ({ household, onClose }) => 
 };
 
 export default ViewHousehold;
+

@@ -512,3 +512,4 @@ const CertificateTemplates: React.FC<CertificateTemplatesProps> = ({
 };
 
 export default CertificateTemplates; 
+

@@ -5,7 +5,7 @@ import {
   type ResidentFormData,
   type Resident,
   type Purok
-} from "../services/types";
+} from "../services/resident.types";
 
 interface AddNewResidentProps {
   onClose: () => void;
@@ -277,7 +277,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       if (err instanceof Error) {
         try {
           // Try to parse JSON error message
-          const errorData = JSON.parse(err.message);
+          const errorData = JSON.parse((err instanceof Error ? err.message : 'Unknown error'));
           if (errorData.errors) {
             const errorMessages = Object.values(errorData.errors).flat();
             setError(`Validation failed: ${errorMessages.join(", ")}`);
@@ -286,7 +286,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           }
         } catch {
           // If not JSON, use the message as is
-          setError(err.message);
+          setError((err instanceof Error ? err.message : 'Unknown error'));
         }
       } else {
         setError("Failed to save resident. Please try again.");
@@ -1178,3 +1178,4 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 };
 
 export default AddNewResident;
+

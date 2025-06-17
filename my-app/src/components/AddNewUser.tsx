@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { UsersService } from '../services/users.service';
-import type { UserFormData } from '../services/types';
+import type { UserFormData, User } from '../services/user.types';
 
 interface AddNewUserProps {
   onClose: () => void;
-  onSave: (userData: any) => void;
+  onSave: (userData: User) => void;
 }
 
 const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
@@ -63,9 +63,9 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
       
       // Call parent callback with success
       onSave(newUser);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      onClose();    } catch (err: unknown) {
+      const message = err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Failed to create user';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -397,3 +397,4 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
 };
 
 export default AddNewUser; 
+

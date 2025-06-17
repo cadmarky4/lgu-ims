@@ -6,6 +6,7 @@ import EditResident from "./EditResident";
 import ViewResident from "./ViewResident";
 import StatCard from "./StatCard";
 import { residentsService } from "../services";
+import type { Resident, CreateResidentData, UpdateResidentData } from "../services/resident.types";
 
 const ResidentManagement: React.FC = () => {
   // API integration states
@@ -18,8 +19,8 @@ const ResidentManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewForm, setShowViewForm] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
-  const [residents, setResidents] = useState<any[]>([]);
+  const [selectedResident, setSelectedResident] = useState<unknown>(null);
+  const [residents, setResidents] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState({
     total_residents: 0,
@@ -64,7 +65,7 @@ const ResidentManagement: React.FC = () => {
       console.log("Residents loaded successfully:", response);
       
       // Map the backend data to the expected format
-      const mappedResidents = response.data.map((resident: any) => ({
+      const mappedResidents = response.data.map((resident: Resident) => ({
         id: resident.id,
         name: `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}${resident.suffix ? ', ' + resident.suffix : ''}`,
         age: resident.age || (resident.birth_date ? new Date().getFullYear() - new Date(resident.birth_date).getFullYear() : 0),
@@ -85,7 +86,7 @@ const ResidentManagement: React.FC = () => {
         per_page: response.per_page,
         total: response.total,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load residents:", error);
       setError("Failed to load residents. Please try again.");
       // Clear residents on error
@@ -96,7 +97,7 @@ const ResidentManagement: React.FC = () => {
   };
 
   // Helper function to determine resident category
-  const getResidentCategory = (resident: any): string => {
+  const getResidentCategory = (resident: unknown): string => {
     const categories = [];
     if (resident.senior_citizen) categories.push("Senior Citizen");
     if (resident.person_with_disability) categories.push("PWD");
@@ -132,7 +133,7 @@ const ResidentManagement: React.FC = () => {
       await loadResidents();
       await loadStatistics();
       setShowAddForm(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to create resident:", error);
       setError(error.message || "Failed to create resident. Please try again.");
     } finally {
@@ -152,20 +153,20 @@ const ResidentManagement: React.FC = () => {
       await loadStatistics();
       setShowEditForm(false);
       setSelectedResident(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update resident:", error);
       setError(error.message || "Failed to update resident. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-  const openEditForm = (resident: any) => {
+  const openEditForm = (resident: unknown) => {
     // Pass the original backend data for editing
     setSelectedResident(resident.originalData || resident);
     setShowEditForm(true);
   };
 
-  const openViewForm = (resident: any) => {
+  const openViewForm = (resident: unknown) => {
     // Pass the original backend data for viewing
     setSelectedResident(resident.originalData || resident);
     setShowViewForm(true);
@@ -185,7 +186,7 @@ const ResidentManagement: React.FC = () => {
         // Reload residents to get updated data
         await loadResidents();
         await loadStatistics();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to deactivate resident:", error);
         setError(error.message || "Failed to deactivate resident. Please try again.");
       } finally {
@@ -506,3 +507,4 @@ const ResidentManagement: React.FC = () => {
 };
 
 export default ResidentManagement;
+

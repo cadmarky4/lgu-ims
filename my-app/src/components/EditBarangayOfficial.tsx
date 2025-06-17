@@ -144,7 +144,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         onClose();
       }, 1000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating official:', err);
 
       // Handle validation errors
@@ -152,7 +152,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         const errorMessages = Object.values(err.response.data.errors).flat();
         setError(`Validation failed: ${errorMessages.join(", ")}`);
       } else {
-        setError(err.message || "Failed to update official. Please try again.");
+        setError((err instanceof Error ? err.message : 'Unknown error') || "Failed to update official. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -501,3 +501,4 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
 };
 
 export default EditBarangayOfficial; 
+

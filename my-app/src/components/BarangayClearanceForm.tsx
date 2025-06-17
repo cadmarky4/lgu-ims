@@ -215,8 +215,8 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       // await apiService.createDocument(documentData);
       
       setStep(3);
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit request');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to submit request');
     } finally {
       setSubmitting(false);
     }
@@ -590,3 +590,4 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
 };
 
 export default BarangayClearanceForm; 
+

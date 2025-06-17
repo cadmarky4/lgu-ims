@@ -102,3 +102,4 @@ const BarangayOfficials: React.FC = () => {
 };
 
 export default BarangayOfficials; 
+

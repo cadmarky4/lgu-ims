@@ -26,8 +26,8 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
       setError(null);
       const userData = await usersService.getUser(userId);
       setUser(userData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load user data');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to load user data');
     } finally {
       setLoading(false);
     }
@@ -281,3 +281,4 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
 };
 
 export default ViewUser;
+

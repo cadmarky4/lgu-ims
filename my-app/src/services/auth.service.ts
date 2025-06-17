@@ -60,3 +60,4 @@ export class AuthService extends BaseApiService {
     throw new Error('Failed to get current user');
   }
 }
+

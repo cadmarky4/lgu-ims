@@ -22,3 +22,4 @@ export const triggerLogout = () => {
 export const clearAuthErrorHandler = () => {
   logoutHandler = null;
 };
+

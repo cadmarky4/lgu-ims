@@ -205,14 +205,14 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
       // Call the parent component's onSave callback
       onSave(updatedResident);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating resident:', err);
 
       // Handle different types of errors
-      if (err.message) {
+      if ((err instanceof Error ? err.message : 'Unknown error')) {
         try {
           // Try to parse JSON error message
-          const errorData = JSON.parse(err.message);
+          const errorData = JSON.parse((err instanceof Error ? err.message : 'Unknown error'));
           if (errorData.errors) {
             const errorMessages = Object.values(errorData.errors).flat();
             setError(`Validation failed: ${errorMessages.join(', ')}`);
@@ -221,7 +221,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
           }
         } catch {
           // If not JSON, use the message as is
-          setError(err.message);
+          setError((err instanceof Error ? err.message : 'Unknown error'));
         }
       } else {
         setError('Failed to update resident. Please try again.');
@@ -1056,3 +1056,4 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
 };
 
 export default EditResident;
+

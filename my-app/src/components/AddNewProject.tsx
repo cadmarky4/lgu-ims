@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FiUpload, FiX, FiCalendar, FiPlus } from 'react-icons/fi';
+import { FiUpload, FiX, FiPlus } from 'react-icons/fi';
+import type { Project } from '../services/project.types';
 
 interface AddNewProjectProps {
   onClose: () => void;
-  onSave: (projectData: any) => void;
+  onSave: (projectData: Project) => void;
 }
 
 interface BudgetItem {
@@ -606,3 +607,4 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
 };
 
 export default AddNewProject;
+

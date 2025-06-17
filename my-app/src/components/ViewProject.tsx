@@ -362,3 +362,4 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
 };
 
 export default ViewProject;
+

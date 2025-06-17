@@ -103,7 +103,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
     } catch (err) {
       console.error('Failed to fetch documents:', err);
       if (err instanceof Error) {
-        setError(err.message);
+        setError((err instanceof Error ? err.message : 'Unknown error'));
       } else {
         setError('An unexpected error occurred');
       }
@@ -282,7 +282,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
     } catch (err) {
       console.error('Error processing document:', err);
       if (err instanceof Error) {
-        setError(err.message);
+        setError((err instanceof Error ? err.message : 'Unknown error'));
       }
     }
   };
@@ -772,3 +772,4 @@ const ProcessDocumentModal: React.FC<{
 
 
 export default ProcessDocument; 
+

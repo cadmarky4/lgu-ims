@@ -47,8 +47,8 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ userId, userName, onClose
       setLoading(true);
       await usersService.resetUserPassword(userId, password);
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -176,3 +176,4 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ userId, userName, onClose
 };
 
 export default ResetPassword;
+
