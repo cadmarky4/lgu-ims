@@ -53,8 +53,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       submenu: [
         { id: "barangay-clearance", label: "Barangay Clearance" },
         { id: "business-permit", label: "Business Permit" },
+        { id: "event-permit", label: "Event Permit" },
         { id: "certificate-indigency", label: "Certificate of Indigency" },
         { id: "certificate-residency", label: "Certificate of Residency" },
+        { id: "certificate-cohabitation", label: "Certificate of Cohabitaion" },
+        
       ],
     },
     {

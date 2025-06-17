@@ -1,43 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiSearch } from 'react-icons/fi';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FiPlus, FiSearch, FiX, FiCheck } from 'react-icons/fi';
 
-interface EditHouseholdProps {
-  household: any;
-  onClose: () => void;
-  onSave: (householdData: any) => void;
-}
-
-const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSave }) => {
+const EditHousehold: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingHousehold, setIsFetchingHousehold] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   // Reference data from backend
   const [barangays, setBarangays] = useState<any[]>([]);
   const [residents, setResidents] = useState<any[]>([]);
   const [filteredResidents, setFilteredResidents] = useState<any[]>([]);
+  
+  const [household, setHousehold] = useState<any>(null);
 
   const [formData, setFormData] = useState({
-    householdId: household.id || 'Auto-generated',
+    householdId: '',
     householdType: '',
     barangay: '',
     streetSitio: '',
     houseNumber: '',
-    completeAddress: household.address || '',
-    householdHeadSearch: household.headName || '',
+    completeAddress: '',
+    householdHeadSearch: '',
     memberSearch: '',
-    monthlyIncome: household.income?.toString() || '',
+    monthlyIncome: '',
     primaryIncomeSource: '',
     householdClassification: {
-      fourPsBeneficiary: household.programs?.includes('4Ps') || false,
+      fourPsBeneficiary: false,
       indigentFamily: false,
-      hasSeniorCitizen: household.programs?.includes('Senior Citizen Assistance') || false,
+      hasSeniorCitizen: false,
       hasPwdMember: false
     },
     houseType: '',
-    ownershipStatus: household.ownership || '',
+    ownershipStatus: '',
     utilitiesAccess: {
       electricity: false,
       waterSupply: false,
@@ -105,46 +120,44 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 
     // Fetch fresh household data
     const fetchHouseholdData = async () => {
-      if (!household.id) return;
+      if (!id) return;
       
       setIsFetchingHousehold(true);
       try {
         // TODO: Backend developer - replace with actual endpoint
-        // const response = await fetch(`/api/households/${household.id}`);
+        // const response = await fetch(`/api/households/${id}`);
         // const householdData = await response.json();
-        // 
-        // if (response.ok) {
-        //   setFormData({
-        //     householdId: householdData.id,
-        //     householdType: householdData.householdType || '',
-        //     barangay: householdData.barangay || '',
-        //     streetSitio: householdData.streetSitio || '',
-        //     houseNumber: householdData.houseNumber || '',
-        //     completeAddress: householdData.address || '',
-        //     householdHeadSearch: householdData.headName || '',
-        //     memberSearch: '',
-        //     monthlyIncome: householdData.income?.toString() || '',
-        //     primaryIncomeSource: householdData.primaryIncomeSource || '',
-        //     householdClassification: {
-        //       fourPsBeneficiary: householdData.programs?.includes('4Ps') || false,
-        //       indigentFamily: householdData.classifications?.indigentFamily || false,
-        //       hasSeniorCitizen: householdData.programs?.includes('Senior Citizen Assistance') || false,
-        //       hasPwdMember: householdData.classifications?.hasPwdMember || false
-        //     },
-        //     houseType: householdData.houseType || '',
-        //     ownershipStatus: householdData.ownership || '',
-        //     utilitiesAccess: {
-        //       electricity: householdData.utilities?.electricity || false,
-        //       waterSupply: householdData.utilities?.waterSupply || false,
-        //       internetAccess: householdData.utilities?.internetAccess || false
-        //     },
-        //     remarks: householdData.remarks || ''
-        //   });
-        // }
-
-      } catch (err) {
+        
+        // For now, using mock data - would need to get from API
+        // This is a simplified example - you would get this from the API
+        const mockHousehold = {
+          id: id,
+          headName: 'Mock Head',
+          address: 'Mock Address',
+          ownership: 'Owned',
+          income: 25000,
+          programs: ['4Ps']
+        };
+        
+        setHousehold(mockHousehold);
+        
+        // Populate form with household data
+        setFormData(prev => ({
+          ...prev,
+          householdId: mockHousehold.id,
+          completeAddress: mockHousehold.address,
+          householdHeadSearch: mockHousehold.headName,
+          monthlyIncome: mockHousehold.income?.toString() || '',
+          ownershipStatus: mockHousehold.ownership,
+          householdClassification: {
+            ...prev.householdClassification,
+            fourPsBeneficiary: mockHousehold.programs?.includes('4Ps') || false,
+            hasSeniorCitizen: mockHousehold.programs?.includes('Senior Citizen Assistance') || false,
+          }
+        }));
+      } catch (error) {
+        console.error('Failed to load household:', error);
         setError('Failed to load household data');
-        console.error('Error fetching household data:', err);
       } finally {
         setIsFetchingHousehold(false);
       }
@@ -152,7 +165,7 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 
     fetchData();
     fetchHouseholdData();
-  }, [household.id]);
+  }, [id]);
 
   // Filter residents based on search input
   useEffect(() => {
@@ -174,8 +187,8 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 
     try {
       // TODO: Backend developer - replace with actual endpoint
-      // const response = await fetch(`/api/households/${household.id}`, {
-      //   method: 'PUT', // or 'PATCH'
+      // const response = await fetch(`/api/households/${id}`, {
+      //   method: 'PUT',
       //   headers: {
       //     'Content-Type': 'application/json',
       //   },
@@ -188,26 +201,67 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
 
       // const updatedHousehold = await response.json();
       
-      // For now, using the existing client-side save
-      onSave({ ...formData, id: household.id });
-      onClose();
+      console.log('Household updated:', formData);
+      showToast('Household updated successfully!', 'success');
+      
+      // Navigate back to households list after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/household');
+      }, 1500);
     } catch (err) {
       setError('Failed to update household. Please try again.');
+      showToast('Failed to update household. Please try again.', 'error');
       console.error('Error updating household:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleAddNewResident = () => {
-    console.log('Add new resident clicked');
+  const handleClose = () => {
+    if (window.confirm('Any unsaved changes will be lost. Are you sure you want to leave?')) {
+      navigate('/household');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading household data...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !household) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Household not found'}</p>
+          <button
+            onClick={() => navigate('/household')}
+            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
+          >
+            Back to Households
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-2">
+      <div className="mb-2 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-darktext pl-0">Edit Household Profile</h1>
+        <button
+          onClick={handleClose}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Error Display */}
@@ -379,7 +433,7 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
             <div className="text-center">
               <button
                 type="button"
-                onClick={handleAddNewResident}
+                onClick={() => console.log('Add new resident clicked')}
                 className="text-smblue-400 hover:text-smblue-300 font-medium flex items-center justify-center space-x-2 mx-auto"
               >
                 <FiPlus className="w-4 h-4" />
@@ -415,7 +469,7 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
             <div className="text-center">
               <button
                 type="button"
-                onClick={handleAddNewResident}
+                onClick={() => console.log('Add new resident clicked')}
                 className="text-smblue-400 hover:text-smblue-300 font-medium flex items-center justify-center space-x-2 mx-auto"
               >
                 <FiPlus className="w-4 h-4" />
@@ -623,7 +677,7 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             disabled={isSubmitting}
           >
@@ -635,15 +689,37 @@ const EditHousehold: React.FC<EditHouseholdProps> = ({ household, onClose, onSav
             disabled={isLoading || isFetchingHousehold || isSubmitting}
           >
             {isSubmitting && (
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             )}
             <span>{isSubmitting ? 'Updating...' : 'Update Household'}</span>
           </button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

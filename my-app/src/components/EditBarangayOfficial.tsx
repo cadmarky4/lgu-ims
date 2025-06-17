@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { FiUpload, FiX } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
+import { apiService } from '../services/api';
 
 interface EditBarangayOfficialProps {
   onClose: () => void;
@@ -8,6 +9,27 @@ interface EditBarangayOfficialProps {
 }
 
 const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, onSave, official }) => {
+  // Loading and error states for API calls
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+
   const [formData, setFormData] = useState({
     prefix: official?.prefix || 'Mr.',
     firstName: official?.firstName || 'Juan',
@@ -25,6 +47,48 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     termEnd: official?.termEnd || '2025-05-10'
   });
 
+  // Load draft data from localStorage
+  const loadDraftData = () => {
+    try {
+      const savedDraft = localStorage.getItem(`officialDraft_${official?.id || 'new'}`);
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        setFormData(draftData);
+      }
+    } catch (error) {
+      console.error('Failed to load draft data:', error);
+    }
+  };
+
+  // Save draft to localStorage
+  const handleSaveDraft = () => {
+    setIsSavingDraft(true);
+    try {
+      localStorage.setItem(`officialDraft_${official?.id || 'new'}`, JSON.stringify(formData));
+      setError(null);
+      showToast('Draft saved successfully!', 'success');
+    } catch (error) {
+      showToast('Failed to save draft. Please try again.', 'error');
+      console.error('Failed to save draft:', error);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Clear draft from localStorage
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(`officialDraft_${official?.id || 'new'}`);
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  };
+
+  // Load draft data on component mount
+  useEffect(() => {
+    loadDraftData();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -33,17 +97,93 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Transform form data to match backend API expectations
+      const officialData = {
+        // Basic Information
+        prefix: formData.prefix,
+        first_name: formData.firstName,
+        middle_name: formData.middleName || null,
+        last_name: formData.lastName,
+        gender: formData.gender,
+        birth_date: formData.birthDate,
+        contact_number: formData.contactNumber,
+        email_address: formData.emailAddress,
+        complete_address: formData.completeAddress,
+        civil_status: formData.civilStatus,
+        educational_background: formData.educationalBackground,
+        
+        // Term Information
+        committee_assignment: formData.committeeAssignment,
+        term_start: formData.termStart,
+        term_end: formData.termEnd,
+        
+        // Status (could be added later)
+        status: 'ACTIVE'
+      };
+
+      // Use the API service to update the official
+      // const updatedOfficial = await apiService.updateBarangayOfficial(official.id, officialData);
+      
+      // For now, use the existing client-side save
+      onSave(officialData);
+      
+      // Clear the draft since official was successfully updated
+      clearDraft();
+      
+      // Show success toast
+      showToast('Official updated successfully!', 'success');
+      
+      // Close after a brief delay to show the toast
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+
+    } catch (err: any) {
+      console.error('Error updating official:', err);
+
+      // Handle validation errors
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        setError(`Validation failed: ${errorMessages.join(", ")}`);
+      } else {
+        setError(err.message || "Failed to update official. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Edit Barangay Official</h1>
+        {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && (
+          <p className="text-sm text-gray-600 mt-1">
+            📝 Draft data loaded from previous session
+          </p>
+        )}
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">Loading reference data...</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
@@ -296,22 +436,66 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         </section>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Cancel
+            {isSavingDraft && (
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            )}
+            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
           </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 text-white rounded-lg transition-colors"
-          >
-            Save Changes
-          </button>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isSubmitting && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
+              <span>{isSubmitting ? 'Updating...' : 'Save Changes'}</span>
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

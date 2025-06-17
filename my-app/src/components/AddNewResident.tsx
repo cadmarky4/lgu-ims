@@ -1,22 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { FiUpload } from "react-icons/fi";
+import { useNavigate } from 'react-router-dom';
+import { FiUpload, FiCheck, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText } from "react-icons/fi";
 import { apiService } from "../services/api";
 
-interface AddNewResidentProps {
-  onClose: () => void;
-  onSave: (residentData: any) => void;
-}
+const AddNewResident: React.FC = () => {
+  const navigate = useNavigate();
 
-const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [duplicateResidents, setDuplicateResidents] = useState<any[]>([]);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+  
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+
   // Reference data from backend
   const [puroks, setPuroks] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
+  
+  // Define initial form data structure
+  const initialFormData = {
     // Basic Information
     firstName: "",
     lastName: "",
@@ -39,10 +54,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     street: "",
     purok: "",
     completeAddress: "",
-    // Family Information
-    householdId: "",
-    isHouseholdHead: "",
-    relationshipToHead: "",
+            // Family Information
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -74,7 +86,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       fourPsBeneficiary: false,
       fourPsHouseholdId: "",
     },
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -186,118 +200,121 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     };
 
     fetchReferenceData();
+    loadDraftData();
   }, []);
+
+  // Load draft data from localStorage
+  const loadDraftData = () => {
+    try {
+      const savedDraft = localStorage.getItem('residentDraft');
+      if (savedDraft) {
+        const draftData = JSON.parse(savedDraft);
+        setFormData(draftData);
+      }
+    } catch (error) {
+      console.error('Failed to load draft data:', error);
+    }
+  };
+
+  // Save draft to localStorage
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    try {
+      const draftData = {
+        ...formData,
+        is_draft: true,
+        status: 'draft'
+      };
+      
+      console.log('Saving draft:', draftData);
+      // Here you would typically save to localStorage or send to API
+      localStorage.setItem('residentDraft', JSON.stringify(draftData));
+      
+      // Show success toast notification
+      showToast('Draft saved successfully!', 'success');
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+      showToast('Failed to save draft. Please try again.', 'error');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Clear draft from localStorage
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem('residentDraft');
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Transform form data to match backend API expectations
+      // Create the resident data object
       const residentData = {
-        // Basic Information
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        middle_name: formData.middleName || null,
-        suffix: formData.suffix || null,
-        birth_date: formData.birthDate,
-        birth_place: formData.birthPlace,
-        gender: formData.gender,
-        civil_status: formData.civilStatus,
-        nationality: formData.nationality,
-        religion: formData.religion || null,
-        employment_status: formData.employmentStatus || null,
-        educational_attainment: formData.educationalAttainment || null,
-
-        // Contact Information
-        mobile_number: formData.mobileNumber || null,
-        telephone_number: formData.landlineNumber || null,
-        email_address: formData.emailAddress || null,
-        complete_address: formData.completeAddress,
-        house_number: formData.houseNumber || null,
-        street: formData.street || null,
-        purok: formData.purok || null,
-
-        // Family Information
-        household_id: formData.householdId || null,
-        is_household_head: formData.isHouseholdHead === "yes",
-        relationship_to_head: formData.relationshipToHead || null,
-        emergency_contact_name: formData.emergencyContactName || null,
-        emergency_contact_number: formData.emergencyContactNumber || null,
-        emergency_contact_relationship:
-          formData.emergencyContactRelationship || null,
-        // Government IDs
-        philhealth_number: formData.philhealthNumber || null,
-        sss_number: formData.sssNumber || null,
-        tin_number: formData.tinNumber || null,
-        voters_id_number: formData.votersIdNumber || null,
-        voter_status: formData.voterStatus || "NOT_REGISTERED",
-        precinct_number: formData.precinctNumber || null,
-
-        // Employment Information
-        occupation: formData.occupation || null,
-        employer: formData.employer || null,
-        monthly_income: formData.monthlyIncome
-          ? parseFloat(formData.monthlyIncome)
-          : null,
-
-        // Health & Medical
-        medical_conditions: formData.medicalConditions || null,
-        allergies: formData.allergies || null,
-
-        // Special Classifications
-        senior_citizen: formData.specialClassifications.seniorCitizen,
-        person_with_disability:
-          formData.specialClassifications.personWithDisability,
-        disability_type: formData.specialClassifications.disabilityType || null,
-        indigenous_people: formData.specialClassifications.indigenousPeople,
-        indigenous_group:
-          formData.specialClassifications.indigenousGroup || null,
-        four_ps_beneficiary: formData.specialClassifications.fourPsBeneficiary,
-        four_ps_household_id:
-          formData.specialClassifications.fourPsHouseholdId || null,
-
-        // Default values
-        status: "ACTIVE",
+        ...formData,
+        is_draft: false,
+        status: 'active'
       };
 
-      // Use the API service to create the resident
-      const newResident = await apiService.createResident(residentData);
+      await apiService.createResident(residentData);
+      console.log("New resident created successfully");
+      
+      // Show success toast notification
+      showToast('Resident registered successfully!', 'success');
 
-      console.log("New resident created successfully:", newResident);
-
-      // Call the parent component's onSave callback
-      onSave(newResident);
-      onClose();
-    } catch (err: any) {
-      console.error("Error saving resident:", err);
-
-      // Handle validation errors
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(`Validation failed: ${errorMessages.join(", ")}`);
-      } else {
-        setError(err.message || "Failed to save resident. Please try again.");
-      }
+      // Clear the draft
+      clearDraft();
+      
+      // Navigate back to residents list after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/residents');
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to create resident:", error);
+      setError('Failed to register resident. Please try again.');
+      showToast('Failed to register resident. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (JSON.stringify(formData) !== JSON.stringify(initialFormData)) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        navigate('/residents');
+      }
+    } else {
+      navigate('/residents');
     }
   };
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">
-          Add New Resident Profile
-        </h1>
-      </div>{" "}
+      <div className="mb-2 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident</h1>
+        <button
+          onClick={handleClose}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
+      </div>
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
+
+
       {/* Duplicate Warning */}
       {duplicateWarning && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -715,64 +732,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Are you the household head? *
-            </label>
-            <div className="flex space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="yes"
-                  checked={formData.isHouseholdHead === "yes"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isHouseholdHead"
-                  value="no"
-                  checked={formData.isHouseholdHead === "no"}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Household ID
-              </label>
-              <input
-                type="text"
-                name="householdId"
-                value={formData.householdId}
-                onChange={handleInputChange}
-                placeholder="Enter household ID if applicable"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Relationship to Head
-              </label>
-              <input
-                type="text"
-                name="relationshipToHead"
-                value={formData.relationshipToHead}
-                onChange={handleInputChange}
-                placeholder="e.g. Son, Daughter, Spouse..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1140,27 +1100,66 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
         </section>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {isSubmitting && (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            {isSavingDraft && (
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
+            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
           </button>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isSubmitting && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
+              <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
