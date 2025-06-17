@@ -595,7 +595,6 @@ const EditProject: React.FC = () => {
             )}
           </div>
 
-          {/* Form Content - Rest of the form sections would go here */}
           {/* Basic Information */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Basic Information</h2>
@@ -713,6 +712,460 @@ const EditProject: React.FC = () => {
                 <span>{formData.progressPercentage}% Complete</span>
               </div>
             </div>
+          </div>
+
+          {/* Timeline and Priority */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Timeline and Priority</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="animate-slide-in-right" style={{animationDelay: '1.5s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                  required
+                />
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '1.6s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date *
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                  required
+                />
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '1.7s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority Level *
+                </label>
+                <div className="flex space-x-2">
+                  {['High', 'Medium', 'Low'].map((priority) => (
+                    <button
+                      key={priority}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priorityLevel: priority }))}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                        formData.priorityLevel === priority
+                          ? priority === 'High' ? 'bg-red-100 text-red-800' : 
+                            priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {priority}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Define Project Milestones */}
+            <div className="animate-slide-in-right" style={{animationDelay: '1.8s'}}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Define Project Milestones *
+              </label>
+              <p className="text-sm text-gray-500 mb-4">Add key milestones and target dates for your projects</p>
+              
+              <div className="space-y-4">
+                {milestones.map((milestone, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <input
+                      type="text"
+                      placeholder="Milestone description"
+                      value={milestone.description}
+                      onChange={(e) => updateMilestone(index, 'description', e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="date"
+                        value={milestone.date}
+                        onChange={(e) => updateMilestone(index, 'date', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                      />
+                      {milestones.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeMilestone(index)}
+                          className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={addMilestone}
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Item</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Budget Information */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Budget Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="animate-slide-in-right" style={{animationDelay: '1.9s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Total Budget *
+                </label>
+                <div className="flex items-center">
+                  <span className="text-gray-500 mr-2">₱</span>
+                  <input
+                    type="text"
+                    name="totalBudget"
+                    value={formData.totalBudget}
+                    onChange={handleInputChange}
+                    placeholder="2,500,000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '2.0s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Funding Source *
+                </label>
+                <select
+                  name="fundingSource"
+                  value={formData.fundingSource}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                  title="Select funding source"
+                  required
+                >
+                  <option value="">Select Funding Source</option>
+                  <option value="Barangay Fund">Barangay Fund</option>
+                  <option value="Government Grant">Government Grant</option>
+                  <option value="Private Donation">Private Donation</option>
+                  <option value="Partnership">Partnership</option>
+                </select>
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '2.1s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Amount Spent
+                </label>
+                <div className="flex items-center">
+                  <span className="text-gray-500 mr-2">₱</span>
+                  <input
+                    type="text"
+                    name="amountSpent"
+                    value={formData.amountSpent}
+                    onChange={handleInputChange}
+                    placeholder="500,000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Budget Breakdown */}
+            <div className="animate-slide-in-right" style={{animationDelay: '2.2s'}}>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Budget Breakdown
+              </label>
+              
+              <div className="space-y-4">
+                {budgetBreakdown.map((item, index) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <input
+                      type="text"
+                      placeholder="Budget item name"
+                      value={item.name}
+                      onChange={(e) => handleBudgetChange(item.id, 'name', e.target.value)}
+                      className="flex-1 mr-4 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <span>₱</span>
+                      <input
+                        type="text"
+                        value={item.amount}
+                        onChange={(e) => handleBudgetChange(item.id, 'amount', e.target.value)}
+                        className="w-24 px-2 py-2 border border-gray-300 rounded text-center focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeBudgetItem(item.id)}
+                        className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                        disabled={budgetBreakdown.length === 1}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addBudgetItem}
+                  className="text-smblue-400 hover:text-smblue-400/90 text-sm font-medium flex items-center space-x-1 transition-colors duration-200 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Item</span>
+                </button>
+
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-900">Total Estimated</span>
+                    <span className="font-semibold text-lg text-smblue-400">₱ {calculateTotal().toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Project Team & Stakeholders */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Project Team & Stakeholders</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="animate-slide-in-right" style={{animationDelay: '2.3s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Project Manager *
+                </label>
+                <select
+                  name="projectManager"
+                  value={formData.projectManager}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                  title="Select project manager"
+                  required
+                >
+                  <option value="">Select Project Manager</option>
+                  <option value="Juan Dela Cruz">Juan Dela Cruz</option>
+                  <option value="Maria Santos">Maria Santos</option>
+                  <option value="Jose Reyes">Jose Reyes</option>
+                </select>
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '2.4s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Expected Beneficiaries
+                </label>
+                <input
+                  type="text"
+                  name="expectedBeneficiaries"
+                  value={formData.expectedBeneficiaries}
+                  onChange={handleInputChange}
+                  placeholder="12000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                />
+              </div>
+            </div>
+
+            {/* Team Members */}
+            <div className="animate-slide-in-right" style={{animationDelay: '2.5s'}}>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Team Members
+              </label>
+              
+              <div className="flex items-center justify-between mb-4">
+                <select
+                  name="teamDepartment"
+                  value={formData.teamDepartment}
+                  onChange={handleInputChange}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200 cursor-pointer"
+                  title="Select department"
+                >
+                  <option value="All Departments">All Departments</option>
+                  <option value="Health">Health</option>
+                  <option value="Education">Education</option>
+                  <option value="Infrastructure">Infrastructure</option>
+                </select>
+                
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={selectAllVisible}
+                    className="px-3 py-2 bg-smblue-400 text-white rounded-lg text-sm hover:bg-smblue-400/90 transition-all duration-200 cursor-pointer"
+                  >
+                    Select All Visible
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {teamMembers.map((member, index) => (
+                  <div
+                    key={member.id}
+                    onClick={() => toggleTeamMember(member.id)}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 animate-slide-in-right ${
+                      selectedTeamMembers.includes(member.id)
+                        ? 'border-smblue-400 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    style={{animationDelay: `${2.6 + index * 0.1}s`}}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={member.photo}
+                        alt={member.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">{member.name}</p>
+                        <p className="text-xs text-gray-500">{member.position}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Key Stakeholders */}
+            <div className="mt-6 animate-slide-in-right" style={{animationDelay: '3.4s'}}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Key Stakeholders
+              </label>
+              <textarea
+                name="keyStakeholders"
+                value={formData.keyStakeholders}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Additional Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="animate-slide-in-right" style={{animationDelay: '3.5s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Project Documents
+                </label>
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
+                    dragActive 
+                      ? 'border-smblue-400 bg-blue-50' 
+                      : 'border-gray-300 hover:border-smblue-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    <span className="text-smblue-400 hover:text-smblue-400/90 font-medium transition-colors duration-200">
+                      Choose Files
+                    </span> 
+                    <span> to browse or drag and drop</span>
+                  </p>
+                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)</p>
+                </div>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  onChange={handleFileInput}
+                  className="hidden"
+                />
+
+                {/* Uploaded Files Display */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Uploaded Files:</h4>
+                    {uploadedFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-smblue-100 rounded flex items-center justify-center">
+                            <Upload className="w-4 h-4 text-smblue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFile(file.id);
+                          }}
+                          className="text-red-400 hover:text-red-600 p-1 rounded transition-colors duration-200 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="animate-slide-in-right" style={{animationDelay: '3.6s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Project Location
+                </label>
+                <input
+                  type="text"
+                  name="projectLocation"
+                  value={formData.projectLocation}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                />
+              </div>
+
+              <div className="md:col-span-2 animate-slide-in-right" style={{animationDelay: '3.7s'}}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Success Metrics
+                </label>
+                <textarea
+                  name="successMetrics"
+                  value={formData.successMetrics}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Potential Risks & Challenges */}
+          <div className="mb-8 animate-slide-in-right" style={{animationDelay: '3.8s'}}>
+            <h2 className="text-lg font-medium text-gray-900 mb-6 pb-2 border-b border-gray-200">Potential Risks & Challenges</h2>
+            
+            <textarea
+              name="potentialRisks"
+              value={formData.potentialRisks}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-smblue-400 transition-all duration-200"
+            />
           </div>
 
           {/* Action Buttons */}
