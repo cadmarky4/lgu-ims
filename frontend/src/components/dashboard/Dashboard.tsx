@@ -1,10 +1,9 @@
 import React from 'react';
-import StatCard from '../StatCard';
+import StatCard from '../global/StatCard';
 import ResidentsChart from './ResidentsChart';
 import QuickActions from './QuickActions';
 import Notifications from './Notifications';
 import BarangayOfficials from './BarangayOfficials';
-import { FiUsers, FiHome, FiUserCheck, FiFileText, FiTrendingUp, FiAlertTriangle } from 'react-icons/fi';
 import { FaUsers, FaHouseUser, FaStamp, FaPen, FaClipboardList, FaUserCheck } from 'react-icons/fa';
 
 const Dashboard: React.FC = () => {

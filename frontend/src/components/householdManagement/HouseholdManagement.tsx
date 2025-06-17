@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
-import StatCard from '../StatCard';
+import StatCard from '../global/StatCard';
 import { HouseholdsService } from '../../services/households.service';
 import { type Household, type HouseholdFormData } from '../../services/household.types';
 

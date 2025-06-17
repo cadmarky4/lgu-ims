@@ -5,7 +5,7 @@ import AddNewUser from './AddNewUser';
 import EditUser from './EditUser';
 import ViewUser from './ViewUser';
 import ResetPassword from '../auth/ResetPassword';
-import StatCard from '../StatCard';
+import StatCard from '../global/StatCard';
 import { UsersService } from '../../services/users.service';
 import type { User, UserParams } from '../../services/user.types';
 

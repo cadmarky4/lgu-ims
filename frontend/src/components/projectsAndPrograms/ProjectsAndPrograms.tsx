@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChevronRight } from 'react-icons/fi';
-import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
+import { FiChevronRight } from 'react-icons/fi';
+import { FaFolder, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import ViewProject from './ViewProject';
 import ProjectQuickActions from './ProjectQuickActions';
 import SelectProject from './SelectProject';
-import StatCard from '../StatCard';
+import StatCard from '../global/StatCard';
 import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
 import ProjectPortfolio from './ProjectPortfolio';

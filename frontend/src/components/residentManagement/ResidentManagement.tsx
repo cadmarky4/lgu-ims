@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from "react-icons/fi";
 import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
-import StatCard from "../StatCard";
+import StatCard from "../global/StatCard";
 import { residentsService } from "../../services";
 import type { Resident, CreateResidentData, UpdateResidentData, ResidentFormData } from "../../services/resident.types";
 

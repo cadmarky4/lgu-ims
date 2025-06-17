@@ -9,8 +9,8 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
+import Header from "./components/global/Header";
+import Sidebar from "./components/global/Sidebar";
 import Dashboard from "./components/dashboard/Dashboard";
 import ResidentManagement from "./components/residentManagement/ResidentManagement";
 import AddNewResident from "./components/residentManagement/AddNewResident";
@@ -27,7 +27,7 @@ import CertificateOfIndigencyForm from "./components/processDocument/Certificate
 import CertificateOfResidencyForm from "./components/processDocument/CertificateOfResidencyForm";
 import DocumentQueue from "./components/processDocument/DocumentQueue";
 import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
-import SettingsPage from "./components/SettingsPage";
+import SettingsPage from "./components/settings/SettingsPage";
 import ProjectsAndPrograms from "./components/projectsAndPrograms/ProjectsAndPrograms";
 import AddNewProject from "./components/projectsAndPrograms/AddNewProject";
 import EditProject from "./components/projectsAndPrograms/EditProject";
