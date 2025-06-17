@@ -141,7 +141,7 @@ const EditResident: React.FC = () => {
         }
         
         setResident(residentData);
-        
+
         // Populate form with resident data - only update fields that exist in formData
         if (residentData) {
           setFormData(prev => ({

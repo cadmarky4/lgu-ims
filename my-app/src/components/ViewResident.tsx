@@ -18,7 +18,7 @@ const ViewResident: React.FC = () => {
         setError('Resident ID not provided');
         setLoading(false);
         return;
-      }
+}
 
       try {
         setLoading(true);
@@ -93,13 +93,13 @@ const ViewResident: React.FC = () => {
           >
             <FiEdit className="w-6 h-6" />
           </button>
-          <button
+        <button
             onClick={handleClose}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Close"
-          >
-            <FiX className="w-6 h-6" />
-          </button>
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
         </div>
       </div>
 

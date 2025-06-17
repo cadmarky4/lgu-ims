@@ -54,7 +54,7 @@ const AddNewResident: React.FC = () => {
     street: "",
     purok: "",
     completeAddress: "",
-    // Family Information
+            // Family Information
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -267,7 +267,7 @@ const AddNewResident: React.FC = () => {
       
       // Show success toast notification
       showToast('Resident registered successfully!', 'success');
-      
+
       // Clear the draft
       clearDraft();
       
