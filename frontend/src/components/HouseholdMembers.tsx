@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiSearch, FiEdit2 } from 'react-icons/fi';
-import { apiService } from '../services';
+import { apiService, residentsService } from '../services';
+import type { Resident } from '../services/resident.types';
 
 interface HouseholdMembersProps {
   householdId: string;
@@ -8,16 +9,25 @@ interface HouseholdMembersProps {
   onMembersUpdate?: (members: any[]) => void;
 }
 
+interface MemberResident {
+  id: number,
+  resident: Resident
+  household_id: string,
+  resident_id: number
+  relationship_to_head: string,
+  is_household_head: boolean
+}
+
 const HouseholdMembers: React.FC<HouseholdMembersProps> = ({ 
   householdId, 
   householdHead, 
   onMembersUpdate 
 }) => {
-  const [members, setMembers] = useState<unknown[]>([]);
+  const [members, setMembers] = useState<MemberResident[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddMember, setShowAddMember] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<unknown>(null);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [relationship, setRelationship] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<unknown[]>([]);
@@ -84,13 +94,10 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
 
     setIsSearching(true);
     try {
-      const results = await apiService.searchResidents({ 
-        search: term,
-        limit: 10
-      });
+      const results = await residentsService.searchResidents(term);
       
       // Filter out the household head and existing members
-      const filteredResults = results.filter((resident: unknown) => 
+      const filteredResults = results.filter((resident: Resident) => 
         resident.id !== householdHead?.id &&
         !members.some((member: any) => member.resident_id === resident.id)
       );
@@ -133,7 +140,7 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
         resident: selectedResident
       };
 
-      setMembers(prev => [...prev, newMember]);
+      setMembers((prev) => [...prev, newMember]);
       
       setSelectedResident(null);
       setRelationship('');
@@ -152,7 +159,7 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = async (memberId: number) => {
     if (!window.confirm('Are you sure you want to remove this member from the household?')) {
       return;
     }

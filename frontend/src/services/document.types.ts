@@ -28,7 +28,6 @@ export type DocumentStatus =
   | 'APPROVED'
   | 'RELEASED'
   | 'REJECTED'
-  | 'CANCELLED';
 
 export type DocumentPriority = 
   | 'LOW'
@@ -42,67 +41,87 @@ export type PaymentStatus =
   | 'WAIVED';
 
 // Main Document interface
+// export interface DocumentRequest {
+//   id: number;
+//   document_type: DocumentType;
+//   title: string;
+//   description?: string;
+//   resident_id: number;
+//   resident_name?: string;
+//   applicant_name: string;
+//   applicant_address?: string;
+//   applicant_contact?: string;
+//   purpose: string;
+//   status: DocumentStatus;
+//   priority: DocumentPriority;
+//   request_date?: string;
+//   requested_date?: string;
+//   needed_date?: string;
+//   processed_date?: string;
+//   approved_date?: string;
+//   released_date?: string;
+//   processing_fee: number;
+//   payment_status: PaymentStatus;
+//   certifying_official?: string;
+//   notes?: string;
+//   remarks?: string;
+//   requirements_submitted?: string[];
+//   document_number?: string;
+//   expiry_date?: string;
+//   qr_code?: string;
+//   created_by?: number;
+//   updated_by?: number;
+//   processed_by?: number;
+//   approved_by?: number;
+//   released_by?: number;
+//   resident?: {
+//     id: number;
+//     first_name: string;
+//     last_name: string;
+//     middle_name?: string;
+//     complete_address: string;
+//     mobile_number?: string;
+//     email?: string;
+//   };
+//   processedBy?: {
+//     id: number;
+//     name: string;
+//   };
+//   approvedBy?: {
+//     id: number;
+//     name: string;
+//   };
+//   releasedBy?: {
+//     id: number;
+//     name: string;
+//   };
+//   createdBy?: {
+//     id: number;
+//     name: string;
+//   };
+//   updatedBy?: {
+//     id: number;
+//     name: string;
+//   };
+// }
 export interface DocumentRequest {
   id: number;
-  document_type: DocumentType;
-  title: string;
-  description?: string;
+  document_type: string;
   resident_id: number;
-  resident_name?: string;
-  applicant_name: string;
-  applicant_address?: string;
-  applicant_contact?: string;
+  resident_name: string;
   purpose: string;
-  status: DocumentStatus;
-  priority: DocumentPriority;
-  request_date?: string;
-  requested_date?: string;
-  needed_date?: string;
+  status: 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'RELEASED' | 'REJECTED';
+  request_date: string;
   processed_date?: string;
-  approved_date?: string;
-  released_date?: string;
   processing_fee: number;
-  payment_status: PaymentStatus;
   certifying_official?: string;
   notes?: string;
-  remarks?: string;
-  requirements_submitted?: string[];
-  document_number?: string;
-  expiry_date?: string;
-  qr_code?: string;
-  created_by?: number;
-  updated_by?: number;
-  processed_by?: number;
-  approved_by?: number;
-  released_by?: number;
-  resident?: {
-    id: number;
+  resident: {
     first_name: string;
     last_name: string;
     middle_name?: string;
     complete_address: string;
     mobile_number?: string;
-    email?: string;
-  };
-  processedBy?: {
-    id: number;
-    name: string;
-  };
-  approvedBy?: {
-    id: number;
-    name: string;
-  };
-  releasedBy?: {
-    id: number;
-    name: string;
-  };
-  createdBy?: {
-    id: number;
-    name: string;
-  };
-  updatedBy?: {
-    id: number;
-    name: string;
   };
 }
 
