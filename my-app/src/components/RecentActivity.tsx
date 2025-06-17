@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FiClock, FiCheckCircle, FiFileText, FiUsers, FiTrendingUp, FiChevronRight, FiFilter } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Clock, CheckCircle, FileText, Users, TrendingUp, ChevronRight, Filter } from 'lucide-react';
 
 interface ActivityItem {
   id: number;
@@ -13,6 +13,8 @@ interface ActivityItem {
 const RecentActivity: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'completed' | 'submitted' | 'approved' | 'started' | 'updated'>('all');
   const [showAll, setShowAll] = useState(false);
+  const [animateNewItems, setAnimateNewItems] = useState(false);
+  const [animateOut, setAnimateOut] = useState(false);
 
   const activities: ActivityItem[] = [
     { 
@@ -76,17 +78,17 @@ const RecentActivity: React.FC = () => {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'completed':
-        return <FiCheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'submitted':
-        return <FiFileText className="w-4 h-4 text-smblue-400" />;
+        return <FileText className="w-4 h-4 text-smblue-400" />;
       case 'approved':
-        return <FiTrendingUp className="w-4 h-4 text-purple-500" />;
+        return <TrendingUp className="w-4 h-4 text-purple-500" />;
       case 'started':
-        return <FiUsers className="w-4 h-4 text-orange-500" />;
+        return <Users className="w-4 h-4 text-orange-500" />;
       case 'updated':
-        return <FiClock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-500" />;
       default:
-        return <FiClock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -126,6 +128,29 @@ const RecentActivity: React.FC = () => {
 
   const displayedActivities = showAll ? filteredActivities : filteredActivities.slice(0, 5);
 
+  // Handle show more animation
+  const handleShowMore = () => {
+    if (!showAll) {
+      setShowAll(true);
+      setAnimateNewItems(true);
+      // Reset animation state after animation completes
+      setTimeout(() => setAnimateNewItems(false), 500);
+    } else {
+      // Animate out before hiding
+      setAnimateOut(true);
+      setTimeout(() => {
+        setShowAll(false);
+        setAnimateOut(false);
+      }, 250); // Match the animation duration
+    }
+  };
+
+  // Reset animation when filter changes
+  useEffect(() => {
+    setAnimateNewItems(true);
+    setTimeout(() => setAnimateNewItems(false), 500);
+  }, [filter]);
+
   return (
     <>
       <style>{`
@@ -137,6 +162,14 @@ const RecentActivity: React.FC = () => {
           from { transform: translateY(10px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
+        @keyframes slideInFromBottom {
+          from { transform: translateY(15px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideOutToBottom {
+          from { transform: translateY(0); opacity: 1; }
+          to { transform: translateY(15px); opacity: 0; }
+        }
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
@@ -144,6 +177,8 @@ const RecentActivity: React.FC = () => {
         
         .animate-slide-in-right { animation: slideInRight 0.4s ease-out; }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }
+        .animate-slide-in-bottom { animation: slideInFromBottom 0.3s ease-out; }
+        .animate-slide-out-bottom { animation: slideOutToBottom 0.25s ease-in; }
         .animate-shimmer { 
           position: relative;
           overflow: hidden;
@@ -171,7 +206,7 @@ const RecentActivity: React.FC = () => {
               className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150"
               title="Filter activities"
             >
-              <FiFilter className="w-4 h-4 text-gray-500" />
+              <Filter className="w-4 h-4 text-gray-500" />
             </button>
           </div>
         </div>
@@ -184,7 +219,7 @@ const RecentActivity: React.FC = () => {
               onClick={() => setFilter(type as any)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 ${
                 filter === type
-                  ? 'bg-smblue-400/80 text-white shadow-sm'
+                  ? 'bg-smblue-400 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -194,49 +229,66 @@ const RecentActivity: React.FC = () => {
         </div>
         
         <div className="space-y-3">
-          {displayedActivities.map((activity, index) => (
-            <div
-              key={activity.id}
-              className={`p-3 rounded-2xl border transition-all duration-200 transform hover:shadow-sm animate-slide-in-right ${getActivityColor(activity.type)}`}
-              style={{animationDelay: `${index * 100}ms`}}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1">
-                  <div className="flex items-center space-x-2 mt-0.5">
-                    {getActivityIcon(activity.type)}
-                    {getPriorityIndicator(activity.priority)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 mb-1 leading-tight">
-                      {activity.activity}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <FiClock className="w-3 h-3 mr-1" />
-                        {activity.time}
+          {displayedActivities.map((activity, index) => {
+            // Only animate initial items or new items when showing more
+            const shouldAnimateIn = index < 5 || (showAll && animateNewItems && index >= 5);
+            const shouldAnimateOut = showAll && animateOut && index >= 5;
+            
+            let animationClass = '';
+            let delay = '0ms';
+            
+            if (shouldAnimateOut) {
+              animationClass = 'animate-slide-out-bottom';
+              delay = `${(index - 5) * 30}ms`;
+            } else if (shouldAnimateIn) {
+              animationClass = index < 5 ? 'animate-slide-in-right' : 'animate-slide-in-bottom';
+              delay = index < 5 ? `${index * 100}ms` : `${(index - 5) * 50}ms`;
+            }
+            
+            return (
+              <div
+                key={activity.id}
+                className={`p-3 rounded-2xl border transition-all duration-200 transform hover:shadow-sm ${getActivityColor(activity.type)} ${animationClass}`}
+                style={{animationDelay: delay}}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="flex items-center space-x-2 mt-0.5">
+                      {getActivityIcon(activity.type)}
+                      {getPriorityIndicator(activity.priority)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 mb-1 leading-tight">
+                        {activity.activity}
                       </p>
-                      <span className="text-xs text-gray-400">•</span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {activity.category}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <p className="text-xs text-gray-500 flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {activity.time}
+                        </p>
+                        <span className="text-xs text-gray-400">•</span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          {activity.category}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0 transform transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
-                <FiChevronRight className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0 transform transition-transform duration-200 group-hover:translate-x-1" />
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Show More/Less Button */}
         {filteredActivities.length > 5 && (
           <div className="text-center pt-4 mt-4 border-t border-gray-100">
             <button 
-              onClick={() => setShowAll(!showAll)}
+              onClick={handleShowMore}
               className="cursor-pointer text-smblue-400 hover:text-white text-sm font-medium flex items-center space-x-2 mx-auto transition-all duration-200 transform hover:scale-105 active:scale-95 px-4 py-2 rounded-2xl hover:bg-smblue-400"
             >
               <span>{showAll ? 'Show Less' : `Show ${filteredActivities.length - 5} More`}</span>
-              <FiChevronRight className={`w-4 h-4 transform transition-transform duration-200 ${showAll ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-4 h-4 transform transition-transform duration-200 ${showAll ? 'rotate-90' : ''}`} />
             </button>
           </div>
         )}
@@ -245,7 +297,7 @@ const RecentActivity: React.FC = () => {
         {filteredActivities.length === 0 && (
           <div className="text-center py-8 animate-fade-in-up">
             <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <FiClock className="w-6 h-6 text-gray-400" />
+              <Clock className="w-6 h-6 text-gray-400" />
             </div>
             <p className="text-gray-500 text-sm">No activities found for this filter</p>
             <button 

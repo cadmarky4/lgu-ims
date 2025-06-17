@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { FiFolder, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChevronRight } from 'react-icons/fi';
 import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
-import AddNewProject from './AddNewProject';
-import EditProject from './EditProject';
 import ViewProject from './ViewProject';
 import ProjectQuickActions from './ProjectQuickActions';
 import SelectProject from './SelectProject';
@@ -11,33 +10,54 @@ import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
 import ProjectPortfolio from './ProjectPortfolio';
 import { FaCircleCheck } from 'react-icons/fa6';
+import type { IconType } from 'react-icons';
+
+interface Project {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  budget: string;
+  progress: number | null;
+  status: 'Active' | 'Pending' | 'Completed';
+  startDate: string | null;
+  completedDate: string | null;
+  priority: 'high' | 'medium' | 'low';
+  teamSize: number;
+  lastUpdated: string;
+}
+
+interface StatItem {
+  title: string;
+  value: number;
+  icon: IconType;
+}
 
 const ProjectsAndPrograms: React.FC = () => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const navigate = useNavigate();
   const [showViewModal, setShowViewModal] = useState(false);
   const [showSelectProjectModal, setShowSelectProjectModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const stats = [
-    { title: 'Total Projects', value: '24', icon: FiFolder },
-    { title: 'Completed Projects', value: '12', icon: FiCheckCircle },
-    { title: 'Active Projects', value: '8', icon: FiClock },
-    { title: 'Total Budget', value: '₱2.4 M', icon: FiDollarSign }
-  ];
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleAddProject = (projectData: any) => {
-    console.log('New project data:', projectData);
-    // Here you would typically save to a database
+  const handleAddProject = () => {
+    navigate('/projects/add');
   };
 
-  const handleEditProject = (project: any) => {
-    setSelectedProject(project);
-    setShowEditForm(true);
+  const handleEditProject = (project: Project) => {
+    navigate(`/projects/edit/${project.id}`);
   };
 
-  const handleViewProject = (project: any) => {
-    console.log('Viewing project:', project); // Debug log
+  const handleViewProject = (project: Project) => {
+    console.log('Viewing project:', project);
     setSelectedProject(project);
     setShowViewModal(true);
   };
@@ -46,92 +66,98 @@ const ProjectsAndPrograms: React.FC = () => {
     setShowSelectProjectModal(true);
   };
 
-  const handleSelectProjectForEdit = (project: any) => {
+  const handleSelectProjectForEdit = (project: Project) => {
     setSelectedProject(project);
     setShowSelectProjectModal(false);
-    setShowEditForm(true);
+    navigate(`/projects/edit/${project.id}`);
   };
-
-  const handleUpdateProject = (projectData: any) => {
-    console.log('Updated project data:', projectData);
-    // Here you would typically update the database
-  };
-
-  if (showEditForm && selectedProject) {
-    return (
-      <EditProject 
-        onClose={() => {
-          setShowEditForm(false);
-          setSelectedProject(null);
-        }} 
-        onSave={handleUpdateProject}
-        projectData={selectedProject}
-      />
-    );
-  }
-
-  if (showAddForm) {
-    return (
-      <AddNewProject 
-        onClose={() => setShowAddForm(false)} 
-        onSave={handleAddProject}
-      />
-    );
-  }
 
   return (
-    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+    <main className="p-4 lg:p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Breadcrumbs */}
+      <div className={`flex items-center space-x-2 text-sm text-gray-600 mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
+        >
+          Dashboard
+        </button>
+        <FiChevronRight className="w-4 h-4 text-gray-400" />
+        <span className="text-gray-900 font-medium">Projects and Programs</span>
+      </div>
+
       {/* Page Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">Projects and Programs</h1>
+      <div className={`mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
+        <h1 className="text-xl lg:text-2xl font-bold text-darktext pl-0">Projects and Programs</h1>
       </div>
 
       {/* Statistics Overview */}
-      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
-        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+      <section className={`w-full bg-white flex flex-col gap-3 border p-4 lg:p-6 rounded-2xl border-gray-100 shadow-sm transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '150ms' }}>
+        <h3 className="text-base lg:text-lg font-semibold text-darktext mb-4 lg:mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
-        <div className="grid grid-cols-4 gap-4">
-          <StatCard 
-            title="Total Projects" 
-            value={24} 
-            icon={FaFolder}
-          />
-          <StatCard 
-            title="Completed Projects" 
-            value={12} 
-            icon={FaCircleCheck}
-          />
-          <StatCard 
-            title="Active Projects" 
-            value={8} 
-            icon={FaHourglassHalf}
-          />
-          <StatCard 
-            title="Total Budget" 
-            value={2420100} 
-            icon={FaDollarSign}
-          />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          {([
+            { title: "Total Projects", value: 24, icon: FaFolder },
+            { title: "Completed Projects", value: 12, icon: FaCircleCheck },
+            { title: "Active Projects", value: 8, icon: FaHourglassHalf },
+            { title: "Total Budget", value: 2420100, icon: FaDollarSign }
+          ] as StatItem[]).map((stat, index) => {
+            // Format value for display
+            const formatValue = (value: number): string => {
+              if (value >= 1000000) {
+                return `${(value / 1000000).toFixed(1)}M`;
+              } else if (value >= 1000) {
+                return `${(value / 1000).toFixed(1)}K`;
+              }
+              return value.toString();
+            };
+
+            return (
+              <div
+                key={stat.title}
+                className={`transition-all duration-700 ease-out ${
+                  isLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+                }`}
+                style={{ 
+                  transitionDelay: `${300 + (index * 150)}ms`,
+                  transformOrigin: 'center bottom'
+                }}
+              >
+                <StatCard 
+                  title={stat.title}
+                  value={formatValue(stat.value)}
+                  icon={stat.icon}
+                />
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Project Portfolio */}
           <ProjectPortfolio 
-            onAddProject={() => setShowAddForm(true)} 
+            onAddProject={handleAddProject} 
             onEditProject={handleEditProject}
             onViewProject={handleViewProject}
           />
         </div>
 
         {/* Right Sidebar */} 
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-4 lg:space-y-6">
           {/* Project Quick Actions */}
           <ProjectQuickActions 
             onUpdateProject={handleUpdateProjectClick}
-            onAddProject={() => setShowAddForm(true)}
+            onAddProject={handleAddProject}
           />
 
           {/* Project Calendar */}
@@ -155,7 +181,7 @@ const ProjectsAndPrograms: React.FC = () => {
           project={selectedProject}
           isOpen={showViewModal}
           onClose={() => {
-            console.log('Closing modal'); // Debug log
+            console.log('Closing modal');
             setShowViewModal(false);
             setSelectedProject(null);
           }}

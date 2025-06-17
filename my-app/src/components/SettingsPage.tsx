@@ -1,22 +1,59 @@
-import React, { useState } from 'react';
-import { FiSettings, FiShield, FiServer } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiSettings, FiShield, FiServer, FiLoader } from 'react-icons/fi';
+
+// Types for better type safety
+interface SettingsData {
+  // General Information
+  barangay: string;
+  city: string;
+  province: string;
+  region: string;
+  type: string;
+  contactNumber: string;
+  emailAddress: string;
+  openingHours: string;
+  closingHours: string;
+  primaryLanguage: string;
+  secondaryLanguage: string;
+  
+  // Privacy and Security
+  sessionTimeout: string;
+  maxLoginAttempts: string;
+  dataRetention: string;
+  backupFrequency: string;
+  
+  // System
+  systemName: string;
+  versionNumber: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SettingsData>({
     // General Information
-    barangay: 'San Miguel',
-    city: 'Pasig City',
-    province: 'Metro Manila',
-    region: 'National Capital Region',
+    barangay: '',
+    city: '',
+    province: '',
+    region: '',
     type: '',
-    contactNumber: '+63 912 345 6789',
-    emailAddress: 'sanmiguel.pasig@gmail.com',
-    openingHours: '8:00 AM',
-    closingHours: '5:00 PM',
-    primaryLanguage: 'Filipino',
-    secondaryLanguage: 'N/A',
+    contactNumber: '',
+    emailAddress: '',
+    openingHours: '',
+    closingHours: '',
+    primaryLanguage: '',
+    secondaryLanguage: '',
     
     // Privacy and Security
     sessionTimeout: '30',
@@ -25,9 +62,94 @@ const SettingsPage: React.FC = () => {
     backupFrequency: 'Daily',
     
     // System
-    systemName: 'Information Management System',
-    versionNumber: '1.0.0-alpha'
+    systemName: '',
+    versionNumber: ''
   });
+
+  const [originalData, setOriginalData] = useState<SettingsData | null>(null);
+
+  // API Base URL - adjust according to your Laravel backend
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+
+  // Fetch settings from API
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/settings`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add authorization header if needed
+          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: ApiResponse<SettingsData> = await response.json();
+      
+      if (result.success && result.data) {
+        setFormData(result.data);
+        setOriginalData(result.data);
+      } else {
+        console.error('Failed to fetch settings:', result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save settings to API
+  const saveSettings = async () => {
+    try {
+      setSaving(true);
+      setErrors({});
+      setSuccessMessage('');
+
+      const response = await fetch(`${API_BASE_URL}/settings`, {
+        method: 'PUT', // or POST depending on your Laravel route setup
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Add authorization header if needed
+          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result: ApiResponse<SettingsData> = await response.json();
+
+      if (response.ok && result.success) {
+        setSuccessMessage('Settings saved successfully!');
+        setOriginalData(formData);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        if (result.errors) {
+          setErrors(result.errors);
+        } else {
+          console.error('Failed to save settings:', result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load settings on component mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,6 +157,25 @@ const SettingsPage: React.FC = () => {
       ...prev,
       [name]: value
     }));
+
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  // Check if form has unsaved changes
+  const hasUnsavedChanges = () => {
+    if (!originalData) return false;
+    return JSON.stringify(formData) !== JSON.stringify(originalData);
+  };
+
+  const getFieldError = (fieldName: string): string | null => {
+    return errors[fieldName] ? errors[fieldName][0] : null;
   };
 
   const tabs = [
@@ -55,12 +196,30 @@ const SettingsPage: React.FC = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <FiLoader className="w-6 h-6 animate-spin text-smblue-400" />
+          <span className="text-gray-600">Loading settings...</span>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-darktext pl-0">Settings</h1>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          {successMessage}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex space-x-1 mb-4">
@@ -97,8 +256,13 @@ const SettingsPage: React.FC = () => {
                   name="barangay"
                   value={formData.barangay}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('barangay') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('barangay') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('barangay')}</p>
+                )}
               </div>
 
               <div>
@@ -110,8 +274,13 @@ const SettingsPage: React.FC = () => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('city') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('city') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('city')}</p>
+                )}
               </div>
 
               <div>
@@ -123,8 +292,13 @@ const SettingsPage: React.FC = () => {
                   name="province"
                   value={formData.province}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('province') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('province') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('province')}</p>
+                )}
               </div>
 
               <div>
@@ -136,8 +310,13 @@ const SettingsPage: React.FC = () => {
                   name="region"
                   value={formData.region}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('region') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('region') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('region')}</p>
+                )}
               </div>
 
               <div>
@@ -148,7 +327,9 @@ const SettingsPage: React.FC = () => {
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('type') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   title="Select type"
                 >
                   <option value="">Select type</option>
@@ -156,6 +337,9 @@ const SettingsPage: React.FC = () => {
                   <option value="Rural">Rural</option>
                   <option value="Highly Urbanized">Highly Urbanized</option>
                 </select>
+                {getFieldError('type') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('type')}</p>
+                )}
               </div>
 
               <div>
@@ -167,8 +351,13 @@ const SettingsPage: React.FC = () => {
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('contactNumber') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('contactNumber') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('contactNumber')}</p>
+                )}
               </div>
 
               <div>
@@ -180,8 +369,13 @@ const SettingsPage: React.FC = () => {
                   name="emailAddress"
                   value={formData.emailAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('emailAddress') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('emailAddress') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('emailAddress')}</p>
+                )}
               </div>
 
               <div>
@@ -193,8 +387,13 @@ const SettingsPage: React.FC = () => {
                   name="openingHours"
                   value={formData.openingHours}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('openingHours') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('openingHours') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('openingHours')}</p>
+                )}
               </div>
 
               <div>
@@ -206,8 +405,13 @@ const SettingsPage: React.FC = () => {
                   name="closingHours"
                   value={formData.closingHours}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('closingHours') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('closingHours') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('closingHours')}</p>
+                )}
               </div>
 
               <div>
@@ -219,8 +423,13 @@ const SettingsPage: React.FC = () => {
                   name="primaryLanguage"
                   value={formData.primaryLanguage}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('primaryLanguage') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('primaryLanguage') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('primaryLanguage')}</p>
+                )}
               </div>
 
               <div>
@@ -232,8 +441,13 @@ const SettingsPage: React.FC = () => {
                   name="secondaryLanguage"
                   value={formData.secondaryLanguage}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('secondaryLanguage') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('secondaryLanguage') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('secondaryLanguage')}</p>
+                )}
               </div>
             </div>
           </div>
@@ -258,8 +472,13 @@ const SettingsPage: React.FC = () => {
                     name="sessionTimeout"
                     value={formData.sessionTimeout}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                      getFieldError('sessionTimeout') ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   />
+                  {getFieldError('sessionTimeout') && (
+                    <p className="mt-1 text-sm text-red-600">{getFieldError('sessionTimeout')}</p>
+                  )}
                 </div>
 
                 <div>
@@ -271,8 +490,13 @@ const SettingsPage: React.FC = () => {
                     name="maxLoginAttempts"
                     value={formData.maxLoginAttempts}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                      getFieldError('maxLoginAttempts') ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   />
+                  {getFieldError('maxLoginAttempts') && (
+                    <p className="mt-1 text-sm text-red-600">{getFieldError('maxLoginAttempts')}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -290,8 +514,13 @@ const SettingsPage: React.FC = () => {
                     name="dataRetention"
                     value={formData.dataRetention}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                      getFieldError('dataRetention') ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   />
+                  {getFieldError('dataRetention') && (
+                    <p className="mt-1 text-sm text-red-600">{getFieldError('dataRetention')}</p>
+                  )}
                 </div>
 
                 <div>
@@ -302,13 +531,18 @@ const SettingsPage: React.FC = () => {
                     name="backupFrequency"
                     value={formData.backupFrequency}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                      getFieldError('backupFrequency') ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     title="Select backup frequency"
                   >
                     <option value="Daily">Daily</option>
                     <option value="Weekly">Weekly</option>
                     <option value="Monthly">Monthly</option>
                   </select>
+                  {getFieldError('backupFrequency') && (
+                    <p className="mt-1 text-sm text-red-600">{getFieldError('backupFrequency')}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -331,8 +565,13 @@ const SettingsPage: React.FC = () => {
                   name="systemName"
                   value={formData.systemName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('systemName') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('systemName') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('systemName')}</p>
+                )}
               </div>
 
               <div>
@@ -344,25 +583,38 @@ const SettingsPage: React.FC = () => {
                   name="versionNumber"
                   value={formData.versionNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    getFieldError('versionNumber') ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {getFieldError('versionNumber') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('versionNumber')}</p>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* Save Button */}
-        <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
-          <button
-            type="button"
-            className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 text-white rounded-lg transition-colors"
-          >
-            Save Changes
-          </button>
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+          {hasUnsavedChanges() && (
+            <p className="text-sm text-amber-600">You have unsaved changes</p>
+          )}
+          <div className="ml-auto">
+            <button
+              type="button"
+              onClick={saveSettings}
+              disabled={saving}
+              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center space-x-2"
+            >
+              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
+              <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            </button>
+          </div>
         </div>
       </section>
     </main>
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

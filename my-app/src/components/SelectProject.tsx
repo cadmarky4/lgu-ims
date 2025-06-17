@@ -195,7 +195,7 @@ const SelectProject: React.FC<SelectProjectProps> = ({ isOpen, onClose, onSelect
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-smblue-400 to-blue-600 text-white p-6">
+          <div className="bg-gradient-to-r from-smblue-400 to-smblue-300 text-white p-6">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold">Select Project to Update</h2>
