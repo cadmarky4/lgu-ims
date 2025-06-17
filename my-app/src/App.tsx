@@ -21,6 +21,8 @@ import DocumentQueue from "./components/DocumentQueue";
 import BarangayOfficialsPage from "./components/BarangayOfficialsPage";
 import SettingsPage from "./components/SettingsPage";
 import ProjectsAndPrograms from "./components/ProjectsAndPrograms";
+import AddNewProject from "./components/AddNewProject";
+import EditProject from "./components/EditProject";
 import UserManagement from "./components/UserManagement";
 import LoginPage from "./components/LoginPage";
 import SignupPage from "./components/SignupPage";
@@ -42,6 +44,10 @@ const AppLayout: React.FC = () => {
   // Get current active menu item from URL
   const getActiveMenuItem = () => {
     const path = location.pathname.substring(1) || "dashboard";
+    // Handle nested project routes
+    if (path.startsWith("projects")) {
+      return "projects";
+    }
     return path;
   };
 
@@ -120,7 +126,12 @@ const AppLayout: React.FC = () => {
               element={<CertificateOfResidencyForm onNavigate={handleMenuItemClick} />}
             />
             <Route path="/officials" element={<BarangayOfficialsPage />} />
+            
+            {/* Projects and Programs Routes */}
             <Route path="/projects" element={<ProjectsAndPrograms />} />
+            <Route path="/projects/add" element={<AddNewProject />} />
+            <Route path="/projects/edit/:projectId" element={<EditProject />} />
+            
             <Route path="/users" element={<UserManagement />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/reports" element={<ReportsPage />} />

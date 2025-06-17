@@ -1,10 +1,7 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload, X, Calendar, Plus } from 'lucide-react';
-
-interface AddNewProjectProps {
-  onClose: () => void;
-  onSave: (projectData: any) => void;
-}
+import { FiChevronRight } from 'react-icons/fi';
 
 interface BudgetItem {
   id: string;
@@ -20,7 +17,9 @@ interface UploadedFile {
   file: File;
 }
 
-const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
+const AddNewProject: React.FC = () => {
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     projectName: '',
     category: '',
@@ -184,7 +183,14 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Empty function as requested - backend developer will handle the submission
+    // Handle form submission here
+    console.log('Form submitted:', formData);
+    // Navigate back to projects after successful submission
+    navigate('/projects');
+  };
+
+  const handleCancel = () => {
+    navigate('/projects');
   };
 
   return (
@@ -218,6 +224,25 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
       `}</style>
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
+        {/* Breadcrumbs */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4 animate-slide-in-up">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
+          >
+            Dashboard
+          </button>
+          <FiChevronRight className="w-4 h-4 text-gray-400" />
+          <button 
+            onClick={() => navigate('/projects')}
+            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
+          >
+            Projects and Programs
+          </button>
+          <FiChevronRight className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-900 font-medium">Add New Project</span>
+        </div>
+
         {/* Header */}
         <div className="mb-6 animate-slide-in-up">
           <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New Project</h1>
@@ -716,7 +741,7 @@ const AddNewProject: React.FC<AddNewProjectProps> = ({ onClose, onSave }) => {
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 animate-slide-in-right" style={{animationDelay: '2.8s'}}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
             >
               Cancel

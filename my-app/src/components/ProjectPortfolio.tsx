@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Calendar, DollarSign, TrendingUp, ChevronDown, ChevronUp, Eye, Edit3 } from 'lucide-react';
 
 interface Project {
@@ -23,6 +24,7 @@ interface ProjectPortfolioProps {
 }
 
 const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEditProject, onViewProject }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Projects');
   const [selectedPriority, setSelectedPriority] = useState('All Priorities');
@@ -239,7 +241,8 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
 
   const handleEditClick = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
-    onEditProject(project);
+    // Use router navigation instead of prop function
+    navigate(`/projects/edit/${project.id}`);
   };
 
   return (

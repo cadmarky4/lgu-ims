@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiFolder, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiFolder, FiCheckCircle, FiClock, FiDollarSign, FiChevronRight } from 'react-icons/fi';
 import { FaFolder, FaCheckCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
-import AddNewProject from './AddNewProject';
-import EditProject from './EditProject';
 import ViewProject from './ViewProject';
 import ProjectQuickActions from './ProjectQuickActions';
 import SelectProject from './SelectProject';
@@ -35,8 +34,7 @@ interface StatItem {
 }
 
 const ProjectsAndPrograms: React.FC = () => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const navigate = useNavigate();
   const [showViewModal, setShowViewModal] = useState(false);
   const [showSelectProjectModal, setShowSelectProjectModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -50,18 +48,16 @@ const ProjectsAndPrograms: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleAddProject = (projectData: any) => {
-    console.log('New project data:', projectData);
-    // Here you would typically save to a database
+  const handleAddProject = () => {
+    navigate('/projects/add');
   };
 
   const handleEditProject = (project: Project) => {
-    setSelectedProject(project);
-    setShowEditForm(true);
+    navigate(`/projects/edit/${project.id}`);
   };
 
   const handleViewProject = (project: Project) => {
-    console.log('Viewing project:', project); // Debug log
+    console.log('Viewing project:', project);
     setSelectedProject(project);
     setShowViewModal(true);
   };
@@ -73,38 +69,25 @@ const ProjectsAndPrograms: React.FC = () => {
   const handleSelectProjectForEdit = (project: Project) => {
     setSelectedProject(project);
     setShowSelectProjectModal(false);
-    setShowEditForm(true);
+    navigate(`/projects/edit/${project.id}`);
   };
-
-  const handleUpdateProject = (projectData: any) => {
-    console.log('Updated project data:', projectData);
-    // Here you would typically update the database
-  };
-
-  if (showEditForm && selectedProject) {
-    return (
-      <EditProject 
-        onClose={() => {
-          setShowEditForm(false);
-          setSelectedProject(null);
-        }} 
-        onSave={handleUpdateProject}
-        projectData={selectedProject}
-      />
-    );
-  }
-
-  if (showAddForm) {
-    return (
-      <AddNewProject 
-        onClose={() => setShowAddForm(false)} 
-        onSave={handleAddProject}
-      />
-    );
-  }
 
   return (
     <main className="p-4 lg:p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Breadcrumbs */}
+      <div className={`flex items-center space-x-2 text-sm text-gray-600 mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
+        >
+          Dashboard
+        </button>
+        <FiChevronRight className="w-4 h-4 text-gray-400" />
+        <span className="text-gray-900 font-medium">Projects and Programs</span>
+      </div>
+
       {/* Page Header */}
       <div className={`mb-2 transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
@@ -163,7 +146,7 @@ const ProjectsAndPrograms: React.FC = () => {
         <div className="lg:col-span-2">
           {/* Project Portfolio */}
           <ProjectPortfolio 
-            onAddProject={() => setShowAddForm(true)} 
+            onAddProject={handleAddProject} 
             onEditProject={handleEditProject}
             onViewProject={handleViewProject}
           />
@@ -174,7 +157,7 @@ const ProjectsAndPrograms: React.FC = () => {
           {/* Project Quick Actions */}
           <ProjectQuickActions 
             onUpdateProject={handleUpdateProjectClick}
-            onAddProject={() => setShowAddForm(true)}
+            onAddProject={handleAddProject}
           />
 
           {/* Project Calendar */}
@@ -198,7 +181,7 @@ const ProjectsAndPrograms: React.FC = () => {
           project={selectedProject}
           isOpen={showViewModal}
           onClose={() => {
-            console.log('Closing modal'); // Debug log
+            console.log('Closing modal');
             setShowViewModal(false);
             setSelectedProject(null);
           }}
