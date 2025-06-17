@@ -135,20 +135,23 @@ const AppointmentsPage: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white shadow-lg rounded-lg p-6">
+          {/* Personal Information */}
+          <div className="col-span-2">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Resident Information
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Personal Information */}
-            <div className="col-span-2">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                Resident Information
-              </h2>
-            </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Full Name *
               </label>
               <input
+                id="fullName"
                 type="text"
                 name="fullName"
                 value={formData.fullName}
@@ -158,10 +161,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email Address *
               </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 value={formData.email}
@@ -171,10 +178,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Contact Number *
               </label>
               <input
+                id="phone"
                 type="tel"
                 name="phone"
                 value={formData.phone}
@@ -184,10 +195,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="department"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Department *
               </label>
               <select
+                id="department"
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
@@ -201,34 +216,44 @@ const AppointmentsPage: React.FC = () => {
                 ))}
               </select>
             </div>
+          </div>
 
-            {/* Appointment Details */}
-            <div className="col-span-2 mt-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                Appointment Details
-              </h2>
-            </div>
+          {/* Appointment Details */}
+          <div className="col-span-2 mt-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              Appointment Details
+            </h2>
+          </div>
 
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purpose of Appointment *
-              </label>
-              <textarea
-                name="purpose"
-                value={formData.purpose}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Please describe the purpose of your appointment..."
-              />
-            </div>
+          <div className="mb-6">
+            <label
+              htmlFor="purpose"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Purpose of Appointment *
+            </label>
+            <textarea
+              id="purpose"
+              name="purpose"
+              value={formData.purpose}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Please describe the purpose of your appointment..."
+            />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="preferredDate"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Preferred Date *
               </label>
               <input
+                id="preferredDate"
                 type="date"
                 name="preferredDate"
                 value={formData.preferredDate}
@@ -239,10 +264,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="preferredTime"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Preferred Time *
               </label>
               <select
+                id="preferredTime"
                 name="preferredTime"
                 value={formData.preferredTime}
                 onChange={handleChange}
@@ -258,10 +287,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="alternativeDate"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Alternative Date
               </label>
               <input
+                id="alternativeDate"
                 type="date"
                 name="alternativeDate"
                 value={formData.alternativeDate}
@@ -272,10 +305,14 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="alternativeTime"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Alternative Time
               </label>
               <select
+                id="alternativeTime"
                 name="alternativeTime"
                 value={formData.alternativeTime}
                 onChange={handleChange}
@@ -289,23 +326,27 @@ const AppointmentsPage: React.FC = () => {
                 ))}
               </select>
             </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Notes
-              </label>
-              <textarea
-                name="additionalNotes"
-                value={formData.additionalNotes}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Any additional information or special requirements..."
-              />
-            </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-6 col-span-2">
+            <label
+              htmlFor="additionalNotes"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Additional Notes
+            </label>
+            <textarea
+              id="additionalNotes"
+              name="additionalNotes"
+              value={formData.additionalNotes}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Any additional information or special requirements..."
+            />
+          </div>
+
+          <div className="mt-6 flex items-center justify-betweenflex flex-col gap-2 sm:flex-row sm:items-center justify-between">
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}

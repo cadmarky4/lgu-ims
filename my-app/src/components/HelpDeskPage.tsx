@@ -223,7 +223,7 @@ const HelpDeskPage: React.FC = () => {
       label: "Process Appointment",
       description: "Schedule resident appointments",
       icon: CalendarIcon,
-      href: "/appointments",
+      href: "/schedule-appointment",
       color: "text-blue-600",
     },
     {
@@ -231,7 +231,7 @@ const HelpDeskPage: React.FC = () => {
       label: "File Blotter Report",
       description: "Document incidents and disputes",
       icon: Shield,
-      href: "/blotter",
+      href: "/file-blotter",
       color: "text-red-600",
     },
     {
@@ -239,7 +239,7 @@ const HelpDeskPage: React.FC = () => {
       label: "Log Complaint",
       description: "Record service complaints",
       icon: AlertCircle,
-      href: "/complaints",
+      href: "/file-complaint",
       color: "text-orange-600",
     },
     {
@@ -247,7 +247,7 @@ const HelpDeskPage: React.FC = () => {
       label: "Submit Suggestion",
       description: "Process improvement ideas",
       icon: Lightbulb,
-      href: "/suggestions",
+      href: "/share-suggestions",
       color: "text-purple-600",
     },
   ];
@@ -658,10 +658,10 @@ const HelpDeskPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="@container/main min-h-screen bg-gray-50 p-6">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col @3xl/main:flex-row @3xl/main:items-center @3xl/main:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Help Desk Management
@@ -671,10 +671,10 @@ const HelpDeskPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
+            <div className="flex-1 @3xl/main:flex-initial relative">
               <button
                 onClick={() => setShowTicketDropdown(!showTicketDropdown)}
-                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                className="w-full cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 {showTicketDropdown ? (
                   <Minus className="w-4 h-4" />
@@ -718,7 +718,7 @@ const HelpDeskPage: React.FC = () => {
               )}
             </div>
 
-            <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <button className="cursor-pointer flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
               <Download className="w-4 h-4" />
               Export Report
             </button>
@@ -921,14 +921,14 @@ const HelpDeskPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openModal(ticket, false)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openModal(ticket, true)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Edit Ticket"
                     >
                       <Edit className="w-4 h-4" />

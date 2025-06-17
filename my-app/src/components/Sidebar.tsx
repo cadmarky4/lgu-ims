@@ -58,15 +58,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      id: "helpdesk",
+      id: "help-desk",
       label: "Help desk",
       icon: FiHelpCircle,
       hasSubmenu: true,
       submenu: [
-        { id: "appointments", label: "Appointments" },
-        { id: "blotter", label: "Blotter" },
-        { id: "complaints", label: "Complaints" },
-        { id: "suggestions", label: "Suggestions" },
+        { id: "schedule-appointment", label: "Schedule an appointment" },
+        { id: "file-blotter", label: "File blotter report" },
+        { id: "file-complaint", label: "File a complaint" },
+        { id: "share-suggestions", label: "Share suggestions" },
       ],
     },
     { id: "projects", label: "Projects & Programs", icon: FiBriefcase },
@@ -203,7 +203,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     if (item.hasSubmenu) {
       // Check if this is a double-click or if the menu is already expanded
-      if (e.detail === 2 || (expandedMenus.includes(item.id) && (isExpanded || isMobile))) {
+      if (
+        e.detail === 2 ||
+        (expandedMenus.includes(item.id) && (isExpanded || isMobile))
+      ) {
         // Navigate to the main page on double-click or if submenu is already open and clicked again
         e.preventDefault();
         onItemClick(item.id);

@@ -181,10 +181,14 @@ const ComplaintsPage: React.FC = () => {
         <div className="bg-white shadow-lg rounded-lg p-6">
           {/* Anonymous Option */}
           <div className="mb-6 bg-gray-50 rounded-lg p-4">
-            <label className="flex items-center cursor-pointer">
+            <label
+              htmlFor="anonymous"
+              className="flex items-center cursor-pointer"
+            >
               <input
                 type="checkbox"
                 name="anonymous"
+                id="anonymous"
                 checked={formData.anonymous}
                 onChange={handleChange}
                 className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
@@ -207,48 +211,64 @@ const ComplaintsPage: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="fullName"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Full Name *
                   </label>
                   <input
                     type="text"
                     name="fullName"
+                    id="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Contact Number *
                   </label>
                   <input
                     type="tel"
                     name="phone"
+                    id="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Email Address
                   </label>
                   <input
                     type="email"
                     name="email"
+                    id="email"
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="address"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Address
                   </label>
                   <input
                     type="text"
                     name="address"
+                    id="address"
                     value={formData.address}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -267,11 +287,15 @@ const ComplaintsPage: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="complaintCategory"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Complaint Category *
                   </label>
                   <select
                     name="complaintCategory"
+                    id="complaintCategory"
                     value={formData.complaintCategory}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -285,11 +309,15 @@ const ComplaintsPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="department"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Department/Office
                   </label>
                   <select
                     name="department"
+                    id="department"
                     value={formData.department}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -305,12 +333,16 @@ const ComplaintsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="subject"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Subject/Title *
                 </label>
                 <input
                   type="text"
                   name="subject"
+                  id="subject"
                   value={formData.subject}
                   onChange={handleChange}
                   placeholder="Brief description of your complaint"
@@ -319,11 +351,15 @@ const ComplaintsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Detailed Description *
                 </label>
                 <textarea
                   name="description"
+                  id="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={6}
@@ -333,12 +369,16 @@ const ComplaintsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Location (if applicable)
                 </label>
                 <input
                   type="text"
                   name="location"
+                  id="location"
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="Where did this issue occur?"
@@ -351,10 +391,11 @@ const ComplaintsPage: React.FC = () => {
                   Urgency Level *
                 </label>
                 <div className="flex space-x-4">
-                  <label className="flex items-center">
+                  <label htmlFor="urgency-low" className="flex items-center">
                     <input
                       type="radio"
                       name="urgency"
+                      id="urgency-low"
                       value="low"
                       checked={formData.urgency === "low"}
                       onChange={handleChange}
@@ -362,10 +403,11 @@ const ComplaintsPage: React.FC = () => {
                     />
                     <span className="ml-2 text-gray-700">Low</span>
                   </label>
-                  <label className="flex items-center">
+                  <label htmlFor="urgency-medium" className="flex items-center">
                     <input
                       type="radio"
                       name="urgency"
+                      id="urgency-medium"
                       value="medium"
                       checked={formData.urgency === "medium"}
                       onChange={handleChange}
@@ -373,10 +415,11 @@ const ComplaintsPage: React.FC = () => {
                     />
                     <span className="ml-2 text-gray-700">Medium</span>
                   </label>
-                  <label className="flex items-center">
+                  <label htmlFor="urgency-high" className="flex items-center">
                     <input
                       type="radio"
                       name="urgency"
+                      id="urgency-high"
                       value="high"
                       checked={formData.urgency === "high"}
                       onChange={handleChange}
@@ -384,10 +427,14 @@ const ComplaintsPage: React.FC = () => {
                     />
                     <span className="ml-2 text-gray-700">High</span>
                   </label>
-                  <label className="flex items-center">
+                  <label
+                    htmlFor="urgency-critical"
+                    className="flex items-center"
+                  >
                     <input
                       type="radio"
                       name="urgency"
+                      id="urgency-critical"
                       value="critical"
                       checked={formData.urgency === "critical"}
                       onChange={handleChange}
@@ -399,11 +446,15 @@ const ComplaintsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="attachments"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Supporting Documents/Evidence
                 </label>
                 <textarea
                   name="attachments"
+                  id="attachments"
                   value={formData.attachments}
                   onChange={handleChange}
                   rows={2}

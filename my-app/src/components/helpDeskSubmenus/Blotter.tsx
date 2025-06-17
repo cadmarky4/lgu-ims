@@ -234,10 +234,14 @@ const BlotterPage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="incidentType"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Type of Incident *
                 </label>
                 <select
+                  id="incidentType"
                   name="incidentType"
                   value={formData.incidentType}
                   onChange={handleChange}
@@ -252,10 +256,14 @@ const BlotterPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="incidentDate"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Date of Incident *
                 </label>
                 <input
+                  id="incidentDate"
                   type="date"
                   name="incidentDate"
                   value={formData.incidentDate}
@@ -265,10 +273,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="incidentTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Time of Incident *
                 </label>
                 <input
+                  id="incidentTime"
                   type="time"
                   name="incidentTime"
                   value={formData.incidentTime}
@@ -277,10 +289,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="incidentLocation"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Location of Incident *
                 </label>
                 <input
+                  id="incidentLocation"
                   type="text"
                   name="incidentLocation"
                   value={formData.incidentLocation}
@@ -290,10 +306,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="incidentDescription"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Detailed Description of Incident *
                 </label>
                 <textarea
+                  id="incidentDescription"
                   name="incidentDescription"
                   value={formData.incidentDescription}
                   onChange={handleChange}
@@ -315,10 +335,14 @@ const BlotterPage: React.FC = () => {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="respondentName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Name
                 </label>
                 <input
+                  id="respondentName"
                   type="text"
                   name="respondentName"
                   value={formData.respondentName}
@@ -327,10 +351,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="respondentContact"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Contact Number
                 </label>
                 <input
+                  id="respondentContact"
                   type="tel"
                   name="respondentContact"
                   value={formData.respondentContact}
@@ -339,10 +367,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="respondentAddress"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Address
                 </label>
                 <input
+                  id="respondentAddress"
                   type="text"
                   name="respondentAddress"
                   value={formData.respondentAddress}
@@ -360,10 +392,14 @@ const BlotterPage: React.FC = () => {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="witnesses"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Witnesses (if any)
                 </label>
                 <textarea
+                  id="witnesses"
                   name="witnesses"
                   value={formData.witnesses}
                   onChange={handleChange}
@@ -373,10 +409,14 @@ const BlotterPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="evidence"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Evidence/Supporting Documents
                 </label>
                 <textarea
+                  id="evidence"
                   name="evidence"
                   value={formData.evidence}
                   onChange={handleChange}
@@ -388,7 +428,7 @@ const BlotterPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
             <p className="text-sm text-gray-500">* Required fields</p>
             <button
               onClick={handleSubmit}

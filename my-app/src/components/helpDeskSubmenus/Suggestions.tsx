@@ -237,47 +237,63 @@ const SuggestionsPage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Name *
                 </label>
                 <input
                   type="text"
                   name="name"
+                  id="name"
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
                   type="email"
                   name="email"
+                  id="email"
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Contact Number
                 </label>
                 <input
                   type="tel"
                   name="phone"
+                  id="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="isResident"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Are you a resident?
                 </label>
                 <select
                   name="isResident"
+                  id="isResident"
                   value={formData.isResident}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
@@ -297,11 +313,15 @@ const SuggestionsPage: React.FC = () => {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Category *
                 </label>
                 <select
                   name="category"
+                  id="category"
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
@@ -316,12 +336,16 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Suggestion Title *
                 </label>
                 <input
                   type="text"
                   name="title"
+                  id="title"
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Give your suggestion a clear, descriptive title"
@@ -330,11 +354,15 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Detailed Description *
                 </label>
                 <textarea
                   name="description"
+                  id="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={5}
@@ -344,11 +372,15 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="benefits"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Expected Benefits
                 </label>
                 <textarea
                   name="benefits"
+                  id="benefits"
                   value={formData.benefits}
                   onChange={handleChange}
                   rows={3}
@@ -358,11 +390,15 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="implementation"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Implementation Ideas
                 </label>
                 <textarea
                   name="implementation"
+                  id="implementation"
                   value={formData.implementation}
                   onChange={handleChange}
                   rows={3}
@@ -372,12 +408,16 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="resources"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Resources Needed
                 </label>
                 <input
                   type="text"
                   name="resources"
+                  id="resources"
                   value={formData.resources}
                   onChange={handleChange}
                   placeholder="What resources (budget, manpower, equipment) might be needed?"
@@ -390,10 +430,11 @@ const SuggestionsPage: React.FC = () => {
                   Priority Level
                 </label>
                 <div className="flex space-x-4">
-                  <label className="flex items-center">
+                  <label htmlFor="priority-low" className="flex items-center">
                     <input
                       type="radio"
                       name="priority"
+                      id="priority-low"
                       value="low"
                       checked={formData.priority === "low"}
                       onChange={handleChange}
@@ -401,10 +442,14 @@ const SuggestionsPage: React.FC = () => {
                     />
                     <span className="ml-2 text-gray-700">Low</span>
                   </label>
-                  <label className="flex items-center">
+                  <label
+                    htmlFor="priority-medium"
+                    className="flex items-center"
+                  >
                     <input
                       type="radio"
                       name="priority"
+                      id="priority-medium"
                       value="medium"
                       checked={formData.priority === "medium"}
                       onChange={handleChange}
@@ -412,10 +457,11 @@ const SuggestionsPage: React.FC = () => {
                     />
                     <span className="ml-2 text-gray-700">Medium</span>
                   </label>
-                  <label className="flex items-center">
+                  <label htmlFor="priority-high" className="flex items-center">
                     <input
                       type="radio"
                       name="priority"
+                      id="priority-high"
                       value="high"
                       checked={formData.priority === "high"}
                       onChange={handleChange}
@@ -427,10 +473,14 @@ const SuggestionsPage: React.FC = () => {
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
-                <label className="flex items-center cursor-pointer">
+                <label
+                  htmlFor="allowContact"
+                  className="flex items-center cursor-pointer"
+                >
                   <input
                     type="checkbox"
                     name="allowContact"
+                    id="allowContact"
                     checked={formData.allowContact}
                     onChange={handleChange}
                     className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"

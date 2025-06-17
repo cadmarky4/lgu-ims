@@ -136,11 +136,11 @@ const AppLayout: React.FC = () => {
             <Route path="/reports" element={<ReportsPage />} />
 
             {/* Help desk routes */}
-            <Route path="/helpdesk" element={<HelpDeskPage />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/blotter" element={<Blotter />} />
-            <Route path="/complaints" element={<Complaints />} />
-            <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/help-desk" element={<HelpDeskPage />} />
+            <Route path="/schedule-appointment" element={<Appointments />} />
+            <Route path="/file-blotter" element={<Blotter />} />
+            <Route path="/file-complaint" element={<Complaints />} />
+            <Route path="/share-suggestions" element={<Suggestions />} />
 
             {/* Catch all route for undefined paths */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
