@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiFilter, FiPrinter, FiEye, FiEdit3, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle, FiPlus } from 'react-icons/fi';
-import { apiService } from '../services/api';
+import { documentsService } from '../services/documents.service';
 
 interface ProcessDocumentProps {
   onNavigate: (page: string) => void;
