@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiUpload, FiCheck, FiX } from "react-icons/fi";
+import { useNavigate } from 'react-router-dom';
+import { FiUpload, FiCheck, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText } from "react-icons/fi";
 import { apiService } from "../services/api";
 
-interface AddNewResidentProps {
-  onClose: () => void;
-  onSave: (residentData: any) => void;
-}
+const AddNewResident: React.FC = () => {
+  const navigate = useNavigate();
 
-const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +29,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
 
   // Reference data from backend
   const [puroks, setPuroks] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
+  
+  // Define initial form data structure
+  const initialFormData = {
     // Basic Information
     firstName: "",
     lastName: "",
@@ -54,7 +54,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
     street: "",
     purok: "",
     completeAddress: "",
-            // Family Information
+    // Family Information
     motherName: "",
     fatherName: "",
     emergencyContactName: "",
@@ -86,7 +86,9 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       fourPsBeneficiary: false,
       fourPsHouseholdId: "",
     },
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -215,15 +217,24 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
   };
 
   // Save draft to localStorage
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     setIsSavingDraft(true);
     try {
-      localStorage.setItem('residentDraft', JSON.stringify(formData));
-      setError(null);
+      const draftData = {
+        ...formData,
+        is_draft: true,
+        status: 'draft'
+      };
+      
+      console.log('Saving draft:', draftData);
+      // Here you would typically save to localStorage or send to API
+      localStorage.setItem('residentDraft', JSON.stringify(draftData));
+      
+      // Show success toast notification
       showToast('Draft saved successfully!', 'success');
     } catch (error) {
-      showToast('Failed to save draft. Please try again.', 'error');
       console.error('Failed to save draft:', error);
+      showToast('Failed to save draft. Please try again.', 'error');
     } finally {
       setIsSavingDraft(false);
     }
@@ -237,119 +248,65 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
       console.error('Failed to clear draft:', error);
     }
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Transform form data to match backend API expectations
+      // Create the resident data object
       const residentData = {
-        // Basic Information
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        middle_name: formData.middleName || null,
-        suffix: formData.suffix || null,
-        birth_date: formData.birthDate,
-        birth_place: formData.birthPlace,
-        gender: formData.gender,
-        civil_status: formData.civilStatus,
-        nationality: formData.nationality,
-        religion: formData.religion || null,
-        employment_status: formData.employmentStatus || null,
-        educational_attainment: formData.educationalAttainment || null,
-
-        // Contact Information
-        mobile_number: formData.mobileNumber || null,
-        telephone_number: formData.landlineNumber || null,
-        email_address: formData.emailAddress || null,
-        complete_address: formData.completeAddress,
-        house_number: formData.houseNumber || null,
-        street: formData.street || null,
-        purok: formData.purok || null,
-
-        // Family Information
-        emergency_contact_name: formData.emergencyContactName || null,
-        emergency_contact_number: formData.emergencyContactNumber || null,
-        emergency_contact_relationship:
-          formData.emergencyContactRelationship || null,
-        // Government IDs
-        philhealth_number: formData.philhealthNumber || null,
-        sss_number: formData.sssNumber || null,
-        tin_number: formData.tinNumber || null,
-        voters_id_number: formData.votersIdNumber || null,
-        voter_status: formData.voterStatus || "NOT_REGISTERED",
-        precinct_number: formData.precinctNumber || null,
-
-        // Employment Information
-        occupation: formData.occupation || null,
-        employer: formData.employer || null,
-        monthly_income: formData.monthlyIncome
-          ? parseFloat(formData.monthlyIncome)
-          : null,
-
-        // Health & Medical
-        medical_conditions: formData.medicalConditions || null,
-        allergies: formData.allergies || null,
-
-        // Special Classifications
-        senior_citizen: formData.specialClassifications.seniorCitizen,
-        person_with_disability:
-          formData.specialClassifications.personWithDisability,
-        disability_type: formData.specialClassifications.disabilityType || null,
-        indigenous_people: formData.specialClassifications.indigenousPeople,
-        indigenous_group:
-          formData.specialClassifications.indigenousGroup || null,
-        four_ps_beneficiary: formData.specialClassifications.fourPsBeneficiary,
-        four_ps_household_id:
-          formData.specialClassifications.fourPsHouseholdId || null,
-
-        // Default values
-        status: "ACTIVE",
+        ...formData,
+        is_draft: false,
+        status: 'active'
       };
 
-      // Use the API service to create the resident
-      const newResident = await apiService.createResident(residentData);
-
-      console.log("New resident created successfully:", newResident);
-
-      // Clear the draft since resident was successfully created
+      await apiService.createResident(residentData);
+      console.log("New resident created successfully");
+      
+      // Show success toast notification
+      showToast('Resident registered successfully!', 'success');
+      
+      // Clear the draft
       clearDraft();
       
-      // Show success toast
-      showToast('Resident registered successfully!', 'success');
-
-      // Call the parent component's onSave callback
-      onSave(newResident);
-      onClose();
-    } catch (err: any) {
-      console.error("Error saving resident:", err);
-
-      // Handle validation errors
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(`Validation failed: ${errorMessages.join(", ")}`);
-      } else {
-        setError(err.message || "Failed to save resident. Please try again.");
-      }
+      // Navigate back to residents list after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/residents');
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to create resident:", error);
+      setError('Failed to register resident. Please try again.');
+      showToast('Failed to register resident. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (JSON.stringify(formData) !== JSON.stringify(initialFormData)) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        navigate('/residents');
+      }
+    } else {
+      navigate('/residents');
     }
   };
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">
-          Add New Resident Profile
-        </h1>
-        {localStorage.getItem('residentDraft') && (
-          <p className="text-sm text-gray-600 mt-1">
-            📝 Draft data loaded from previous session
-          </p>
-        )}
-      </div>{" "}
+      <div className="mb-2 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident</h1>
+        <button
+          onClick={handleClose}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
+      </div>
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -1159,7 +1116,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = ({ onClose, onSave }) => {
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

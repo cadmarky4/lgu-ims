@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiTrash2, FiCheck, FiX } from 'react-icons/fi';
 
-interface AddNewHouseholdProps {
-  onClose: () => void;
-  onSave: (householdData: any) => void;
-}
-
-const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) => {
+const AddNewHousehold: React.FC = () => {
+  const navigate = useNavigate();
+  
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,29 +234,58 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
       // }
 
       // const newHousehold = await response.json();
-      
-      // Include household members in the data
-      const householdData = {
-        ...formData,
-        householdHead: selectedHouseholdHead,
-        members: householdMembers,
-        totalMembers: householdMembers.length + (selectedHouseholdHead ? 1 : 0)
-      };
 
-      // Clear the draft since household was successfully created
+      // For now, using mock success
+      console.log('New household created:', formData);
+      showToast('Household registered successfully!', 'success');
+      
+      // Clear the draft
       clearDraft();
       
-      // Show success toast
-      showToast('Household created successfully!', 'success');
-
-      // For now, using the existing client-side save
-      onSave(householdData);
-      onClose();
+      // Navigate back to households list after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/household');
+      }, 1500);
     } catch (err) {
-      setError('Failed to save household. Please try again.');
-      console.error('Error saving household:', err);
+      setError('Failed to register household. Please try again.');
+      showToast('Failed to register household. Please try again.', 'error');
+      console.error('Error creating household:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (JSON.stringify(formData) !== JSON.stringify({
+      householdId: 'Auto-generated',
+      householdType: '',
+      barangay: '',
+      streetSitio: '',
+      houseNumber: '',
+      completeAddress: '',
+      householdHeadSearch: '',
+      monthlyIncome: '',
+      primaryIncomeSource: '',
+      householdClassification: {
+        fourPsBeneficiary: false,
+        indigentFamily: false,
+        hasSeniorCitizen: false,
+        hasPwdMember: false
+      },
+      houseType: '',
+      ownershipStatus: '',
+      utilitiesAccess: {
+        electricity: false,
+        waterSupply: false,
+        internetAccess: false
+      },
+      remarks: ''
+    })) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        navigate('/household');
+      }
+    } else {
+      navigate('/household');
     }
   };
 
@@ -914,7 +941,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = ({ onClose, onSave }) =>
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={isSubmitting}
             >

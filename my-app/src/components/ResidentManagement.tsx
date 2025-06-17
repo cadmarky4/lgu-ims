@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from "react-icons/fi";
 import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
-import AddNewResident from "./AddNewResident";
-import EditResident from "./EditResident";
-import ViewResident from "./ViewResident";
 import StatCard from "./StatCard";
 import { apiService } from "../services/api";
 
 const ResidentManagement: React.FC = () => {
+  const navigate = useNavigate();
+  
   // API integration states
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
@@ -15,10 +15,6 @@ const ResidentManagement: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [showViewForm, setShowViewForm] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<any>(null);
   const [residents, setResidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState({
@@ -33,6 +29,7 @@ const ResidentManagement: React.FC = () => {
     per_page: 15,
     total: 0,
   });
+
   // Load residents data on component mount and when filters change
   useEffect(() => {
     loadResidents();
@@ -101,49 +98,8 @@ const ResidentManagement: React.FC = () => {
     }
   };
 
-  const handleAddResident = async (residentData: any) => {
-    setLoading(true);
-    try {
-      await apiService.createResident(residentData);
-      console.log("New resident created successfully");
-      // Reload residents to get updated data
-      await loadResidents();
-      await loadStatistics();
-      setShowAddForm(false);
-    } catch (error) {
-      console.error("Failed to create resident:", error);
-      // Handle error (show notification, etc.)
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditResident = async (residentData: any) => {
-    setLoading(true);
-    try {
-      await apiService.updateResident(residentData.id, residentData);
-      console.log("Resident updated successfully");
-      // Reload residents to get updated data
-      await loadResidents();
-      await loadStatistics();
-      setShowEditForm(false);
-      setSelectedResident(null);
-    } catch (error) {
-      console.error("Failed to update resident:", error);
-      // Handle error (show notification, etc.)
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openEditForm = (resident: any) => {
-    setSelectedResident(resident);
-    setShowEditForm(true);
-  };
-
-  const openViewForm = (resident: any) => {
-    setSelectedResident(resident);
-    setShowViewForm(true);
+  const handleAddResident = () => {
+    navigate('/residents/add');
   };
 
   const handleDeleteResident = async (residentId: number) => {
@@ -168,39 +124,13 @@ const ResidentManagement: React.FC = () => {
     }
   };
 
-  if (showAddForm) {
-    return (
-      <AddNewResident
-        onClose={() => setShowAddForm(false)}
-        onSave={handleAddResident}
-      />
-    );
-  }
+  const openEditForm = (resident: any) => {
+    navigate(`/residents/edit/${resident.id}`);
+  };
 
-  if (showEditForm && selectedResident) {
-    return (
-      <EditResident
-        resident={selectedResident}
-        onClose={() => {
-          setShowEditForm(false);
-          setSelectedResident(null);
-        }}
-        onSave={handleEditResident}
-      />
-    );
-  }
-
-  if (showViewForm && selectedResident) {
-    return (
-      <ViewResident
-        resident={selectedResident}
-        onClose={() => {
-          setShowViewForm(false);
-          setSelectedResident(null);
-        }}
-      />
-    );
-  }
+  const openViewForm = (resident: any) => {
+    navigate(`/residents/view/${resident.id}`);
+  };
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
@@ -274,7 +204,7 @@ const ResidentManagement: React.FC = () => {
               />
             </div>{" "}
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={handleAddResident}
               disabled={loading}
               className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

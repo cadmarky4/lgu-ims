@@ -1,24 +1,109 @@
-import React from 'react';
-import { FiX, FiHome, FiUsers, FiDollarSign, FiMapPin, FiFileText } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FiX, FiHome, FiUsers, FiDollarSign, FiMapPin, FiFileText, FiEdit } from 'react-icons/fi';
 
-interface ViewHouseholdProps {
-  household: any;
-  onClose: () => void;
-}
+const ViewHousehold: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  const [household, setHousehold] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const ViewHousehold: React.FC<ViewHouseholdProps> = ({ household, onClose }) => {
+  // Load household data when component mounts
+  useEffect(() => {
+    const loadHousehold = async () => {
+      if (!id) {
+        setError('Household ID not provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        // TODO: Backend developer - replace with actual endpoint
+        // const response = await fetch(`/api/households/${id}`);
+        // const householdData = await response.json();
+        
+        // For now, using mock data - would need to get from API
+        const mockHousehold = {
+          id: id,
+          headName: 'Mock Household Head',
+          address: 'Purok 1, Block 2, San Miguel',
+          ownership: 'Owned',
+          members: 5,
+          income: 25000,
+          programs: ['4Ps', 'Senior Citizen Assistance']
+        };
+        
+        setHousehold(mockHousehold);
+      } catch (error) {
+        console.error('Failed to load household:', error);
+        setError('Failed to load household data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHousehold();
+  }, [id]);
+
+  const handleClose = () => {
+    navigate('/household');
+  };
+
+  const handleEdit = () => {
+    navigate(`/household/edit/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading household data...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !household) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Household not found'}</p>
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
+          >
+            Back to Households
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
       <div className="mb-2 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-darktext pl-0">View Household Profile</h1>
-        <button
-          onClick={onClose}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Close"
-        >
-          <FiX className="w-6 h-6" />
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleEdit}
+            className="p-2 text-smblue-400 hover:text-smblue-300 hover:bg-smblue-50 rounded-lg transition-colors"
+            title="Edit Household"
+          >
+            <FiEdit className="w-6 h-6" />
+          </button>
+          <button
+            onClick={handleClose}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Close"
+          >
+            <FiX className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -231,8 +316,14 @@ const ViewHousehold: React.FC<ViewHouseholdProps> = ({ household, onClose }) => 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
-            onClick={onClose}
+            onClick={handleEdit}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+          >
+            Edit Household
+          </button>
+          <button
+            onClick={handleClose}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Close
           </button>

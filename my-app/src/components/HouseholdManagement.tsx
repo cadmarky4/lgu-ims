@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiFilter } from 'react-icons/fi';
 import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
-import AddNewHousehold from './AddNewHousehold';
-import EditHousehold from './EditHousehold';
-import ViewHousehold from './ViewHousehold';
 import StatCard from './StatCard';
 
 const HouseholdManagement: React.FC = () => {
+  const navigate = useNavigate();
+  
   // API integration states
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -16,10 +16,6 @@ const HouseholdManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState('All Households');
   const [showAdvanceFilter, setShowAdvanceFilter] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [showViewForm, setShowViewForm] = useState(false);
-  const [selectedHousehold, setSelectedHousehold] = useState<any>(null);
 
   const [households, setHouseholds] = useState<any[]>([]);
 
@@ -141,46 +137,8 @@ const HouseholdManagement: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleAddHousehold = (householdData: any) => {
-    const newHousehold = {
-      id: `HSH-${String(households.length + 1).padStart(3, '0')}`,
-      headName: householdData.householdHeadSearch || 'New Head',
-      address: householdData.completeAddress || 'No address provided',
-      ownership: householdData.ownershipStatus || 'Not specified',
-      members: 1,
-      income: parseInt(householdData.monthlyIncome) || 0,
-      programs: [] as string[]
-    };
-
-    // Add programs based on classification
-    if (householdData.householdClassification?.fourPsBeneficiary) {
-      newHousehold.programs.push('4Ps');
-    }
-    if (householdData.householdClassification?.hasSeniorCitizen) {
-      newHousehold.programs.push('Senior Citizen Assistance');
-    }
-
-    setHouseholds(prev => [...prev, newHousehold]);
-    console.log('New household added:', newHousehold);
-  };
-
-  const handleEditHousehold = (householdData: any) => {
-    setHouseholds(prev => prev.map(household => 
-      household.id === householdData.id 
-        ? {
-            ...household,
-            headName: householdData.householdHeadSearch || household.headName,
-            address: householdData.completeAddress || household.address,
-            ownership: householdData.ownershipStatus || household.ownership,
-            income: parseInt(householdData.monthlyIncome) || household.income,
-            programs: [
-              ...(householdData.householdClassification?.fourPsBeneficiary ? ['4Ps'] : []),
-              ...(householdData.householdClassification?.hasSeniorCitizen ? ['Senior Citizen Assistance'] : [])
-            ]
-          }
-        : household
-    ));
-    console.log('Household updated:', householdData);
+  const handleAddHousehold = () => {
+    navigate('/household/add');
   };
 
   const handleDeleteHousehold = async (household: any) => {
@@ -212,13 +170,11 @@ const HouseholdManagement: React.FC = () => {
   };
 
   const openEditForm = (household: any) => {
-    setSelectedHousehold(household);
-    setShowEditForm(true);
+    navigate(`/household/edit/${household.id}`);
   };
 
   const openViewForm = (household: any) => {
-    setSelectedHousehold(household);
-    setShowViewForm(true);
+    navigate(`/household/view/${household.id}`);
   };
 
   const getProgramBadgeColor = (program: string) => {
@@ -233,40 +189,6 @@ const HouseholdManagement: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  if (showAddForm) {
-    return (
-      <AddNewHousehold 
-        onClose={() => setShowAddForm(false)} 
-        onSave={handleAddHousehold}
-      />
-    );
-  }
-
-  if (showEditForm && selectedHousehold) {
-    return (
-      <EditHousehold 
-        household={selectedHousehold}
-        onClose={() => {
-          setShowEditForm(false);
-          setSelectedHousehold(null);
-        }} 
-        onSave={handleEditHousehold}
-      />
-    );
-  }
-
-  if (showViewForm && selectedHousehold) {
-    return (
-      <ViewHousehold 
-        household={selectedHousehold}
-        onClose={() => {
-          setShowViewForm(false);
-          setSelectedHousehold(null);
-        }}
-      />
-    );
-  }
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
@@ -339,7 +261,7 @@ const HouseholdManagement: React.FC = () => {
             
             {/* Add Button */}
             <button 
-              onClick={() => setShowAddForm(true)}
+              onClick={handleAddHousehold}
               className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" />
@@ -452,7 +374,7 @@ const HouseholdManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
-                      {household.programs.map((program, programIndex) => (
+                      {household.programs.map((program: string, programIndex: number) => (
                         <span
                           key={programIndex}
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getProgramBadgeColor(program)}`}

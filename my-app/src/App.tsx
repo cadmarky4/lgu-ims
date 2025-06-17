@@ -11,7 +11,13 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import ResidentManagement from "./components/ResidentManagement";
+import AddNewResident from "./components/AddNewResident";
+import EditResident from "./components/EditResident";
+import ViewResident from "./components/ViewResident";
 import HouseholdManagement from "./components/HouseholdManagement";
+import AddNewHousehold from "./components/AddNewHousehold";
+import EditHousehold from "./components/EditHousehold";
+import ViewHousehold from "./components/ViewHousehold";
 import ProcessDocument from "./components/ProcessDocument";
 import BarangayClearanceForm from "./components/BarangayClearanceForm";
 import BusinessPermitForm from "./components/BusinessPermitForm";
@@ -42,6 +48,13 @@ const AppLayout: React.FC = () => {
   // Get current active menu item from URL
   const getActiveMenuItem = () => {
     const path = location.pathname.substring(1) || "dashboard";
+    // Handle nested routes for residents and household
+    if (path.startsWith("residents")) {
+      return "residents";
+    }
+    if (path.startsWith("household")) {
+      return "household";
+    }
     return path;
   };
 
@@ -94,7 +107,13 @@ const AppLayout: React.FC = () => {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/residents" element={<ResidentManagement />} />
+            <Route path="/residents/add" element={<AddNewResident />} />
+            <Route path="/residents/edit/:id" element={<EditResident />} />
+            <Route path="/residents/view/:id" element={<ViewResident />} />
             <Route path="/household" element={<HouseholdManagement />} />
+            <Route path="/household/add" element={<AddNewHousehold />} />
+            <Route path="/household/edit/:id" element={<EditHousehold />} />
+            <Route path="/household/view/:id" element={<ViewHousehold />} />
             <Route
               path="/process-document"
               element={<ProcessDocument onNavigate={handleMenuItemClick} />}

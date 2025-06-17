@@ -1,46 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { FiUpload } from 'react-icons/fi';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FiUpload, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText, FiCheck } from 'react-icons/fi';
+import { apiService } from '../services/api';
 
-interface EditResidentProps {
-  resident: any;
-  onClose: () => void;
-  onSave: (residentData: any) => void;
-}
+const EditResident: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }) => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingResident, setIsFetchingResident] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   // Reference data from backend
   const [barangays, setBarangays] = useState<any[]>([]);
   const [puroks, setPuroks] = useState<any[]>([]);
 
+  const [resident, setResident] = useState<any>(null);
+
   const [formData, setFormData] = useState({
     // Basic Information
-    firstName: resident.name?.split(' ')[0] || '',
-    lastName: resident.name?.split(' ').slice(-1)[0] || '',
+    firstName: '',
+    lastName: '',
     middleName: '',
     suffix: '',
     birthDate: '',
-    age: resident.age?.toString() || '',
+    age: '',
     birthPlace: '',
-    gender: resident.gender || '',
+    gender: '',
     civilStatus: '',
     nationality: 'Filipino',
     religion: '',
     employmentStatus: '',
     educationalAttainment: '',
     // Contact Information
-    mobileNumber: resident.phone || '',
+    mobileNumber: '',
     landlineNumber: '',
-    emailAddress: resident.email || '',
+    emailAddress: '',
     houseNumber: '',
     street: '',
     purok: '',
-    completeAddress: resident.address || '',
+    completeAddress: '',
     // Family Information
     householdId: '',
     isHouseholdHead: '',
@@ -62,7 +78,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
     allergies: '',
     // Special Classifications
     specialClassifications: {
-      seniorCitizen: resident.category === 'Senior Citizen',
+      seniorCitizen: false,
       personWithDisability: false,
       disabilityType: '',
       indigenousPeople: false,
@@ -102,67 +118,88 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
     }));
   };
 
-  // Fetch reference data and fresh resident data on component mount
+  // Load resident data when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
+    const loadResident = async () => {
+      if (!id) {
+        setError('Resident ID not provided');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Fetch reference data
-        // TODO: Backend developer - replace with actual endpoints
-        // const barangayResponse = await fetch('/api/barangays');
-        // const barangayData = await barangayResponse.json();
-        // setBarangays(barangayData);
-
-        // const purokResponse = await fetch('/api/puroks');
-        // const purokData = await purokResponse.json();
-        // setPuroks(purokData);
-
-        // For now, using mock data
-        setBarangays([
-          { id: 1, name: 'San Miguel' },
-          { id: 2, name: 'Poblacion' },
-          { id: 3, name: 'Santo Domingo' }
-        ]);
-        setPuroks([
-          { id: 1, name: 'Purok 1' },
-          { id: 2, name: 'Purok 2' },
-          { id: 3, name: 'Purok 3' },
-          { id: 4, name: 'Purok 4' }
-        ]);
-
-        // Fetch fresh resident data
-        setIsFetchingResident(true);
-        // TODO: Backend developer - replace with actual endpoint
-        // const residentResponse = await fetch(`/api/residents/${resident.id}`);
-        // const residentData = await residentResponse.json();
+        setIsLoading(true);
+        // For now, we'll use the getResidents method and filter by ID
+        // TODO: Backend should provide a getResident(id) method
+        const residentsData = await apiService.getResidents({});
+        const residentData = residentsData.data?.find((r: any) => r.id === parseInt(id));
         
-        // Update form data with fresh resident data
-        // setFormData(prev => ({
-        //   ...prev,
-        //   firstName: residentData.firstName || '',
-        //   lastName: residentData.lastName || '',
-        //   middleName: residentData.middleName || '',
-        //   age: residentData.age?.toString() || '',
-        //   gender: residentData.gender || '',
-        //   mobileNumber: residentData.mobileNumber || '',
-        //   emailAddress: residentData.emailAddress || '',
-        //   completeAddress: residentData.completeAddress || '',
-        //   // ... map all other fields from fresh data
-        // }));
-
-      } catch (err) {
-        setError('Failed to load data');
-        console.error('Error fetching data:', err);
+        if (!residentData) {
+          setError('Resident not found');
+          setIsLoading(false);
+          return;
+        }
+        
+        setResident(residentData);
+        
+        // Populate form with resident data - only update fields that exist in formData
+        if (residentData) {
+          setFormData(prev => ({
+            ...prev,
+            firstName: residentData.first_name || residentData.name?.split(' ')[0] || '',
+            lastName: residentData.last_name || residentData.name?.split(' ').slice(-1)[0] || '',
+            middleName: residentData.middle_name || '',
+            suffix: residentData.suffix || '',
+            birthDate: residentData.birth_date || '',
+            age: residentData.age?.toString() || '',
+            birthPlace: residentData.birth_place || '',
+            gender: residentData.gender || '',
+            civilStatus: residentData.civil_status || '',
+            nationality: residentData.nationality || 'Filipino',
+            religion: residentData.religion || '',
+            employmentStatus: residentData.employment_status || '',
+            educationalAttainment: residentData.educational_attainment || '',
+            mobileNumber: residentData.mobile_number || residentData.phone || '',
+            landlineNumber: residentData.telephone_number || '',
+            emailAddress: residentData.email_address || residentData.email || '',
+            houseNumber: residentData.house_number || '',
+            street: residentData.street || '',
+            purok: residentData.purok || '',
+            completeAddress: residentData.complete_address || residentData.address || '',
+            emergencyContactName: residentData.emergency_contact_name || '',
+            emergencyContactNumber: residentData.emergency_contact_number || '',
+            emergencyContactRelationship: residentData.emergency_contact_relationship || '',
+            primaryIdType: residentData.primary_id_type || '',
+            idNumber: residentData.id_number || '',
+            philhealthNumber: residentData.philhealth_number || '',
+            sssNumber: residentData.sss_number || '',
+            tinNumber: residentData.tin_number || '',
+            votersIdNumber: residentData.voters_id_number || '',
+            voterStatus: residentData.voter_status || 'NOT_REGISTERED',
+            precinctNumber: residentData.precinct_number || '',
+            medicalConditions: residentData.medical_conditions || '',
+            allergies: residentData.allergies || '',
+            specialClassifications: {
+              seniorCitizen: residentData.senior_citizen || residentData.category === 'Senior Citizen' || false,
+              personWithDisability: residentData.person_with_disability || false,
+              disabilityType: residentData.disability_type || '',
+              indigenousPeople: residentData.indigenous_people || false,
+              indigenousGroup: residentData.indigenous_group || '',
+              fourPsBeneficiary: residentData.four_ps_beneficiary || false,
+              fourPsHouseholdId: residentData.four_ps_household_id || '',
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load resident:', error);
+        setError('Failed to load resident data');
       } finally {
         setIsLoading(false);
-        setIsFetchingResident(false);
       }
     };
 
-    fetchData();
-  }, [resident.id]);
+    loadResident();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,37 +207,76 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
     setError(null);
 
     try {
-      // TODO: Backend developer - replace with actual endpoint
-      // const response = await fetch(`/api/residents/${resident.id}`, {
-      //   method: 'PUT', // or 'PATCH' depending on your API design
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
+      // Create the resident data object
+      const residentData = {
+        id: parseInt(id!),
+        ...formData,
+      };
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to update resident');
-      // }
-
-      // const updatedResident = await response.json();
+      await apiService.updateResident(parseInt(id!), residentData);
+      console.log("Resident updated successfully");
       
-      // For now, using the existing client-side save
-      onSave({ ...formData, id: resident.id });
-      onClose();
-    } catch (err) {
+      // Show success toast notification
+      showToast('Resident updated successfully!', 'success');
+      
+      // Navigate back to residents list after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/residents');
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to update resident:", error);
       setError('Failed to update resident. Please try again.');
-      console.error('Error updating resident:', err);
+      showToast('Failed to update resident. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleClose = () => {
+    if (window.confirm('Any unsaved changes will be lost. Are you sure you want to leave?')) {
+      navigate('/residents');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading resident data...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !resident) {
+    return (
+      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
+          <button
+            onClick={() => navigate('/residents')}
+            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
+          >
+            Back to Residents
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Header */}
-      <div className="mb-2">
+      <div className="mb-2 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-darktext pl-0">Edit Resident Profile</h1>
+        <button
+          onClick={handleClose}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Error Display */}
@@ -954,7 +1030,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -962,7 +1038,7 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || isLoading || isFetchingResident}
+            disabled={isSubmitting || isLoading}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {isSubmitting && (
@@ -972,6 +1048,31 @@ const EditResident: React.FC<EditResidentProps> = ({ resident, onClose, onSave }
           </button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <FiCheck className="w-5 h-5 text-green-600" />
+            ) : (
+              <FiX className="w-5 h-5 text-red-600" />
+            )}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+              title="Close notification"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
