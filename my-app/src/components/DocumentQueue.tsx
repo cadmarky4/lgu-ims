@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiClock, FiEye, FiCheck, FiX, FiFileText, FiUser, FiCalendar, FiMoreVertical } from 'react-icons/fi';
-import { apiService } from '../services/api';
+import { apiService } from '../services';
 
 interface DocumentQueueProps {
   onNavigate: (page: string) => void;

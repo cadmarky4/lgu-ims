@@ -1,5 +1,11 @@
 import { BaseApiService } from './api';
-import { type User, type UserFormData, type CreateUserData, type UpdateUserData, type UserParams, type PaginatedResponse } from './types';
+import { 
+  type User, 
+  type UserFormData, 
+  type CreateUserData, 
+  type UpdateUserData, 
+  type UserParams 
+} from './user.types';
 
 export class UsersService extends BaseApiService {
   

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiSearch, FiEdit2 } from 'react-icons/fi';
-import { apiService } from '../services/api';
+import { apiService } from '../services';
 
 interface HouseholdMembersProps {
   householdId: string;

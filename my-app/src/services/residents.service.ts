@@ -12,8 +12,9 @@ import {
     type CreateResidentData,
     type UpdateResidentData,
     type ResidentStatistics,
-    type ResidentFormData
-} from './types';
+    type ResidentFormData,
+    type AgeGroupStatistics
+} from './resident.types';
 
 export class ResidentsService extends BaseApiService {
     async getResidents(params: ResidentParams = {}): Promise<PaginatedResponse<Resident>> {
@@ -271,10 +272,8 @@ export class ResidentsService extends BaseApiService {
             return response.data.data;
         }
         throw new Error('Failed to get residents by purok');
-    }
-
-    async getAgeGroupStatistics(): Promise<any> {
-        const response = await this.request<any>('/residents/age-groups');
+    }    async getAgeGroupStatistics(): Promise<AgeGroupStatistics> {
+        const response = await this.request<AgeGroupStatistics>('/residents/age-groups');
         
         if (response.data) {
             return response.data;

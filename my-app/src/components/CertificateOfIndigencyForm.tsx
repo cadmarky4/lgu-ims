@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiInfo } from 'react-icons/fi';
-import { apiService } from '../services/api';
+import { apiService } from '../services';
 
 interface CertificateOfIndigencyFormProps {
   onNavigate: (page: string) => void;

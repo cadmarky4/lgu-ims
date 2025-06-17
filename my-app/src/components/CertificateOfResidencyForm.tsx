@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiHome, FiCalendar } from 'react-icons/fi';
-import { apiService } from '../services/api';
+import { apiService } from '../services';
 
 interface CertificateOfResidencyFormProps {
   onNavigate: (page: string) => void;
