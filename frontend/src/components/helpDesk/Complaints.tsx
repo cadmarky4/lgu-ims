@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { AlertCircle, User, CheckCircle, Info } from "lucide-react";
+import { AlertCircle, User, CheckCircle, Info, Loader } from "lucide-react";
+import { ComplaintsService } from "../../services/complaints.service";
+import type { CreateComplaintData } from "../../services/complaint.types";
 
 interface ComplaintFormData {
   // Personal Information
@@ -38,6 +40,11 @@ const ComplaintsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [complaintNumber, setComplaintNumber] = useState<string>("");
+
+  const complaintsService = new ComplaintsService();
 
   const complaintCategories: string[] = [
     "Public Services",
@@ -84,14 +91,14 @@ const ComplaintsPage: React.FC = () => {
         [name]: value,
       });
     }
-  };
-
-  const handleSubmit = (): void => {
+  };  const handleSubmit = async (): Promise<void> => {
+    console.log("Submit button clicked, form data:", formData);
+    
     // Validate required fields
     if (!formData.anonymous && (!formData.fullName || !formData.phone)) {
-      alert(
-        "Please provide your name and contact number, or choose to submit anonymously."
-      );
+      const errorMsg = "Please provide your name and contact number, or choose to submit anonymously.";
+      console.log("Validation error:", errorMsg);
+      setError(errorMsg);
       return;
     }
 
@@ -100,33 +107,84 @@ const ComplaintsPage: React.FC = () => {
       !formData.subject ||
       !formData.description
     ) {
-      alert("Please fill in all required complaint details.");
+      const missingFields = [];
+      if (!formData.complaintCategory) missingFields.push("Complaint Category");
+      if (!formData.subject) missingFields.push("Subject");
+      if (!formData.description) missingFields.push("Description");
+      
+      const errorMsg = `Please fill in all required complaint details: ${missingFields.join(", ")}`;
+      console.log("Validation error:", errorMsg);
+      setError(errorMsg);
       return;
     }
 
-    console.log("Complaint submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        address: "",
-        complaintCategory: "",
-        department: "",
-        subject: "",
-        description: "",
-        location: "",
-        urgency: "medium",
-        anonymous: false,
-        attachments: "",
-      });
-    }, 3000);
-  };
+    setLoading(true);
+    setError("");
+    console.log("Starting API call...");
 
-  const generateReferenceNumber = (): string => {
-    return Math.random().toString(36).substr(2, 9).toUpperCase();
+    try {
+      // Transform frontend form data to backend API format
+      const complaintData: CreateComplaintData = {
+        subject: formData.subject,
+        description: formData.description,
+        complaint_category: formData.complaintCategory,
+        department: formData.department || undefined,
+        location: formData.location || undefined,
+        urgency: formData.urgency,
+        is_anonymous: formData.anonymous,
+        attachments: formData.attachments || undefined,
+      };
+
+      // Add personal information only if not anonymous
+      if (!formData.anonymous) {
+        complaintData.full_name = formData.fullName;
+        complaintData.email = formData.email || undefined;
+        complaintData.phone = formData.phone;
+        complaintData.address = formData.address || undefined;
+      }      const response = await complaintsService.createComplaint(complaintData);
+      console.log("API response received:", response);
+      
+      setComplaintNumber(response.complaint_number);
+      setSubmitted(true);
+      console.log("Form submitted successfully with number:", response.complaint_number);
+      
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setComplaintNumber("");
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          address: "",
+          complaintCategory: "",
+          department: "",
+          subject: "",
+          description: "",
+          location: "",
+          urgency: "medium",
+          anonymous: false,
+          attachments: "",
+        });
+      }, 5000);
+        } catch (err) {
+      console.error("Error submitting complaint:", err);
+      
+      // More detailed error handling
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setError("Unable to connect to the server. Please check your internet connection and try again.");
+        } else if (err.message.includes('Authentication failed')) {
+          setError("Your session has expired. Please log in again.");
+        } else {
+          setError(err.message || "Failed to submit complaint");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -158,9 +216,7 @@ const ComplaintsPage: React.FC = () => {
             </ul>
           </div>
         </div>
-      </div>
-
-      {submitted ? (
+      </div>      {submitted ? (
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
@@ -168,17 +224,26 @@ const ComplaintsPage: React.FC = () => {
               Complaint Logged Successfully!
             </h3>
             <p className="text-green-700">
-              The complaint has been recorded. Reference number: #
-              {generateReferenceNumber()}
+              Your complaint has been recorded with reference number: <strong>{complaintNumber}</strong>
             </p>
             <p className="text-green-700 text-sm mt-1">
-              Assigned department will process this complaint within 3-5
-              business days.
+              The assigned department will process this complaint within 3-5 business days.
             </p>
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+        <>
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-6 flex items-center space-x-3">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-red-900">Error</h3>
+                <p className="text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+          
+          <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
           {/* Anonymous Option */}
           <div className="mb-6 bg-gray-50 rounded-lg p-4">
             <label
@@ -466,16 +531,21 @@ const ComplaintsPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
-            <p className="text-sm text-gray-500">* Required fields</p>
-            <button
+            <p className="text-sm text-gray-500">* Required fields</p>            <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 flex justify-center items-center"
+              disabled={loading}
+              className="px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50"
             >
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Submit Complaint
+              {loading ? (
+                <Loader className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <AlertCircle className="h-5 w-5 mr-2" />
+              )}
+              {loading ? "Submitting..." : "Submit Complaint"}
             </button>
           </div>
         </div>
+        </>
       )}
 
       {/* Process Timeline */}

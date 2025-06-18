@@ -4,10 +4,7 @@ import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } 
 import { residentsService } from '../../services';
 import type { Resident } from '../../services/resident.types';
 
-interface ViewResidentProps {
-}
-
-const ViewResident: React.FC<ViewResidentProps> = () => {
+const ViewResident: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -17,19 +14,27 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
 
   // Load resident data when component mounts
   useEffect(() => {
-    const loadResident = async () => {
+    const loadResident = async () => {      
       if (!id) {
         setError('Resident ID not provided');
         setLoading(false);
+        return;      
+      }
+
+      // Validate ID is a valid number
+      const residentId = parseInt(id);
+      if (isNaN(residentId) || residentId <= 0) {
+        setError('Invalid resident ID');
+        setLoading(false);
         return;
-}
+      }
 
       try {
         setLoading(true);
-        // For now, we'll use the getResidents method and filter by ID
-        // TODO: Backend should provide a getResident(id) method
-        const residentsData = await residentsService.getResidents({});
-        const residentData = residentsData.data?.find((r: any) => r.id === parseInt(id));
+        setError(null);
+        
+        // Use the getResident method to fetch resident data
+        const residentData = await residentsService.getResident(residentId);
         
         if (!residentData) {
           setError('Resident not found');
@@ -37,10 +42,17 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
           return;
         }
         
-        setResident(residentData);
-      } catch (error) {
+        setResident(residentData);      } catch (error: any) {
         console.error('Failed to load resident:', error);
-        setError('Failed to load resident data');
+        
+        // Check if it's a 404 error (resident not found)
+        if (error.message?.includes('404') || error.message?.includes('not found')) {
+          setError('Resident not found');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          setError('Unable to connect to server. Please check your connection.');
+        } else {
+          setError('Failed to load resident data. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -67,18 +79,35 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
       </main>
     );
   }
-
   if (error || !resident) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-          >
-            Back to Residents
-          </button>
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Resident Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              {error === 'Invalid resident ID' 
+                ? 'The resident ID provided is invalid.'
+                : error === 'Resident not found'
+                ? 'The resident you are looking for does not exist.'
+                : error || 'Unable to load resident data.'}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={handleClose}
+              className="w-full px-6 py-3 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            >
+              Back to Residents List
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </main>
     );

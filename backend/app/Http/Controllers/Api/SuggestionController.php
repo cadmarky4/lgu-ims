@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Suggestion;
+use App\Models\Schemas\SuggestionSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class SuggestionController extends Controller
 {
@@ -48,28 +50,47 @@ class SuggestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $suggestions,
+            'data' => $suggestions->items(),
+            'current_page' => $suggestions->currentPage(),
+            'per_page' => $suggestions->perPage(),
+            'total' => $suggestions->total(),
+            'last_page' => $suggestions->lastPage(),
+            'from' => $suggestions->firstItem(),
+            'to' => $suggestions->lastItem(),
+            'links' => $suggestions->linkCollection(),
+            'prev_page_url' => $suggestions->previousPageUrl(),
+            'next_page_url' => $suggestions->nextPageUrl(),
+            'first_page_url' => $suggestions->url(1),
+            'last_page_url' => $suggestions->url($suggestions->lastPage()),
+            'path' => $suggestions->path()
         ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created suggestion in storage.
      */
     public function store(Request $request): JsonResponse
     {
+        // Use frontend field names for validation
         $validator = Validator::make($request->all(), [
-            'resident_id' => 'nullable|exists:residents,id',
-            'suggester_name' => 'required|string|max:255',
-            'suggestor_contact' => 'nullable|string|max:255',
-            'suggestor_email' => 'nullable|email|max:255',
-            'suggestor_address' => 'nullable|string',
-            'category' => 'required|in:INFRASTRUCTURE,SERVICES,PROGRAMS,POLICIES,FACILITIES,TECHNOLOGY,OTHER',
+            // Frontend fields (required)
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'priority_level' => 'nullable|in:LOW,MEDIUM,HIGH,URGENT',
-            'expected_impact' => 'nullable|string',
-            'estimated_cost' => 'nullable|numeric|min:0',
-            'target_department' => 'nullable|string|max:255',
+            
+            // Frontend fields (optional)
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'is_resident' => 'sometimes|in:yes,no',
+            'benefits' => 'nullable|string',
+            'implementation' => 'nullable|string',
+            'resources' => 'nullable|string|max:255',
+            'priority' => 'sometimes|in:low,medium,high',
+            'allow_contact' => 'boolean',
+            
+            // Optional system fields
+            'resident_id' => 'nullable|exists:residents,id',
         ]);
 
         if ($validator->fails()) {
@@ -80,11 +101,14 @@ class SuggestionController extends Controller
             ], 422);
         }
 
+        // Generate suggestion number
+        $suggestionNumber = $this->generateSuggestionNumber();
+
         $suggestion = Suggestion::create(array_merge($validator->validated(), [
-            'status' => 'PENDING',
-            'implementation_status' => 'NOT_STARTED',
-            'votes_count' => 0,
-            'submitted_by' => auth()->id(),
+            'suggestion_number' => $suggestionNumber,
+            'status' => 'SUBMITTED',
+            'date_submitted' => now()->toDateString(),
+            'created_by' => Auth::id(),
         ]));
 
         $suggestion->load('resident');
@@ -180,7 +204,7 @@ class SuggestionController extends Controller
         }
 
         $suggestion->update(array_merge($validator->validated(), [
-            'reviewed_by' => auth()->id(),
+            'reviewed_by' => Auth::id(),
             'reviewed_at' => now(),
         ]));
 
@@ -209,7 +233,7 @@ class SuggestionController extends Controller
         }
 
         // Check if user already voted
-        $existingVote = $suggestion->votes()->where('user_id', auth()->id())->first();
+        $existingVote = $suggestion->votes()->where('user_id', Auth::id())->first();
 
         if ($existingVote) {
             // Update existing vote
@@ -217,7 +241,7 @@ class SuggestionController extends Controller
         } else {
             // Create new vote
             $suggestion->votes()->create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'vote_type' => $request->vote_type,
             ]);
         }
@@ -294,5 +318,29 @@ class SuggestionController extends Controller
             'success' => true,
             'data' => $stats
         ]);
+    }
+
+    /**
+     * Generate a unique suggestion number
+     */
+    private function generateSuggestionNumber(): string
+    {
+        $prefix = 'SUG';
+        $year = date('Y');
+        $month = date('m');
+        
+        // Get the last suggestion number for this month
+        $lastSuggestion = Suggestion::where('suggestion_number', 'like', "{$prefix}{$year}{$month}%")
+            ->orderBy('suggestion_number', 'desc')
+            ->first();
+        
+        if ($lastSuggestion) {
+            $lastNumber = intval(substr($lastSuggestion->suggestion_number, -4));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        
+        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

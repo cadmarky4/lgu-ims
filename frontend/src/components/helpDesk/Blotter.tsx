@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Shield, AlertTriangle, User, CheckCircle, Phone } from "lucide-react";
+import { Shield, AlertTriangle, User, CheckCircle, Phone, Loader, AlertCircle } from "lucide-react";
+import { BlotterService } from "../../services/blotter.service";
+import type { CreateBlotterData, IncidentType } from "../../services/blotter.types";
 
 interface BlotterFormData {
   // Complainant Information
@@ -7,9 +9,8 @@ interface BlotterFormData {
   complainantAddress: string;
   complainantContact: string;
   complainantEmail: string;
-
   // Incident Details
-  incidentType: string;
+  incidentType: IncidentType | "";
   incidentDate: string;
   incidentTime: string;
   incidentLocation: string;
@@ -44,8 +45,12 @@ const BlotterPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [blotterNumber, setBlotterNumber] = useState<string>("");
 
-  const incidentTypes: string[] = [
+  const blotterService = new BlotterService();
+  const incidentTypes: IncidentType[] = [
     "Theft",
     "Physical Assault",
     "Verbal Assault",
@@ -69,8 +74,9 @@ const BlotterPage: React.FC = () => {
       [e.target.name]: e.target.value,
     });
   };
+  const handleSubmit = async (): Promise<void> => {
+    console.log("Submit button clicked, form data:", formData);
 
-  const handleSubmit = (): void => {
     // Validate required fields
     if (
       !formData.complainantName ||
@@ -82,31 +88,81 @@ const BlotterPage: React.FC = () => {
       !formData.incidentLocation ||
       !formData.incidentDescription
     ) {
-      alert("Please fill in all required fields");
+      const missingFields = [];
+      if (!formData.complainantName) missingFields.push("Complainant Name");
+      if (!formData.complainantAddress) missingFields.push("Complainant Address");
+      if (!formData.complainantContact) missingFields.push("Complainant Contact");
+      if (!formData.incidentType) missingFields.push("Incident Type");
+      if (!formData.incidentDate) missingFields.push("Incident Date");
+      if (!formData.incidentTime) missingFields.push("Incident Time");
+      if (!formData.incidentLocation) missingFields.push("Incident Location");
+      if (!formData.incidentDescription) missingFields.push("Incident Description");
+      
+      const errorMsg = `Please fill in all required fields: ${missingFields.join(", ")}`;
+      console.log("Validation error:", errorMsg);
+      setError(errorMsg);
       return;
     }
 
-    console.log("Blotter report submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        complainantName: "",
-        complainantAddress: "",
-        complainantContact: "",
-        complainantEmail: "",
-        incidentType: "",
-        incidentDate: "",
-        incidentTime: "",
-        incidentLocation: "",
-        incidentDescription: "",
-        respondentName: "",
-        respondentAddress: "",
-        respondentContact: "",
-        witnesses: "",
-        evidence: "",
-      });
-    }, 3000);
+    setLoading(true);
+    setError("");
+    console.log("Starting API call...");
+
+    try {
+      // Transform frontend form data to backend API format
+      const blotterData: CreateBlotterData = {
+        complainant_name: formData.complainantName,
+        complainant_address: formData.complainantAddress,
+        complainant_contact: formData.complainantContact,
+        complainant_email: formData.complainantEmail || undefined,
+        incident_type: formData.incidentType as IncidentType,
+        incident_date: formData.incidentDate,
+        incident_time: formData.incidentTime,
+        incident_location: formData.incidentLocation,
+        incident_description: formData.incidentDescription,
+        respondent_name: formData.respondentName || undefined,
+        respondent_address: formData.respondentAddress || undefined,
+        respondent_contact: formData.respondentContact || undefined,
+        witnesses: formData.witnesses || undefined,
+        evidence: formData.evidence || undefined,
+      };
+
+      const response = await blotterService.createBlotterCase(blotterData);
+      console.log("API response received:", response);
+      
+      setBlotterNumber(response.case_number);
+      setSubmitted(true);
+      console.log("Form submitted successfully with number:", response.case_number);
+      
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setBlotterNumber("");
+        setFormData({
+          complainantName: "",
+          complainantAddress: "",
+          complainantContact: "",
+          complainantEmail: "",
+          incidentType: "",
+          incidentDate: "",
+          incidentTime: "",
+          incidentLocation: "",
+          incidentDescription: "",
+          respondentName: "",
+          respondentAddress: "",
+          respondentContact: "",
+          witnesses: "",
+          evidence: "",
+        });
+      }, 5000);
+    } catch (err) {
+      console.error("Error submitting blotter report:", err);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      console.log("Setting error message:", errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -135,22 +191,36 @@ const BlotterPage: React.FC = () => {
             </p>
           </div>
         </div>
-      </div>
-
-      {submitted ? (
+      </div>      {submitted ? (
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
             <h3 className="text-lg font-semibold text-green-900">
               Blotter Report Filed Successfully!
             </h3>
-            <p className="text-green-700">
-              The report has been recorded in the system. Reference number has
-              been generated for tracking purposes.
+            <p className="text-green-700 mb-2">
+              The report has been recorded in the system. Your blotter case number is:
+            </p>
+            <p className="text-xl font-bold text-green-800">
+              {blotterNumber}
+            </p>
+            <p className="text-green-600 text-sm mt-2">
+              Please keep this reference number for your records and future follow-ups.
             </p>
           </div>
-        </div>
-      ) : (
+        </div>      ) : (
+        <>
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <div>
+                <p className="font-medium">Error</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+
         <div className="bg-white shadow-lg rounded-lg p-6">
           {/* Complainant Information */}
           <div className="mb-8">
@@ -429,16 +499,26 @@ const BlotterPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
-            <p className="text-sm text-gray-500">* Required fields</p>
-            <button
+            <p className="text-sm text-gray-500">* Required fields</p>            <button
               onClick={handleSubmit}
-              className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors duration-200 flex justify-center items-center"
+              disabled={loading}
+              className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Shield className="h-5 w-5 mr-2" />
-              Submit Blotter Report
+              {loading ? (
+                <>
+                  <Loader className="h-5 w-5 mr-2 animate-spin" />
+                  Submitting Report...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-5 w-5 mr-2" />
+                  Submit Blotter Report
+                </>
+              )}
             </button>
           </div>
         </div>
+        </>
       )}
 
       {/* Emergency Contact Card */}

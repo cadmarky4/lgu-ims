@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BlotterCase;
+use App\Models\Schemas\BlotterCaseSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class BlotterCaseController extends Controller
 {
@@ -16,16 +17,18 @@ class BlotterCaseController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = BlotterCase::with(['complainant', 'respondent', 'investigator', 'mediator']);
+        $query = BlotterCase::query();
 
-        // Apply filters
-        if ($request->has('case_type')) {
-            $query->where('case_type', $request->case_type);
+        // Apply filters based on schema fields
+        if ($request->has('incident_type')) {
+            $query->where('incident_type', $request->incident_type);
         }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
-        }        if ($request->has('priority')) {
+        }
+
+        if ($request->has('priority')) {
             $query->where('priority', $request->priority);
         }
 
@@ -43,7 +46,8 @@ class BlotterCaseController extends Controller
                 $q->where('case_number', 'like', "%{$search}%")
                   ->orWhere('incident_description', 'like', "%{$search}%")
                   ->orWhere('complainant_name', 'like', "%{$search}%")
-                  ->orWhere('respondent_name', 'like', "%{$search}%");
+                  ->orWhere('respondent_name', 'like', "%{$search}%")
+                  ->orWhere('incident_location', 'like', "%{$search}%");
             });
         }
 
@@ -56,7 +60,19 @@ class BlotterCaseController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $cases,
+            'data' => $cases->items(),
+            'current_page' => $cases->currentPage(),
+            'per_page' => $cases->perPage(),
+            'total' => $cases->total(),
+            'last_page' => $cases->lastPage(),
+            'from' => $cases->firstItem(),
+            'to' => $cases->lastItem(),
+            'links' => $cases->linkCollection(),
+            'prev_page_url' => $cases->previousPageUrl(),
+            'next_page_url' => $cases->nextPageUrl(),
+            'first_page_url' => $cases->url(1),
+            'last_page_url' => $cases->url($cases->lastPage()),
+            'path' => $cases->path()
         ]);
     }
 
@@ -65,24 +81,29 @@ class BlotterCaseController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Use frontend field names for validation
         $validator = Validator::make($request->all(), [
-            'complainant_id' => 'nullable|exists:residents,id',
-            'complainant_name' => 'required|string|max:255',
-            'complainant_address' => 'nullable|string',
-            'complainant_contact' => 'nullable|string|max:255', 
-            'respondent_id' => 'nullable|exists:residents,id',
-            'respondent_name' => 'required|string|max:255',
-            'respondent_address' => 'nullable|string',
-            'respondent_contact' => 'nullable|string|max:255',
-            'case_type' => 'required|in:NOISE_COMPLAINT,PROPERTY_DISPUTE,FAMILY_DISPUTE,ASSAULT,HARASSMENT,THEFT,VANDALISM,TRESPASSING,NEIGHBOR_DISPUTE,OTHER',
-            'incident_date' => 'required|date',
-            'incident_time' => 'nullable|string',
-            'incident_location' => 'required|string',
-            'incident_description' => 'required|string',
-            'priority' => 'required|in:LOW,NORMAL,HIGH,URGENT',
+            // Frontend complainant fields
+            'complainantName' => 'required|string|max:255',
+            'complainantAddress' => 'required|string',
+            'complainantContact' => 'required|string|max:20',
+            'complainantEmail' => 'nullable|email|max:255',
+            
+            // Frontend incident fields
+            'incidentType' => 'required|in:Theft,Physical Assault,Verbal Assault,Property Damage,Disturbance,Trespassing,Fraud,Harassment,Domestic Dispute,Noise Complaint,Other',
+            'incidentDate' => 'required|date',
+            'incidentTime' => 'required|date_format:H:i',
+            'incidentLocation' => 'required|string|max:255',
+            'incidentDescription' => 'required|string',
+            
+            // Frontend respondent fields (optional)
+            'respondentName' => 'nullable|string|max:255',
+            'respondentAddress' => 'nullable|string',
+            'respondentContact' => 'nullable|string|max:20',
+            
+            // Frontend additional fields
             'witnesses' => 'nullable|string',
-            'evidence_description' => 'nullable|string',
-            'initial_action_taken' => 'nullable|string',
+            'evidence' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -95,13 +116,38 @@ class BlotterCaseController extends Controller
 
         $validated = $validator->validated();
         
-        // Generate case number
-        $validated['case_number'] = $this->generateCaseNumber();
-        $validated['status'] = 'FILED';
-        $validated['filed_by'] = auth()->id();
+        // Map frontend fields to backend schema fields
+        $mappedData = [
+            // Basic case info
+            'case_number' => $this->generateCaseNumber(),
+            'status' => 'FILED',
+            'date_filed' => now(),
+            'created_by' => Auth::id(),
+            
+            // Map complainant fields
+            'complainant_name' => $validated['complainantName'],
+            'complainant_address' => $validated['complainantAddress'],
+            'complainant_contact' => $validated['complainantContact'],
+            'complainant_email' => $validated['complainantEmail'] ?? null,
+            
+            // Map incident fields
+            'incident_type' => $validated['incidentType'],
+            'incident_date' => $validated['incidentDate'],
+            'incident_time' => $validated['incidentTime'],
+            'incident_location' => $validated['incidentLocation'],
+            'incident_description' => $validated['incidentDescription'],
+            
+            // Map respondent fields
+            'respondent_name' => $validated['respondentName'] ?? null,
+            'respondent_address' => $validated['respondentAddress'] ?? null,
+            'respondent_contact' => $validated['respondentContact'] ?? null,
+            
+            // Map additional fields
+            'witnesses' => $validated['witnesses'] ?? null,
+            'evidence' => $validated['evidence'] ?? null,
+        ];
 
-        $blotterCase = BlotterCase::create($validated);
-        $blotterCase->load(['complainant', 'respondent']);
+        $blotterCase = BlotterCase::create($mappedData);
 
         return response()->json([
             'success' => true,
@@ -115,8 +161,6 @@ class BlotterCaseController extends Controller
      */
     public function show(BlotterCase $blotterCase): JsonResponse
     {
-        $blotterCase->load(['complainant', 'respondent', 'investigator', 'mediator', 'hearings']);
-
         return response()->json([
             'success' => true,
             'data' => $blotterCase
@@ -128,22 +172,29 @@ class BlotterCaseController extends Controller
      */
     public function update(Request $request, BlotterCase $blotterCase): JsonResponse
     {
+        // Use frontend field names for validation
         $validator = Validator::make($request->all(), [
-            'complainant_name' => 'sometimes|string|max:255',
-            'complainant_address' => 'nullable|string',
-            'complainant_contact' => 'nullable|string|max:255',
-            'respondent_name' => 'sometimes|string|max:255',
-            'respondent_address' => 'nullable|string',
-            'respondent_contact' => 'nullable|string|max:255',
-            'case_type' => 'sometimes|in:NOISE_COMPLAINT,PROPERTY_DISPUTE,FAMILY_DISPUTE,ASSAULT,HARASSMENT,THEFT,VANDALISM,TRESPASSING,NEIGHBOR_DISPUTE,OTHER',
-            'incident_date' => 'sometimes|date',
-            'incident_time' => 'nullable|string',
-            'incident_location' => 'sometimes|string',
-            'incident_description' => 'sometimes|string',
-            'priority' => 'sometimes|in:LOW,NORMAL,HIGH,URGENT',
+            // Frontend complainant fields
+            'complainantName' => 'sometimes|string|max:255',
+            'complainantAddress' => 'sometimes|string',
+            'complainantContact' => 'sometimes|string|max:20',
+            'complainantEmail' => 'nullable|email|max:255',
+            
+            // Frontend incident fields
+            'incidentType' => 'sometimes|in:Theft,Physical Assault,Verbal Assault,Property Damage,Disturbance,Trespassing,Fraud,Harassment,Domestic Dispute,Noise Complaint,Other',
+            'incidentDate' => 'sometimes|date',
+            'incidentTime' => 'sometimes|date_format:H:i',
+            'incidentLocation' => 'sometimes|string|max:255',
+            'incidentDescription' => 'sometimes|string',
+            
+            // Frontend respondent fields
+            'respondentName' => 'nullable|string|max:255',
+            'respondentAddress' => 'nullable|string',
+            'respondentContact' => 'nullable|string|max:20',
+            
+            // Frontend additional fields
             'witnesses' => 'nullable|string',
-            'evidence_description' => 'nullable|string',
-            'initial_action_taken' => 'nullable|string',
+            'evidence' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -154,8 +205,32 @@ class BlotterCaseController extends Controller
             ], 422);
         }
 
-        $blotterCase->update($validator->validated());
-        $blotterCase->load(['complainant', 'respondent']);
+        $validated = $validator->validated();
+        
+        // Map frontend fields to backend schema fields
+        $mappedData = [];
+        
+        if (isset($validated['complainantName'])) $mappedData['complainant_name'] = $validated['complainantName'];
+        if (isset($validated['complainantAddress'])) $mappedData['complainant_address'] = $validated['complainantAddress'];
+        if (isset($validated['complainantContact'])) $mappedData['complainant_contact'] = $validated['complainantContact'];
+        if (isset($validated['complainantEmail'])) $mappedData['complainant_email'] = $validated['complainantEmail'];
+        
+        if (isset($validated['incidentType'])) $mappedData['incident_type'] = $validated['incidentType'];
+        if (isset($validated['incidentDate'])) $mappedData['incident_date'] = $validated['incidentDate'];
+        if (isset($validated['incidentTime'])) $mappedData['incident_time'] = $validated['incidentTime'];
+        if (isset($validated['incidentLocation'])) $mappedData['incident_location'] = $validated['incidentLocation'];
+        if (isset($validated['incidentDescription'])) $mappedData['incident_description'] = $validated['incidentDescription'];
+        
+        if (isset($validated['respondentName'])) $mappedData['respondent_name'] = $validated['respondentName'];
+        if (isset($validated['respondentAddress'])) $mappedData['respondent_address'] = $validated['respondentAddress'];
+        if (isset($validated['respondentContact'])) $mappedData['respondent_contact'] = $validated['respondentContact'];
+        
+        if (isset($validated['witnesses'])) $mappedData['witnesses'] = $validated['witnesses'];
+        if (isset($validated['evidence'])) $mappedData['evidence'] = $validated['evidence'];
+        
+        $mappedData['updated_by'] = Auth::id();
+
+        $blotterCase->update($mappedData);
 
         return response()->json([
             'success' => true,
@@ -338,7 +413,7 @@ class BlotterCaseController extends Controller
             'closure_reason' => $request->closure_reason,
             'closure_notes' => $request->closure_notes,
             'settlement_date' => now(),
-            'closed_by' => auth()->id(),
+            'closed_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -360,11 +435,13 @@ class BlotterCaseController extends Controller
             'mediation_scheduled' => BlotterCase::where('status', 'MEDIATION_SCHEDULED')->count(),
             'settled_cases' => BlotterCase::where('status', 'SETTLED')->count(),
             'closed_cases' => BlotterCase::where('status', 'CLOSED')->count(),
-            'by_case_type' => BlotterCase::selectRaw('case_type, COUNT(*) as count')
-                ->groupBy('case_type')
-                ->pluck('count', 'case_type'),            'by_priority' => BlotterCase::selectRaw('priority, COUNT(*) as count')
+            'by_incident_type' => BlotterCase::selectRaw('incident_type, COUNT(*) as count')
+                ->groupBy('incident_type')
+                ->pluck('count', 'incident_type'),
+            'by_priority' => BlotterCase::selectRaw('priority, COUNT(*) as count')
                 ->groupBy('priority')
-                ->pluck('count', 'priority'),            'average_resolution_days' => BlotterCase::whereNotNull('settlement_date')
+                ->pluck('count', 'priority'),
+            'average_resolution_days' => BlotterCase::whereNotNull('settlement_date')
                 ->selectRaw('AVG(julianday(settlement_date) - julianday(created_at)) as avg_days')
                 ->value('avg_days'),
             'monthly_cases' => BlotterCase::selectRaw('strftime("%m", created_at) as month, COUNT(*) as count')

@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, message } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
-  });
+  });  
   const [error, setError] = useState<string>('');
+
+  // Debug: Monitor error state changes
+  useEffect(() => {
+    console.log('Error state changed:', error);
+  }, [error]);
+
+  // Debug: Monitor component lifecycle
+  useEffect(() => {
+    console.log('LoginPage mounted');
+    return () => {
+      console.log('LoginPage unmounted');
+    };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -19,24 +33,54 @@ const LoginPage: React.FC = () => {
     }));
     // Clear error when user starts typing
     if (error) setError('');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted, clearing error and starting login...');
     setError('');
-    
+
     try {
+      console.log('Attempting login with:', formData);
       await login(formData);
+      console.log('Login successful');
+      
       // Navigation will be handled by ProtectedRoute
     } catch (err) {
-      setError(err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Login failed');
+      console.error('Login error:', err);
+      
+      // More detailed error handling
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          const errorMsg = 'Unable to connect to the server. Please check your internet connection and try again.';
+          console.log('Setting network error:', errorMsg);
+          setError(errorMsg);
+        } else if (err.message.includes('Unauthorized') || err.message.includes('Invalid credentials')) {
+          const errorMsg = 'Invalid email or password. Please check your credentials and try again.';
+          console.log('Setting auth error:', errorMsg);
+          setError(errorMsg);
+        } else if (err.message.includes('validation')) {
+          const errorMsg = 'Please check your email and password format.';
+          console.log('Setting validation error:', errorMsg);
+          setError(errorMsg);
+        } else {
+          const errorMsg = err.message || 'Login failed. Please try again.';
+          console.log('Setting generic error:', errorMsg);
+          setError(errorMsg);
+        }
+      } else {
+        const errorMsg = 'An unexpected error occurred. Please try again.';
+        console.log('Setting unexpected error:', errorMsg);
+        setError(errorMsg);
+      }
+      
+      // Force a re-render to make sure error displays
+      console.log('Error state after setting:', error);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed bg-blue-500"
         style={{
           backgroundImage: `url('/background.png')`
@@ -54,21 +98,25 @@ const LoginPage: React.FC = () => {
               <span className="text-blue-900 font-bold text-lg">BSM</span>
             </div>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-gray-800 mb-2">BARANGAY SAN MIGUEL</h1>
           <p className="text-gray-600 text-lg">Information Management System</p>
           <div className="w-16 h-px bg-gray-400 mx-auto mt-4"></div>
-        </div>        {/* Login Form */}
+        </div>        
+        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-sm bg-opacity-95">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Sign In</h2>
-          
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Sign In</h2>          {/* Error Message */}
+          {message && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+
+              <div className="flex-1">
+                <p className="text-red-600 text-sm font-bold">Login Failed</p>
+                <p className="text-red-600 text-sm">{message}</p>
+              </div>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
@@ -105,14 +153,14 @@ const LoginPage: React.FC = () => {
             {/* Remember Me and Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                                 <input
-                   type="checkbox"
-                   name="rememberMe"
-                   checked={formData.rememberMe}
-                   onChange={handleInputChange}
-                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                   aria-label="Remember me"
-                 />
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  aria-label="Remember me"
+                />
                 <label className="ml-2 block text-sm text-gray-700">
                   Remember me
                 </label>
@@ -123,7 +171,9 @@ const LoginPage: React.FC = () => {
               >
                 Forgot Password?
               </button>
-            </div>            {/* Login Button */}
+            </div>            
+            
+            {/* Login Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -173,5 +223,5 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;
 

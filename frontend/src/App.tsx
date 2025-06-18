@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./components/global/NotificationSystem";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./components/dashboard/Dashboard";
@@ -23,6 +24,8 @@ import ProjectsAndPrograms from "./components/projectsAndPrograms/ProjectsAndPro
 import AddNewProject from "./components/projectsAndPrograms/AddNewProject";
 import EditProject from "./components/projectsAndPrograms/EditProject";
 import UserManagement from "./components/userManagement/UserManagement";
+import EditUserPage from "./components/userManagement/EditUserPage";
+import ViewUserPage from "./components/userManagement/ViewUserPage";
 import LoginPage from "./components/auth/LoginPage";
 import SignupPage from "./components/auth/SignupPage";
 import ReportsPage from "./components/reports/ReportsPage";
@@ -189,10 +192,22 @@ const router = createBrowserRouter([
             element: <AddNewProject />,
           },
         ],
-      },
-      {
+      },      {
         path: "users",
-        element: <UserManagement />,
+        children: [
+          {
+            index: true,
+            element: <UserManagement />,
+          },
+          {
+            path: "edit/:id",
+            element: <EditUserPage />,
+          },
+          {
+            path: "view/:id",
+            element: <ViewUserPage />,
+          },
+        ],
       },
       {
         path: "settings",
@@ -239,7 +254,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

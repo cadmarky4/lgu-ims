@@ -23,9 +23,29 @@ interface HouseholdParams {
   ownership_status?: string;
 }
 
-export class HouseholdsService extends BaseApiService {  /**
+// Helper function for type-safe error handling
+function createApiError(message: string, errors?: Record<string, string[]>): Error {
+  const error = new Error(message);
+  (error as any).response = {
+    data: { errors: errors || { general: ['Server error occurred'] } }
+  };
+  return error;
+}
+
+// Helper function to check if an error is an API error
+function isApiError(error: unknown): error is Error & { response: { data: { errors: Record<string, string[]> } } } {
+  return error instanceof Error && 
+         'response' in error && 
+         error.response !== null &&
+         typeof error.response === 'object' &&
+         'data' in error.response!;
+}
+
+export class HouseholdsService extends BaseApiService {
+  /**
    * Convert frontend form data to backend API format
-   */  private mapFormDataToRequest(formData: HouseholdFormData): CreateHouseholdRequest {
+   */
+  private mapFormDataToRequest(formData: HouseholdFormData): CreateHouseholdRequest {
     // Construct complete address if not provided by user
     const completeAddress = formData.completeAddress || 
       `${formData.houseNumber} ${formData.streetSitio}, ${formData.barangay}`.trim();
@@ -44,51 +64,40 @@ export class HouseholdsService extends BaseApiService {  /**
       has_senior_citizen: formData.householdClassification.hasSeniorCitizen,
       has_pwd_member: formData.householdClassification.hasPwdMember,
       house_type: formData.houseType || undefined,
-      ownership_status: formData.ownershipStatus || undefined,
-      has_electricity: formData.utilitiesAccess.electricity,
+      ownership_status: formData.ownershipStatus || undefined,      has_electricity: formData.utilitiesAccess.electricity,
       has_water_supply: formData.utilitiesAccess.waterSupply,
       has_internet_access: formData.utilitiesAccess.internetAccess,
       remarks: formData.remarks || undefined
     };
-
-    // Map householdId to household_number if provided and not auto-generated
-    if (formData.householdId && formData.householdId !== 'Auto-generated') {
-      request.household_number = formData.householdId;
-    }
-
-    // Add member relationships if provided
-    if (formData.members && formData.members.length > 0) {
-      request.member_ids = formData.members.map(member => ({
-        resident_id: member.residentId,
-        relationship: member.relationship
-      }));
-    }
 
     return request;
   }
 
   async getHouseholds(params: HouseholdParams = {}): Promise<PaginatedResponse<Household>> {
     const searchParams = new URLSearchParams();
+    
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const response = await this.requestAll<Household>(
+    const response = await this.request<PaginatedResponse<Household>>(
       `/households?${searchParams.toString()}`
     );
 
     if (response.data) {
-      return response;
+      return response.data;
     }
-    throw new Error(JSON.stringify(response) || 'Failed to get households');
+
+    throw new Error('Failed to fetch households');
   }
-  async createHousehold(householdData: HouseholdFormData): Promise<Household> {
+
+  async createHousehold(formData: HouseholdFormData): Promise<Household> {
     try {
-      // Convert form data to API format
-      const requestData = this.mapFormDataToRequest(householdData);
-      const response = await this.request('/households', {
+      const requestData = this.mapFormDataToRequest(formData);
+      
+      const response = await this.request<Household>('/households', {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
@@ -98,49 +107,25 @@ export class HouseholdsService extends BaseApiService {  /**
       }
 
       if (response.errors && Object.keys(response.errors).length > 0) {
-        const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as Error).response = {
-          data: { errors: response.errors }
-        };
-        throw error;
+        throw createApiError('Validation failed', response.errors);
       }
 
-      throw new Error(JSON.stringify(response) || 'Failed to create household');
+      throw new Error('Failed to create household');
     } catch (error: unknown) {
-      if (error.response && error.response.data) {
+      if (isApiError(error)) {
         throw error;
       }
 
-      const wrappedError = new Error(error.message || 'Failed to create household');
-      (wrappedError as Error).response = {
-        data: { errors: { general: ['Server error occurred'] } }
-      };
-      throw wrappedError;
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create household';
+      throw createApiError(errorMessage);
     }
   }
-  async updateHousehold(id: number, householdData: Partial<HouseholdFormData>): Promise<Household> {
-    try {      // Convert partial form data to API format for updates
-      const requestData: Partial<CreateHouseholdRequest> = {
-        household_type: householdData.householdType as HouseholdType,
-        house_number: householdData.houseNumber,
-        street_sitio: householdData.streetSitio,
-        barangay: householdData.barangay,
-        complete_address: householdData.completeAddress,
-        monthly_income: householdData.monthlyIncome || undefined,
-        primary_income_source: householdData.primaryIncomeSource,
-        four_ps_beneficiary: householdData.householdClassification?.fourPsBeneficiary || false,
-        indigent_family: householdData.householdClassification?.indigentFamily || false,
-        has_senior_citizen: householdData.householdClassification?.hasSeniorCitizen || false,
-        has_pwd_member: householdData.householdClassification?.hasPwdMember || false,
-        house_type: householdData.houseType || undefined,
-        ownership_status: householdData.ownershipStatus || undefined,
-        has_electricity: householdData.utilitiesAccess?.electricity || false,
-        has_water_supply: householdData.utilitiesAccess?.waterSupply || false,
-        has_internet_access: householdData.utilitiesAccess?.internetAccess || false,
-        remarks: householdData.remarks
-      };
 
-      const response = await this.request(`/households/${id}`, {
+  async updateHousehold(id: number, formData: HouseholdFormData): Promise<Household> {
+    try {
+      const requestData = this.mapFormDataToRequest(formData);
+      
+      const response = await this.request<Household>(`/households/${id}`, {
         method: 'PUT',
         body: JSON.stringify(requestData),
       });
@@ -150,33 +135,18 @@ export class HouseholdsService extends BaseApiService {  /**
       }
 
       if (response.errors && Object.keys(response.errors).length > 0) {
-        const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as Error).response = {
-          data: { errors: response.errors }
-        };
-        throw error;
+        throw createApiError('Validation failed', response.errors);
       }
 
-      throw new Error(JSON.stringify(response) || `Failed to update household #${id}`);
+      throw new Error(`Failed to update household #${id}`);
     } catch (error: unknown) {
-      if (error.response && error.response.data) {
+      if (isApiError(error)) {
         throw error;
       }
 
-      const wrappedError = new Error(error.message || `Failed to update household #${id}`);
-      (wrappedError as Error).response = {
-        data: { errors: { general: ['Server error occurred'] } }
-      };
-      throw wrappedError;
+      const errorMessage = error instanceof Error ? error.message : `Failed to update household #${id}`;
+      throw createApiError(errorMessage);
     }
-  }
-
-  async getHousehold(id: number): Promise<Household> {
-    const response = await this.request(`/households/${id}`);
-    if (response.data) {
-      return response.data as Household;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to get household');
   }
 
   async deleteHousehold(id: number): Promise<void> {
@@ -185,46 +155,25 @@ export class HouseholdsService extends BaseApiService {  /**
     });
 
     if (!response) {
-      throw new Error(JSON.stringify(response));
+      throw new Error(`Failed to delete household #${id}`);
     }
-  }
-  async getStatistics(): Promise<HouseholdStatistics> {
-    const response = await this.request('/households/statistics');
-    if (response.data) {
-      return response.data as HouseholdStatistics;
-    }
-    throw new Error(JSON.stringify(response));
   }
 
-  async searchHouseholds(query: string, perPage: number = 15): Promise<PaginatedResponse<Household>> {
-    const response = await this.requestAll<Household>(`/households/search?query=${encodeURIComponent(query)}&per_page=${perPage}`);
+  async getHousehold(id: number): Promise<Household> {
+    const response = await this.request<Household>(`/households/${id}`);
+    
     if (response.data) {
-      return response;
+      return response.data;
     }
-    throw new Error(JSON.stringify(response));
+    
+    throw new Error(`Failed to get household #${id}`);
   }
 
-  async getHouseholdsByBarangay(barangay: string): Promise<Household[]> {
-    const response = await this.request(`/households/by-barangay/${encodeURIComponent(barangay)}`);
-    if (response.data) {
-      return response.data as Household[];
-    }
-    throw new Error(JSON.stringify(response));
-  }
-
-  async updateHouseholdMembers(householdId: number, headResidentId: number, members: Array<{residentId: number, relationship: string}>): Promise<Household> {
+  async updateHouseholdMembers(id: number, memberIds: number[]): Promise<Household> {
     try {
-      const requestData = {
-        head_resident_id: headResidentId,
-        member_ids: members.map(member => ({
-          resident_id: member.residentId,
-          relationship: member.relationship
-        }))
-      };
-
-      const response = await this.request(`/households/${householdId}/members`, {
-        method: 'PATCH',
-        body: JSON.stringify(requestData),
+      const response = await this.request<Household>(`/households/${id}/members`, {
+        method: 'PUT',
+        body: JSON.stringify({ member_ids: memberIds }),
       });
 
       if (response.data) {
@@ -232,37 +181,38 @@ export class HouseholdsService extends BaseApiService {  /**
       }
 
       if (response.errors && Object.keys(response.errors).length > 0) {
-        const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as Error).response = {
-          data: { errors: response.errors }
-        };
-        throw error;
+        throw createApiError('Validation failed', response.errors);
       }
 
-      throw new Error(JSON.stringify(response) || `Failed to update household members`);
+      throw new Error('Failed to update household members');
     } catch (error: unknown) {
-      if (error.response && error.response.data) {
+      if (isApiError(error)) {
         throw error;
       }
 
-      const wrappedError = new Error(error.message || `Failed to update household members`);
-      (wrappedError as Error).response = {
-        data: { errors: { general: ['Server error occurred'] } }
-      };
-      throw wrappedError;
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update household members';
+      throw createApiError(errorMessage);
     }
   }
 
-  // Reference data methods
+  async getStatistics(): Promise<HouseholdStatistics> {
+    const response = await this.request<HouseholdStatistics>('/households/statistics');
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to get household statistics');
+  }
+
   async getBarangays(): Promise<Barangay[]> {
-    // For now return mock data, but this should be replaced with real API call
+    // Mock data for now - replace with actual API call when backend is ready
     return [
-      { id: 1, name: 'San Miguel', value: 'san-miguel' },
-      { id: 2, name: 'Poblacion', value: 'poblacion' },
+      { id: 1, name: 'San Rafael', value: 'san-rafael' },
+      { id: 2, name: 'Santa Cruz', value: 'santa-cruz' },
       { id: 3, name: 'Santo Domingo', value: 'santo-domingo' },
       { id: 4, name: 'San Antonio', value: 'san-antonio' },
       { id: 5, name: 'San Jose', value: 'san-jose' }
     ];
   }
 }
-

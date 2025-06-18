@@ -42,9 +42,7 @@ export class ResidentsService extends BaseApiService {
             return response.data;
         }
         throw new Error(JSON.stringify(response) || 'Failed to get resident');
-    }
-
-    async createResident(residentData: CreateResidentData): Promise<Resident> {
+    }    async createResident(residentData: CreateResidentData): Promise<Resident> {
         const response = await this.request<Resident>('/residents', {
             method: 'POST',
             body: JSON.stringify(residentData),
@@ -54,6 +52,11 @@ export class ResidentsService extends BaseApiService {
             return response.data;
         }
         throw new Error(JSON.stringify(response) || 'Failed to create resident');
+    }
+
+    async createResidentFromForm(formData: ResidentFormData): Promise<Resident> {
+        const apiData = this.transformFormDataToApiFormat(formData);
+        return this.createResident(apiData);
     }
 
     async updateResident(id: number, residentData: UpdateResidentData): Promise<Resident> {

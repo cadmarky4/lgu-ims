@@ -10,57 +10,32 @@ use Carbon\Carbon;
 class Suggestion extends Model
 {
     protected $fillable = [
-        'suggestion_number',
-        'title',
-        'description',
-        'category',
-        'resident_id',
-        'suggester_name',
-        'suggester_contact',
-        'suggester_email',
-        'is_anonymous',
-        'current_situation',
-        'proposed_solution',
-        'expected_benefits',
-        'estimated_cost',
-        'implementation_timeline',
-        'status',
-        'date_submitted',
-        'review_date',
-        'decision_date',
-        'implementation_date',
-        'reviewed_by',
-        'review_comments',
-        'decision_remarks',
-        'feasibility_rating',
-        'impact_rating',
-        'assigned_to',
-        'implementation_plan',
-        'implementation_status',
-        'implementation_progress',
-        'upvotes',
-        'downvotes',
-        'community_comments',
-        'attachments',
-        'supporting_documents',
-        'remarks',
-        'created_by',
-        'updated_by'
+        'suggestion_number', 'title', 'description', 'category', 'priority', 'target_department',
+        'suggested_solution', 'expected_outcome', 'implementation_timeline', 'estimated_budget',
+        'suggested_by_name', 'suggested_by_contact', 'suggested_by_resident_id', 'anonymous',
+        'status', 'assigned_evaluator', 'evaluation_date', 'evaluation_notes', 'feasibility_score',
+        'impact_assessment', 'cost_benefit_analysis', 'implementation_plan', 'decision',
+        'decision_date', 'decision_reason', 'approved_budget', 'implementation_start_date',
+        'implementation_end_date', 'progress_notes', 'completion_date', 'outcome_summary',
+        'lessons_learned', 'upvotes', 'downvotes', 'public_feedback', 'remarks',
+        'created_by', 'updated_by'
     ];
 
     protected $casts = [
-        'date_submitted' => 'date',
-        'review_date' => 'date',
+        'evaluation_date' => 'date',
         'decision_date' => 'date',
-        'implementation_date' => 'date',
-        'is_anonymous' => 'boolean',
-        'estimated_cost' => 'decimal:2',
-        'implementation_progress' => 'integer',
+        'implementation_start_date' => 'date',
+        'implementation_end_date' => 'date',
+        'completion_date' => 'date',
+        'anonymous' => 'boolean',
+        'feasibility_score' => 'integer',
+        'estimated_budget' => 'decimal:2',
+        'approved_budget' => 'decimal:2',
         'upvotes' => 'integer',
         'downvotes' => 'integer',
-        'community_comments' => 'array',
-        'attachments' => 'array',
-        'supporting_documents' => 'array'
+        'public_feedback' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected $appends = [
@@ -97,7 +72,7 @@ class Suggestion extends Model
     // Computed attributes
     public function getNetVotesAttribute(): int
     {
-        return $this->upvotes - $this->downvotes;
+        return ($this->upvotes ?? 0) - ($this->downvotes ?? 0);
     }
 
     public function getDaysPendingAttribute(): int
@@ -106,7 +81,10 @@ class Suggestion extends Model
             return 0;
         }
         
-        return Carbon::parse($this->date_submitted)->diffInDays(now());
+        $dateSubmitted = $this->date_submitted ?? $this->created_at;
+        if (!$dateSubmitted) return 0;
+        
+        return Carbon::parse($dateSubmitted)->diffInDays(now());
     }
 
     // Scopes

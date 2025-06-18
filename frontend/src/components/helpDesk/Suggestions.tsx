@@ -8,7 +8,12 @@ import {
   Star,
   TrendingUp,
   Award,
+  Loader,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
+import { SuggestionsService } from "../../services/suggestions.service";
+import type { CreateSuggestionData } from "../../services/suggestion.types";
 
 interface SuggestionFormData {
   // Personal Information
@@ -54,6 +59,11 @@ const SuggestionsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [suggestionNumber, setSuggestionNumber] = useState<string>("");
+
+  const suggestionsService = new SuggestionsService();
 
   const suggestionCategories: string[] = [
     "Community Development",
@@ -118,9 +128,9 @@ const SuggestionsPage: React.FC = () => {
         [name]: value,
       });
     }
-  };
+  }; const handleSubmit = async (): Promise<void> => {
+    console.log("Submit button clicked, form data:", formData);
 
-  const handleSubmit = (): void => {
     // Validate required fields
     if (
       !formData.name ||
@@ -128,33 +138,81 @@ const SuggestionsPage: React.FC = () => {
       !formData.title ||
       !formData.description
     ) {
-      alert("Please fill in all required fields");
+      const missingFields = [];
+      if (!formData.name) missingFields.push("Name");
+      if (!formData.category) missingFields.push("Category");
+      if (!formData.title) missingFields.push("Title");
+      if (!formData.description) missingFields.push("Description");
+
+      const errorMsg = `Please fill in all required fields: ${missingFields.join(", ")}`;
+      console.log("Validation error:", errorMsg);
+      setError(errorMsg);
       return;
     }
 
-    console.log("Suggestion submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        isResident: "yes",
-        category: "",
-        title: "",
-        description: "",
-        benefits: "",
-        implementation: "",
-        resources: "",
-        priority: "medium",
-        allowContact: true,
-      });
-    }, 3000);
-  };
+    setLoading(true);
+    setError("");
+    console.log("Starting API call...");
 
-  const generateReferenceId = (): string => {
-    return Math.random().toString(36).substr(2, 9).toUpperCase();
+    try {
+      // Transform frontend form data to backend API format
+      const suggestionData: CreateSuggestionData = {
+        name: formData.name,
+        category: formData.category,
+        title: formData.title,
+        description: formData.description,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        is_resident: formData.isResident === "yes",
+        benefits: formData.benefits || undefined,
+        implementation: formData.implementation || undefined,
+        resources: formData.resources || undefined,
+        priority: formData.priority,
+        allow_contact: formData.allowContact,
+      }; const response = await suggestionsService.createSuggestion(suggestionData);
+      console.log("API response received:", response);
+
+      setSuggestionNumber(response.suggestion_number);
+      setSubmitted(true);
+      console.log("Form submitted successfully with number:", response.suggestion_number);
+
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setSuggestionNumber("");
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          isResident: "yes",
+          category: "",
+          title: "",
+          description: "",
+          benefits: "",
+          implementation: "",
+          resources: "",
+          priority: "medium",
+          allowContact: true,
+        });
+      }, 5000);
+    } catch (err) {
+      console.error("Error submitting suggestion:", err);
+
+      // More detailed error handling
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setError("Unable to connect to the server. Please check your internet connection and try again.");
+        } else if (err.message.includes('Authentication failed')) {
+          setError("Your session has expired. Please log in again.");
+        } else {
+          setError(err.message || "Failed to submit suggestion");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -209,302 +267,315 @@ const SuggestionsPage: React.FC = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {submitted ? (
+      </div>      {submitted ? (
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
-          <Star className="h-6 w-6 text-green-600" />
+          <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
             <h3 className="text-lg font-semibold text-green-900">
               Suggestion Recorded Successfully!
             </h3>
             <p className="text-green-700">
-              The suggestion has been logged for review. The planning committee
-              will evaluate this proposal.
+              Your suggestion has been submitted with reference number: <strong>{suggestionNumber}</strong>
             </p>
             <p className="text-green-700 text-sm mt-1">
-              Reference ID: #{generateReferenceId()}
+              The planning committee will review and evaluate this proposal.
             </p>
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
-          {/* Personal Information */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Submitter Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <>
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-6 flex items-center space-x-3">
+              <AlertCircle className="h-6 w-6 text-red-600" />
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Contact Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  id="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="isResident"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Are you a resident?
-                </label>
-                <select
-                  name="isResident"
-                  id="isResident"
-                  value={formData.isResident}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                >
-                  <option value="yes">Yes, I'm a resident</option>
-                  <option value="no">No, I'm a visitor/non-resident</option>
-                </select>
+                <h3 className="text-lg font-semibold text-red-900">Error</h3>
+                <p className="text-red-700">{error}</p>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Suggestion Details */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2" />
-              Suggestion Details
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Category *
-                </label>
-                <select
-                  name="category"
-                  id="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                >
-                  <option value="">Select a category</option>
-                  {suggestionCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Suggestion Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  id="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Give your suggestion a clear, descriptive title"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Detailed Description *
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="Describe your suggestion in detail. What problem does it solve? How will it work?"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="benefits"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Expected Benefits
-                </label>
-                <textarea
-                  name="benefits"
-                  id="benefits"
-                  value={formData.benefits}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="What positive impacts will this suggestion have on the community?"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="implementation"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Implementation Ideas
-                </label>
-                <textarea
-                  name="implementation"
-                  id="implementation"
-                  value={formData.implementation}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="Do you have ideas on how this could be implemented?"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="resources"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Resources Needed
-                </label>
-                <input
-                  type="text"
-                  name="resources"
-                  id="resources"
-                  value={formData.resources}
-                  onChange={handleChange}
-                  placeholder="What resources (budget, manpower, equipment) might be needed?"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority Level
-                </label>
-                <div className="flex space-x-4">
-                  <label htmlFor="priority-low" className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priority"
-                      id="priority-low"
-                      value="low"
-                      checked={formData.priority === "low"}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-                    />
-                    <span className="ml-2 text-gray-700">Low</span>
-                  </label>
+          <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+            {/* Personal Information */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Submitter Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label
-                    htmlFor="priority-medium"
-                    className="flex items-center"
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Contact Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="isResident"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Are you a resident?
+                  </label>
+                  <select
+                    name="isResident"
+                    id="isResident"
+                    value={formData.isResident}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  >
+                    <option value="yes">Yes, I'm a resident</option>
+                    <option value="no">No, I'm a visitor/non-resident</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Suggestion Details */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Lightbulb className="h-5 w-5 mr-2" />
+                Suggestion Details
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="category"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    id="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  >
+                    <option value="">Select a category</option>
+                    {suggestionCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Suggestion Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    id="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="Give your suggestion a clear, descriptive title"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Detailed Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    id="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={5}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                    placeholder="Describe your suggestion in detail. What problem does it solve? How will it work?"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="benefits"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Expected Benefits
+                  </label>
+                  <textarea
+                    name="benefits"
+                    id="benefits"
+                    value={formData.benefits}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                    placeholder="What positive impacts will this suggestion have on the community?"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="implementation"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Implementation Ideas
+                  </label>
+                  <textarea
+                    name="implementation"
+                    id="implementation"
+                    value={formData.implementation}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                    placeholder="Do you have ideas on how this could be implemented?"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="resources"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Resources Needed
+                  </label>
+                  <input
+                    type="text"
+                    name="resources"
+                    id="resources"
+                    value={formData.resources}
+                    onChange={handleChange}
+                    placeholder="What resources (budget, manpower, equipment) might be needed?"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority Level
+                  </label>
+                  <div className="flex space-x-4">
+                    <label htmlFor="priority-low" className="flex items-center">
+                      <input
+                        type="radio"
+                        name="priority"
+                        id="priority-low"
+                        value="low"
+                        checked={formData.priority === "low"}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+                      />
+                      <span className="ml-2 text-gray-700">Low</span>
+                    </label>
+                    <label
+                      htmlFor="priority-medium"
+                      className="flex items-center"
+                    >
+                      <input
+                        type="radio"
+                        name="priority"
+                        id="priority-medium"
+                        value="medium"
+                        checked={formData.priority === "medium"}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+                      />
+                      <span className="ml-2 text-gray-700">Medium</span>
+                    </label>
+                    <label htmlFor="priority-high" className="flex items-center">
+                      <input
+                        type="radio"
+                        name="priority"
+                        id="priority-high"
+                        value="high"
+                        checked={formData.priority === "high"}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+                      />
+                      <span className="ml-2 text-gray-700">High</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <label
+                    htmlFor="allowContact"
+                    className="flex items-center cursor-pointer"
                   >
                     <input
-                      type="radio"
-                      name="priority"
-                      id="priority-medium"
-                      value="medium"
-                      checked={formData.priority === "medium"}
+                      type="checkbox"
+                      name="allowContact"
+                      id="allowContact"
+                      checked={formData.allowContact}
                       onChange={handleChange}
-                      className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+                      className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
                     />
-                    <span className="ml-2 text-gray-700">Medium</span>
-                  </label>
-                  <label htmlFor="priority-high" className="flex items-center">
-                    <input
-                      type="radio"
-                      name="priority"
-                      id="priority-high"
-                      value="high"
-                      checked={formData.priority === "high"}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-                    />
-                    <span className="ml-2 text-gray-700">High</span>
+                    <span className="ml-2 text-gray-700">
+                      I'm willing to be contacted for further discussion about
+                      this suggestion
+                    </span>
                   </label>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <label
-                  htmlFor="allowContact"
-                  className="flex items-center cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    name="allowContact"
-                    id="allowContact"
-                    checked={formData.allowContact}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-gray-700">
-                    I'm willing to be contacted for further discussion about
-                    this suggestion
-                  </span>
-                </label>
-              </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
+              <p className="text-sm text-gray-500">* Required fields</p>            <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5 mr-2" />
+                )}
+                {loading ? "Submitting..." : "Submit Suggestion"}
+              </button>
             </div>
           </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
-            <p className="text-sm text-gray-500">* Required fields</p>
-            <button
-              onClick={handleSubmit}
-              className="px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex justify-center items-center"
-            >
-              <Send className="h-5 w-5 mr-2" />
-              Submit Suggestion
-            </button>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Tips Section */}

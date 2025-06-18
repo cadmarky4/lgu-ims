@@ -7,26 +7,37 @@ namespace App\Models\Schemas;
  * This serves as the single source of truth for all complaint-related data structure
  */
 class ComplaintSchema
-{
-    /**
+{    /**
      * Complete field definitions for complaints
      */
     public static function getFields(): array
     {
         return [
-            // Basic Information
+            // Basic Information (matching frontend)
             'complaint_number' => ['type' => 'string', 'max' => 255, 'required' => true, 'unique' => true],
+            'full_name' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
+            'phone' => ['type' => 'string', 'max' => 20, 'nullable' => true],
+            'address' => ['type' => 'text', 'required' => true],
+            'complaint_category' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'department' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             'subject' => ['type' => 'string', 'max' => 255, 'required' => true],
             'description' => ['type' => 'text', 'required' => true],
-            'category' => ['type' => 'enum', 'values' => ['SERVICE_RELATED', 'OFFICIAL_MISCONDUCT', 'FACILITY_ISSUE', 'PROCESS_COMPLAINT', 'DISCRIMINATION', 'CORRUPTION', 'OTHERS'], 'required' => true],
-            'priority' => ['type' => 'enum', 'values' => ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'default' => 'NORMAL'],
+            'location' => ['type' => 'string', 'max' => 255, 'nullable' => true],
+            'urgency' => ['type' => 'enum', 'values' => ['low', 'medium', 'high', 'critical'], 'default' => 'medium'],
+            'anonymous' => ['type' => 'boolean', 'default' => false],
+            'attachments' => ['type' => 'text', 'nullable' => true],
             
-            // Complainant Information
+            // System Processing Fields 
+            'priority' => ['type' => 'enum', 'values' => ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'default' => 'NORMAL'],
+            'category' => ['type' => 'enum', 'values' => ['SERVICE_RELATED', 'OFFICIAL_MISCONDUCT', 'FACILITY_ISSUE', 'PROCESS_COMPLAINT', 'DISCRIMINATION', 'CORRUPTION', 'OTHERS'], 'nullable' => true],
+            
+            // Complainant Information (legacy fields for backward compatibility)
             'resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
-            'complainant_name' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'complainant_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             'complainant_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
             'complainant_email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
-            'complainant_address' => ['type' => 'text', 'required' => true],
+            'complainant_address' => ['type' => 'text', 'nullable' => true],
             'is_anonymous' => ['type' => 'boolean', 'default' => false],
             
             // Incident Details
@@ -60,7 +71,6 @@ class ComplaintSchema
             'is_feedback_received' => ['type' => 'boolean', 'default' => false],
             
             // Documents & Evidence
-            'attachments' => ['type' => 'json', 'nullable' => true],
             'evidence_files' => ['type' => 'json', 'nullable' => true],
             'investigation_notes' => ['type' => 'text', 'nullable' => true],
             
@@ -80,11 +90,6 @@ class ComplaintSchema
             'communication_log' => ['type' => 'json', 'nullable' => true],
             'preferred_contact_method' => ['type' => 'enum', 'values' => ['EMAIL', 'SMS', 'PHONE', 'IN_PERSON', 'MAIL'], 'nullable' => true],
             'updates_sent' => ['type' => 'json', 'nullable' => true],
-            
-            // Lessons & Improvements
-            'lessons_learned' => ['type' => 'text', 'nullable' => true],
-            'process_improvements' => ['type' => 'text', 'nullable' => true],
-            'training_needs' => ['type' => 'text', 'nullable' => true],
             
             // Additional Information
             'remarks' => ['type' => 'text', 'nullable' => true],

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
-import {apiService} from '../../services';
+import { barangayOfficialsService } from '../../services';
+import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
 
 interface EditBarangayOfficialProps {
   onClose: () => void;
@@ -8,9 +9,7 @@ interface EditBarangayOfficialProps {
   official?: any;
 }
 
-const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, onSave, official }) => {
-  // Loading and error states for API calls
-  const [isLoading, setIsLoading] = useState(false);
+const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, onSave, official }) => {  // Loading and error states for API calls
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +28,11 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
       setToast({ show: false, message: '', type: 'success' });
     }, 3000);
   };
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BarangayOfficialFormData>({
     prefix: official?.prefix || 'Mr.',
     firstName: official?.firstName || 'Juan',
     middleName: official?.middleName || 'Perez',
@@ -39,12 +41,14 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     birthDate: official?.birthDate || '1985-06-16',
     contactNumber: official?.contactNumber || '+63 912 345 6789',
     emailAddress: official?.emailAddress || 'sanmiguel.pasig@gmail.com',
-    completeAddress: official?.completeAddress || 'Filipino',
+    completeAddress: official?.completeAddress || '',
     civilStatus: official?.civilStatus || 'Married',
     educationalBackground: official?.educationalBackground || 'Bachelor in Public Administration',
-    committeeAssignment: official?.committeeAssignment || 'Married',
+    position: official?.position || 'KAGAWAD',
+    committeeAssignment: official?.committeeAssignment || 'Health',
     termStart: official?.termStart || '2022-05-05',
-    termEnd: official?.termEnd || '2025-05-10'
+    termEnd: official?.termEnd || '2025-05-10',
+    isActive: official?.isActive !== undefined ? official.isActive : true
   });
 
   // Load draft data from localStorage
@@ -83,12 +87,32 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
       console.error('Failed to clear draft:', error);
     }
   };
-
   // Load draft data on component mount
   useEffect(() => {
     loadDraftData();
-  }, []);
-
+    
+    // Initialize form data from official prop if provided
+    if (official) {
+      setFormData({
+        prefix: official.prefix || 'Mr.',
+        firstName: official.firstName || '',
+        middleName: official.middleName || '',
+        lastName: official.lastName || '',
+        gender: official.gender || 'Male',
+        birthDate: official.birthDate || '',
+        contactNumber: official.contactNumber || '',
+        emailAddress: official.emailAddress || '',
+        completeAddress: official.completeAddress || '',
+        civilStatus: official.civilStatus || 'Single',
+        educationalBackground: official.educationalBackground || '',
+        position: official.position || 'KAGAWAD',
+        committeeAssignment: official.committeeAssignment || '',
+        termStart: official.termStart || '',
+        termEnd: official.termEnd || '',
+        isActive: official.isActive !== undefined ? official.isActive : true
+      });
+    }
+  }, [official]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -97,47 +121,58 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Transform form data to match backend API expectations
-      const officialData = {
-        // Basic Information
-        prefix: formData.prefix,
-        first_name: formData.firstName,
-        middle_name: formData.middleName || null,
-        last_name: formData.lastName,
-        gender: formData.gender,
-        birth_date: formData.birthDate,
-        contact_number: formData.contactNumber,
-        email_address: formData.emailAddress,
-        complete_address: formData.completeAddress,
-        civil_status: formData.civilStatus,
-        educational_background: formData.educationalBackground,
-        
-        // Term Information
-        committee_assignment: formData.committeeAssignment,
-        term_start: formData.termStart,
-        term_end: formData.termEnd,
-        
-        // Status (could be added later)
-        status: 'ACTIVE'
-      };
+      // Create FormData to handle file upload
+      const submitData = new FormData();
+      
+      // Append all form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          submitData.append(key, value.toString());
+        }
+      });
+      
+      // Append file if selected
+      if (selectedFile) {
+        submitData.append('profile_photo', selectedFile);
+      }
 
-      // Use the API service to update the official
-      // const updatedOfficial = await apiService.updateBarangayOfficial(official.id, officialData);
+      if (official?.id) {
+        // Update existing official
+        const updatedOfficial = await barangayOfficialsService.updateBarangayOfficial(official.id, submitData);
+        
+        // Call the parent onSave with the updated data
+        onSave(updatedOfficial);
+      } else {
+        // Create new official
+        const newOfficial = await barangayOfficialsService.createBarangayOfficial(submitData);
+        
+        // Call the parent onSave with the new data
+        onSave(newOfficial);
+      }
       
-      // For now, use the existing client-side save
-      onSave(officialData);
-      
-      // Clear the draft since official was successfully updated
+      // Clear the draft since official was successfully saved
       clearDraft();
       
       // Show success toast
-      showToast('Official updated successfully!', 'success');
+      showToast(`Official ${official?.id ? 'updated' : 'created'} successfully!`, 'success');
       
       // Close after a brief delay to show the toast
       setTimeout(() => {
@@ -145,14 +180,14 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
       }, 1000);
 
     } catch (err: any) {
-      console.error('Error updating official:', err);
+      console.error('Error saving official:', err);
 
       // Handle validation errors
       if (err.response?.data?.errors) {
         const errorMessages = Object.values(err.response.data.errors).flat();
         setError(`Validation failed: ${errorMessages.join(", ")}`);
       } else {
-        setError((err instanceof Error ? err.message : 'Unknown error') || "Failed to update official. Please try again.");
+        setError(err.message || "Failed to save official. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -160,10 +195,11 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
   };
 
   return (
-    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      {/* Header */}
+    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">      {/* Header */}
       <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">Edit Barangay Official</h1>
+        <h1 className="text-2xl font-bold text-darktext pl-0">
+          {official?.id ? 'Edit Barangay Official' : 'Add New Barangay Official'}
+        </h1>
         {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && (
           <p className="text-sm text-gray-600 mt-1">
             📝 Draft data loaded from previous session
@@ -176,14 +212,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <p className="text-red-800 text-sm">{error}</p>
         </div>
-      )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p className="text-blue-800 text-sm">Loading reference data...</p>
-        </div>
-      )}
+      )}      {/* Loading State - removed since not used */}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* Basic Information */}
@@ -191,22 +220,48 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Profile Photo */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">            {/* Profile Photo */}
             <div className="lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Profile Photo
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
-                  <FiUpload className="w-8 h-8 text-gray-400" />
-                </div>
-                <button
-                  type="button"
-                  className="text-smblue-400 hover:text-smblue-300 text-sm font-medium"
+                {previewUrl ? (
+                  <div className="relative">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setSelectedFile(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                    >
+                      <FiX className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                    <FiUpload className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  id="profilePhoto"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="profilePhoto"
+                  className="text-smblue-400 hover:text-smblue-300 text-sm font-medium cursor-pointer"
                 >
-                  Upload Profile Photo
-                </button>
+                  {previewUrl ? 'Change Photo' : 'Upload Profile Photo'}
+                </label>
               </div>
             </div>
 
@@ -460,13 +515,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting}
               className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               {isSubmitting && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               )}
-              <span>{isSubmitting ? 'Updating...' : 'Save Changes'}</span>
+              <span>{isSubmitting ? (official?.id ? 'Updating...' : 'Creating...') : (official?.id ? 'Save Changes' : 'Create Official')}</span>
             </button>
           </div>
         </div>

@@ -7,8 +7,7 @@ namespace App\Models\Schemas;
  * This serves as the single source of truth for all suggestion-related data structure
  */
 class SuggestionSchema
-{
-    /**
+{    /**
      * Complete field definitions for suggestions
      */
     public static function getFields(): array
@@ -18,21 +17,22 @@ class SuggestionSchema
             'suggestion_number' => ['type' => 'string', 'max' => 255, 'required' => true, 'unique' => true],
             'title' => ['type' => 'string', 'max' => 255, 'required' => true],
             'description' => ['type' => 'text', 'required' => true],
-            'category' => ['type' => 'enum', 'values' => ['INFRASTRUCTURE', 'SERVICES', 'GOVERNANCE', 'HEALTH', 'EDUCATION', 'ENVIRONMENT', 'TECHNOLOGY', 'POLICY', 'PROCESS_IMPROVEMENT', 'OTHERS'], 'required' => true],
+            'category' => ['type' => 'enum', 'values' => ['Community Development', 'Infrastructure Improvement', 'Environmental Protection', 'Public Safety', 'Health Services', 'Education', 'Tourism and Culture', 'Economic Development', 'Digital Services', 'Transportation', 'Social Welfare', 'Youth and Sports', 'Senior Citizens Affairs', 'Other'], 'required' => true],
             
-            // Suggester Information
+            // Suggester Information (based on frontend fields)
             'resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
-            'suggester_name' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'suggester_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'suggester_email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
-            'is_anonymous' => ['type' => 'boolean', 'default' => false],
+            'name' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
+            'phone' => ['type' => 'string', 'max' => 20, 'nullable' => true],
+            'is_resident' => ['type' => 'enum', 'values' => ['yes', 'no'], 'default' => 'yes'],
             
-            // Suggestion Details
-            'current_situation' => ['type' => 'text', 'required' => true],
-            'proposed_solution' => ['type' => 'text', 'required' => true],
-            'expected_benefits' => ['type' => 'text', 'nullable' => true],
-            'estimated_cost' => ['type' => 'decimal', 'precision' => 12, 'scale' => 2, 'min' => 0, 'nullable' => true],
-            'implementation_timeline' => ['type' => 'string', 'max' => 255, 'nullable' => true],
+            // Suggestion Details (based on frontend fields)
+            'benefits' => ['type' => 'text', 'nullable' => true],
+            'implementation' => ['type' => 'text', 'nullable' => true],
+            'resources' => ['type' => 'string', 'max' => 255, 'nullable' => true],            
+            // Priority & Classification (based on frontend)
+            'priority' => ['type' => 'enum', 'values' => ['low', 'medium', 'high'], 'default' => 'medium'],
+            'allow_contact' => ['type' => 'boolean', 'default' => true],
             
             // Status & Processing
             'status' => ['type' => 'enum', 'values' => ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'IMPLEMENTED', 'DEFERRED'], 'default' => 'SUBMITTED'],
@@ -75,8 +75,7 @@ class SuggestionSchema
             'outcome_assessment' => ['type' => 'text', 'nullable' => true],
             'lessons_learned' => ['type' => 'text', 'nullable' => true],
             
-            // Priority & Classification
-            'priority' => ['type' => 'enum', 'values' => ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'default' => 'NORMAL'],
+            // Additional Classification
             'complexity' => ['type' => 'enum', 'values' => ['SIMPLE', 'MODERATE', 'COMPLEX', 'VERY_COMPLEX'], 'nullable' => true],
             'stakeholders_involved' => ['type' => 'json', 'nullable' => true],
             

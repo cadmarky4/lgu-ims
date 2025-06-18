@@ -194,14 +194,10 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
         comparison = a.status.localeCompare(b.status);
         break;
       case 'budget':
-        const budgetA = parseInt(a.budget.replace(/[^\d]/g, ''));
-        const budgetB = parseInt(b.budget.replace(/[^\d]/g, ''));
-        comparison = budgetA - budgetB;
+        comparison = parseInt(a.budget.replace(/[^\d]/g, '')) - parseInt(b.budget.replace(/[^\d]/g, ''));
         break;
       case 'progress':
-        const progressA = a.progress || 0;
-        const progressB = b.progress || 0;
-        comparison = progressA - progressB;
+        comparison = (a.progress || 0) - (b.progress || 0);
         break;
     }
     

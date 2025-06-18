@@ -1,5 +1,6 @@
 import { BaseApiService } from './api';
-import { type LoginCredentials, type RegisterData, type User } from './types';
+import { type LoginCredentials, type RegisterData } from './types';
+import { type User } from './user.types';
 
 export class AuthService extends BaseApiService {
   async login(credentials: LoginCredentials): Promise<{ user: User; token: string }> {

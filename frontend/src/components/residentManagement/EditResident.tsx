@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { FiUpload, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText, FiCheck } from 'react-icons/fi';
+import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 
 import { residentsService } from '../../services';
+import { useNotificationHelpers } from '../../components/global/NotificationSystem';
 
 import {
   type Purok,
@@ -11,47 +12,90 @@ import {
   type ResidentFormData,
 } from '../../services/resident.types';
 
-interface EditResidentProps {
-  resident: Resident;
-  onClose: () => void;
-  onSave: (residentData: Resident) => void;
-}
-
 
 const EditResident: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showUpdateSuccess, showUpdateError } = useNotificationHelpers();
 
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingResident, setIsFetchingResident] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);  const [error, setError] = useState<string | null>(null);
   
-  // Toast state
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({ show: false, message: '', type: 'success' });
-
-  // Toast utility function
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
-
   // Reference data from backend
   const [puroks, setPuroks] = useState<Purok[]>([]);
 
   const [resident, setResident] = useState<Resident | null>(null);
+  // Helper function to create empty form data
+  const createEmptyFormData = (): ResidentFormData => {
+    return {
+      // Basic Information
+      firstName: '',
+      lastName: '',
+      middleName: '',
+      suffix: '',
+      birthDate: '',
+      age: '',
+      birthPlace: '',
+      gender: '',
+      civilStatus: '',
+      nationality: 'Filipino',
+      religion: '',
+      employmentStatus: '',
+      educationalAttainment: '',
+
+      // Contact Information
+      mobileNumber: '',
+      landlineNumber: '',
+      emailAddress: '',
+      houseNumber: '',
+      street: '',
+      purok: '',
+      completeAddress: '',
+      
+      // Family Information
+      motherName: '',
+      fatherName: '',
+      emergencyContactName: '',
+      emergencyContactNumber: '',
+      emergencyContactRelationship: '',
+
+      // Government IDs & Documents
+      primaryIdType: '',
+      idNumber: '',
+      philhealthNumber: '',
+      sssNumber: '',
+      tinNumber: '',
+      votersIdNumber: '',
+      voterStatus: 'NOT_REGISTERED',
+      precinctNumber: '',
+      
+      // Employment Information
+      occupation: '',
+      employer: '',
+      monthlyIncome: '',
+
+      // Health & Medical Information
+      medicalConditions: '',
+      allergies: '',
+
+      // Special Classifications
+      specialClassifications: {
+        seniorCitizen: false,
+        personWithDisability: false,
+        disabilityType: '',
+        indigenousPeople: false,
+        indigenousGroup: '',
+        fourPsBeneficiary: false,
+        fourPsHouseholdId: ''
+      }
+    };
+  };
 
   // Helper function to convert API resident data to form data
   const convertResidentToFormData = (residentData: Resident | null): ResidentFormData => {
     if (residentData == null) {
-      throw new Error("Resident form is empty");
+      return createEmptyFormData();
     }
 
     return {
@@ -116,10 +160,8 @@ const EditResident: React.FC = () => {
     };
   };
 
-  // Initialize form data with resident data
-  const [formData, setFormData] = useState<ResidentFormData>(
-    convertResidentToFormData(resident)
-  );
+  // Initialize form data with empty data initially
+  const [formData, setFormData] = useState<ResidentFormData>(createEmptyFormData());
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -153,81 +195,63 @@ const EditResident: React.FC = () => {
 
   // Load resident data when component mounts
   useEffect(() => {
-    const loadResident = async () => {
-      if (!id) {
+    const loadResident = async () => {      if (!id) {
+        console.error('No resident ID provided');
         setError('Resident ID not provided');
         setIsLoading(false);
         return;
-      }
-
-      try {
+      }      
+      try {        
+        console.log('Loading resident with ID:', id);
         setIsLoading(true);
-        // For now, we'll use the getResidents method and filter by ID
-        // TODO: Backend should provide a getResident(id) method
-        const residentsData = await residentsService.getResidents({});
-        const residentData = residentsData.data?.find((r: any) => r.id === parseInt(id));
-        
-        if (!residentData) {
-          setError('Resident not found');
+        setError(null);
+
+        // Validate ID is a valid number
+        const residentId = parseInt(id);
+        if (isNaN(residentId) || residentId <= 0) {
+          console.error('Invalid resident ID:', id);
+          setError('Invalid resident ID');
           setIsLoading(false);
           return;
         }
         
-        setResident(residentData);
-
-        // Populate form with resident data - only update fields that exist in formData
-        if (residentData) {
-          setFormData(prev => ({
-            ...prev,
-            firstName: residentData.first_name || '',
-            lastName: residentData.last_name || '',
-            middleName: residentData.middle_name || '',
-            suffix: residentData.suffix || '',
-            birthDate: residentData.birth_date || '',
-            age: residentData.age?.toString() || '',
-            birthPlace: residentData.birth_place || '',
-            gender: residentData.gender || '',
-            civilStatus: residentData.civil_status || '',
-            nationality: residentData.nationality || 'Filipino',
-            religion: residentData.religion || '',
-            employmentStatus: residentData.employment_status || '',
-            educationalAttainment: residentData.educational_attainment || '',
-            mobileNumber: residentData.mobile_number || '',
-            landlineNumber: residentData.telephone_number || '',
-            emailAddress: residentData.email_address || '',
-            houseNumber: residentData.house_number || '',
-            street: residentData.street || '',
-            purok: residentData.purok || '',
-            completeAddress: residentData.complete_address ||  '',
-            emergencyContactName: residentData.emergency_contact_name || '',
-            emergencyContactNumber: residentData.emergency_contact_number || '',
-            emergencyContactRelationship: residentData.emergency_contact_relationship || '',
-            primaryIdType: residentData.primary_id_type || '',
-            idNumber: residentData.id_number || '',
-            philhealthNumber: residentData.philhealth_number || '',
-            sssNumber: residentData.sss_number || '',
-            tinNumber: residentData.tin_number || '',
-            votersIdNumber: residentData.voters_id_number || '',
-            voterStatus: residentData.voter_status || 'NOT_REGISTERED',
-            precinctNumber: residentData.precinct_number || '',
-            medicalConditions: residentData.medical_conditions || '',
-            allergies: residentData.allergies || '',
-            specialClassifications: {
-              seniorCitizen: residentData.senior_citizen || false,
-              personWithDisability: residentData.person_with_disability || false,
-              disabilityType: residentData.disability_type || '',
-              indigenousPeople: residentData.indigenous_people || false,
-              indigenousGroup: residentData.indigenous_group || '',
-              fourPsBeneficiary: residentData.four_ps_beneficiary || false,
-              fourPsHouseholdId: residentData.four_ps_household_id || '',
-            },
-          }));
+        // Use the getResident method to fetch resident data
+        console.log('Fetching resident data from API...');
+        const residentData = await residentsService.getResident(residentId);
+        console.log('Resident data received:', residentData);
+        
+        if (!residentData) {
+          console.error('No resident data received');
+          setError('Resident not found');
+          setIsLoading(false);
+          return;
         }
-      } catch (error) {
+          setResident(residentData);
+
+        // Populate form with resident data using the conversion function
+        console.log('Converting resident data to form data...');
+        const formDataConverted = convertResidentToFormData(residentData);
+        console.log('Form data converted:', formDataConverted);
+        setFormData(formDataConverted);
+        
+        console.log('Resident loaded successfully');} catch (error: any) {
         console.error('Failed to load resident:', error);
-        setError('Failed to load resident data');
+        
+        // Check if it's a 404 error (resident not found)
+        if (error.message?.includes('404') || error.message?.includes('not found')) {
+          setError('Resident not found');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          setError('Unable to connect to server. Please check your connection.');
+        } else {
+          setError('Failed to load resident data. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
       }
-    }}, []);
+    };
+
+    loadResident();
+  }, [id]);
 
   // Auto-calculate age when birth date changes
   useEffect(() => {
@@ -247,13 +271,9 @@ const EditResident: React.FC = () => {
       setFormData((prev) => ({ ...prev, age: age.toString() }));
     }
   }, [formData.birthDate]);
-
-  // Fetch reference data and fresh resident data on component mount
+  // Fetch reference data on component mount (only once)
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
+    const fetchReferenceData = async () => {
       try {
         // Fetch reference data
         // Future API calls would be:
@@ -267,24 +287,14 @@ const EditResident: React.FC = () => {
           { id: 3, name: 'Purok 3' },
           { id: 4, name: 'Purok 4' }
         ]);
-
-        // Fetch fresh resident data
-        setIsFetchingResident(true);
-        try {
-          const freshResident = await residentsService.getResident(resident?.id ?? 1);
-          setFormData(convertResidentToFormData(freshResident));
-        } catch (err) {
-          console.error('Failed to fetch resident data:', err);
-          // Continue with existing data if fetch fails
-        }
       } catch (err) {
-        setError('Failed to load reference data');
-        console.error('Error fetching data:', err);
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching reference data:', err);
+        // Reference data failure is not critical, continue without it
       }
     };
-  }, [id]);
+
+    fetchReferenceData();
+  }, []); // Empty dependency array - run only once
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -302,21 +312,24 @@ const EditResident: React.FC = () => {
       const updateData = residentsService.transformFormDataToApiFormat(formData);
 
       // Remove the status field as it shouldn't be updated through this form
-      delete (updateData as any).status;
-
-      // Use the API service to update the resident
+      delete (updateData as any).status;      // Use the API service to update the resident
       await residentsService.updateResident(resident.id, updateData);
       
       console.log("Resident updated successfully");
-      showToast('Resident updated successfully!', 'success');
       
-      // Navigate back to residents list after a short delay to show the toast
+      // Show success notification
+      const residentName = `${resident.first_name} ${resident.last_name}`;
+      showUpdateSuccess('Resident', residentName);
+      
+      // Navigate back to residents list after a short delay to show the notification
       setTimeout(() => {
         navigate('/residents');
       }, 1500);
     } catch (err: unknown) {
       console.error('Error updating resident:', err);
 
+      let errorMessage = 'Failed to update resident. Please try again.';
+      
       // Handle different types of errors
       if (err instanceof Error) {
         try {
@@ -324,18 +337,19 @@ const EditResident: React.FC = () => {
           const errorData = JSON.parse(err.message);
           if (errorData.errors) {
             const errorMessages = Object.values(errorData.errors).flat();
-            setError(`Validation failed: ${errorMessages.join(', ')}`);
+            errorMessage = `Validation failed: ${errorMessages.join(', ')}`;
           } else {
-            setError(errorData.message || 'Failed to update resident');
+            errorMessage = errorData.message || 'Failed to update resident';
           }
         } catch {
           // If not JSON, use the message as is
-          setError(err.message);
+          errorMessage = err.message;
         }
-      } else {
-        setError('Failed to update resident. Please try again.');
       }
-      showToast('Failed to update resident. Please try again.', 'error');
+
+      // Show error notification
+      showUpdateError('Resident', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -356,19 +370,35 @@ const EditResident: React.FC = () => {
         </div>
       </main>
     );
-  }
-
-  if (error || !resident) {
+  }  if (error && !isLoading) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{JSON.stringify(error) || 'Resident not found'}</p>
-          <button
-            onClick={() => navigate('/residents')}
-            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-          >
-            Back to Residents
-          </button>
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Resident Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              {error === 'Invalid resident ID' 
+                ? 'The resident ID provided is invalid.'
+                : error === 'Resident not found'
+                ? 'The resident you are looking for does not exist.'
+                : error || 'Unable to load resident data.'}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/residents')}
+              className="w-full px-6 py-3 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            >
+              Back to Residents List
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -376,8 +406,7 @@ const EditResident: React.FC = () => {
 
   // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && resident.id) {
+    const file = e.target.files?.[0];    if (file && resident?.id) {
       try {
         await residentsService.uploadProfilePhoto(resident.id, file);
         // You might want to refresh the resident data after upload
@@ -409,10 +438,10 @@ const EditResident: React.FC = () => {
       )}
 
       {/* Loading State */}
-      {(isLoading || isFetchingResident) && (
+      {isLoading && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <p className="text-blue-800 text-sm">
-            {isFetchingResident ? 'Loading resident data...' : 'Loading reference data...'}
+            Loading resident data...
           </p>
         </div>
       )}
@@ -494,7 +523,7 @@ const EditResident: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={resident.household?.household_number || 'No Household Assigned'}
+                value={resident?.household?.household_number || 'No Household Assigned'}
                 readOnly
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                 placeholder="No Household Assigned"
@@ -777,7 +806,7 @@ const EditResident: React.FC = () => {
                 value={formData.purok}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                disabled={isLoading || isFetchingResident}
+                disabled={isLoading}
               >
                 <option value="">Select Purok</option>
                 {puroks.map((purok) => (
@@ -1197,35 +1226,9 @@ const EditResident: React.FC = () => {
             {isSubmitting && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSubmitting ? 'Updating...' : 'Update Resident'}</span>
-          </button>
+            <span>{isSubmitting ? 'Updating...' : 'Update Resident'}</span>          </button>
         </div>
       </form>
-
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
-            toast.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            {toast.type === 'success' ? (
-              <FiCheck className="w-5 h-5 text-green-600" />
-            ) : (
-              <FiX className="w-5 h-5 text-red-600" />
-            )}
-            <span className="text-sm font-medium">{toast.message}</span>
-            <button
-              onClick={() => setToast({ show: false, message: '', type: 'success' })}
-              className="ml-2 text-gray-400 hover:text-gray-600"
-              title="Close notification"
-            >
-              <FiX className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 };

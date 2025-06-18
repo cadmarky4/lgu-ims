@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
 {
@@ -56,7 +57,19 @@ class AppointmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $appointments,
+            'data' => $appointments->items(),
+            'current_page' => $appointments->currentPage(),
+            'per_page' => $appointments->perPage(),
+            'total' => $appointments->total(),
+            'last_page' => $appointments->lastPage(),
+            'from' => $appointments->firstItem(),
+            'to' => $appointments->lastItem(),
+            'links' => $appointments->linkCollection(),
+            'prev_page_url' => $appointments->previousPageUrl(),
+            'next_page_url' => $appointments->nextPageUrl(),
+            'first_page_url' => $appointments->url(1),
+            'last_page_url' => $appointments->url($appointments->lastPage()),
+            'path' => $appointments->path()
         ]);
     }
 
@@ -65,20 +78,24 @@ class AppointmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Use the schema validation rules
         $validator = Validator::make($request->all(), [
-            'resident_id' => 'nullable|exists:residents,id',
-            'applicant_name' => 'required|string|max:255',
-            'applicant_contact' => 'required|string|max:255',
-            'applicant_email' => 'nullable|email|max:255',
-            'applicant_address' => 'nullable|string',
-            'appointment_type' => 'required|in:CONSULTATION,DOCUMENT_REQUEST,COMPLAINT_FILING,BUSINESS_PERMIT,CERTIFICATION_REQUEST,MEETING,OTHER',
+            // Frontend fields (required)
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'department' => 'required|string|max:255',
             'purpose' => 'required|string',
-            'appointment_date' => 'required|date|after:today',
-            'appointment_time' => 'required|string',
-            'assigned_official_id' => 'nullable|exists:users,id',
-            'priority_level' => 'nullable|in:LOW,MEDIUM,HIGH,URGENT',
-            'special_requirements' => 'nullable|string',
-            'estimated_duration' => 'nullable|integer|min:15|max:480', // 15 mins to 8 hours
+            'preferred_date' => 'required|date|after_or_equal:today',
+            'preferred_time' => 'required|string|max:10',
+            
+            // Frontend fields (optional)
+            'alternative_date' => 'nullable|date|after_or_equal:today',
+            'alternative_time' => 'nullable|string|max:10',
+            'additional_notes' => 'nullable|string',
+            
+            // Optional system fields
+            'resident_id' => 'nullable|exists:residents,id',
         ]);
 
         if ($validator->fails()) {
@@ -89,18 +106,42 @@ class AppointmentController extends Controller
             ], 422);
         }
 
-        // Check for scheduling conflicts
-        if ($this->hasSchedulingConflict($request->appointment_date, $request->appointment_time, $request->assigned_official_id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Scheduling conflict detected for the selected time slot'
-            ], 422);
+        // Generate appointment number
+        $appointmentNumber = Appointment::generateAppointmentNumber();
+
+        // Prepare appointment data
+        $appointmentData = [
+            'appointment_number' => $appointmentNumber,
+            'full_name' => $request->input('full_name'),
+            'email' => $request->input('email'),
+            'phone' => $request->input('phone'),
+            'department' => $request->input('department'),
+            'purpose' => $request->input('purpose'),
+            'preferred_date' => $request->input('preferred_date'),
+            'preferred_time' => $request->input('preferred_time'),
+            'status' => 'PENDING',
+            'date_requested' => now()->toDateString(),
+        ];
+
+        // Add optional fields if they exist
+        if ($request->filled('alternative_date')) {
+            $appointmentData['alternative_date'] = $request->input('alternative_date');
+        }
+        if ($request->filled('alternative_time')) {
+            $appointmentData['alternative_time'] = $request->input('alternative_time');
+        }
+        if ($request->filled('additional_notes')) {
+            $appointmentData['additional_notes'] = $request->input('additional_notes');
+        }
+        if ($request->filled('resident_id')) {
+            $appointmentData['resident_id'] = $request->input('resident_id');
+        }
+        if (Auth::check()) {
+            $appointmentData['created_by'] = Auth::id();
         }
 
-        $appointment = Appointment::create(array_merge($validator->validated(), [
-            'status' => 'SCHEDULED',
-            'scheduled_by' => auth()->id(),
-        ]));
+        // Create appointment
+        $appointment = Appointment::create($appointmentData);
 
         $appointment->load(['resident', 'assignedOfficial']);
 
@@ -210,7 +251,7 @@ class AppointmentController extends Controller
             'status' => 'CONFIRMED',
             'confirmation_notes' => $request->confirmation_notes,
             'confirmed_at' => now(),
-            'confirmed_by' => auth()->id(),
+            'confirmed_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -243,7 +284,7 @@ class AppointmentController extends Controller
             'cancellation_reason' => $request->cancellation_reason,
             'cancelled_by_client' => $request->get('cancelled_by_client', false),
             'cancelled_at' => now(),
-            'cancelled_by' => auth()->id(),
+            'cancelled_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -280,7 +321,7 @@ class AppointmentController extends Controller
             'follow_up_required' => $request->get('follow_up_required', false),
             'follow_up_notes' => $request->follow_up_notes,
             'completed_at' => now(),
-            'completed_by' => auth()->id(),
+            'completed_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -323,7 +364,7 @@ class AppointmentController extends Controller
             'reschedule_reason' => $request->reschedule_reason,
             'reschedule_count' => $appointment->reschedule_count + 1,
             'rescheduled_at' => now(),
-            'rescheduled_by' => auth()->id(),
+            'rescheduled_by' => Auth::id(),
         ]);
 
         return response()->json([
@@ -353,7 +394,7 @@ class AppointmentController extends Controller
         }
 
         $appointment->followUps()->create(array_merge($validator->validated(), [
-            'created_by' => auth()->id(),
+            'created_by' => Auth::id(),
         ]));
 
         return response()->json([
