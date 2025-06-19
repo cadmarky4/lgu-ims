@@ -25,6 +25,18 @@ interface BlotterFormData {
   evidence: string;
 }
 
+interface FormErrors {
+  complainantName?: string;
+  complainantAddress?: string;
+  complainantContact?: string;
+  complainantEmail?: string;
+  incidentType?: string;
+  incidentDate?: string;
+  incidentTime?: string;
+  incidentLocation?: string;
+  incidentDescription?: string;
+}
+
 const BlotterPage: React.FC = () => {
   const [formData, setFormData] = useState<BlotterFormData>({
     complainantName: "",
@@ -43,6 +55,7 @@ const BlotterPage: React.FC = () => {
     evidence: "",
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   const incidentTypes: string[] = [
@@ -64,25 +77,68 @@ const BlotterPage: React.FC = () => {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ): void => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Clear error when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined,
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Complainant Information
+    if (!formData.complainantName.trim()) {
+      newErrors.complainantName = "Complainant name is required";
+    }
+
+    if (!formData.complainantAddress.trim()) {
+      newErrors.complainantAddress = "Complainant address is required";
+    }
+
+    if (!formData.complainantContact.trim()) {
+      newErrors.complainantContact = "Contact number is required";
+    }
+
+    if (formData.complainantEmail && !/\S+@\S+\.\S+/.test(formData.complainantEmail)) {
+      newErrors.complainantEmail = "Please enter a valid email address";
+    }
+
+    // Incident Details
+    if (!formData.incidentType) {
+      newErrors.incidentType = "Please select an incident type";
+    }
+
+    if (!formData.incidentDate) {
+      newErrors.incidentDate = "Incident date is required";
+    }
+
+    if (!formData.incidentTime) {
+      newErrors.incidentTime = "Incident time is required";
+    }
+
+    if (!formData.incidentLocation.trim()) {
+      newErrors.incidentLocation = "Incident location is required";
+    }
+
+    if (!formData.incidentDescription.trim()) {
+      newErrors.incidentDescription = "Incident description is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (): void => {
-    // Validate required fields
-    if (
-      !formData.complainantName ||
-      !formData.complainantAddress ||
-      !formData.complainantContact ||
-      !formData.incidentType ||
-      !formData.incidentDate ||
-      !formData.incidentTime ||
-      !formData.incidentLocation ||
-      !formData.incidentDescription
-    ) {
-      alert("Please fill in all required fields");
+    if (!validateForm()) {
       return;
     }
 
@@ -106,7 +162,14 @@ const BlotterPage: React.FC = () => {
         witnesses: "",
         evidence: "",
       });
+      setErrors({});
     }, 3000);
+  };
+
+  const getFieldClasses = (fieldName: keyof FormErrors, baseClasses: string) => {
+    return errors[fieldName] 
+      ? `${baseClasses} border-red-500 focus:ring-red-500 focus:border-red-500`
+      : `${baseClasses} border-gray-300 focus:ring-red-500 focus:border-transparent`;
   };
 
   return (
@@ -172,8 +235,11 @@ const BlotterPage: React.FC = () => {
                   name="complainantName"
                   value={formData.complainantName}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('complainantName', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.complainantName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.complainantName}</p>
+                )}
               </div>
               <div>
                 <label
@@ -188,8 +254,11 @@ const BlotterPage: React.FC = () => {
                   name="complainantContact"
                   value={formData.complainantContact}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('complainantContact', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.complainantContact && (
+                  <p className="mt-1 text-sm text-red-600">{errors.complainantContact}</p>
+                )}
               </div>
               <div>
                 <label
@@ -204,8 +273,11 @@ const BlotterPage: React.FC = () => {
                   name="complainantAddress"
                   value={formData.complainantAddress}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('complainantAddress', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.complainantAddress && (
+                  <p className="mt-1 text-sm text-red-600">{errors.complainantAddress}</p>
+                )}
               </div>
               <div>
                 <label
@@ -220,8 +292,11 @@ const BlotterPage: React.FC = () => {
                   name="complainantEmail"
                   value={formData.complainantEmail}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('complainantEmail', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.complainantEmail && (
+                  <p className="mt-1 text-sm text-red-600">{errors.complainantEmail}</p>
+                )}
               </div>
             </div>
           </div>
@@ -245,7 +320,7 @@ const BlotterPage: React.FC = () => {
                   name="incidentType"
                   value={formData.incidentType}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('incidentType', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 >
                   <option value="">Select incident type</option>
                   {incidentTypes.map((type) => (
@@ -254,6 +329,9 @@ const BlotterPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {errors.incidentType && (
+                  <p className="mt-1 text-sm text-red-600">{errors.incidentType}</p>
+                )}
               </div>
               <div>
                 <label
@@ -269,8 +347,11 @@ const BlotterPage: React.FC = () => {
                   value={formData.incidentDate}
                   onChange={handleChange}
                   max={new Date().toISOString().split("T")[0]}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('incidentDate', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.incidentDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.incidentDate}</p>
+                )}
               </div>
               <div>
                 <label
@@ -285,8 +366,11 @@ const BlotterPage: React.FC = () => {
                   name="incidentTime"
                   value={formData.incidentTime}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('incidentTime', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.incidentTime && (
+                  <p className="mt-1 text-sm text-red-600">{errors.incidentTime}</p>
+                )}
               </div>
               <div>
                 <label
@@ -302,8 +386,11 @@ const BlotterPage: React.FC = () => {
                   value={formData.incidentLocation}
                   onChange={handleChange}
                   placeholder="Street, Barangay, Municipality"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('incidentLocation', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.incidentLocation && (
+                  <p className="mt-1 text-sm text-red-600">{errors.incidentLocation}</p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label
@@ -318,9 +405,12 @@ const BlotterPage: React.FC = () => {
                   value={formData.incidentDescription}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={getFieldClasses('incidentDescription', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                   placeholder="Please provide a detailed account of what happened..."
                 />
+                {errors.incidentDescription && (
+                  <p className="mt-1 text-sm text-red-600">{errors.incidentDescription}</p>
+                )}
               </div>
             </div>
           </div>
