@@ -37,3 +37,83 @@
     @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-sm font-medium;
   }
 }
+
+/* Print Styles */
+@media print {
+  /* Hide all elements by default */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Show only the print content */
+  .print\\:block {
+    display: block !important;
+  }
+  
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  .print\\:p-0 {
+    padding: 0 !important;
+  }
+  
+  .print\\:p-4 {
+    padding: 1rem !important;
+  }
+  
+  .print\\:border-0 {
+    border: none !important;
+  }
+  
+  /* Make print content visible */
+  .fixed.inset-0.bg-white.z-50,
+  .fixed.inset-0.bg-white.z-50 * {
+    visibility: visible;
+  }
+  
+  /* Remove fixed positioning for print */
+  .fixed.inset-0.bg-white.z-50 {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    background: white !important;
+    z-index: auto !important;
+  }
+  
+  /* Optimize for A4 paper */
+  @page {
+    size: A4;
+    margin: 0.5in;
+  }
+  
+  /* Ensure proper page breaks */
+  .bg-white.border-2.border-black {
+    page-break-inside: avoid;
+    border: 1px solid black !important;
+    padding: 2rem !important;
+  }
+  
+  /* Hide buttons when printing */
+  button {
+    display: none !important;
+  }
+  
+  /* Ensure text is black for printing */
+  .text-gray-800,
+  .text-gray-700,
+  .text-gray-600 {
+    color: black !important;
+  }
+  
+  /* Ensure borders are visible */
+  .border-t-2,
+  .border-b-2,
+  .border-black {
+    border-color: black !important;
+  }
+  
+  .border-b-2.border-black {
+    border-bottom: 2px solid black !important;
+  }
+}

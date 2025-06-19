@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiFilter, FiPrinter, FiEye, FiEdit3, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiSearch, FiFilter, FiPrinter, FiEye, FiClipboard, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
 import { documentsService } from '../../services/documents.service';
 import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/document.types';
 import Breadcrumb from '../global/Breadcrumb';
@@ -39,6 +40,7 @@ interface DocumentStats {
 }
 
 const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState<DocumentRequest[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>([]);
   const [stats, setStats] = useState<DocumentStats>({
@@ -296,6 +298,12 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         setError((err instanceof Error ? err.message : 'Unknown error'));
       }
     }
+  };
+
+  const handlePrintDocument = (document: DocumentRequest) => {
+    // Navigate to the appropriate standalone print route based on document type
+    const documentType = document.document_type.toLowerCase().replace(/_/g, '-');
+    navigate(`/print/${documentType}/${document.id}`);
   };
 
   const getDocumentTypeLabel = (type: string) => {
@@ -569,21 +577,18 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                           setSelectedDocument(document);
                           setShowProcessModal(true);
                         }}
-                        className="text-smblue-400 hover:text-smblue-300"
-                        title="Process Document"
+                        className="text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
+                        title="Review & Process (Approve/Reject)"
                       >
-                        <FiEdit3 className="h-4 w-4" />
+                        <FiClipboard className="h-4 w-4" />
                       </button>
-          <button
-                        onClick={() => {
-                          // Handle print/view functionality
-                          console.log('Print document:', document.id);
-                        }}
-                        className="text-gray-400 hover:text-gray-600"
-                        title="Print/View"
+                                <button
+                        onClick={() => handlePrintDocument(document)}
+                        className="text-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
+                        title="Print Certificate"
                       >
                         <FiPrinter className="h-4 w-4" />
-          </button>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -668,6 +673,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           onProcess={handleProcessDocument}
         />
       )}
+
 
 
     </div>

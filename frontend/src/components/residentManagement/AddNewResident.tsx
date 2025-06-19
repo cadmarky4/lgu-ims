@@ -421,7 +421,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Name Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 First Name *
@@ -485,6 +486,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 <option value="IV">IV</option>
               </select>
             </div>
+          </div>
+
+          {/* Personal Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birth Date *
@@ -546,6 +551,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 <option value="FEMALE">Female</option>
               </select>
             </div>
+          </div>
+
+          {/* Social Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label
                 htmlFor="civilStatus"
@@ -619,6 +628,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 <option value="OFW">OFW</option>
               </select>
             </div>
+          </div>
+
+          {/* Work & Education Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Educational Attainment
@@ -644,7 +657,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 placeholder="e.g. Teacher, Engineer, Farmer..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>            <div>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Employer
               </label>
@@ -654,21 +668,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 value={formData.employer}
                 onChange={handleInputChange}
                 placeholder="Name of employer/company..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Income (PHP)
-              </label>
-              <input
-                type="number"
-                name="monthlyIncome"
-                value={formData.monthlyIncome}
-                onChange={handleInputChange}
-                placeholder="Enter monthly income..."
-                min="0"
-                step="0.01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
@@ -682,7 +681,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Contact Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mobile Number
@@ -696,7 +696,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Landline Number
@@ -710,8 +709,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
@@ -724,7 +722,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+          </div>
 
+          {/* Address Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 House/Unit Number
@@ -738,7 +739,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Street
@@ -752,7 +752,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Purok
@@ -763,6 +762,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 disabled={isLoading}
+                title="Select purok/zone"
               >
                 <option value="">Select Purok</option>
                 {puroks.map((purok) => (
@@ -772,8 +772,11 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 ))}
               </select>
             </div>
+          </div>
 
-            <div className="md:col-span-3">
+          {/* Complete Address */}
+          <div className="grid grid-cols-1 gap-6">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Complete Address *
               </label>
@@ -795,11 +798,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Family Information
           </h2>
-
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
+          {/* Parents Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -813,7 +815,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Father's Name
@@ -827,7 +828,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+          </div>
 
+          {/* Emergency Contact Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Name
@@ -841,7 +845,6 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Number
@@ -855,8 +858,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Relationship
               </label>
