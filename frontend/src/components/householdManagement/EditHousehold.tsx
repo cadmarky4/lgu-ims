@@ -339,7 +339,8 @@ const EditHousehold = () => {
             Basic Household Information
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Household Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-darktext mb-2">Household Number</label>
               <input
@@ -351,7 +352,6 @@ const EditHousehold = () => {
                 placeholder="Auto-generated if empty"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-darktext mb-2">Household Type</label>
               <select
@@ -359,6 +359,7 @@ const EditHousehold = () => {
                 value={formData.household_type}
                 onChange={handleInputChange}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-smblue-500 focus:border-transparent"
+                title="Select household type"
               >
                 <option value="">Select Type</option>
                 <option value="nuclear">Nuclear Family</option>
@@ -368,7 +369,10 @@ const EditHousehold = () => {
                 <option value="other">Other</option>
               </select>
             </div>
+          </div>
 
+          {/* Address Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-darktext mb-2">Barangay</label>
               <input
@@ -380,7 +384,6 @@ const EditHousehold = () => {
                 placeholder="Enter barangay"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-darktext mb-2">Street/Sitio</label>
               <input
@@ -392,7 +395,6 @@ const EditHousehold = () => {
                 placeholder="Enter street or sitio"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-darktext mb-2">House Number</label>
               <input
@@ -404,8 +406,11 @@ const EditHousehold = () => {
                 placeholder="Enter house number"
               />
             </div>
+          </div>
 
-            <div className="md:col-span-2 lg:col-span-3">
+          {/* Complete Address */}
+          <div className="grid grid-cols-1 gap-6">
+            <div>
               <label className="block text-sm font-medium text-darktext mb-2">Complete Address *</label>
               <input
                 type="text"

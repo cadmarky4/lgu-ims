@@ -423,7 +423,8 @@ const EditResident: React.FC = () => {
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Name Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 First Name *
@@ -438,7 +439,6 @@ const EditResident: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Last Name *
@@ -453,7 +453,6 @@ const EditResident: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Middle Name
@@ -467,9 +466,11 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
-              <label htmlFor="suffix" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="suffix"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Suffix
               </label>
               <select
@@ -478,6 +479,7 @@ const EditResident: React.FC = () => {
                 value={formData.suffix}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                title="Select suffix"
               >
                 <option value="">Select Suffix</option>
                 <option value="Jr.">Jr.</option>
@@ -487,20 +489,10 @@ const EditResident: React.FC = () => {
                 <option value="IV">IV</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Household ID
-              </label>
-              <input
-                type="text"
-                value={resident.household?.household_number || 'No Household Assigned'}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                placeholder="No Household Assigned"
-              />
-            </div>
-
+          {/* Personal Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birth Date *
@@ -514,7 +506,6 @@ const EditResident: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Age (will be automatically calculated)
@@ -529,7 +520,6 @@ const EditResident: React.FC = () => {
                 readOnly
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birth Place *
@@ -539,14 +529,16 @@ const EditResident: React.FC = () => {
                 name="birthPlace"
                 value={formData.birthPlace}
                 onChange={handleInputChange}
-                placeholder="Enter birth place here..."
+                placeholder="Enter birth place..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
               />
             </div>
-
             <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Gender *
               </label>
               <select
@@ -556,15 +548,22 @@ const EditResident: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
+                title="Select gender"
               >
                 <option value="">Select Gender</option>
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
               </select>
             </div>
+          </div>
 
+          {/* Social Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label htmlFor="civilStatus" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="civilStatus"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Civil Status *
               </label>
               <select
@@ -574,6 +573,7 @@ const EditResident: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 required
+                title="Select civil status"
               >
                 <option value="">Select Civil Status</option>
                 <option value="SINGLE">Single</option>
@@ -583,7 +583,6 @@ const EditResident: React.FC = () => {
                 <option value="SEPARATED">Separated</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nationality *
@@ -598,7 +597,6 @@ const EditResident: React.FC = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Religion
@@ -612,9 +610,11 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
-              <label htmlFor="employmentStatus" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="employmentStatus"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Employment Status
               </label>
               <select
@@ -623,6 +623,7 @@ const EditResident: React.FC = () => {
                 value={formData.employmentStatus}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                title="Select employment status"
               >
                 <option value="">Select Employment Status</option>
                 <option value="EMPLOYED">Employed</option>
@@ -633,7 +634,10 @@ const EditResident: React.FC = () => {
                 <option value="OFW">OFW</option>
               </select>
             </div>
+          </div>
 
+          {/* Work & Education Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Educational Attainment
@@ -647,7 +651,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Occupation
@@ -660,7 +663,8 @@ const EditResident: React.FC = () => {
                 placeholder="e.g. Teacher, Engineer, Farmer..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>            <div>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Employer
               </label>
@@ -673,22 +677,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Income (PHP)
-              </label>
-              <input
-                type="number"
-                name="monthlyIncome"
-                value={formData.monthlyIncome}
-                onChange={handleInputChange}
-                placeholder="Enter monthly income..."
-                min="0"
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              />
-            </div>
           </div>
         </section>
 
@@ -697,7 +685,8 @@ const EditResident: React.FC = () => {
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Contact Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Contact Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mobile Number
@@ -711,7 +700,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Landline Number
@@ -725,8 +713,7 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
@@ -739,7 +726,10 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+          </div>
 
+          {/* Address Details Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 House/Unit Number
@@ -753,7 +743,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Street
@@ -767,7 +756,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Purok
@@ -777,7 +765,8 @@ const EditResident: React.FC = () => {
                 value={formData.purok}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                disabled={isLoading || isFetchingResident}
+                disabled={isLoading}
+                title="Select purok/zone"
               >
                 <option value="">Select Purok</option>
                 {puroks.map((purok) => (
@@ -787,8 +776,11 @@ const EditResident: React.FC = () => {
                 ))}
               </select>
             </div>
+          </div>
 
-            <div className="md:col-span-3">
+          {/* Complete Address */}
+          <div className="grid grid-cols-1 gap-6">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Complete Address *
               </label>
@@ -807,11 +799,11 @@ const EditResident: React.FC = () => {
 
         {/* Family Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Family Information</h2>          <div className="border-b border-gray-200 mb-6"></div>
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Family Information</h2>
+          <div className="border-b border-gray-200 mb-6"></div>
 
-          {/* Household relationship fields removed - managed by Household module */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Parents Information Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mother's Name
@@ -825,7 +817,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Father's Name
@@ -839,7 +830,10 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+          </div>
 
+          {/* Emergency Contact Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Name
@@ -853,7 +847,6 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Number
@@ -867,8 +860,7 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emergency Contact Relationship
               </label>
