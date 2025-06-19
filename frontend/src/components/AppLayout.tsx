@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 import Header from "./global/Header";
 import Sidebar from "./global/Sidebar";
 
@@ -9,7 +8,6 @@ const AppLayout: React.FC = () => {
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 767px)").matches
   );
-  const { logout } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,11 +43,6 @@ const AppLayout: React.FC = () => {
     if (isMobile) setIsOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    // No need to navigate here since logout() handles the redirect
-  };
-
   const handleSidebarToggle = () => {
     setIsOpen((prev) => !prev);
   };
@@ -74,7 +67,6 @@ const AppLayout: React.FC = () => {
       <Header
         isSidebarExpanded={isOpen}
         onToggleSidebar={handleSidebarToggle}
-        onLogout={handleLogout}
         isMobile={isMobile}
       />
       <div className="bg-gray-50 flex h-screen overflow-hidden">
