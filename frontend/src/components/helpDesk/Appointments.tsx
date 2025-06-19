@@ -14,6 +14,16 @@ interface AppointmentFormData {
   additionalNotes: string;
 }
 
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  department?: string;
+  purpose?: string;
+  preferredDate?: string;
+  preferredTime?: string;
+}
+
 const AppointmentsPage: React.FC = () => {
   const [formData, setFormData] = useState<AppointmentFormData>({
     fullName: "",
@@ -28,6 +38,7 @@ const AppointmentsPage: React.FC = () => {
     additionalNotes: "",
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   const departments: string[] = [
@@ -67,24 +78,60 @@ const AppointmentsPage: React.FC = () => {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ): void => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Clear error when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined,
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email address is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Contact number is required";
+    }
+
+    if (!formData.department) {
+      newErrors.department = "Please select a department";
+    }
+
+    if (!formData.purpose.trim()) {
+      newErrors.purpose = "Purpose of appointment is required";
+    }
+
+    if (!formData.preferredDate) {
+      newErrors.preferredDate = "Preferred date is required";
+    }
+
+    if (!formData.preferredTime) {
+      newErrors.preferredTime = "Preferred time is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (): void => {
-    // Validate required fields
-    if (
-      !formData.fullName ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.department ||
-      !formData.purpose ||
-      !formData.preferredDate ||
-      !formData.preferredTime
-    ) {
-      alert("Please fill in all required fields");
+    if (!validateForm()) {
       return;
     }
 
@@ -105,7 +152,14 @@ const AppointmentsPage: React.FC = () => {
         alternativeTime: "",
         additionalNotes: "",
       });
+      setErrors({});
     }, 3000);
+  };
+
+  const getFieldClasses = (fieldName: keyof FormErrors, baseClasses: string) => {
+    return errors[fieldName] 
+      ? `${baseClasses} border-red-500 focus:ring-red-500 focus:border-red-500`
+      : `${baseClasses} border-gray-300 focus:ring-blue-500 focus:border-transparent`;
   };
 
   return (
@@ -156,8 +210,11 @@ const AppointmentsPage: React.FC = () => {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('fullName', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               />
+              {errors.fullName && (
+                <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
+              )}
             </div>
 
             <div>
@@ -173,8 +230,11 @@ const AppointmentsPage: React.FC = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('email', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -190,8 +250,11 @@ const AppointmentsPage: React.FC = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('phone', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+              )}
             </div>
 
             <div>
@@ -206,7 +269,7 @@ const AppointmentsPage: React.FC = () => {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('department', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               >
                 <option value="">Select a department</option>
                 {departments.map((dept) => (
@@ -215,6 +278,9 @@ const AppointmentsPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+              {errors.department && (
+                <p className="mt-1 text-sm text-red-600">{errors.department}</p>
+              )}
             </div>
           </div>
 
@@ -239,9 +305,12 @@ const AppointmentsPage: React.FC = () => {
               value={formData.purpose}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={getFieldClasses('purpose', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               placeholder="Please describe the purpose of your appointment..."
             />
+            {errors.purpose && (
+              <p className="mt-1 text-sm text-red-600">{errors.purpose}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,8 +328,11 @@ const AppointmentsPage: React.FC = () => {
                 value={formData.preferredDate}
                 onChange={handleChange}
                 min={new Date().toISOString().split("T")[0]}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('preferredDate', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               />
+              {errors.preferredDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.preferredDate}</p>
+              )}
             </div>
 
             <div>
@@ -275,7 +347,7 @@ const AppointmentsPage: React.FC = () => {
                 name="preferredTime"
                 value={formData.preferredTime}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getFieldClasses('preferredTime', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
               >
                 <option value="">Select a time</option>
                 {timeSlots.map((time) => (
@@ -284,6 +356,9 @@ const AppointmentsPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+              {errors.preferredTime && (
+                <p className="mt-1 text-sm text-red-600">{errors.preferredTime}</p>
+              )}
             </div>
 
             <div>

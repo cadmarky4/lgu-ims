@@ -21,6 +21,14 @@ interface ComplaintFormData {
   attachments: string;
 }
 
+interface FormErrors {
+  fullName?: string;
+  phone?: string;
+  complaintCategory?: string;
+  subject?: string;
+  description?: string;
+}
+
 const ComplaintsPage: React.FC = () => {
   const [formData, setFormData] = useState<ComplaintFormData>({
     fullName: "",
@@ -38,6 +46,7 @@ const ComplaintsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const complaintCategories: string[] = [
     "Public Services",
@@ -84,23 +93,46 @@ const ComplaintsPage: React.FC = () => {
         [name]: value,
       });
     }
+
+    // Clear error when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined,
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Validate personal information if not anonymous
+    if (!formData.anonymous) {
+      if (!formData.fullName.trim()) {
+        newErrors.fullName = "Full name is required";
+      }
+      if (!formData.phone.trim()) {
+        newErrors.phone = "Contact number is required";
+      }
+    }
+
+    // Validate complaint details
+    if (!formData.complaintCategory) {
+      newErrors.complaintCategory = "Please select a complaint category";
+    }
+    if (!formData.subject.trim()) {
+      newErrors.subject = "Subject/Title is required";
+    }
+    if (!formData.description.trim()) {
+      newErrors.description = "Detailed description is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (): void => {
-    // Validate required fields
-    if (!formData.anonymous && (!formData.fullName || !formData.phone)) {
-      alert(
-        "Please provide your name and contact number, or choose to submit anonymously."
-      );
-      return;
-    }
-
-    if (
-      !formData.complaintCategory ||
-      !formData.subject ||
-      !formData.description
-    ) {
-      alert("Please fill in all required complaint details.");
+    if (!validateForm()) {
       return;
     }
 
@@ -122,11 +154,18 @@ const ComplaintsPage: React.FC = () => {
         anonymous: false,
         attachments: "",
       });
+      setErrors({});
     }, 3000);
   };
 
   const generateReferenceNumber = (): string => {
     return Math.random().toString(36).substr(2, 9).toUpperCase();
+  };
+
+  const getFieldClasses = (fieldName: keyof FormErrors, baseClasses: string): string => {
+    return errors[fieldName] 
+      ? `${baseClasses} border-red-500 focus:ring-red-500 focus:border-red-500`
+      : `${baseClasses} border-gray-300 focus:ring-orange-500 focus:border-transparent`;
   };
 
   return (
@@ -223,8 +262,11 @@ const ComplaintsPage: React.FC = () => {
                     id="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={getFieldClasses('fullName', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                   />
+                  {errors.fullName && (
+                    <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -239,8 +281,11 @@ const ComplaintsPage: React.FC = () => {
                     id="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={getFieldClasses('phone', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                   />
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -298,7 +343,7 @@ const ComplaintsPage: React.FC = () => {
                     id="complaintCategory"
                     value={formData.complaintCategory}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={getFieldClasses('complaintCategory', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                   >
                     <option value="">Select a category</option>
                     {complaintCategories.map((category) => (
@@ -307,6 +352,9 @@ const ComplaintsPage: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                  {errors.complaintCategory && (
+                    <p className="text-red-500 text-sm mt-1">{errors.complaintCategory}</p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -346,8 +394,11 @@ const ComplaintsPage: React.FC = () => {
                   value={formData.subject}
                   onChange={handleChange}
                   placeholder="Brief description of your complaint"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={getFieldClasses('subject', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                 />
+                {errors.subject && (
+                  <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+                )}
               </div>
 
               <div>
@@ -363,9 +414,12 @@ const ComplaintsPage: React.FC = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={getFieldClasses('description', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
                   placeholder="Please provide a detailed description of your complaint. Include what happened, when it happened, who was involved, and any other relevant information..."
                 />
+                {errors.description && (
+                  <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                )}
               </div>
 
               <div>

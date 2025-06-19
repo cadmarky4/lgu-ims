@@ -30,6 +30,13 @@ interface SuggestionFormData {
   allowContact: boolean;
 }
 
+interface ValidationErrors {
+  name?: string;
+  category?: string;
+  title?: string;
+  description?: string;
+}
+
 interface RecentSuggestion {
   id: number;
   title: string;
@@ -54,6 +61,7 @@ const SuggestionsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
 
   const suggestionCategories: string[] = [
     "Community Development",
@@ -118,22 +126,47 @@ const SuggestionsPage: React.FC = () => {
         [name]: value,
       });
     }
+
+    // Clear error when user starts typing
+    if (errors[name as keyof ValidationErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined,
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Please select a category";
+    }
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Suggestion title is required";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Detailed description is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (): void => {
-    // Validate required fields
-    if (
-      !formData.name ||
-      !formData.category ||
-      !formData.title ||
-      !formData.description
-    ) {
-      alert("Please fill in all required fields");
+    if (!validateForm()) {
       return;
     }
 
     console.log("Suggestion submitted:", formData);
     setSubmitted(true);
+    setErrors({});
     setTimeout(() => {
       setSubmitted(false);
       setFormData({
@@ -157,8 +190,19 @@ const SuggestionsPage: React.FC = () => {
     return Math.random().toString(36).substr(2, 9).toUpperCase();
   };
 
+  const getInputClassName = (fieldName: keyof ValidationErrors): string => {
+    const baseClasses = "w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent";
+    const hasError = errors[fieldName];
+    
+    if (hasError) {
+      return `${baseClasses} border-red-500 focus:ring-red-500`;
+    }
+    
+    return `${baseClasses} border-gray-300 focus:ring-yellow-500`;
+  };
+
   return (
-    <div className="@container/main p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
           <Lightbulb className="h-8 w-8 mr-3 text-yellow-500" />
@@ -228,7 +272,7 @@ const SuggestionsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+        <div className="bg-white shadow-lg rounded-lg p-6">
           {/* Personal Information */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -249,8 +293,11 @@ const SuggestionsPage: React.FC = () => {
                   id="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("name")}
                 />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label
@@ -324,7 +371,7 @@ const SuggestionsPage: React.FC = () => {
                   id="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("category")}
                 >
                   <option value="">Select a category</option>
                   {suggestionCategories.map((category) => (
@@ -333,6 +380,9 @@ const SuggestionsPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {errors.category && (
+                  <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                )}
               </div>
 
               <div>
@@ -349,8 +399,11 @@ const SuggestionsPage: React.FC = () => {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Give your suggestion a clear, descriptive title"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("title")}
                 />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -366,9 +419,12 @@ const SuggestionsPage: React.FC = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("description")}
                   placeholder="Describe your suggestion in detail. What problem does it solve? How will it work?"
                 />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                )}
               </div>
 
               <div>
@@ -508,7 +564,7 @@ const SuggestionsPage: React.FC = () => {
       )}
 
       {/* Tips Section */}
-      <div className="mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-blue-50 rounded-lg p-6">
           <Target className="h-8 w-8 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 mb-2">Be Specific</h3>
