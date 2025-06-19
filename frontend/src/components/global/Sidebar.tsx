@@ -344,12 +344,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               ref={(el) => {
                 if (el) menuItemRefs.current[item.id] = el;
               }}
-              to={item.hasSubmenu ? "#" : `/${item.id}`}
+              // to={item.hasSubmenu ? "#" : `/${item.id}`}
+              to={item.id}
               onClick={(e) => handleMenuClick(e, item)}
               className={`sidebar-link flex items-center px-[22px] min-h-12 transition-colors duration-200 cursor-pointer no-underline ${
                 isExpanded ? "md:w-72" : "md:w-full"
               } w-screen overflow-x-hidden ${
-                activeItem === item.id ||
+                activeItem.split('/')[0] === item.id ||
                 (item.hasSubmenu && isSubmenuActive(item.submenu || []))
                   ? `active font-medium ${
                       isExpanded ? "border-r-4" : "border-r-3"
@@ -428,10 +429,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <Link
                         to={`/${item.id}/${subItem.id}`}
                         // onClick={(e) => handleSubmenuClick(e, item.id, subItem.id)}
+                        onClick={(e) => console.log(activeItem)}
                         className={`flex items-center ${
                           !isMobile && !isExpanded ? "px-3" : "pl-6 pr-4"
                         } py-2 text-sm w-full text-left rounded-md transition-colors cursor-pointer relative ${
-                          activeItem === subItem.id
+                          activeItem.split('/')[1] === subItem.id
                             ? "bg-[#D2DEE7] text-smblue-400 font-medium"
                             : "hover:bg-[#E6EBF0] hover:text-smblue-400"
                         }`}
