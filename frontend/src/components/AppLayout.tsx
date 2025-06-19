@@ -16,25 +16,25 @@ const AppLayout: React.FC = () => {
   const getActiveMenuItem = () => {
     const path = location.pathname.substring(1) || "dashboard";
 
-    // Handle nested project routes
-    if (path.startsWith("projects")) {
-      return "projects";
-    }
-    // Handle nested routes for residents and household
-    if (path.startsWith("residents")) {
-      return "residents";
-    }
-    if (path.startsWith("household")) {
-      return "household";
-    }
-    // Handle nested process-document routes
-    if (path.startsWith("process-document")) {
-      return "process-document";
-    }
-    // Handle nested help-desk routes
-    if (path.startsWith("help-desk")) {
-      return "help-desk";
-    }
+    // // Handle nested project routes
+    // if (path.startsWith("projects")) {
+    //   return "projects";
+    // }
+    // // Handle nested routes for residents and household
+    // if (path.startsWith("residents")) {
+    //   return "residents";
+    // }
+    // if (path.startsWith("household")) {
+    //   return "household";
+    // }
+    // // Handle nested process-document routes
+    // if (path.startsWith("process-document")) {
+    //   return "process-document";
+    // }
+    // // Handle nested help-desk routes
+    // if (path.startsWith("help-desk")) {
+    //   return "help-desk";
+    // }
     return path;
   };
 

@@ -57,7 +57,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         { id: "certificate-indigency", label: "Certificate of Indigency" },
         { id: "certificate-residency", label: "Certificate of Residency" },
         { id: "certificate-cohabitation", label: "Certificate of Cohabitaion" },
-        
       ],
     },
     {
@@ -78,6 +77,30 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: "users", label: "Manage Users", icon: FiUsers },
     { id: "settings", label: "Settings", icon: FiSettings },
   ];
+
+  // Helper function to find which menu should be expanded based on active item
+  const getActiveParentMenu = () => {
+    // Check if active item is a parent menu
+    const parentMenu = menuItems.find(item => item.id === activeItem);
+    if (parentMenu?.hasSubmenu) {
+      return parentMenu.id;
+    }
+
+    // Check if active item is a submenu item
+    const activeSegments = activeItem.split('/');
+    const parentId = activeSegments[0];
+    
+    const parent = menuItems.find(item => 
+      item.id === parentId && 
+      item.hasSubmenu && 
+      item.submenu?.some(sub => 
+        activeItem === `${parentId}/${sub.id}` || 
+        activeSegments[1] === sub.id
+      )
+    );
+    
+    return parent?.id || null;
+  };
 
   // Calculate submenu position
   const calculateSubmenuPosition = (menuId: string): SubmenuPosition => {
@@ -110,42 +133,59 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (isMobile || isExpanded) return;
 
     const newPositions: Record<string, SubmenuPosition> = {};
-    expandedMenus.forEach((menuId) => {
-      newPositions[menuId] = calculateSubmenuPosition(menuId);
+    menuItems.forEach((item) => {
+      if (item.hasSubmenu) {
+        newPositions[item.id] = calculateSubmenuPosition(item.id);
+      }
     });
     setSubmenuPositions(newPositions);
   };
 
-  // Auto-expand parent menu if a submenu item is active (only when sidebar is expanded)
+  // Auto-expand parent menu based on active item
   useEffect(() => {
-    if (!isExpanded && !isMobile) return;
-
-    const parentMenus = menuItems.filter(
-      (item) =>
-        item.hasSubmenu &&
-        item.submenu?.some((subItem) => subItem.id === activeItem)
-    );
-
-    if (parentMenus.length > 0) {
-      const parentIds = parentMenus.map((menu) => menu.id);
-      setExpandedMenus(parentIds); // Only keep the active parent expanded
+    const activeParent = getActiveParentMenu();
+    
+    if (isMobile) {
+      // On mobile, expand all menus with submenus
+      const menusWithSubmenus = menuItems
+        .filter(item => item.hasSubmenu)
+        .map(item => item.id);
+      setExpandedMenus(menusWithSubmenus);
+    } else if (isExpanded) {
+      // When sidebar is expanded (desktop), only expand active parent
+      if (activeParent) {
+        setExpandedMenus([activeParent]);
+      } else {
+        // No active submenu, collapse all
+        setExpandedMenus([]);
+      }
+    } else {
+      // Collapsed sidebar - clear expanded menus
+      setExpandedMenus([]);
     }
   }, [activeItem, isExpanded, isMobile]);
 
-  // Close all submenus when sidebar collapses
+  // Clear hover state when sidebar collapses
   useEffect(() => {
     if (!isExpanded && !isMobile) {
-      setExpandedMenus([]);
+      setHoveredMenu(null);
     }
   }, [isExpanded, isMobile]);
 
   // Update positions when menus expand/collapse or sidebar state changes
   useEffect(() => {
     if (!isMobile && !isExpanded) {
-      // Calculate positions immediately for collapsed sidebar
+      // Pre-calculate all positions for collapsed sidebar
       updateSubmenuPositions();
     }
-  }, [expandedMenus, isExpanded, isMobile]);
+  }, [isExpanded, isMobile]);
+
+  // Update positions on scroll/resize
+  useEffect(() => {
+    if (!isMobile && !isExpanded) {
+      updateSubmenuPositions();
+    }
+  }, [expandedMenus]);
 
   // Listen for scroll events on sidebar
   useEffect(() => {
@@ -171,31 +211,21 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [expandedMenus, isExpanded, isMobile]);
 
-  // Close submenu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!sidebarRef.current?.contains(event.target as Node)) {
-        setExpandedMenus([]);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const toggleSubmenu = (menuId: string) => {
-    if (!isMobile && !isExpanded) {
-      // For collapsed sidebar, calculate position immediately before showing
-      const position = calculateSubmenuPosition(menuId);
-      setSubmenuPositions((prev) => ({ ...prev, [menuId]: position }));
+    // Don't allow toggling on mobile - submenus always expanded
+    if (isMobile) return;
+    
+    if (!isExpanded) {
+      // For collapsed sidebar, use hover behavior instead
+      return;
     }
 
     setExpandedMenus((prev) => {
-      // Only allow one submenu open at a time
+      // Only one submenu open at a time
       if (prev.includes(menuId)) {
-        return []; // Close if already open
+        return prev.filter(id => id !== menuId);
       } else {
-        return [menuId]; // Open only this one, close others
+        return [menuId];
       }
     });
   };
@@ -204,33 +234,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Allow right-click and middle-click to work naturally for links
     if (e.button === 1 || e.button === 2) return;
 
-    if (item.hasSubmenu) {
-      // Check if this is a double-click or if the menu is already expanded
-      if (
-        e.detail === 2 ||
-        (expandedMenus.includes(item.id) && (isExpanded || isMobile))
-      ) {
-        // Navigate to the main page on double-click or if submenu is already open and clicked again
-        e.preventDefault();
-        onItemClick(item.id);
-        return;
-      }
+    e.preventDefault();
 
-      e.preventDefault();
+    // Always navigate to the menu item
+    onItemClick(item.id);
 
-      if (isExpanded || isMobile) {
-        // Normal toggle behavior when expanded
-        toggleSubmenu(item.id);
-      } else {
-        // For collapsed sidebar, use hover behavior
+    // If it has submenu and sidebar is expanded, ensure it's expanded
+    if (item.hasSubmenu && (isExpanded || isMobile) && !isMobile) {
+      // Don't toggle on mobile since they're always expanded
+      if (!expandedMenus.includes(item.id)) {
         setExpandedMenus([item.id]);
       }
-      return;
     }
-
-    // For regular left clicks, prevent default and use programmatic navigation
-    e.preventDefault();
-    onItemClick(item.id);
   };
 
   const handleMenuHover = (menuId: string) => {
@@ -240,20 +255,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         clearTimeout(submenuTimeoutRef.current);
       }
 
-      // Calculate position immediately before showing
-      const position = calculateSubmenuPosition(menuId);
-      setSubmenuPositions((prev) => ({ ...prev, [menuId]: position }));
-
       setHoveredMenu(menuId);
       setExpandedMenus([menuId]);
     }
   };
 
+  // removed menuId: string
   const handleMenuLeave = () => {
     if (!isExpanded && !isMobile) {
-      setHoveredMenu(null);
       // Delay closing to allow moving to submenu
       submenuTimeoutRef.current = setTimeout(() => {
+        setHoveredMenu(null);
         setExpandedMenus([]);
       }, 300);
     }
@@ -268,6 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleSubmenuLeave = () => {
     if (!isExpanded && !isMobile) {
       submenuTimeoutRef.current = setTimeout(() => {
+        setHoveredMenu(null);
         setExpandedMenus([]);
       }, 300);
     }
@@ -283,15 +296,31 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Navigate first
     onItemClick(itemId + "/" + subItemId);
 
-    // Only close submenu if sidebar is collapsed, keep it open when expanded
+    // Only close submenu if sidebar is collapsed
     if (!isExpanded && !isMobile) {
       setExpandedMenus([]);
+      setHoveredMenu(null);
     }
-    // When expanded, let the auto-expand logic in useEffect handle the state
   };
 
   const isSubmenuActive = (submenu: any[]) => {
     return submenu.some((subItem) => subItem.id === activeItem);
+  };
+
+  // Determine if submenu should be shown
+  const shouldShowSubmenu = (itemId: string) => {
+    if (isMobile) {
+      // Always show on mobile
+      return true;
+    }
+    
+    if (isExpanded) {
+      // Show if expanded in expanded sidebar
+      return expandedMenus.includes(itemId);
+    } else {
+      // Show if hovered in collapsed sidebar
+      return hoveredMenu === itemId && expandedMenus.includes(itemId);
+    }
   };
 
   return (
@@ -338,18 +367,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             key={item.id}
             className="relative"
             onMouseEnter={() => item.hasSubmenu && handleMenuHover(item.id)}
+            // removed menuId: string
             onMouseLeave={() => item.hasSubmenu && handleMenuLeave()}
           >
             <Link
               ref={(el) => {
                 if (el) menuItemRefs.current[item.id] = el;
               }}
-              to={item.hasSubmenu ? "#" : `/${item.id}`}
+              to={`/${item.id}`}
               onClick={(e) => handleMenuClick(e, item)}
               className={`sidebar-link flex items-center px-[22px] min-h-12 transition-colors duration-200 cursor-pointer no-underline ${
                 isExpanded ? "md:w-72" : "md:w-full"
               } w-screen overflow-x-hidden ${
-                activeItem === item.id ||
+                activeItem.split('/')[0] === item.id ||
                 (item.hasSubmenu && isSubmenuActive(item.submenu || []))
                   ? `active font-medium ${
                       isExpanded ? "border-r-4" : "border-r-3"
@@ -379,8 +409,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? "opacity-0 max-w-0 overflow-hidden"
                       : "opacity-100"
                   }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSubmenu(item.id);
+                  }}
                 >
-                  {expandedMenus.includes(item.id) ? (
+                  {(isMobile || expandedMenus.includes(item.id)) ? (
                     <FiChevronDown className="w-4 h-4" />
                   ) : (
                     <FiChevronRight className="w-4 h-4" />
@@ -392,25 +427,26 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Submenu */}
             {item.hasSubmenu && (
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                className={`${
                   !isMobile && !isExpanded
-                    ? "fixed bg-white p-3 rounded-2xl border border-gray-200 shadow-lg min-w-52 z-50"
-                    : expandedMenus.includes(item.id)
-                    ? "ml-8 mt-1 relative max-h-96 opacity-100"
-                    : "ml-8 mt-1 relative max-h-0 opacity-0"
+                    ? `fixed bg-white p-3 rounded-2xl border border-gray-200 shadow-lg min-w-52 z-50 ${
+                        shouldShowSubmenu(item.id) ? 'block' : 'hidden'
+                      }`
+                    : isMobile
+                    ? "ml-8 mt-1 relative transition-all duration-300 ease-in-out"
+                    : "ml-8 mt-1 relative transition-all duration-300 ease-in-out"
                 }`}
                 style={
-                  !isMobile &&
-                  !isExpanded &&
-                  submenuPositions[item.id] &&
-                  expandedMenus.includes(item.id)
+                  !isMobile && !isExpanded
                     ? {
-                        top: `${submenuPositions[item.id].top}px`,
-                        left: `${submenuPositions[item.id].left}px`,
+                        top: submenuPositions[item.id]?.top ? `${submenuPositions[item.id].top}px` : 'auto',
+                        left: submenuPositions[item.id]?.left ? `${submenuPositions[item.id].left}px` : 'auto',
                       }
-                    : !isMobile && !isExpanded
-                    ? { display: "none" }
-                    : {}
+                    : {
+                        maxHeight: (isMobile || expandedMenus.includes(item.id)) ? '500px' : '0',
+                        opacity: (isMobile || expandedMenus.includes(item.id)) ? '1' : '0',
+                        overflow: 'hidden'
+                      }
                 }
                 onMouseEnter={handleSubmenuEnter}
                 onMouseLeave={handleSubmenuLeave}
@@ -427,11 +463,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div key={subItem.id} className="relative">
                       <Link
                         to={`/${item.id}/${subItem.id}`}
-                        // onClick={(e) => handleSubmenuClick(e, item.id, subItem.id)}
+                        onClick={(e) => handleSubmenuClick(e, item.id, subItem.id)}
                         className={`flex items-center ${
                           !isMobile && !isExpanded ? "px-3" : "pl-6 pr-4"
                         } py-2 text-sm w-full text-left rounded-md transition-colors cursor-pointer relative ${
-                          activeItem === subItem.id
+                          activeItem.split('/')[1] === subItem.id
                             ? "bg-[#D2DEE7] text-smblue-400 font-medium"
                             : "hover:bg-[#E6EBF0] hover:text-smblue-400"
                         }`}

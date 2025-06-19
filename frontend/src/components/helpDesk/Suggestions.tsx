@@ -31,6 +31,13 @@ interface SuggestionFormData {
   allowContact: boolean;
 }
 
+interface ValidationErrors {
+  name?: string;
+  category?: string;
+  title?: string;
+  description?: string;
+}
+
 interface RecentSuggestion {
   id: number;
   title: string;
@@ -55,6 +62,7 @@ const SuggestionsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   const suggestionCategories: string[] = [
@@ -128,22 +136,47 @@ const SuggestionsPage: React.FC = () => {
         [name]: value,
       });
     }
+
+    // Clear error when user starts typing
+    if (errors[name as keyof ValidationErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined,
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Please select a category";
+    }
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Suggestion title is required";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Detailed description is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (): void => {
-    // Validate required fields
-    if (
-      !formData.name ||
-      !formData.category ||
-      !formData.title ||
-      !formData.description
-    ) {
-      alert("Please fill in all required fields");
+    if (!validateForm()) {
       return;
     }
 
     console.log("Suggestion submitted:", formData);
     setSubmitted(true);
+    setErrors({});
     setTimeout(() => {
       setSubmitted(false);
       setFormData({
@@ -165,6 +198,17 @@ const SuggestionsPage: React.FC = () => {
 
   const generateReferenceId = (): string => {
     return Math.random().toString(36).substr(2, 9).toUpperCase();
+  };
+
+  const getInputClassName = (fieldName: keyof ValidationErrors): string => {
+    const baseClasses = "w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent";
+    const hasError = errors[fieldName];
+    
+    if (hasError) {
+      return `${baseClasses} border-red-500 focus:ring-red-500`;
+    }
+    
+    return `${baseClasses} border-gray-300 focus:ring-yellow-500`;
   };
 
   return (
@@ -273,8 +317,11 @@ const SuggestionsPage: React.FC = () => {
                   id="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("name")}
                 />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                )}
               </div>
               <div>
                 <label
@@ -348,7 +395,7 @@ const SuggestionsPage: React.FC = () => {
                   id="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("category")}
                 >
                   <option value="">Select a category</option>
                   {suggestionCategories.map((category) => (
@@ -357,6 +404,9 @@ const SuggestionsPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {errors.category && (
+                  <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                )}
               </div>
 
               <div>
@@ -373,8 +423,11 @@ const SuggestionsPage: React.FC = () => {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Give your suggestion a clear, descriptive title"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("title")}
                 />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -390,9 +443,12 @@ const SuggestionsPage: React.FC = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  className={getInputClassName("description")}
                   placeholder="Describe your suggestion in detail. What problem does it solve? How will it work?"
                 />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                )}
               </div>
 
               <div>
