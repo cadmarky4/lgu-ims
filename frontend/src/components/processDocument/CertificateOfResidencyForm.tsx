@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiHome, FiCalendar } from 'react-icons/fi';
 import { apiService } from '../../services';
+import Breadcrumb from '../global/Breadcrumb';
 
 interface CertificateOfResidencyFormProps {
   onNavigate: (page: string) => void;
@@ -27,6 +28,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
     purpose: '',
@@ -64,6 +66,14 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
     'Hon. Roberto Garcia - Kagawad',
     'Carmen Rodriguez - Barangay Secretary'
   ];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (searchTerm.length >= 2) {
@@ -216,7 +226,9 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   };
 
   const renderStep1 = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
         Select Resident
       </h2>
@@ -281,7 +293,9 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   );
 
   const renderStep2 = () => (
-    <div className="space-y-6">
+    <div className={`space-y-6 transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       {/* Selected Resident Info */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
@@ -361,7 +375,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               placeholder="Number of years residing in the barangay"
               min="0"
               max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               required
             />
           </div>
@@ -373,7 +387,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
             <select
               value={formData.residencyStatus}
               onChange={(e) => handleInputChange('residencyStatus', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               required
             >
               <option value="">Select residency status</option>
@@ -390,7 +404,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
             <select
               value={formData.certifyingOfficial}
               onChange={(e) => handleInputChange('certifyingOfficial', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               required
             >
               <option value="">Select official</option>
@@ -409,7 +423,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               value={formData.previousAddress}
               onChange={(e) => handleInputChange('previousAddress', e.target.value)}
               placeholder="Previous address if recently moved to the barangay"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
             />
           </div>
 
@@ -422,7 +436,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
               placeholder="Any additional information or special circumstances..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
             />
           </div>
         </div>
@@ -434,7 +448,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               type="checkbox"
               checked={formData.urgentRequest}
               onChange={(e) => handleInputChange('urgentRequest', e.target.checked)}
-              className="h-4 w-4 text-green-500 focus:ring-green-200 border-gray-300 rounded"
+              className="h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
             />
             <span className="ml-2 text-sm font-medium text-gray-700">
               Urgent Processing Request (+₱25 fee)
@@ -449,7 +463,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-700">Processing Fee:</span>
-            <span className="text-lg font-bold text-green-500">
+            <span className="text-lg font-bold text-smblue-400">
               ₱{formData.urgentRequest ? '55' : '30'}
             </span>
           </div>
@@ -524,7 +538,9 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   );
 
   const renderStep3 = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <FiCheck className="w-8 h-8 text-green-600" />
       </div>
@@ -548,14 +564,14 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
         </div>
       )}
       
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex">
-            <FiHome className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
-            <div className="ml-3 text-left">
-              <h3 className="text-sm font-medium text-blue-800">
-                Next Steps
-              </h3>
-              <div className="mt-1 text-sm text-blue-700">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex">
+          <FiHome className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
+          <div className="ml-3 text-left">
+            <h3 className="text-sm font-medium text-blue-800">
+              Next Steps
+            </h3>
+            <div className="mt-1 text-sm text-blue-700">
               <ol className="list-decimal list-inside space-y-1">
                 <li>Prepare required documents listed above</li>
                 <li>Wait for approval notification</li>
@@ -570,7 +586,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       <div className="flex justify-center space-x-4">
         <button
           onClick={() => onNavigate('process-document')}
-                      className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
         >
           View All Requests
         </button>
@@ -599,8 +615,13 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <div className="flex items-center space-x-2 mb-2">
           <button
             onClick={() => onNavigate('process-document')}
@@ -614,7 +635,9 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       </div>
 
       {/* Progress Indicator */}
-      <div className="mb-8">
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex items-center justify-center space-x-4">
           {[1, 2, 3].map((stepNumber) => (
             <div key={stepNumber} className="flex items-center">
@@ -653,4 +676,3 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
 };
 
 export default CertificateOfResidencyForm;
-

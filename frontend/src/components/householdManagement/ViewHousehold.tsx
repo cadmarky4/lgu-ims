@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiHome, FiUsers, FiDollarSign, FiMapPin, FiFileText, FiEdit } from 'react-icons/fi';
 import type { Household } from '../../services/household.types';
+import Breadcrumb from '../global/Breadcrumb';
 
 const ViewHousehold: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -10,6 +11,15 @@ const ViewHousehold: React.FC = () => {
   const [household, setHousehold] = useState<Household | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load household data when component mounts
   useEffect(() => {
@@ -107,8 +117,13 @@ const ViewHousehold: React.FC = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-2 flex justify-between items-center">
+      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">View Household Profile</h1>
         <div className="flex space-x-2">
           <button
@@ -128,7 +143,9 @@ const ViewHousehold: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         {/* Household Header */}
         <div className="flex items-center mb-8 pb-6 border-b border-gray-200">
           <div className="w-24 h-24 bg-smblue-100 rounded-full flex items-center justify-center border-4 border-smblue-200">
@@ -420,4 +437,3 @@ const ViewHousehold: React.FC = () => {
 };
 
 export default ViewHousehold;
-

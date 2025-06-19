@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { FiUpload, FiCheck, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText } from "react-icons/fi";
+import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
 import {
   type ResidentFormData,
@@ -20,11 +21,20 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [duplicateResidents, setDuplicateResidents] = useState<Resident[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
     type: 'success' | 'error';
   }>({ show: false, message: '', type: 'success' });
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Toast utility function
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -279,6 +289,11 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
       // Show success toast
       showToast('Resident registered successfully!', 'success');
 
+      // Navigate back to residents list
+      setTimeout(() => {
+        navigate('/residents');
+      }, 1500);
+
       // Call the parent component's onSave callback
       // onSave(newResident);
       // onClose();
@@ -331,8 +346,13 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Automatic Breadcrumbs */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-2 flex justify-between items-center">
+      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident</h1>
         <button
           onClick={handleClose}
@@ -342,16 +362,21 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
           <FiX className="w-6 h-6" />
         </button>
       </div>
+
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '200ms' }}>
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
 
       {/* Duplicate Warning */}
       {duplicateWarning && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '250ms' }}>
           <p className="text-yellow-800 text-sm font-medium">
             ⚠️ {duplicateWarning}
           </p>
@@ -375,14 +400,19 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '300ms' }}>
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+        style={{ transitionDelay: '350ms' }}
       >
         {/* Basic Information */}
         <section className="mb-8">
@@ -1201,4 +1231,3 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
 };
 
 export default AddNewResident;
-

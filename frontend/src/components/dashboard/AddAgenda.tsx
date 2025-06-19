@@ -95,7 +95,7 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
         .animate-modal-slide-in { animation: modalSlideIn 0.3s ease-out; }
       `}</style>
       
-      <div className="fixed inset-0 bg-[rgba(0,0,0,0.1)]  flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="fixed inset-0 bg-[rgba(0,0,0,0.1)] max-h  flex items-center justify-center z-50 p-4 animate-fade-in">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] flex flex-col animate-modal-slide-in">
           {/* Header */}
           <div className="bg-gradient-to-r from-smblue-400 to-smblue-300 text-white p-6 rounded-t-2xl flex-shrink-0">

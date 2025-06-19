@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiFilter, FiPrinter, FiEye, FiEdit3, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
 import { documentsService } from '../../services/documents.service';
 import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/document.types';
+import Breadcrumb from '../global/Breadcrumb';
 
 interface ProcessDocumentProps {
   onNavigate: (page: string) => void;
@@ -55,6 +56,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('ALL');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -81,6 +83,14 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
     RELEASED: FiFileText,
     REJECTED: FiX
   };
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Use placeholder data for demonstration
@@ -318,15 +328,22 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext">Document Processing Center</h1>
         <p className="text-gray-600 mt-1">Manage and process barangay documents and certificates</p>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-6 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}>
           <div className="flex items-center">
             <FiAlertCircle className="text-red-500 mr-2" />
             <p className="text-red-800 text-sm">{error}</p>
@@ -335,7 +352,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -410,7 +429,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
       </div>
 
       {/* Controls */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-4 flex-1">
             {/* Search */}
@@ -464,7 +485,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
       </div>
 
       {/* Documents Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -772,5 +795,4 @@ const ProcessDocumentModal: React.FC<{
 
 
 
-export default ProcessDocument; 
-
+export default ProcessDocument;

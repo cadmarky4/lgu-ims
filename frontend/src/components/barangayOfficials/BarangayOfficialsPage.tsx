@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
-import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter, FiChevronRight } from 'react-icons/fi';
+import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 import EditBarangayOfficial from './EditBarangayOfficial';
+import FileLeave from './FileLeave';
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All Active Officials');
   const [showEditForm, setShowEditForm] = useState(false);
   const [showOfficerSelection, setShowOfficerSelection] = useState(false);
+  const [showFileLeave, setShowFileLeave] = useState(false);
   const [selectedOfficial, setSelectedOfficial] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const officials = [
     {
@@ -159,13 +171,16 @@ const BarangayOfficialsPage: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Organizational chart data
   const captain = officials.find(official => official.position === 'Barangay Captain');
   const councilors = officials.filter(official => official.position === 'Kagawad').slice(0, 8);
 
   const handleEditOfficial = (officialData: any) => {
     console.log('Updated official data:', officialData);
-    // Here you would typically save to a database
+  };
+
+  const handleFileLeave = (leaveData: any) => {
+    console.log('Leave application filed:', leaveData);
+    // Handle the leave data submission here
   };
 
   const handleSelectOfficerToEdit = (official: any) => {
@@ -174,28 +189,46 @@ const BarangayOfficialsPage: React.FC = () => {
     setShowEditForm(true);
   };
 
-  if (showEditForm) {
+  // Show File Leave component
+  if (showFileLeave) {
     return (
-      <EditBarangayOfficial 
-        onClose={() => setShowEditForm(false)} 
-        onSave={handleEditOfficial}
-        official={selectedOfficial}
-      />
+      <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <FileLeave 
+          onClose={() => setShowFileLeave(false)} 
+          onSave={handleFileLeave}
+        />
+      </div>
     );
   }
 
-  // Officer Selection Modal
+  // Show Edit Form component
+  if (showEditForm) {
+    return (
+      <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <EditBarangayOfficial 
+          onClose={() => setShowEditForm(false)} 
+          onSave={handleEditOfficial}
+          official={selectedOfficial}
+        />
+      </div>
+    );
+  }
+
+  // Show Officer Selection component
   if (showOfficerSelection) {
     return (
-      <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Breadcrumb */}
+        <Breadcrumb isLoaded={isLoaded} />
+        
         {/* Header */}
-        <div className="mb-2">
+        <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
           <h1 className="text-2xl font-bold text-darktext pl-0">Select Officer to Edit</h1>
           <p className="text-sm text-gray-600 mt-1">Choose which barangay official you want to update</p>
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '200ms' }}>
           <div className="relative">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -203,23 +236,24 @@ const BarangayOfficialsPage: React.FC = () => {
               placeholder="Search for an official to edit..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
             />
           </div>
         </div>
 
         {/* Officials Grid */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '300ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Available Officials ({filteredOfficials.length})
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredOfficials.map((official) => (
+            {filteredOfficials.map((official, index) => (
               <div
                 key={official.id}
                 onClick={() => handleSelectOfficerToEdit(official)}
-                className="border border-gray-200 rounded-lg p-4 hover:border-smblue-400 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                className={`border border-gray-200 rounded-lg p-4 hover:border-smblue-400 hover:shadow-md transition-all duration-200 cursor-pointer group transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                style={{ animationDelay: `${400 + (index * 50)}ms` }}
               >
                 <div className="flex items-center space-x-4">
                   <img
@@ -256,10 +290,10 @@ const BarangayOfficialsPage: React.FC = () => {
         </div>
 
         {/* Back Button */}
-        <div className="flex justify-start">
+        <div className={`flex justify-start transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '500ms' }}>
           <button
             onClick={() => setShowOfficerSelection(false)}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors hover:shadow-sm"
           >
             Back to Officials Page
           </button>
@@ -269,23 +303,26 @@ const BarangayOfficialsPage: React.FC = () => {
   }
 
   return (
-    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+    <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+      
       {/* Page Header */}
-      <div className="mb-2">
+      <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Barangay Officials</h1>
       </div>
 
       {/* Top Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Officials Overview */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div className={`lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '200ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">Officials Overview</h3>
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+            <div className={`bg-white rounded-lg p-6 border border-gray-100 shadow-sm transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '250ms' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Officials</p>
-                  <p className="text-2xl font-bold text-gray-900">9 officials</p>
+                  <p className="text-2xl font-bold text-gray-900">11 officials</p>
                 </div>
                 <div className="text-smblue-400">
                   <FiUsers className="w-8 h-8" />
@@ -293,7 +330,7 @@ const BarangayOfficialsPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+            <div className={`bg-white rounded-lg p-6 border border-gray-100 shadow-sm transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '300ms' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Upcoming Elections</p>
@@ -308,7 +345,7 @@ const BarangayOfficialsPage: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-smblue-400 rounded-2xl p-6">
+        <div className={`bg-smblue-400 rounded-2xl p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '350ms' }}>
           <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-white border-opacity-30 pl-4">Quick Actions</h3>
           <div className="space-y-4">
             <button 
@@ -316,12 +353,18 @@ const BarangayOfficialsPage: React.FC = () => {
                 console.log('Update Officers button clicked');
                 setShowOfficerSelection(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
             >
               <FiUsers className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
             </button>
-            <button className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm">
+            <button 
+              onClick={() => {
+                console.log('File Leave button clicked');
+                setShowFileLeave(true);
+              }}
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+            >
               <FiFileText className="w-5 h-5 text-white" />
               <span className="font-medium text-white">File Leave</span>
             </button>
@@ -330,7 +373,7 @@ const BarangayOfficialsPage: React.FC = () => {
       </div>
 
       {/* Officials List */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '400ms' }}>
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Officials List</h3>
           
@@ -344,7 +387,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 placeholder="Search Officials..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
               />
             </div>
             
@@ -353,7 +396,7 @@ const BarangayOfficialsPage: React.FC = () => {
               <select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                 title="Filter officials"
               >
                 <option value="All Active Officials">All Active Officials</option>
@@ -362,7 +405,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 <option value="Inactive">Inactive</option>
               </select>
               
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
+              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-all hover:shadow-sm">
                 <FiFilter className="w-4 h-4" />
                 <span>Advanced Filter</span>
               </button>
@@ -385,15 +428,15 @@ const BarangayOfficialsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOfficials.map((official) => (
-                <tr key={official.id} className="hover:bg-gray-50">
+              {filteredOfficials.map((official, index) => (
+                <tr key={official.id} className={`hover:bg-gray-50 transition-all duration-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: `${500 + (index * 50)}ms` }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                    <img
-                      src={official.photo}
-                      alt={official.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                      <img
+                        src={official.photo}
+                        alt={official.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{official.name}</div>
                         <div className="text-sm text-gray-500">{official.nationality}</div>
@@ -420,19 +463,20 @@ const BarangayOfficialsPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="text-smblue-400 hover:text-smblue-300"
+                        className="text-smblue-400 hover:text-smblue-300 transition-colors"
                         title="View official details"
                       >
                         <FiEye className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-smblue-400 hover:text-smblue-300"
+                        className="text-smblue-400 hover:text-smblue-300 transition-colors"
                         title="Edit official"
+                        onClick={() => handleSelectOfficerToEdit(official)}
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 transition-colors"
                         title="Delete official"
                       >
                         <FiTrash2 className="w-4 h-4" />
@@ -447,7 +491,7 @@ const BarangayOfficialsPage: React.FC = () => {
       </section>
 
       {/* Organizational Chart */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '600ms' }}>
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-darktext border-l-4 border-smblue-400 pl-4">Organizational Chart</h3>
         </div>
@@ -455,7 +499,7 @@ const BarangayOfficialsPage: React.FC = () => {
         <div className="p-8">
           {/* Barangay Captain */}
           {captain && (
-            <div className="flex flex-col items-center mb-8">
+            <div className={`flex flex-col items-center mb-8 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '650ms' }}>
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
@@ -477,7 +521,7 @@ const BarangayOfficialsPage: React.FC = () => {
           {/* Kagawads */}
           <div className="grid grid-cols-4 lg:grid-cols-8 gap-6">
             {councilors.map((councilor, index) => (
-              <div key={index} className="flex flex-col items-center">
+              <div key={index} className={`flex flex-col items-center transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ animationDelay: `${700 + (index * 100)}ms` }}>
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
                     src={councilor.photo}
@@ -496,5 +540,4 @@ const BarangayOfficialsPage: React.FC = () => {
   );
 };
 
-export default BarangayOfficialsPage; 
-
+export default BarangayOfficialsPage;

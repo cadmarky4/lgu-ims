@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, Calendar, Plus, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { FiChevronRight } from 'react-icons/fi';
 import type { Project, UpdateProjectData } from '../../services/project.types';
+import Breadcrumb from '../global/Breadcrumb';
 
 interface EditProjectProps {
   onClose: () => void;
@@ -40,6 +41,7 @@ interface UploadedFile {
 
 const EditProject: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoaded, setIsLoaded] = useState(false);
   const { projectId } = useParams<{ projectId: string }>();
   
   const [formData, setFormData] = useState({
@@ -62,6 +64,8 @@ const EditProject: React.FC = () => {
     successMetrics: '',
     potentialRisks: ''
   });
+
+  
 
   const [budgetBreakdown, setBudgetBreakdown] = useState<BudgetItem[]>([
     { id: '1', name: 'Material & Supplies', amount: '200000' },
@@ -127,6 +131,13 @@ const EditProject: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [projectTitle, setProjectTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsLoaded(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }, []);
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -455,30 +466,8 @@ const EditProject: React.FC = () => {
       `}</style>
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
-        {/* Breadcrumbs */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4 animate-slide-in-up">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
-          >
-            Dashboard
-          </button>
-          <FiChevronRight className="w-4 h-4 text-gray-400" />
-          <button 
-            onClick={() => navigate('/projects')}
-            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
-          >
-            Projects and Programs
-          </button>
-          <FiChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-900 font-medium">Edit Project</span>
-          {projectTitle && (
-            <>
-              <FiChevronRight className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-700 truncate max-w-xs">{projectTitle}</span>
-            </>
-          )}
-        </div>
+        {/* Automatic Breadcrumbs */}
+        <Breadcrumb isLoaded={isLoaded} />
 
         {/* Header */}
         <div className="mb-6 animate-slide-in-up">

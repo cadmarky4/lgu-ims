@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, Clock, User, Phone, Mail, CheckCircle } from "lucide-react";
+import Breadcrumb from "../global/Breadcrumb";
 
 interface AppointmentFormData {
   fullName: string;
@@ -29,6 +30,7 @@ const AppointmentsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const departments: string[] = [
     "Mayor's Office",
@@ -61,6 +63,14 @@ const AppointmentsPage: React.FC = () => {
     "4:00 PM",
     "4:30 PM",
   ];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -110,7 +120,13 @@ const AppointmentsPage: React.FC = () => {
 
   return (
     <div className="@container/main p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
+      {/* Header */}
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Process Appointment Request
         </h1>
@@ -121,7 +137,9 @@ const AppointmentsPage: React.FC = () => {
       </div>
 
       {submitted ? (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
+        <div className={`bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
             <h3 className="text-lg font-semibold text-green-900">
@@ -134,7 +152,9 @@ const AppointmentsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+        <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           {/* Personal Information */}
           <div className="col-span-2">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -360,7 +380,9 @@ const AppointmentsPage: React.FC = () => {
       )}
 
       {/* Information Cards */}
-      <div className="mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6">
+      <div className={`mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         <div className="bg-blue-50 rounded-lg p-6">
           <Clock className="h-8 w-8 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 mb-2">Office Hours</h3>

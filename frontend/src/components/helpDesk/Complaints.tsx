@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AlertCircle, User, CheckCircle, Info } from "lucide-react";
+import Breadcrumb from "../global/Breadcrumb";
 
 interface ComplaintFormData {
   // Personal Information
@@ -38,6 +39,7 @@ const ComplaintsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const complaintCategories: string[] = [
     "Public Services",
@@ -64,6 +66,14 @@ const ComplaintsPage: React.FC = () => {
     "Education",
     "General Services",
   ];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -131,7 +141,13 @@ const ComplaintsPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
+      {/* Header */}
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
           <AlertCircle className="h-8 w-8 mr-3 text-orange-600" />
           Process Complaint
@@ -143,7 +159,9 @@ const ComplaintsPage: React.FC = () => {
       </div>
 
       {/* Information Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex items-start">
           <Info className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
           <div>
@@ -161,7 +179,9 @@ const ComplaintsPage: React.FC = () => {
       </div>
 
       {submitted ? (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
+        <div className={`bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
             <h3 className="text-lg font-semibold text-green-900">
@@ -178,7 +198,9 @@ const ComplaintsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+        <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           {/* Anonymous Option */}
           <div className="mb-6 bg-gray-50 rounded-lg p-4">
             <label
@@ -479,7 +501,9 @@ const ComplaintsPage: React.FC = () => {
       )}
 
       {/* Process Timeline */}
-      <div className="mt-8 bg-gray-50 rounded-lg p-6">
+      <div className={`mt-8 bg-gray-50 rounded-lg p-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         <h3 className="font-semibold text-gray-900 mb-4">
           Complaint Process Timeline
         </h3>

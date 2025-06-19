@@ -1,13 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { FiChevronRight } from 'react-icons/fi';
-import type { Project } from '../../services/project.types';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Plus } from 'lucide-react';
-
-interface AddNewProjectProps {
-  onClose: () => void;
-  onSave: (projectData: Project) => void;
-}
+import Breadcrumb from '../global/Breadcrumb';
 
 interface BudgetItem {
   id: string;
@@ -25,6 +19,7 @@ interface UploadedFile {
 
 const AddNewProject: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
     projectName: '',
@@ -58,6 +53,14 @@ const AddNewProject: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -230,24 +233,8 @@ const AddNewProject: React.FC = () => {
       `}</style>
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
-        {/* Breadcrumbs */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4 animate-slide-in-up">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
-          >
-            Dashboard
-          </button>
-          <FiChevronRight className="w-4 h-4 text-gray-400" />
-          <button 
-            onClick={() => navigate('/projects')}
-            className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
-          >
-            Projects and Programs
-          </button>
-          <FiChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-900 font-medium">Add New Project</span>
-        </div>
+        {/* Automatic Breadcrumbs */}
+        <Breadcrumb isLoaded={isLoaded} />
 
         {/* Header */}
         <div className="mb-6 animate-slide-in-up">
@@ -766,4 +753,3 @@ const AddNewProject: React.FC = () => {
 };
 
 export default AddNewProject;
-

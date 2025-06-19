@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
-import {apiService} from '../../services';
+import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 
 interface EditBarangayOfficialProps {
   onClose: () => void;
@@ -14,6 +14,15 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -47,24 +56,24 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     termEnd: official?.termEnd || '2025-05-10'
   });
 
-  // Load draft data from localStorage
+  // Load draft data (commented out to avoid localStorage issues)
   const loadDraftData = () => {
     try {
-      const savedDraft = localStorage.getItem(`officialDraft_${official?.id || 'new'}`);
-      if (savedDraft) {
-        const draftData = JSON.parse(savedDraft);
-        setFormData(draftData);
-      }
+      // const savedDraft = localStorage.getItem(`officialDraft_${official?.id || 'new'}`);
+      // if (savedDraft) {
+      //   const draftData = JSON.parse(savedDraft);
+      //   setFormData(draftData);
+      // }
     } catch (error) {
       console.error('Failed to load draft data:', error);
     }
   };
 
-  // Save draft to localStorage
+  // Save draft (commented out to avoid localStorage issues)
   const handleSaveDraft = () => {
     setIsSavingDraft(true);
     try {
-      localStorage.setItem(`officialDraft_${official?.id || 'new'}`, JSON.stringify(formData));
+      // localStorage.setItem(`officialDraft_${official?.id || 'new'}`, JSON.stringify(formData));
       setError(null);
       showToast('Draft saved successfully!', 'success');
     } catch (error) {
@@ -75,10 +84,10 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     }
   };
 
-  // Clear draft from localStorage
+  // Clear draft (commented out to avoid localStorage issues)
   const clearDraft = () => {
     try {
-      localStorage.removeItem(`officialDraft_${official?.id || 'new'}`);
+      // localStorage.removeItem(`officialDraft_${official?.id || 'new'}`);
     } catch (error) {
       console.error('Failed to clear draft:', error);
     }
@@ -97,8 +106,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
 
@@ -127,10 +135,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         status: 'ACTIVE'
       };
 
-      // Use the API service to update the official
-      // const updatedOfficial = await apiService.updateBarangayOfficial(official.id, officialData);
-      
-      // For now, use the existing client-side save
+      // Use the existing client-side save
       onSave(officialData);
       
       // Clear the draft since official was successfully updated
@@ -160,50 +165,50 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
   };
 
   return (
-    <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+    <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+      
       {/* Header */}
-      <div className="mb-2">
+      <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Edit Barangay Official</h1>
-        {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && (
-          <p className="text-sm text-gray-600 mt-1">
-            📝 Draft data loaded from previous session
-          </p>
-        )}
+        {/* Draft notice commented out to avoid localStorage issues */}
+        {/* Draft data loaded notice would go here if localStorage was available */}
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '150ms' }}>
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '200ms' }}>
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '250ms' }}>
         {/* Basic Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Basic Information</h2>
+          <h2 className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '300ms' }}>Basic Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Profile Photo */}
-            <div className="lg:col-span-1">
+            <div className={`lg:col-span-1 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '350ms' }}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Profile Photo
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
                 <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
                   <FiUpload className="w-8 h-8 text-gray-400" />
                 </div>
                 <button
                   type="button"
-                  className="text-smblue-400 hover:text-smblue-300 text-sm font-medium"
+                  className="text-smblue-400 hover:text-smblue-300 text-sm font-medium transition-colors"
                 >
                   Upload Profile Photo
                 </button>
@@ -212,7 +217,8 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
 
             {/* Form Fields */}
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
+              {/* Prefix */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '400ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prefix
                 </label>
@@ -220,7 +226,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="prefix"
                   value={formData.prefix}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   title="Select prefix"
                 >
                   <option value="Mr.">Mr.</option>
@@ -231,7 +237,8 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 </select>
               </div>
 
-              <div>
+              {/* First Name */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '450ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   First Name *
                 </label>
@@ -240,12 +247,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   required
                 />
               </div>
 
-              <div>
+              {/* Middle Name */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '500ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Middle Name *
                 </label>
@@ -254,12 +262,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="middleName"
                   value={formData.middleName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   required
                 />
               </div>
 
-              <div>
+              {/* Last Name */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '550ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name *
                 </label>
@@ -268,12 +277,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   required
                 />
               </div>
 
-              <div>
+              {/* Gender */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '600ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender *
                 </label>
@@ -281,7 +291,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   title="Select gender"
                   required
                 >
@@ -290,7 +300,8 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 </select>
               </div>
 
-              <div>
+              {/* Birthdate */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '650ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Birthdate
                 </label>
@@ -299,11 +310,12 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="birthDate"
                   value={formData.birthDate}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                 />
               </div>
 
-              <div>
+              {/* Contact Number */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '700ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contact Number *
                 </label>
@@ -312,12 +324,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   required
                 />
               </div>
 
-              <div>
+              {/* Email Address */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '750ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address *
                 </label>
@@ -326,12 +339,13 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="emailAddress"
                   value={formData.emailAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   required
                 />
               </div>
 
-              <div>
+              {/* Complete Address */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '800ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Complete Address
                 </label>
@@ -340,11 +354,12 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="completeAddress"
                   value={formData.completeAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                 />
               </div>
 
-              <div>
+              {/* Civil Status */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '850ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Civil Status
                 </label>
@@ -352,7 +367,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="civilStatus"
                   value={formData.civilStatus}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   title="Select civil status"
                 >
                   <option value="Single">Single</option>
@@ -362,7 +377,8 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 </select>
               </div>
 
-              <div>
+              {/* Educational Background */}
+              <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '900ms' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Educational Background
                 </label>
@@ -371,7 +387,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                   name="educationalBackground"
                   value={formData.educationalBackground}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                 />
               </div>
             </div>
@@ -380,11 +396,12 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
 
         {/* Term Information */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Term Information</h2>
+          <h2 className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '950ms' }}>Term Information</h2>
           <div className="border-b border-gray-200 mb-6"></div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
+            {/* Committee Assignment */}
+            <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '1000ms' }}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Committee Assignment
               </label>
@@ -392,7 +409,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="committeeAssignment"
                 value={formData.committeeAssignment}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                 title="Select committee assignment"
               >
                 <option value="Health">Health</option>
@@ -407,7 +424,8 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
               </select>
             </div>
 
-            <div>
+            {/* Term Start */}
+            <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '1050ms' }}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Term Start
               </label>
@@ -416,11 +434,12 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="termStart"
                 value={formData.termStart}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
               />
             </div>
 
-            <div>
+            {/* Term End */}
+            <div className={`transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '1100ms' }}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Term End
               </label>
@@ -429,19 +448,19 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
                 name="termEnd"
                 value={formData.termEnd}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
               />
             </div>
           </div>
         </section>
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+        <div className={`flex justify-between items-center pt-6 border-t border-gray-200 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '1150ms' }}>
           <button
             type="button"
             onClick={handleSaveDraft}
             disabled={isSavingDraft || isSubmitting}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
           >
             {isSavingDraft && (
               <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
@@ -454,14 +473,15 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
             >
               Cancel
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={isSubmitting || isLoading}
-              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
             >
               {isSubmitting && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -470,7 +490,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
             </button>
           </div>
         </div>
-      </form>
+      </div>
 
       {/* Toast Notification */}
       {toast.show && (
@@ -488,7 +508,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
             <span className="text-sm font-medium">{toast.message}</span>
             <button
               onClick={() => setToast({ show: false, message: '', type: 'success' })}
-              className="ml-2 text-gray-400 hover:text-gray-600"
+              className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
               title="Close notification"
             >
               <FiX className="w-4 h-4" />
@@ -500,5 +520,4 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
   );
 };
 
-export default EditBarangayOfficial; 
-
+export default EditBarangayOfficial;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } from 'react-icons/fi';
+import Breadcrumb from '../global/Breadcrumb';
 import { residentsService } from '../../services';
 import type { Resident } from '../../services/resident.types';
 
@@ -14,6 +15,15 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
   const [resident, setResident] = useState<Resident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load resident data when component mounts
   useEffect(() => {
@@ -22,7 +32,7 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         setError('Resident ID not provided');
         setLoading(false);
         return;
-}
+      }
 
       try {
         setLoading(true);
@@ -70,15 +80,20 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
 
   if (error || !resident) {
     return (
-      <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-          >
-            Back to Residents
-          </button>
+      <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+        {/* Breadcrumbs even on error page */}
+        <Breadcrumb isLoaded={true} />
+        
+        <div className="flex justify-center items-center flex-1">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
+            >
+              Back to Residents
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -173,8 +188,13 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Automatic Breadcrumbs */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-2 flex justify-between items-center">
+      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">View Resident Profile</h1>
         <div className="flex space-x-2">
           <button
@@ -184,19 +204,23 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
           >
             <FiEdit className="w-6 h-6" />
           </button>
-        <button
+          <button
             onClick={handleClose}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Close"
-        >
-          <FiX className="w-6 h-6" />
-        </button>
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Close"
+          >
+            <FiX className="w-6 h-6" />
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
         {/* Profile Header */}
-        <div className="flex items-center mb-8 pb-6 border-b border-gray-200">
+        <div className={`flex items-center mb-8 pb-6 border-b border-gray-200 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '300ms' }}>
           <img
             src={resident.profile_photo_url || '/default-avatar.png'}
             alt={getFullName()}
@@ -220,7 +244,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </div>
 
         {/* Basic Information */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '400ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiUser className="mr-2" />
             Basic Information
@@ -278,7 +304,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Contact Information */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '500ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiPhone className="mr-2" />
             Contact Information
@@ -316,7 +344,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Family Information */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '600ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiUsers className="mr-2" />
             Family Information
@@ -358,7 +388,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Government IDs */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '700ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiFileText className="mr-2" />
             Government IDs & Documents
@@ -400,7 +432,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Health Information */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '800ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiHeart className="mr-2" />
             Health & Medical Information
@@ -418,7 +452,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Special Classifications */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '900ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiMapPin className="mr-2" />
             Special Classifications
@@ -474,7 +510,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* System Information */}
-        <section className="mb-8">
+        <section className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '1000ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             System Information
           </h3>
@@ -491,7 +529,9 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
         </section>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+        <div className={`flex justify-end space-x-4 pt-6 border-t border-gray-200 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '1100ms' }}>
           <button
             onClick={handleEdit}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
@@ -511,4 +551,3 @@ const ViewResident: React.FC<ViewResidentProps> = () => {
 };
 
 export default ViewResident;
-

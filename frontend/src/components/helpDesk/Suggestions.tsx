@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Lightbulb,
   User,
@@ -9,6 +9,7 @@ import {
   TrendingUp,
   Award,
 } from "lucide-react";
+import Breadcrumb from "../global/Breadcrumb";
 
 interface SuggestionFormData {
   // Personal Information
@@ -54,6 +55,7 @@ const SuggestionsPage: React.FC = () => {
   });
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const suggestionCategories: string[] = [
     "Community Development",
@@ -98,6 +100,14 @@ const SuggestionsPage: React.FC = () => {
       likes: 93,
     },
   ];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -159,7 +169,13 @@ const SuggestionsPage: React.FC = () => {
 
   return (
     <div className="@container/main p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
+      {/* Header */}
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
           <Lightbulb className="h-8 w-8 mr-3 text-yellow-500" />
           Process Resident Suggestions
@@ -171,7 +187,9 @@ const SuggestionsPage: React.FC = () => {
       </div>
 
       {/* Motivational Banner */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6 mb-6">
+      <div className={`bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6 mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold mb-2">Community Impact</h3>
@@ -185,7 +203,9 @@ const SuggestionsPage: React.FC = () => {
       </div>
 
       {/* Popular Suggestions */}
-      <div className="mb-8">
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '150ms' }}>
         <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
           <TrendingUp className="h-5 w-5 mr-2" />
           Popular Recent Suggestions
@@ -212,7 +232,9 @@ const SuggestionsPage: React.FC = () => {
       </div>
 
       {submitted ? (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3">
+        <div className={`bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           <Star className="h-6 w-6 text-green-600" />
           <div>
             <h3 className="text-lg font-semibold text-green-900">
@@ -228,7 +250,9 @@ const SuggestionsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="@container/main-form bg-white shadow-lg rounded-lg p-6">
+        <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
           {/* Personal Information */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -508,7 +532,9 @@ const SuggestionsPage: React.FC = () => {
       )}
 
       {/* Tips Section */}
-      <div className="mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6">
+      <div className={`mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         <div className="bg-blue-50 rounded-lg p-6">
           <Target className="h-8 w-8 text-blue-600 mb-3" />
           <h3 className="font-semibold text-gray-900 mb-2">Be Specific</h3>

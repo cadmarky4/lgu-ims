@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -22,6 +22,7 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import Breadcrumb from "../global/Breadcrumb";
 
 // Type definitions
 interface Ticket {
@@ -104,6 +105,15 @@ const HelpDeskPage: React.FC = () => {
   const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [editedTicket, setEditedTicket] = useState<Ticket | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Mock data with proper typing
   const [tickets, setTickets] = useState<Ticket[]>([
@@ -659,8 +669,13 @@ const HelpDeskPage: React.FC = () => {
 
   return (
     <div className="@container/main min-h-screen bg-gray-50 p-6">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header Section */}
-      <div className="mb-8">
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <div className="flex flex-col @3xl/main:flex-row @3xl/main:items-center @3xl/main:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -727,7 +742,9 @@ const HelpDeskPage: React.FC = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         {statCards.map((card: StatCard, index: number) => {
           const IconComponent = card.icon;
           return (
@@ -754,7 +771,9 @@ const HelpDeskPage: React.FC = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+      <div className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
           {/* Search */}
           <div className="flex-1">
@@ -780,11 +799,6 @@ const HelpDeskPage: React.FC = () => {
               onChange={(e) => setActiveTab(e.target.value as TabKey)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent"
             >
-              {/* {statusFilterOptions.map((status: TicketStatus | "all") => (
-                <option key={status} value={status}>
-                  {status === "all" ? "All Status" : status}
-                </option>
-              ))} */}
               {tabs.map((status: TabItem) => (
                 <option key={status.key} value={status.key}>
                   {status.label}
@@ -816,7 +830,9 @@ const HelpDeskPage: React.FC = () => {
       </div>
 
       {/* Tickets List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className={`bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
             Active Tickets ({filteredTickets.length})
@@ -1057,4 +1073,3 @@ const HelpDeskPage: React.FC = () => {
 };
 
 export default HelpDeskPage;
-

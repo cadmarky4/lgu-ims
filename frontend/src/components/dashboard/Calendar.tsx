@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 import { X, Calendar as CalendarIcon } from 'lucide-react';
+import AddAgenda from './AddAgenda';
 
 interface AgendaItem {
   id: number;
@@ -19,9 +20,8 @@ const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<SelectedDate | null>(null);
     const [showModal, setShowModal] = useState(false);
-
-  // Sample agenda data - you can replace this with your actual data
-    const agendaData: {[key: string]: AgendaItem[]} = {
+    const [showAddAgendaModal, setShowAddAgendaModal] = useState(false);
+    const [agendaData, setAgendaData] = useState<{[key: string]: AgendaItem[]}>({
     '2025-06-05': [
         { id: 1, title: 'Progress with Street Enhancement Lighting Program', time: '10:00 AM', color: 'bg-smblue-400' },
         { id: 2, title: 'Review project milestones', time: '2:00 PM', color: 'bg-green-500' }
@@ -35,7 +35,7 @@ const Calendar = () => {
     '2025-06-23': [
         { id: 5, title: 'Contractor evaluation', time: '11:00 AM', color: 'bg-red-500' }
     ],
-    };
+    });
 
     const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -66,6 +66,21 @@ const Calendar = () => {
 
     const handleNextMonth = (): void => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+    };
+
+    const handleAddAgenda = (): void => {
+        setShowAddAgendaModal(true);
+    };
+
+    const handleSaveAgenda = (newAgendaData: any): void => {
+        const dateKey = newAgendaData.date; // Date is already in YYYY-MM-DD format from the form
+        
+        setAgendaData(prev => ({
+            ...prev,
+            [dateKey]: prev[dateKey] ? [...prev[dateKey], newAgendaData] : [newAgendaData]
+        }));
+        
+        console.log('Agenda saved:', newAgendaData);
     };
 
     const daysInMonth = getDaysInMonth(currentDate);
@@ -207,6 +222,17 @@ const Calendar = () => {
             );
             })}
         </div>
+
+        {/* Add Agenda Button - Positioned at bottom */}
+        <div className="mt-6 pt-4 border-t border-gray-100">
+            <button
+            onClick={handleAddAgenda}
+            className="w-full flex items-center justify-center gap-2 bg-smblue-400 text-white px-4 py-3 rounded-lg hover:bg-smblue-300 transition-all duration-150 transform shadow-sm hover:shadow-md"
+            >
+            <FiPlus className="w-4 h-4" />
+            <span className="text-sm font-medium">Add Agenda</span>
+            </button>
+        </div>
     </div>
 
       {/* Modal for Agenda with Professional Animations - FIXED */}
@@ -268,9 +294,15 @@ const Calendar = () => {
           </div>
         </div>
       )}
+
+      {/* AddAgenda Modal */}
+      <AddAgenda 
+        isOpen={showAddAgendaModal}
+        onClose={() => setShowAddAgendaModal(false)}
+        onSave={handleSaveAgenda}
+      />
     </>
   );
 };
 
 export default Calendar;
-

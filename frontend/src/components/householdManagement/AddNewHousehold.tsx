@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiX, FiCheck, FiTrash2 } from 'react-icons/fi';
+import Breadcrumb from '../global/Breadcrumb';
 import { HouseholdsService } from '../../services/households.service';
 import { ResidentsService } from '../../services/residents.service';
 import { type HouseholdFormData } from '../../services/household.types';
@@ -39,6 +40,15 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -535,8 +545,13 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Automatic Breadcrumbs */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-2">
+      <div className={`mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
         {localStorage.getItem('householdDraft') && (
           <p className="text-sm text-gray-600 mt-1">
@@ -547,10 +562,12 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
 
       {/* Error Display */}
       {error && (
-        <div className={`border rounded-lg p-4 mb-4 ${isErrorInfo
+        <div className={`border rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        } ${isErrorInfo
           ? 'bg-blue-50 border-blue-200'
           : 'bg-red-50 border-red-200'
-          }`}>
+          }`} style={{ transitionDelay: '200ms' }}>
           <p className={`text-sm ${isErrorInfo ? 'text-blue-800' : 'text-red-800'
             }`}>{error}</p>
         </div>
@@ -558,12 +575,16 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '250ms' }}>
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <form onSubmit={handleSubmit} className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         {/* Household Identification */}
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Household Identification</h2>
@@ -1403,4 +1424,3 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
 };
 
 export default AddNewHousehold;
-

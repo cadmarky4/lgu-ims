@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiFileText, FiCheck, FiArrowLeft } from 'react-icons/fi';
 import { apiService } from '../../services';
+import Breadcrumb from '../global/Breadcrumb';
 
 interface BarangayClearanceFormProps {
   onNavigate: (page: string) => void;
@@ -28,6 +29,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
     purpose: '',
@@ -71,6 +73,14 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
     'Hon. Roberto Garcia - Kagawad',
     'Carmen Rodriguez - Barangay Secretary'
   ];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (searchTerm.length >= 2) {
@@ -223,7 +233,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   };
 
   const renderStep1 = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
         Select Resident
       </h2>
@@ -288,7 +300,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   );
 
   const renderStep2 = () => (
-    <div className="space-y-6">
+    <div className={`space-y-6 transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       {/* Selected Resident Info */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
@@ -482,7 +496,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   );
 
   const renderStep3 = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center transition-all duration-700 ease-out ${
+      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`} style={{ transitionDelay: '200ms' }}>
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <FiCheck className="w-8 h-8 text-green-600" />
       </div>
@@ -536,8 +552,13 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Header */}
-      <div className="mb-6">
+      <div className={`mb-6 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <div className="flex items-center space-x-2 mb-2">
           <button
             onClick={() => onNavigate('process-document')}
@@ -551,7 +572,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       </div>
 
       {/* Progress Indicator */}
-      <div className="mb-8">
+      <div className={`mb-8 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex items-center justify-center space-x-4">
           {[1, 2, 3].map((stepNumber) => (
             <div key={stepNumber} className="flex items-center">
@@ -589,5 +612,4 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   );
 };
 
-export default BarangayClearanceForm; 
-
+export default BarangayClearanceForm;

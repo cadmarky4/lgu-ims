@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Edit3, Download, Plus, Calendar } from 'lucide-react';
-import AddAgenda from './AddAgenda';
 
 interface ProjectQuickActionsProps {
   onUpdateProject: () => void;
@@ -41,13 +40,6 @@ const ProjectQuickActions: React.FC<ProjectQuickActionsProps> = ({ onUpdateProje
     },
     {
       id: 3,
-      title: 'Add Agenda',
-      shortTitle: 'Agenda',
-      icon: Calendar,
-      onClick: () => setShowAddAgenda(true)
-    },
-    {
-      id: 4,
       title: 'Export Report',
       shortTitle: 'Export',
       icon: Download,
@@ -123,14 +115,6 @@ const ProjectQuickActions: React.FC<ProjectQuickActionsProps> = ({ onUpdateProje
         )}
       </div>
 
-      {/* AddAgenda Modal*/}
-      {
-      <AddAgenda 
-        isOpen={showAddAgenda}
-        onClose={() => setShowAddAgenda(false)}
-        onSave={handleAgendaSave}
-      />
-      }
     </>
   );
 };

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronRight } from 'react-icons/fi';
 import { FaFolder, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import ViewProject from './ViewProject';
 import ProjectQuickActions from './ProjectQuickActions';
 import SelectProject from './SelectProject';
 import StatCard from '../global/StatCard';
-import Calendar from './Calendar';
 import RecentActivity from './RecentActivity';
 import ProjectPortfolio from './ProjectPortfolio';
+import Breadcrumb from '../global/Breadcrumb';
 import { FaCircleCheck } from 'react-icons/fa6';
 import type { IconType } from 'react-icons';
 
@@ -74,19 +73,8 @@ const ProjectsAndPrograms: React.FC = () => {
 
   return (
     <main className="p-4 lg:p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      {/* Breadcrumbs */}
-      <div className={`flex items-center space-x-2 text-sm text-gray-600 mb-2 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
-        <button 
-          onClick={() => navigate('/dashboard')}
-          className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
-        >
-          Dashboard
-        </button>
-        <FiChevronRight className="w-4 h-4 text-gray-400" />
-        <span className="text-gray-900 font-medium">Projects and Programs</span>
-      </div>
+      {/* Automatic Breadcrumbs */}
+      <Breadcrumb isLoaded={isLoaded} />
 
       {/* Page Header */}
       <div className={`mb-2 transition-all duration-700 ease-out ${
@@ -160,9 +148,6 @@ const ProjectsAndPrograms: React.FC = () => {
             onAddProject={handleAddProject}
           />
 
-          {/* Project Calendar */}
-          <Calendar />
-
           {/* Recent Activity */}
           <RecentActivity />
         </div>
@@ -192,4 +177,3 @@ const ProjectsAndPrograms: React.FC = () => {
 };
 
 export default ProjectsAndPrograms;
-

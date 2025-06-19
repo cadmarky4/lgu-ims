@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from "react-icons/fi";
 import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
 import StatCard from "../global/StatCard";
+import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
 import type { Resident, CreateResidentData, UpdateResidentData, ResidentFormData } from "../../services/resident.types";
 
@@ -27,6 +28,7 @@ const ResidentManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +51,14 @@ const ResidentManagement: React.FC = () => {
     total: 0,
   });
 
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Load residents data on component mount and when filters change
   useEffect(() => {
     loadResidents();
@@ -67,6 +77,7 @@ const ResidentManagement: React.FC = () => {
 
     return () => clearTimeout(delayedSearch);
   }, [searchTerm]);
+
   const loadResidents = async () => {
     setLoading(true);
     setError(null);
@@ -121,7 +132,9 @@ const ResidentManagement: React.FC = () => {
     if (resident.indigenous_people) categories.push("Indigenous");
     
     return categories.length > 0 ? categories.join(", ") : "Regular";
-  };  const loadStatistics = async () => {
+  };
+
+  const loadStatistics = async () => {
     try {
       const stats = await residentsService.getStatistics();
       
@@ -224,8 +237,13 @@ const ResidentManagement: React.FC = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      {/* Automatic Breadcrumbs */}
+      <Breadcrumb isLoaded={isLoaded} />
+
       {/* Page Header */}
-      <div className="mb-2">
+      <div className={`mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">
           Resident Management
         </h1>
@@ -233,49 +251,60 @@ const ResidentManagement: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '200ms' }}>
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`} style={{ transitionDelay: '250ms' }}>
           <p className="text-blue-800 text-sm">Loading residents...</p>
         </div>
       )}
 
       {/* Statistics Overview */}
-      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+      <section className={`w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '300ms' }}>
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
-        </h3>{" "}
+        </h3>
         <div className="grid grid-cols-4 gap-4">
-          <StatCard
-            title="Total Residents"
-            value={statistics.total_residents || 0}
-            icon={FaUsers}
-          />
-          <StatCard
-            title="PWD"
-            value={statistics.pwd_count || 0}
-            icon={FaWheelchair}
-          />
-          <StatCard
-            title="Senior Citizens"
-            value={statistics.senior_citizens || 0}
-            icon={FaUserFriends}
-          />
-          <StatCard
-            title="Children"
-            value={statistics.children_count || 0}
-            icon={FaChild}
-          />
+          {[
+            { title: "Total Residents", value: statistics.total_residents || 0, icon: FaUsers },
+            { title: "PWD", value: statistics.pwd_count || 0, icon: FaWheelchair },
+            { title: "Senior Citizens", value: statistics.senior_citizens || 0, icon: FaUserFriends },
+            { title: "Children", value: statistics.children_count || 0, icon: FaChild }
+          ].map((stat, index) => (
+            <div
+              key={stat.title}
+              className={`transition-all duration-700 ease-out ${
+                isLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+              }`}
+              style={{ 
+                transitionDelay: `${450 + (index * 100)}ms`,
+                transformOrigin: 'center bottom'
+              }}
+            >
+              <StatCard
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Residents Section */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '850ms' }}>
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Residents
@@ -292,7 +321,7 @@ const ResidentManagement: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
-            </div>{" "}
+            </div>
             <button
               onClick={openAddForm}
               disabled={loading}
@@ -302,7 +331,8 @@ const ResidentManagement: React.FC = () => {
               <span>Add New Resident</span>
             </button>
           </div>
-        </div>{" "}
+        </div>
+        
         {/* Table */}
         <div className="overflow-x-auto">
           {loading ? (
@@ -333,7 +363,7 @@ const ResidentManagement: React.FC = () => {
                     Actions
                   </th>
                 </tr>
-              </thead>{" "}
+              </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {residents.length === 0 && !loading ? (
                   <tr>
@@ -413,7 +443,8 @@ const ResidentManagement: React.FC = () => {
                             onClick={() => openEditForm(resident)}
                           >
                             <FiEdit className="w-4 h-4" />
-                          </button>                          <button
+                          </button>
+                          <button
                             className={`text-red-600 hover:text-red-900 ${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title={isDeleting === resident.id ? "Deactivating..." : "Deactivate resident"}
                             onClick={() => handleDeleteResident(resident.id)}
@@ -433,7 +464,8 @@ const ResidentManagement: React.FC = () => {
               </tbody>
             </table>
           )}
-        </div>{" "}
+        </div>
+        
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
@@ -495,4 +527,3 @@ const ResidentManagement: React.FC = () => {
 };
 
 export default ResidentManagement;
-
