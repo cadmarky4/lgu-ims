@@ -19,14 +19,13 @@ class SettingController extends Controller
             $settings = Setting::current();
             
             return response()->json([
-                'success' => true,
+                'message' => 'Settings retrieved successfully',
                 'data' => $settings->toFrontendFormat(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to retrieve settings',
-                'error' => $e->getMessage()
+                'errors' => ['general' => [$e->getMessage()]]
             ], 500);
         }
     }
@@ -47,8 +46,8 @@ class SettingController extends Controller
                 'type' => 'nullable|string|max:255',
                 'contactNumber' => 'nullable|string|max:255',
                 'emailAddress' => 'nullable|email|max:255',
-                'openingHours' => 'nullable|string|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/',
-                'closingHours' => 'nullable|string|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/',
+                'openingHours' => 'nullable|string|date_format:H:i',
+                'closingHours' => 'nullable|string|date_format:H:i',
                 'primaryLanguage' => 'nullable|string|max:255',
                 'secondaryLanguage' => 'nullable|string|max:255',
                 
@@ -65,7 +64,6 @@ class SettingController extends Controller
 
             if ($validator->fails()) {
                 return response()->json([
-                    'success' => false,
                     'message' => 'Validation failed',
                     'errors' => $validator->errors(),
                 ], 422);
@@ -75,16 +73,14 @@ class SettingController extends Controller
             $settings->updateFromFrontend($request->all());
 
             return response()->json([
-                'success' => true,
                 'message' => 'Settings updated successfully',
                 'data' => $settings->fresh()->toFrontendFormat(),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to update settings',
-                'error' => $e->getMessage()
+                'errors' => ['general' => [$e->getMessage()]]
             ], 500);
         }
     }
@@ -119,16 +115,14 @@ class SettingController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
                 'message' => 'Settings reset to default values',
                 'data' => $settings->fresh()->toFrontendFormat(),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to reset settings',
-                'error' => $e->getMessage()
+                'errors' => ['general' => [$e->getMessage()]]
             ], 500);
         }
     }

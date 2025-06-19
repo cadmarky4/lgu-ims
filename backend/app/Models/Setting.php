@@ -32,8 +32,6 @@ class Setting extends Model
     ];
 
     protected $casts = [
-        'opening_hours' => 'datetime:H:i',
-        'closing_hours' => 'datetime:H:i',
         'session_timeout' => 'integer',
         'max_login_attempts' => 'integer',
         'data_retention' => 'integer',
@@ -69,8 +67,8 @@ class Setting extends Model
             'type' => $this->type,
             'contactNumber' => $this->contact_number,
             'emailAddress' => $this->email_address,
-            'openingHours' => $this->opening_hours ? $this->opening_hours->format('H:i') : '',
-            'closingHours' => $this->closing_hours ? $this->closing_hours->format('H:i') : '',
+            'openingHours' => $this->opening_hours ?? '',
+            'closingHours' => $this->closing_hours ?? '',
             'primaryLanguage' => $this->primary_language,
             'secondaryLanguage' => $this->secondary_language,
             'sessionTimeout' => (string)$this->session_timeout,

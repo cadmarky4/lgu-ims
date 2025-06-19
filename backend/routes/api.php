@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\SuggestionController;
 use App\Http\Controllers\Api\BlotterCaseController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\BarangayOfficialController;
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +118,25 @@ Route::prefix('blotter-cases')->group(function () {
 });
 Route::apiResource('blotter-cases', BlotterCaseController::class)->only(['index', 'store', 'show', 'update']);
 
+// Settings - System Configuration (temporarily outside auth for testing)
+Route::get('settings', [SettingController::class, 'index']);
+Route::put('settings', [SettingController::class, 'update']);
+Route::post('settings/reset', [SettingController::class, 'reset']);
+
+// Dashboard routes (temporarily outside auth for testing)
+Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+Route::get('dashboard/demographics', [DashboardController::class, 'demographics']);
+Route::get('dashboard/notifications', [DashboardController::class, 'notifications']);
+Route::get('dashboard/activities', [DashboardController::class, 'activities']);
+Route::get('dashboard/barangay-officials', [DashboardController::class, 'barangayOfficials']);
+
+// Projects routes (temporarily outside auth for testing)  
+Route::get('projects/test', function () {
+    return response()->json(['message' => 'Projects API working']);
+});
+Route::get('projects/statistics', [ProjectController::class, 'statistics']);
+Route::apiResource('projects', ProjectController::class);
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
@@ -141,16 +162,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{document}/generate-qr', [DocumentController::class, 'generateQR']);
     });
     Route::apiResource('documents', DocumentController::class);
-
-    // Projects - Specific routes BEFORE apiResource
-    Route::prefix('projects')->group(function () {
-        Route::get('/statistics', [ProjectController::class, 'statistics']);
-        Route::post('/{project}/approve', [ProjectController::class, 'approve']);
-        Route::post('/{project}/start', [ProjectController::class, 'start']);
-        Route::post('/{project}/complete', [ProjectController::class, 'complete']);
-        Route::patch('/{project}/progress', [ProjectController::class, 'updateProgress']);
-    });
-    Route::apiResource('projects', ProjectController::class);
     
     // Help Desk - Complaints - Specific routes BEFORE apiResource
     Route::prefix('complaints')->group(function () {
@@ -205,21 +216,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
         Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
     });
-    Route::apiResource('barangay-officials', BarangayOfficialController::class);// General utility routes
-    Route::get('/dashboard/statistics', function () {
-        return response()->json([
-            'residents' => \App\Models\Resident::count(),
-            'households' => \App\Models\Household::count(),
-            'documents' => \App\Models\Document::count(),
-            'pending_documents' => \App\Models\Document::where('status', 'PENDING')->count(),
-            'projects' => \App\Models\Project::count(),
-            'active_projects' => \App\Models\Project::where('status', 'IN_PROGRESS')->count(),
-            'complaints' => \App\Models\Complaint::count(),
-            'pending_complaints' => \App\Models\Complaint::where('status', 'PENDING')->count(),
-            'total_budget' => \App\Models\Project::sum('total_budget'),
-            'utilized_budget' => \App\Models\Project::sum('utilized_budget'),
-        ]);
-    });
+    Route::apiResource('barangay-officials', BarangayOfficialController::class);
 
     // Temporary test route
     Route::get('/test-appointment-model', function () {

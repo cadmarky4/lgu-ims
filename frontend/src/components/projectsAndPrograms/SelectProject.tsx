@@ -1,119 +1,25 @@
 import React, { useState } from 'react';
 import { FiX, FiSearch, FiEdit3, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
-
-interface Project {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  budget: string;
-  progress: number | null;
-  status: 'Active' | 'Pending' | 'Completed';
-  startDate: string | null;
-  completedDate: string | null;
-  priority: 'high' | 'medium' | 'low';
-  teamSize: number;
-  lastUpdated: string;
-}
+import { type Project } from '../../services/project.types';
 
 interface SelectProjectProps {
   isOpen: boolean;
+  projects: Project[];
+  loading: boolean;
   onClose: () => void;
   onSelectProject: (project: Project) => void;
 }
 
-const SelectProject: React.FC<SelectProjectProps> = ({ isOpen, onClose, onSelectProject }) => {
+const SelectProject: React.FC<SelectProjectProps> = ({ 
+  isOpen, 
+  projects, 
+  loading, 
+  onClose, 
+  onSelectProject 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-
   if (!isOpen) return null;
-
-  const projects: Project[] = [
-    {
-      id: 1,
-      title: 'Street Lighting Enhancement Program',
-      category: 'Infrastructure',
-      description: 'Installation of LED street lights across major roads and pathways to improve safety and security for residents during night time.',
-      budget: '₱450,000',
-      progress: 65,
-      status: 'Active',
-      startDate: 'March 2025',
-      completedDate: null,
-      priority: 'high',
-      teamSize: 8,
-      lastUpdated: '2 days ago'
-    },
-    {
-      id: 2,
-      title: 'Community Health Center Renovation',
-      category: 'Health',
-      description: 'Comprehensive renovation of the barangay health center including new medical equipment and facility upgrades.',
-      budget: '₱850,000',
-      progress: null,
-      status: 'Pending',
-      startDate: 'July 2025',
-      completedDate: null,
-      priority: 'high',
-      teamSize: 12,
-      lastUpdated: '1 week ago'
-    },
-    {
-      id: 3,
-      title: 'Youth Skills Development Program',
-      category: 'Education',
-      description: 'Technical and vocational training program for young residents to develop employable skills and entrepreneurship capabilities.',
-      budget: '₱320,000',
-      progress: 40,
-      status: 'Active',
-      startDate: 'January 2025',
-      completedDate: null,
-      priority: 'medium',
-      teamSize: 5,
-      lastUpdated: '3 days ago'
-    },
-    {
-      id: 4,
-      title: 'Solid Waste Management System',
-      category: 'Environment',
-      description: 'Implementation of segregated waste collection and recycling program with community education component.',
-      budget: '₱850,000',
-      progress: null,
-      status: 'Completed',
-      startDate: 'November 2024',
-      completedDate: 'May 2025',
-      priority: 'medium',
-      teamSize: 10,
-      lastUpdated: '2 weeks ago'
-    },
-    {
-      id: 5,
-      title: 'Digital Library Initiative',
-      category: 'Education',
-      description: 'Establishing computer labs and digital resources for community learning and development.',
-      budget: '₱680,000',
-      progress: 25,
-      status: 'Active',
-      startDate: 'April 2025',
-      completedDate: null,
-      priority: 'low',
-      teamSize: 6,
-      lastUpdated: '5 days ago'
-    },
-    {
-      id: 6,
-      title: 'Senior Citizens Wellness Program',
-      category: 'Community',
-      description: 'Health and wellness activities for senior citizens including regular check-ups and recreational programs.',
-      budget: '₱200,000',
-      progress: 80,
-      status: 'Active',
-      startDate: 'February 2025',
-      completedDate: null,
-      priority: 'medium',
-      teamSize: 4,
-      lastUpdated: '1 day ago'
-    }
-  ];
 
   const categories = ['All', 'Infrastructure', 'Health', 'Education', 'Environment', 'Community'];
 
@@ -246,11 +152,16 @@ const SelectProject: React.FC<SelectProjectProps> = ({ isOpen, onClose, onSelect
             <p className="text-sm text-gray-600 mt-3">
               Found {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
             </p>
-          </div>
-
-          {/* Projects List */}
+          </div>          {/* Projects List */}
           <div className="p-6 overflow-y-auto max-h-96">
-            {filteredProjects.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center animate-pulse">
+                  <FiSearch className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500">Loading projects...</p>
+              </div>
+            ) : filteredProjects.length > 0 ? (
               <div className="space-y-4">
                 {filteredProjects.map((project, index) => (
                   <div

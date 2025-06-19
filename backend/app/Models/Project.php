@@ -342,6 +342,48 @@ class Project extends Model
         return $this->progress_percentage < $expectedProgress;
     }
 
+    /**
+     * Transform project data to frontend format
+     */
+    public function toFrontendFormat(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'category' => $this->category,
+            'description' => $this->description,
+            'budget' => number_format($this->total_budget, 2),
+            'progress' => $this->progress_percentage,
+            'status' => $this->status,
+            'startDate' => $this->start_date ? $this->start_date->toDateString() : null,
+            'completedDate' => $this->actual_end_date ? $this->actual_end_date->toDateString() : null,
+            'priority' => strtolower($this->priority),
+            'teamSize' => $this->team_size,
+            'lastUpdated' => $this->updated_at->toISOString(),
+        ];
+    }
+
+    /**
+     * Update project from frontend data
+     */
+    public function updateFromFrontend(array $data): void
+    {
+        $mappedData = [
+            'title' => $data['title'] ?? $this->title,
+            'category' => $data['category'] ?? $this->category,
+            'description' => $data['description'] ?? $this->description,
+            'total_budget' => isset($data['budget']) ? (float) str_replace(',', '', $data['budget']) : $this->total_budget,
+            'progress_percentage' => $data['progress'] ?? $this->progress_percentage,
+            'status' => $data['status'] ?? $this->status,
+            'start_date' => $data['startDate'] ?? $this->start_date,
+            'actual_end_date' => $data['completedDate'] ?? $this->actual_end_date,
+            'priority' => isset($data['priority']) ? strtolower($data['priority']) : $this->priority,
+            'team_size' => $data['teamSize'] ?? $this->team_size,
+        ];
+
+        $this->update($mappedData);
+    }
+
     // Boot method
     protected static function boot()
     {
