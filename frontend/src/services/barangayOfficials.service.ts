@@ -77,7 +77,6 @@ export class BarangayOfficialsService extends BaseApiService {
     }
     throw new Error(JSON.stringify(response) || 'Failed to create barangay official');
   }
-
   /**
    * Update an existing barangay official
    */
@@ -92,6 +91,10 @@ export class BarangayOfficialsService extends BaseApiService {
         method: 'POST', // Laravel requires POST for FormData with _method
         body: data,
         // Don't set Content-Type header - let browser set it with boundary for FormData
+        headers: {
+          // Ensure the X-HTTP-Method-Override header is set as well
+          'X-HTTP-Method-Override': 'PUT'
+        }
       };
     } else {
       // Handle regular JSON data

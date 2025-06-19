@@ -9,7 +9,7 @@ const AppLayout: React.FC = () => {
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 767px)").matches
   );
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,10 +44,15 @@ const AppLayout: React.FC = () => {
     navigate(`/${item}`);
     if (isMobile) setIsOpen(false);
   };
-
   const handleLogout = () => {
     logout();
     // No need to navigate here since logout() handles the redirect
+  };
+
+  const handleUserClick = () => {
+    if (user?.id) {
+      navigate(`/users/view/${user.id}`);
+    }
   };
 
   const handleSidebarToggle = () => {
@@ -68,13 +73,14 @@ const AppLayout: React.FC = () => {
     mediaQuery.addEventListener("change", handleMediaChange);
     return () => mediaQuery.removeEventListener("change", handleMediaChange);
   }, []);
-
   return (
     <>
       <Header
         isSidebarExpanded={isOpen}
         onToggleSidebar={handleSidebarToggle}
         onLogout={handleLogout}
+        onUserClick={handleUserClick}
+        user={user}
         isMobile={isMobile}
       />
       <div className="bg-gray-50 flex h-screen overflow-hidden">

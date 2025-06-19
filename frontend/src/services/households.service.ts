@@ -72,7 +72,6 @@ export class HouseholdsService extends BaseApiService {
 
     return request;
   }
-
   async getHouseholds(params: HouseholdParams = {}): Promise<PaginatedResponse<Household>> {
     const searchParams = new URLSearchParams();
     
@@ -82,12 +81,12 @@ export class HouseholdsService extends BaseApiService {
       }
     });
 
-    const response = await this.request<PaginatedResponse<Household>>(
+    const response = await this.requestAll<Household>(
       `/households?${searchParams.toString()}`
     );
 
     if (response.data) {
-      return response.data;
+      return response;
     }
 
     throw new Error('Failed to fetch households');

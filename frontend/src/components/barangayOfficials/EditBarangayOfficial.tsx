@@ -139,19 +139,25 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
     setError(null);
 
     try {
-      // Create FormData to handle file upload
-      const submitData = new FormData();
+      let submitData: any;
       
-      // Append all form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          submitData.append(key, value.toString());
-        }
-      });
-      
-      // Append file if selected
       if (selectedFile) {
-        submitData.append('profile_photo', selectedFile);
+        // Use FormData only when there's a file to upload
+        const formDataForUpload = new FormData();
+        
+        // Append all form fields
+        Object.entries(formData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            formDataForUpload.append(key, value.toString());
+          }
+        });
+        
+        // Append file
+        formDataForUpload.append('profile_photo', selectedFile);
+        submitData = formDataForUpload;
+      } else {
+        // Use regular JSON data when there's no file
+        submitData = { ...formData };
       }
 
       if (official?.id) {

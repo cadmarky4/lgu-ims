@@ -3,11 +3,30 @@ import { BiSidebar } from "react-icons/bi";
 import { useContainerWidth } from "../../custom-hooks/useContainerWidth";
 import { useEffect, useState } from "react";
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  role: string;
+  department: string;
+  position?: string;
+  employee_id?: string;
+  phone?: string;
+  is_active: boolean;
+  is_verified: boolean;
+  full_name: string;
+}
+
 interface HeaderProps {
   onToggleSidebar: () => void;
   onLogout?: () => void;
   isSidebarExpanded: boolean;
   isMobile: boolean;
+  user?: User | null;
+  onUserClick?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -15,6 +34,8 @@ const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   isSidebarExpanded,
   isMobile,
+  user,
+  onUserClick,
 }) => {
   const [containerRef, width] = useContainerWidth();
   const isDateShortened = width < 576;
@@ -74,26 +95,26 @@ const Header: React.FC<HeaderProps> = ({
           >
             <BiSidebar fontSize={24} />
           </button>
-        </div>
-
-        {/* Welcome Section and User Profile */}
+        </div>        {/* Welcome Section and User Profile */}
         <div className="flex items-center space-x-6">
           <div className="max-w-[330px] text-right">
             <h2 className="truncate text-lg font-semibold text-gray-900">
-              Welcome, Juan
+              Welcome, {user?.first_name || 'User'}
             </h2>
             <p className="truncate text-sm text-gray-500">
               {currentDate.toUpperCase()} | {currentTime.toUpperCase()}
             </p>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <div className="max-w-56 flex justify-center items-center space-x-2 bg-smblue-400 text-white px-4 py-2 rounded-lg">
+          </div><div className="flex items-center space-x-3">
+            <button
+              onClick={onUserClick}
+              className="max-w-56 flex justify-center items-center space-x-2 bg-smblue-400 hover:bg-smblue-500 transition-colors text-white px-4 py-2 rounded-lg cursor-pointer"
+              title="View Profile"
+            >
               <FiUser className="header-pre-mobile:mr-0 mr-0 @2xl/header:mr-2 w-5 h-5 flex justify-center" />
               <span className="truncate font-medium hidden @2xl/header:inline">
-                Ayevinna Hao
+                {user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User'}
               </span>
-            </div>
+            </button>
 
             {onLogout && (
               <button
