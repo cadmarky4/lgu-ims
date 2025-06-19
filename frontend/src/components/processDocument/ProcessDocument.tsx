@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiFilter, FiPrinter, FiEye, FiEdit3, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
 import { documentsService } from '../../services/documents.service';
 import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/document.types';
+import { 
+  BarangayClearanceTemplate, 
+  CertificateOfResidencyTemplate, 
+  CertificateOfIndigencyTemplate, 
+  BusinessPermitTemplate,
+  type DocumentData 
+} from './CertificateTemplates';
 
 interface ProcessDocumentProps {
   onNavigate: (page: string) => void;
@@ -55,6 +62,8 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('ALL');
   const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const [showPrintTemplate, setShowPrintTemplate] = useState(false);
+  const [selectedPrintDocument, setSelectedPrintDocument] = useState<DocumentData | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -286,6 +295,34 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         setError((err instanceof Error ? err.message : 'Unknown error'));
       }
     }
+  };
+
+  const handlePrintDocument = (document: DocumentRequest) => {
+    // Convert DocumentRequest to DocumentData for the template
+    const documentData: DocumentData = {
+      id: document.id,
+      document_type: document.document_type,
+      resident_name: document.resident_name,
+      purpose: document.purpose,
+      status: document.status,
+      request_date: document.request_date,
+      resident: {
+        first_name: document.resident.first_name,
+        last_name: document.resident.last_name,
+        middle_name: document.resident.middle_name || '',
+        complete_address: document.resident.complete_address,
+        birth_date: (document.resident as any).birth_date || '',
+        civil_status: (document.resident as any).civil_status || '',
+        nationality: (document.resident as any).nationality || 'Filipino',
+      },
+      certifying_official: (document as any).certifying_official || '',
+      or_number: (document as any).or_number || '',
+      amount_paid: (document as any).amount_paid || 0,
+      date_issued: (document as any).date_issued || '',
+    };
+
+    setSelectedPrintDocument(documentData);
+    setShowPrintTemplate(true);
   };
 
   const getDocumentTypeLabel = (type: string) => {
@@ -551,16 +588,13 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                       >
                         <FiEdit3 className="h-4 w-4" />
                       </button>
-          <button
-                        onClick={() => {
-                          // Handle print/view functionality
-                          console.log('Print document:', document.id);
-                        }}
+                                <button
+                        onClick={() => handlePrintDocument(document)}
                         className="text-gray-400 hover:text-gray-600"
                         title="Print/View"
                       >
                         <FiPrinter className="h-4 w-4" />
-          </button>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -646,6 +680,26 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         />
       )}
 
+      {/* Print Templates */}
+      {showPrintTemplate && selectedPrintDocument && (() => {
+        const handleClosePrint = () => {
+          setShowPrintTemplate(false);
+          setSelectedPrintDocument(null);
+        };
+
+        switch (selectedPrintDocument.document_type) {
+          case 'BARANGAY_CLEARANCE':
+            return <BarangayClearanceTemplate document={selectedPrintDocument} onClose={handleClosePrint} />;
+          case 'CERTIFICATE_OF_RESIDENCY':
+            return <CertificateOfResidencyTemplate document={selectedPrintDocument} onClose={handleClosePrint} />;
+          case 'CERTIFICATE_OF_INDIGENCY':
+            return <CertificateOfIndigencyTemplate document={selectedPrintDocument} onClose={handleClosePrint} />;
+          case 'BUSINESS_PERMIT':
+            return <BusinessPermitTemplate document={selectedPrintDocument} onClose={handleClosePrint} />;
+          default:
+            return <BarangayClearanceTemplate document={selectedPrintDocument} onClose={handleClosePrint} />;
+        }
+      })()}
 
     </div>
   );
