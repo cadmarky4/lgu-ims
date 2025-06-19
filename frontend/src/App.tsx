@@ -17,6 +17,10 @@ import BusinessPermitForm from "./components/processDocument/BusinessPermitForm"
 import CertificateOfIndigencyForm from "./components/processDocument/CertificateOfIndigencyForm";
 import CertificateOfResidencyForm from "./components/processDocument/CertificateOfResidencyForm";
 import DocumentQueue from "./components/processDocument/DocumentQueue";
+import BarangayClearancePrint from "./components/processDocument/BarangayClearancePrint";
+import CertificateOfResidencyPrint from "./components/processDocument/CertificateOfResidencyPrint";
+import CertificateOfIndigencyPrint from "./components/processDocument/CertificateOfIndigencyPrint";
+import BusinessPermitPrint from "./components/processDocument/BusinessPermitPrint";
 import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
 import SettingsPage from "./components/settings/SettingsPage";
 import ProjectsAndPrograms from "./components/projectsAndPrograms/ProjectsAndPrograms";
@@ -167,6 +171,7 @@ const router = createBrowserRouter([
             path: "certificate-residency",
             element: <CertificateOfResidencyFormWrapper />,
           },
+
         ],
       },
       {
@@ -232,6 +237,39 @@ const router = createBrowserRouter([
         element: <Navigate to="/dashboard" replace />,
       },
     ],
+  },
+  // Standalone Print Routes (outside AppLayout to avoid headers/navigation)
+  {
+    path: "/print/barangay-clearance/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <BarangayClearancePrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/certificate-residency/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <CertificateOfResidencyPrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/certificate-indigency/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <CertificateOfIndigencyPrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/business-permit/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <BusinessPermitPrint />
+      </ProtectedRoute>
+    ),
   },
 ]);
 
