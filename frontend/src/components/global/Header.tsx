@@ -3,6 +3,7 @@ import { BiSidebar } from "react-icons/bi";
 import { useContainerWidth } from "../../custom-hooks/useContainerWidth";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -23,6 +24,8 @@ const Header: React.FC<HeaderProps> = ({
   const { user, logout } = useAuth();
 
   const [now, setNow] = useState(new Date());
+
+  const navigate = useNavigate();
 
   const currentDate = now.toLocaleDateString("en-US", {
     weekday: isDateShortenedEvenMore
@@ -69,6 +72,12 @@ const Header: React.FC<HeaderProps> = ({
     }
   }, [isDropdownOpen]);
 
+  const handleUserClick = () => {
+    if (user?.id) {
+      navigate(`/users/view/${user.id}`)
+    }
+  }
+
   const handleLogout = () => {
     setIsDropdownOpen(false);
     logout();
@@ -113,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="relative" id="user-dropdown">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex justify-center items-center space-x-2 bg-smblue-400 hover:bg-smblue-500 text-white px-4 py-2 rounded-lg transition-colors min-w-fit"
+            className="cursor-pointer flex justify-center items-center space-x-2 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg transition-colors min-w-fit"
           >
             <FiUser className="header-pre-mobile:mr-0 mr-0 @2xl/header:mr-2 w-5 h-5 flex-shrink-0" />
             <span className="font-medium hidden @2xl/header:inline whitespace-nowrap">
@@ -125,17 +134,17 @@ const Header: React.FC<HeaderProps> = ({
           {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              {/* User Info */}
-              <div className="px-4 py-2 border-b border-gray-100">
+              {/* User Info Button */}
+              <button onClick={handleUserClick} className="cursor-pointer text-left w-full px-4 py-2 border-b border-gray-100 hover:bg-gray-200">
                 <p className="font-medium text-gray-900">{user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User'}</p>
                 <p className="text-sm text-gray-500">{user?.email}</p>
                 <p className="text-xs text-gray-400">{user?.role} • {user?.department}</p>
-              </div>
+              </button>
               
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                className="cursor-pointer w-full flex items-center space-x-2 px-4 py-2 text-left text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
               >
                 <FiLogOut className="w-4 h-4" />
                 <span className="font-medium">Logout</span>
