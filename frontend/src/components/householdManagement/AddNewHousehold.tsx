@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiSearch, FiX, FiCheck, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiX, FiTrash2 } from 'react-icons/fi';
 import Breadcrumb from '../global/Breadcrumb';
 import { HouseholdsService } from '../../services/households.service';
 import { ResidentsService } from '../../services/residents.service';
+import { useNotificationHelpers } from '../global/NotificationSystem';
 import { type HouseholdFormData } from '../../services/household.types';
 import { type Resident } from '../../services/resident.types';
 import { type Barangay } from '../../services/types';
@@ -24,13 +25,10 @@ const RELATIONSHIP_OPTIONS = [
   'Non-relative'
 ];
 
-interface AddNewHouseholdProps {
-  // onClose: () => void;
-  // onSave: (householdData: HouseholdFormData) => void;
-}
-
-const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
+const AddNewHousehold: React.FC = () => {
   const navigate = useNavigate();
+  const { showCreateSuccess, showCreateError, showSuccess, showError } = useNotificationHelpers();
+  
   // Refs for dropdown click-outside detection
   const headSearchRef = useRef<HTMLDivElement>(null);
   const memberSearchRef = useRef<HTMLDivElement>(null);
@@ -38,8 +36,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);  const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -49,21 +46,6 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
-  // Toast state
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({ show: false, message: '', type: 'success' });
-
-  // Toast utility function
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
 
   // Services
   const householdsService = new HouseholdsService();
@@ -180,9 +162,9 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
       };
       localStorage.setItem('householdDraft', JSON.stringify(draftData));
       setError(null);
-      showToast('Draft saved successfully!', 'success');
+      showSuccess('Draft saved successfully!');
     } catch (error) {
-      showToast('Failed to save draft. Please try again.', 'error');
+      showError('Failed to save draft. Please try again.');
       console.error('Failed to save draft:', error);
     } finally {
       setIsSavingDraft(false);
@@ -356,18 +338,35 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
     }
 
     console.log('Form submission - formData:', formData);
-    console.log('Members to be sent:', formData.members);
-
+    console.log('Members to be sent:', formData.members);    
     try {
       // Use the service to create household
       const result = await householdsService.createHousehold(formData);
       console.log('Household created successfully:', result);
+      
+      // Show success notification
+      const householdName = result.household_number || `Household #${result.id}`;
+      showCreateSuccess('Household', householdName);
+      
+      // Navigate back to household list after a short delay
+      setTimeout(() => {
+        navigate('/household');
+      }, 1000);
+      
       // onSave(formData); // Still call onSave for parent component to refresh list
       // onClose();
     } catch (err) {
       console.error('Error creating household:', err);
+      
+      let errorMessage = 'Failed to save household. Please try again.';
+      if (err instanceof Error) {
+        errorMessage = err.message || errorMessage;
+      }
+      
+      // Show error notification
+      showCreateError('Household', errorMessage);
       setIsErrorInfo(false);
-      setError('Failed to save household. Please try again.');
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -1392,34 +1391,7 @@ const AddNewHousehold: React.FC<AddNewHouseholdProps> = () => {
             </button>
           </div>
         </div>
-      </form >
-
-      {/* Toast Notification */}
-      {
-        toast.show && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-            <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${toast.type === 'success'
-              ? 'bg-green-50 border-green-200 text-green-800'
-              : 'bg-red-50 border-red-200 text-red-800'
-              }`}>
-              {toast.type === 'success' ? (
-                <FiCheck className="w-5 h-5 text-green-600" />
-              ) : (
-                <FiX className="w-5 h-5 text-red-600" />
-              )}
-              <span className="text-sm font-medium">{toast.message}</span>
-              <button
-                onClick={() => setToast({ show: false, message: '', type: 'success' })}
-                className="ml-2 text-gray-400 hover:text-gray-600"
-                title="Close notification"
-              >
-                <FiX className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )
-      }
-    </main >
+      </form >    </main >
   );
 };
 

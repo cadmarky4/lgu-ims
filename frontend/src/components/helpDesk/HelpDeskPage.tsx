@@ -24,6 +24,16 @@ import {
 } from "lucide-react";
 import Breadcrumb from "../global/Breadcrumb";
 
+// Import API services
+import { AppointmentsService } from "../../services/appointments.service";
+import { ComplaintsService } from "../../services/complaints.service";
+import { SuggestionsService } from "../../services/suggestions.service";
+import { BlotterService } from "../../services/blotter.service";
+import type { Appointment, AppointmentStatus } from "../../services/appointment.types";
+import type { Complaint, ComplaintStatus } from "../../services/complaint.types";
+import type { Suggestion, SuggestionStatus } from "../../services/suggestion.types";
+import type { BlotterCase, BlotterStatus } from "../../services/blotter.types";
+
 // Type definitions
 interface Ticket {
   id: string;
@@ -102,8 +112,7 @@ const HelpDeskPage: React.FC = () => {
   const [showTicketDropdown, setShowTicketDropdown] = useState<boolean>(false);
   const [editingStatus, setEditingStatus] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalTicket, setModalTicket] = useState<Ticket | null>(null);
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [modalTicket, setModalTicket] = useState<Ticket | null>(null);  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [editedTicket, setEditedTicket] = useState<Ticket | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -115,85 +124,208 @@ const HelpDeskPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Mock data with proper typing
-  const [tickets, setTickets] = useState<Ticket[]>([
-    {
-      id: "TKT-001",
-      title: "Business Permit Appointment Request",
-      description:
-        "Resident requested appointment for business permit renewal. Scheduled for next week.",
-      type: "Appointment",
-      priority: "Medium",
-      status: "Pending",
-      submittedBy: "Maria Santos",
-      submittedDate: "2025-06-14",
-      assignedTo: "Business Permits Office",
-      department: "Business Permits and Licensing",
-      referenceNumber: "APT-2025-0614-001",
-      appointmentDate: "2025-06-21",
-      appointmentTime: "10:00 AM",
-      purpose: "Business permit renewal for retail store",
-      contactEmail: "maria.santos@email.com",
-      contactPhone: "+63 912 345 6789",
-    },
-    {
-      id: "TKT-002",
-      title: "Noise Disturbance Report",
-      description:
-        "Blotter report filed regarding noise complaint in Barangay Zone 3. Requires mediation.",
-      type: "Blotter",
-      priority: "High",
-      status: "In Progress",
-      submittedBy: "Juan Dela Cruz",
-      submittedDate: "2025-06-13",
-      assignedTo: "Barangay Peace and Order Committee",
-      department: "Peace and Order",
-      referenceNumber: "BLT-2025-0613-001",
-      incidentType: "Noise Complaint",
-      incidentDate: "2025-06-13",
-      incidentLocation: "123 Main St, Barangay Zone 3",
-      respondentName: "Pedro Gonzales",
-      contactEmail: "juan.delacruz@email.com",
-      contactPhone: "+63 917 123 4567",
-    },
-    {
-      id: "TKT-003",
-      title: "Street Light Malfunction",
-      description:
-        "Complaint about non-functioning street lights on Main Street. Affects public safety.",
-      type: "Complaint",
-      priority: "High",
-      status: "Resolved",
-      submittedBy: "Ana Rodriguez",
-      submittedDate: "2025-06-12",
-      assignedTo: "Engineering Department",
-      department: "Infrastructure",
-      referenceNumber: "CMP-2025-0612-001",
-      complaintCategory: "Infrastructure",
-      urgency: "High",
-      contactEmail: "ana.rodriguez@email.com",
-      contactPhone: "+63 905 987 6543",
-    },
-    {
-      id: "TKT-004",
-      title: "Community Garden Project Proposal",
-      description:
-        "Suggestion for establishing a community garden in the vacant lot near the health center.",
-      type: "Suggestion",
-      priority: "Low",
-      status: "Pending",
-      submittedBy: "Community Leaders",
-      submittedDate: "2025-06-11",
-      assignedTo: "Planning Committee",
-      department: "Community Development",
-      referenceNumber: "SUG-2025-0611-001",
-      suggestionCategory: "Environmental Protection",
-      expectedBenefits:
-        "Promotes community engagement, provides fresh produce, beautifies the area",
-      contactEmail: "community.leaders@email.com",
-      contactPhone: "+63 920 111 2222",
-    },
-  ]);
+  // API state management
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // API service instances
+  const appointmentsService = new AppointmentsService();
+  const complaintsService = new ComplaintsService();
+  const suggestionsService = new SuggestionsService();
+  const blotterService = new BlotterService();
+
+  // Load all help desk data on component mount
+  useEffect(() => {
+    loadAllTickets();
+  }, []);
+
+  const loadAllTickets = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch data from all help desk modules in parallel
+      const [appointments, complaints, suggestions, blotterCases] = await Promise.all([
+        appointmentsService.getAppointments().catch(() => []),
+        complaintsService.getComplaints().catch(() => []),
+        suggestionsService.getSuggestions().catch(() => []),
+        blotterService.getBlotterCases().catch(() => []),
+      ]);
+
+      // Transform API data to unified Ticket format
+      const transformedTickets: Ticket[] = [
+        ...transformAppointments(appointments || []),
+        ...transformComplaints(complaints || []),
+        ...transformSuggestions(suggestions || []),
+        ...transformBlotterCases(blotterCases || []),
+      ];
+
+      setTickets(transformedTickets);
+    } catch (err) {
+      console.error('Failed to load help desk data:', err);
+      setError('Failed to load help desk data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Transform functions to convert API data to Ticket format
+  const transformAppointments = (appointments: Appointment[]): Ticket[] => {
+    return appointments.map(apt => ({
+      id: `APT-${apt.id}`,
+      title: `Appointment: ${apt.purpose}`,
+      description: apt.additional_notes || 'No additional notes provided',
+      type: "Appointment" as TicketType,
+      priority: mapAppointmentPriority(apt.priority),
+      status: mapAppointmentStatus(apt.status),
+      submittedBy: apt.full_name,
+      submittedDate: apt.created_at.split('T')[0],
+      assignedTo: apt.assigned_official_name || apt.department,
+      department: apt.department,
+      referenceNumber: apt.appointment_number,
+      appointmentDate: apt.preferred_date,
+      appointmentTime: apt.preferred_time,
+      purpose: apt.purpose,
+      contactEmail: apt.email,
+      contactPhone: apt.phone,
+    }));
+  };
+
+  const transformComplaints = (complaints: Complaint[]): Ticket[] => {
+    return complaints.map(cmp => ({
+      id: `CMP-${cmp.id}`,
+      title: `Complaint: ${cmp.subject}`,
+      description: cmp.description,
+      type: "Complaint" as TicketType,
+      priority: mapComplaintPriority(cmp.urgency),
+      status: mapComplaintStatus(cmp.status),
+      submittedBy: cmp.full_name || 'Anonymous',
+      submittedDate: cmp.created_at.split('T')[0],
+      assignedTo: cmp.assigned_official?.name || cmp.department || 'Unassigned',
+      department: cmp.department || 'General',
+      referenceNumber: cmp.complaint_number,
+      complaintCategory: cmp.complaint_category,
+      urgency: cmp.urgency,
+      contactEmail: cmp.email,
+      contactPhone: cmp.phone,
+    }));
+  };
+
+  const transformSuggestions = (suggestions: Suggestion[]): Ticket[] => {
+    return suggestions.map(sug => ({
+      id: `SUG-${sug.id}`,
+      title: `Suggestion: ${sug.title}`,
+      description: sug.description,
+      type: "Suggestion" as TicketType,
+      priority: mapSuggestionPriority(sug.priority),
+      status: mapSuggestionStatus(sug.status),
+      submittedBy: sug.name,
+      submittedDate: sug.created_at.split('T')[0],
+      assignedTo: sug.reviewer?.name || 'Planning Committee',
+      department: 'Community Development',
+      referenceNumber: sug.suggestion_number,
+      suggestionCategory: sug.category,
+      expectedBenefits: sug.benefits,
+      contactEmail: sug.email,
+      contactPhone: sug.phone,
+    }));
+  };
+
+  const transformBlotterCases = (blotterCases: BlotterCase[]): Ticket[] => {
+    return blotterCases.map(blotter => ({
+      id: `BLT-${blotter.id}`,
+      title: `Blotter: ${blotter.incident_type}`,
+      description: blotter.incident_description,
+      type: "Blotter" as TicketType,
+      priority: mapBlotterPriority(blotter.priority),
+      status: mapBlotterStatus(blotter.status),
+      submittedBy: blotter.complainant_name,
+      submittedDate: blotter.created_at.split('T')[0],
+      assignedTo: blotter.investigator_details?.name || 'Peace and Order Committee',
+      department: 'Peace and Order',
+      referenceNumber: blotter.case_number,
+      incidentType: blotter.incident_type,
+      incidentDate: blotter.incident_date,
+      incidentLocation: blotter.incident_location,
+      respondentName: blotter.respondent_name,
+      contactEmail: blotter.complainant_email,
+      contactPhone: blotter.complainant_contact,
+    }));
+  };
+
+  // Helper functions to map API enums to UI types
+  const mapAppointmentPriority = (priority: string): TicketPriority => {
+    switch (priority) {
+      case 'URGENT': case 'HIGH': return 'High';
+      case 'NORMAL': case 'MEDIUM': return 'Medium';
+      case 'LOW': return 'Low';
+      default: return 'Medium';
+    }
+  };
+
+  const mapAppointmentStatus = (status: string): TicketStatus => {
+    switch (status) {
+      case 'CONFIRMED': return 'In Progress';
+      case 'COMPLETED': return 'Resolved';
+      case 'CANCELLED': return 'Closed';
+      case 'PENDING': default: return 'Pending';
+    }
+  };
+
+  const mapComplaintPriority = (urgency: string): TicketPriority => {
+    switch (urgency?.toUpperCase()) {
+      case 'HIGH': case 'URGENT': return 'High';
+      case 'MEDIUM': case 'NORMAL': return 'Medium';
+      case 'LOW': return 'Low';
+      default: return 'Medium';
+    }
+  };
+
+  const mapComplaintStatus = (status: string): TicketStatus => {
+    switch (status) {
+      case 'INVESTIGATING': case 'ASSIGNED': return 'In Progress';
+      case 'RESOLVED': return 'Resolved';
+      case 'CLOSED': return 'Closed';
+      case 'PENDING': default: return 'Pending';
+    }
+  };
+
+  const mapSuggestionPriority = (priority: string): TicketPriority => {
+    switch (priority?.toUpperCase()) {
+      case 'HIGH': return 'High';
+      case 'MEDIUM': return 'Medium';
+      case 'LOW': return 'Low';
+      default: return 'Low';
+    }
+  };
+
+  const mapSuggestionStatus = (status: string): TicketStatus => {
+    switch (status) {
+      case 'UNDER_REVIEW': case 'APPROVED': return 'In Progress';
+      case 'IMPLEMENTED': return 'Resolved';
+      case 'REJECTED': return 'Closed';
+      case 'SUBMITTED': default: return 'Pending';
+    }
+  };
+
+  const mapBlotterPriority = (priority: string): TicketPriority => {
+    switch (priority) {
+      case 'URGENT': case 'HIGH': return 'High';
+      case 'NORMAL': return 'Medium';
+      case 'LOW': return 'Low';
+      default: return 'Medium';
+    }
+  };
+
+  const mapBlotterStatus = (status: string): TicketStatus => {
+    switch (status) {
+      case 'UNDER_INVESTIGATION': case 'MEDIATION': return 'In Progress';
+      case 'SETTLED': return 'Resolved';
+      case 'CLOSED': case 'DISMISSED': return 'Closed';
+      case 'FILED': default: return 'Pending';
+    }
+  };
 
   // Statistics calculation with proper typing
   const stats: TicketStats = {
@@ -302,17 +434,43 @@ const HelpDeskPage: React.FC = () => {
   const getTypeColor = (type: TicketType): string => {
     return typeColors[type] || "bg-gray-100 text-gray-800 border-gray-200";
   };
-
-  const handleStatusChange = (
+  const handleStatusChange = async (
     ticketId: string,
     newStatus: TicketStatus
-  ): void => {
-    setTickets((prevTickets) =>
-      prevTickets.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
-      )
-    );
-    setEditingStatus(null);
+  ): Promise<void> => {
+    try {      // Extract type and ID from ticket ID format (e.g., "APT-123" -> type: "Appointment", id: 123)
+      const [typePrefix, id] = ticketId.split('-');
+      const numericId = parseInt(id);
+      
+      // Update via appropriate API service with proper type casting
+      switch (typePrefix) {
+        case 'APT':
+          await appointmentsService.updateAppointment(numericId, { status: mapUIStatusToAPI(newStatus, typePrefix) as AppointmentStatus });
+          break;
+        case 'CMP':
+          await complaintsService.updateComplaint(numericId, { status: mapUIStatusToAPI(newStatus, typePrefix) as ComplaintStatus });
+          break;
+        case 'SUG':
+          await suggestionsService.updateSuggestion(numericId, { status: mapUIStatusToAPI(newStatus, typePrefix) as SuggestionStatus });
+          break;
+        case 'BLT':
+          await blotterService.updateBlotterCase(numericId, { status: mapUIStatusToAPI(newStatus, typePrefix) as BlotterStatus });
+          break;
+        default:
+          throw new Error(`Unknown ticket type: ${typePrefix}`);
+      }
+
+      // Update local state
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
+          ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
+        )
+      );
+      setEditingStatus(null);
+    } catch (error) {
+      console.error('Failed to update ticket status:', error);
+      setError('Failed to update ticket status. Please try again.');
+    }
   };
 
   const openModal = (ticket: Ticket, editMode: boolean = false): void => {
@@ -334,15 +492,78 @@ const HelpDeskPage: React.FC = () => {
       setEditedTicket({ ...editedTicket, [field]: value });
     }
   };
+  const saveChanges = async (): Promise<void> => {
+    if (!editedTicket) return;
 
-  const saveChanges = (): void => {
-    if (editedTicket) {
+    try {
+      // Extract type and ID from ticket ID format
+      const [typePrefix, id] = editedTicket.id.split('-');
+      const numericId = parseInt(id);
+
+      // Prepare update data based on ticket type
+      const updateData: any = {
+        status: mapUIStatusToAPI(editedTicket.status, typePrefix),
+        priority: mapUIPriorityToAPI(editedTicket.priority, typePrefix),
+      };
+
+      // Add common fields that can be updated
+      if (editedTicket.description !== modalTicket?.description) {
+        updateData.description = editedTicket.description;
+      }
+
+      // Add type-specific fields that can be updated
+      switch (typePrefix) {
+        case 'APT':
+          if (editedTicket.purpose !== modalTicket?.purpose) {
+            updateData.purpose = editedTicket.purpose;
+          }
+          if (editedTicket.appointmentDate !== modalTicket?.appointmentDate) {
+            updateData.preferred_date = editedTicket.appointmentDate;
+          }
+          if (editedTicket.appointmentTime !== modalTicket?.appointmentTime) {
+            updateData.preferred_time = editedTicket.appointmentTime;
+          }
+          await appointmentsService.updateAppointment(numericId, updateData);
+          break;
+        case 'CMP':
+          if (editedTicket.complaintCategory !== modalTicket?.complaintCategory) {
+            updateData.complaint_category = editedTicket.complaintCategory;
+          }
+          if (editedTicket.urgency !== modalTicket?.urgency) {
+            updateData.urgency = editedTicket.urgency;
+          }
+          await complaintsService.updateComplaint(numericId, updateData);
+          break;
+        case 'SUG':
+          if (editedTicket.suggestionCategory !== modalTicket?.suggestionCategory) {
+            updateData.category = editedTicket.suggestionCategory;
+          }
+          if (editedTicket.expectedBenefits !== modalTicket?.expectedBenefits) {
+            updateData.benefits = editedTicket.expectedBenefits;
+          }
+          await suggestionsService.updateSuggestion(numericId, updateData);
+          break;
+        case 'BLT':
+          if (editedTicket.respondentName !== modalTicket?.respondentName) {
+            updateData.respondent_name = editedTicket.respondentName;
+          }
+          await blotterService.updateBlotterCase(numericId, updateData);
+          break;
+        default:
+          throw new Error(`Unknown ticket type: ${typePrefix}`);
+      }
+
+      // Update local state
       setTickets((prevTickets) =>
         prevTickets.map((ticket) =>
           ticket.id === editedTicket.id ? editedTicket : ticket
         )
       );
+      
       closeModal();
+    } catch (error) {
+      console.error('Failed to save ticket changes:', error);
+      setError('Failed to save changes. Please try again.');
     }
   };
 
@@ -666,6 +887,81 @@ const HelpDeskPage: React.FC = () => {
       bgColor: "bg-green-100",
     },
   ];
+  // Helper function to map UI status back to API status
+  const mapUIStatusToAPI = (uiStatus: TicketStatus, typePrefix: string): AppointmentStatus | ComplaintStatus | SuggestionStatus | BlotterStatus => {
+    switch (typePrefix) {
+      case 'APT': // Appointments
+        switch (uiStatus) {
+          case 'Pending': return 'PENDING' as AppointmentStatus;
+          case 'In Progress': return 'CONFIRMED' as AppointmentStatus;
+          case 'Resolved': return 'COMPLETED' as AppointmentStatus;
+          case 'Closed': return 'CANCELLED' as AppointmentStatus;
+          default: return 'PENDING' as AppointmentStatus;
+        }
+      case 'CMP': // Complaints
+        switch (uiStatus) {
+          case 'Pending': return 'PENDING' as ComplaintStatus;
+          case 'In Progress': return 'INVESTIGATING' as ComplaintStatus;
+          case 'Resolved': return 'RESOLVED' as ComplaintStatus;
+          case 'Closed': return 'CLOSED' as ComplaintStatus;
+          default: return 'PENDING' as ComplaintStatus;
+        }
+      case 'SUG': // Suggestions
+        switch (uiStatus) {
+          case 'Pending': return 'SUBMITTED' as SuggestionStatus;
+          case 'In Progress': return 'UNDER_REVIEW' as SuggestionStatus;
+          case 'Resolved': return 'IMPLEMENTED' as SuggestionStatus;
+          case 'Closed': return 'REJECTED' as SuggestionStatus;
+          default: return 'SUBMITTED' as SuggestionStatus;
+        }
+      case 'BLT': // Blotter Cases
+        switch (uiStatus) {
+          case 'Pending': return 'FILED' as BlotterStatus;
+          case 'In Progress': return 'UNDER_INVESTIGATION' as BlotterStatus;
+          case 'Resolved': return 'SETTLED' as BlotterStatus;
+          case 'Closed': return 'CLOSED' as BlotterStatus;
+          default: return 'FILED' as BlotterStatus;
+        }
+      default:
+        return 'PENDING' as any;
+    }
+  };
+
+  // Helper function to map UI priority back to API priority
+  const mapUIPriorityToAPI = (uiPriority: TicketPriority, typePrefix: string): string => {
+    switch (typePrefix) {
+      case 'APT': // Appointments
+        switch (uiPriority) {
+          case 'High': return 'HIGH';
+          case 'Medium': return 'NORMAL';
+          case 'Low': return 'LOW';
+          default: return 'NORMAL';
+        }
+      case 'CMP': // Complaints
+        switch (uiPriority) {
+          case 'High': return 'HIGH';
+          case 'Medium': return 'MEDIUM';
+          case 'Low': return 'LOW';
+          default: return 'MEDIUM';
+        }
+      case 'SUG': // Suggestions
+        switch (uiPriority) {
+          case 'High': return 'HIGH';
+          case 'Medium': return 'MEDIUM';
+          case 'Low': return 'LOW';
+          default: return 'LOW';
+        }
+      case 'BLT': // Blotter Cases
+        switch (uiPriority) {
+          case 'High': return 'URGENT';
+          case 'Medium': return 'NORMAL';
+          case 'Low': return 'LOW';
+          default: return 'NORMAL';
+        }
+      default:
+        return uiPriority.toUpperCase();
+    }
+  };
 
   return (
     <div className="@container/main min-h-screen bg-gray-50 p-6">
@@ -837,10 +1133,24 @@ const HelpDeskPage: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">
             Active Tickets ({filteredTickets.length})
           </h3>
-        </div>
-
-        <div className="divide-y divide-gray-200">
-          {filteredTickets.length === 0 ? (
+        </div>        <div className="divide-y divide-gray-200">
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading help desk tickets...</p>
+            </div>
+          ) : error ? (
+            <div className="p-12 text-center">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={loadAllTickets}
+                className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filteredTickets.length === 0 ? (
             <div className="p-12 text-center">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">

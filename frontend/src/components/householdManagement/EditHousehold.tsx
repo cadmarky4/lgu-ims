@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiCheck, FiSearch, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiX, FiTrash2 } from 'react-icons/fi';
 import { HouseholdsService } from '../../services/households.service';
 import { ResidentsService } from '../../services/residents.service';
+import { useNotificationHelpers } from '../global/NotificationSystem';
 import { type HouseholdFormData, type Household } from '../../services/household.types';
 import { type Resident } from '../../services/resident.types'
 
@@ -22,18 +23,13 @@ const RELATIONSHIP_OPTIONS = [
 ];
 import { useParams, useNavigate } from 'react-router-dom';
 
-interface EditHouseholdProps {
-  // household: Household;
-  // onClose: () => void;
-  // onSave: (householdData: HouseholdFormData) => void;
-}
-
 const EditHousehold = () => {
   // Refs for dropdown click-outside detection
   const headSearchRef = useRef<HTMLDivElement>(null);
   const memberSearchRef = useRef<HTMLDivElement>(null);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showUpdateSuccess, showUpdateError } = useNotificationHelpers();
   
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
@@ -46,20 +42,6 @@ const EditHousehold = () => {
   const householdsService = new HouseholdsService();
   const residentsService = new ResidentsService();
   
-  // Toast state
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({ show: false, message: '', type: 'success' });
-
-  // Toast utility function
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
 
   // Reference data from backend
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -98,28 +80,108 @@ const EditHousehold = () => {
   // Search state
   const [headSearch, setHeadSearch] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
-
-  // Fetch reference data and fresh household data on component mount
+  // Fetch reference data and household data on component mount
   useEffect(() => {
-    const loadReferenceData = async () => {
+    const loadData = async () => {
+      if (!id) {
+        setError('Household ID not provided');
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate ID is a valid number
+      const householdId = parseInt(id);
+      if (isNaN(householdId) || householdId <= 0) {
+        setError('Invalid household ID');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
+      
       try {
-        // Load residents for search
+        // Load household data
+        const householdData = await householdsService.getHousehold(householdId);
+        
+        if (!householdData) {
+          setError('Household not found');
+          setIsLoading(false);
+          return;
+        }
+        
+        setHousehold(householdData);        // Convert household data to form data
+        setFormData({
+          household_number: householdData.household_number,
+          household_type: householdData.household_type || '',
+          barangay: householdData.barangay,
+          street_sitio: householdData.street_sitio,
+          house_number: householdData.house_number,
+          complete_address: householdData.complete_address,
+          monthly_income: householdData.monthly_income || '',
+          primary_income_source: householdData.primary_income_source || '',
+          house_type: householdData.house_type || '',
+          ownership_status: householdData.ownership_status || '',
+          four_ps_beneficiary: householdData.four_ps_beneficiary || false,
+          indigent_family: householdData.indigent_family || false,
+          has_senior_citizen: householdData.has_senior_citizen || false,
+          has_pwd_member: householdData.has_pwd_member || false,
+          has_electricity: householdData.has_electricity || false,
+          has_water_supply: householdData.has_water_supply || false,
+          has_internet_access: householdData.has_internet_access || false,
+          remarks: householdData.remarks || '',
+          created_by: 1
+        });        // Set selected head resident search text
+        if (householdData.head_resident) {
+          setHeadSearch(`${householdData.head_resident.first_name} ${householdData.head_resident.last_name}`);
+        }
+
+        // Note: Member assignment will be handled when residents are loaded        // Load residents for search
         const residentsData = await residentsService.getResidents();
-        setResidents(residentsData.data || residentsData);
-        setFilteredResidents(residentsData.data || residentsData);
-        setFilteredMembers(residentsData.data || residentsData);
-      } catch (err) {
-        setError('Failed to load residents data');
-        console.error('Error loading residents:', err);
+        const allResidents = residentsData.data || residentsData;
+        setResidents(allResidents);
+        setFilteredResidents(allResidents);
+        setFilteredMembers(allResidents);        // After residents are loaded, set the selected head and members
+        if (householdData.head_resident && allResidents.length > 0) {
+          const headResident = allResidents.find(r => r.id === householdData.head_resident?.id);
+          if (headResident) {
+            setSelectedHead(headResident);
+          }
+        }
+
+        // Set selected members if household has members
+        if (householdData.members && householdData.members.length > 0 && allResidents.length > 0) {
+          const householdMembers = householdData.members
+            .map(member => {
+              const resident = allResidents.find(r => r.id === member.id);
+              return resident ? {
+                resident,
+                relationship: member.relationship || 'Unknown'
+              } : null;
+            })
+            .filter(Boolean) as Array<{ resident: Resident; relationship: string }>;
+          
+          setSelectedMembers(householdMembers);
+        }
+        
+      } catch (error: any) {
+        console.error('Failed to load household data:', error);
+        
+        // Check if it's a 404 error (household not found)
+        if (error.message?.includes('404') || error.message?.includes('not found')) {
+          setError('Household not found');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          setError('Unable to connect to server. Please check your connection.');
+        } else {
+          setError('Failed to load household data. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadReferenceData();
-  }, []);
+    loadData();
+  }, [id]);
 
   // Handle form field changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -251,14 +313,36 @@ const EditHousehold = () => {
         headResidentId: selectedHead?.id || household?.head_resident_id,
         members: selectedMembers.map(member => ({
           residentId: member.resident.id,
-          relationship: member.relationship
-        }))
+          relationship: member.relationship        }))
       };
 
-      // await onSave(householdData);
+      // Call the households service to update the household
+      if (!household?.id) {
+        throw new Error('Household ID not found');
+      }
+      
+      await householdsService.updateHousehold(household.id, householdData);
+      
+      // Show success notification
+      const householdName = household.household_number || `Household #${household.id}`;
+      showUpdateSuccess('Household', householdName);
+      
+      // Navigate back to household list after a short delay
+      setTimeout(() => {
+        navigate('/household');
+      }, 1000);
+      
     } catch (err) {
-      setError(err instanceof Error ? (err instanceof Error ? err.message : 'Unknown error') : 'Failed to update household');
-      showToast('Failed to update household. Please try again.', 'error');
+      console.error('Error updating household:', err);
+      
+      let errorMessage = 'Failed to update household. Please try again.';
+      if (err instanceof Error) {
+        errorMessage = err.message || errorMessage;
+      }
+      
+      // Show error notification
+      showUpdateError('Household', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -294,18 +378,35 @@ const EditHousehold = () => {
       </main>
     );
   }
-
   if (error || !household) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Household not found'}</p>
-          <button
-            onClick={() => navigate('/household')}
-            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-          >
-            Back to Households
-          </button>
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Household Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              {error === 'Invalid household ID' 
+                ? 'The household ID provided is invalid.'
+                : error === 'Household not found'
+                ? 'The household you are looking for does not exist.'
+                : error || 'Unable to load household data.'}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/household')}
+              className="w-full px-6 py-3 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            >
+              Back to Households List
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -799,41 +900,14 @@ const EditHousehold = () => {
           >
             Cancel
           </button>    
-                
-          <button
+                  <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 bg-smblue-100 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            className="flex-1 bg-smblue-400 text-white py-3 px-6 rounded-lg font-medium hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Updating...' : 'Update Household'}
-          </button>
-        </div>
+          </button>        </div>
       </form>
-
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
-            toast.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            {toast.type === 'success' ? (
-              <FiCheck className="w-5 h-5 text-green-600" />
-            ) : (
-              <FiX className="w-5 h-5 text-red-600" />
-            )}
-            <span className="text-sm font-medium">{toast.message}</span>
-            <button
-              onClick={() => setToast({ show: false, message: '', type: 'success' })}
-              className="ml-2 text-gray-400 hover:text-gray-600"
-              title="Close notification"
-            >
-              <FiX className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 };

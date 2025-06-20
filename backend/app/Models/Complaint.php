@@ -10,62 +10,30 @@ use Carbon\Carbon;
 class Complaint extends Model
 {
     protected $fillable = [
-        'complaint_number',
-        'subject',
-        'description',
-        'category',
-        'priority',
-        'resident_id',
-        'complainant_name',
-        'complainant_contact',
-        'complainant_email',
-        'complainant_address',
-        'is_anonymous',
-        'incident_location',
-        'incident_date',
-        'incident_time',
-        'persons_involved',
-        'witnesses',
-        'status',
-        'date_received',
-        'acknowledged_date',
-        'target_resolution_date',
-        'actual_resolution_date',
-        'assigned_to',
-        'investigated_by',
-        'assigned_department',
-        'actions_taken',
-        'resolution_details',
-        'recommendations',
-        'resolution_type',
-        'satisfaction_rating',
-        'complainant_feedback',
-        'is_feedback_received',
-        'attachments',
-        'evidence_files',
-        'investigation_notes',
-        'requires_followup',
-        'followup_date',
-        'followup_notes',
-        'remarks',
-        'created_by',
-        'updated_by'
+        'complaint_number', 'complaint_type', 'subject', 'description', 'urgency_level',
+        'complainant_name', 'complainant_contact', 'complainant_address', 'complainant_resident_id',
+        'respondent_name', 'respondent_contact', 'respondent_address', 'respondent_resident_id',
+        'incident_date', 'incident_time', 'incident_location', 'witnesses', 'evidence_description',
+        'supporting_documents', 'status', 'priority', 'assigned_mediator', 'mediation_date',
+        'mediation_time', 'mediation_venue', 'mediation_notes', 'resolution_type', 'agreement_terms',
+        'resolution_date', 'resolution_description', 'outcome', 'follow_up_required', 'follow_up_date',
+        'follow_up_notes', 'escalation_level', 'escalated_to', 'escalation_date', 'escalation_reason',
+        'case_notes', 'remarks', 'created_by', 'updated_by'
     ];
 
     protected $casts = [
         'incident_date' => 'date',
         'incident_time' => 'datetime:H:i',
-        'date_received' => 'date',
-        'acknowledged_date' => 'date',
-        'target_resolution_date' => 'date',
-        'actual_resolution_date' => 'date',
-        'followup_date' => 'date',
-        'is_anonymous' => 'boolean',
-        'requires_followup' => 'boolean',
-        'is_feedback_received' => 'boolean',
-        'satisfaction_rating' => 'integer',
-        'attachments' => 'array',
-        'evidence_files' => 'array'
+        'mediation_date' => 'date',
+        'mediation_time' => 'datetime:H:i',
+        'resolution_date' => 'date',
+        'follow_up_date' => 'date',
+        'escalation_date' => 'date',
+        'follow_up_required' => 'boolean',
+        'supporting_documents' => 'array',
+        'witnesses' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected $appends = [
@@ -107,7 +75,10 @@ class Complaint extends Model
             return 0;
         }
         
-        return Carbon::parse($this->date_received)->diffInDays(now());
+        $dateReceived = $this->date_received ?? $this->created_at;
+        if (!$dateReceived) return 0;
+        
+        return Carbon::parse($dateReceived)->diffInDays(now());
     }
 
     public function getIsOverdueAttribute(): bool
@@ -116,14 +87,17 @@ class Complaint extends Model
             return false;
         }
         
-        return $this->target_resolution_date->isPast();
+        return Carbon::parse($this->target_resolution_date)->isPast();
     }
 
     public function getResolutionTimeDaysAttribute(): int
     {
-        if (!$this->actual_resolution_date) return 0;
+        if (!$this->resolution_date) return 0;
         
-        return Carbon::parse($this->date_received)->diffInDays($this->actual_resolution_date);
+        $dateReceived = $this->date_received ?? $this->created_at;
+        if (!$dateReceived) return 0;
+        
+        return Carbon::parse($dateReceived)->diffInDays(Carbon::parse($this->resolution_date));
     }
 
     // Scopes

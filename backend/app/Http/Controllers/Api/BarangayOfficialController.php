@@ -58,10 +58,8 @@ class BarangayOfficialController extends Controller
 
         $officials = $query->paginate($request->get('per_page', 15));
 
-        return response()->json([
-            'success' => true,
-            'data' => $officials,
-        ]);
+        // Return Laravel pagination structure directly (frontend expects this format)
+        return response()->json($officials);
     }
 
     /**
@@ -69,28 +67,67 @@ class BarangayOfficialController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Transform frontend data format if needed
+        $requestData = $this->transformFrontendToBackend($request->all());
+        
+        $validator = Validator::make($requestData, [
+            // Personal Information (based on frontend form)
+            'prefix' => 'nullable|string|in:Mr.,Ms.,Mrs.,Dr.,Hon.',
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'suffix' => 'nullable|string|max:20',
-            'position' => 'required|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
-            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
-            'contact_number' => 'nullable|string|max:255',
-            'email_address' => 'nullable|email|max:255',
-            'home_address' => 'nullable|string',
+            'last_name' => 'required|string|max:255',
+            'gender' => 'required|in:Male,Female',
             'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:MALE,FEMALE,OTHER',
-            'civil_status' => 'nullable|in:SINGLE,MARRIED,DIVORCED,WIDOWED,SEPARATED',
+            'contact_number' => 'required|string|max:255',
+            'email_address' => 'nullable|email|max:255',
+            'complete_address' => 'nullable|string',
+            'civil_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'educational_background' => 'nullable|string',
-            'work_experience' => 'nullable|string',
+            
+            // Position Information
+            'position' => 'required|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
+            'position_title' => 'nullable|string|max:255',
+            'committee_assignment' => 'nullable|in:Health,Education,Public Safety,Environment,Peace and Order,Sports and Recreation,Women and Family,Senior Citizens',
+            
+            // Term Information
             'term_start' => 'required|date',
             'term_end' => 'required|date|after:term_start',
-            'oath_date' => 'nullable|date',
-            'appointment_type' => 'nullable|in:ELECTED,APPOINTED,DESIGNATED',
-            'salary_grade' => 'nullable|string|max:20',
-            'plantilla_position' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'term_number' => 'nullable|integer|min:1',
+            'is_current_term' => 'nullable|boolean',
+            
+            // Election Information
+            'election_date' => 'nullable|date',
+            'votes_received' => 'nullable|integer|min:0',
+            'is_elected' => 'nullable|boolean',
+            'appointment_document' => 'nullable|string|max:500',
+            
+            // Status
+            'status' => 'nullable|in:ACTIVE,INACTIVE,SUSPENDED,RESIGNED,TERMINATED,DECEASED',
+            'status_date' => 'nullable|date',
+            'status_reason' => 'nullable|string',
+            
+            // Additional fields
+            'work_experience' => 'nullable|string',
+            'skills_expertise' => 'nullable|string',
+            'trainings_attended' => 'nullable|array',
+            'certifications' => 'nullable|array',
+            'major_accomplishments' => 'nullable|string',
+            'projects_initiated' => 'nullable|array',
+            'performance_notes' => 'nullable|string',
+            'performance_rating' => 'nullable|integer|min:1|max:5',
+            
+            // Emergency Contact
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            
+            // Files
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'documents' => 'nullable|array',
+            
+            // Oath Information
+            'oath_taking_date' => 'nullable|date',
+            'oath_taking_notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -104,9 +141,9 @@ class BarangayOfficialController extends Controller
         $validated = $validator->validated();
 
         // Handle photo upload
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('officials/photos', 'public');
-            $validated['photo_path'] = $photoPath;
+        if ($request->hasFile('profile_photo')) {
+            $photoPath = $request->file('profile_photo')->store('officials/photos', 'public');
+            $validated['profile_photo'] = $photoPath;
         }
 
         $validated['is_active'] = true;
@@ -136,28 +173,69 @@ class BarangayOfficialController extends Controller
      */
     public function update(Request $request, BarangayOfficial $barangayOfficial): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Transform frontend data format if needed
+        $requestData = $this->transformFrontendToBackend($request->all());
+        
+        $validator = Validator::make($requestData, [
+            // Personal Information (based on frontend form) - using 'sometimes' for updates
+            'prefix' => 'nullable|string|in:Mr.,Ms.,Mrs.,Dr.,Hon.',
             'first_name' => 'sometimes|string|max:255',
-            'last_name' => 'sometimes|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'suffix' => 'nullable|string|max:20',
-            'position' => 'sometimes|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
-            'committee' => 'nullable|in:HEALTH,EDUCATION,INFRASTRUCTURE,PEACE_AND_ORDER,ENVIRONMENT,SOCIAL_SERVICES,SPORTS_AND_RECREATION,SENIOR_CITIZEN,WOMEN_AND_FAMILY,YOUTH_DEVELOPMENT',
-            'contact_number' => 'nullable|string|max:255',
-            'email_address' => 'nullable|email|max:255',
-            'home_address' => 'nullable|string',
+            'last_name' => 'sometimes|string|max:255',
+            'gender' => 'sometimes|in:Male,Female',
             'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:MALE,FEMALE,OTHER',
-            'civil_status' => 'nullable|in:SINGLE,MARRIED,DIVORCED,WIDOWED,SEPARATED',
+            'contact_number' => 'sometimes|string|max:255',
+            'email_address' => 'nullable|email|max:255',
+            'complete_address' => 'nullable|string',
+            'civil_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'educational_background' => 'nullable|string',
-            'work_experience' => 'nullable|string',
+            
+            // Position Information
+            'position' => 'sometimes|in:BARANGAY_CAPTAIN,BARANGAY_SECRETARY,BARANGAY_TREASURER,KAGAWAD,SK_CHAIRPERSON,SK_KAGAWAD,BARANGAY_CLERK,BARANGAY_TANOD',
+            'position_title' => 'nullable|string|max:255',
+            'committee_assignment' => 'nullable|in:Health,Education,Public Safety,Environment,Peace and Order,Sports and Recreation,Women and Family,Senior Citizens',
+            
+            // Term Information
             'term_start' => 'sometimes|date',
             'term_end' => 'sometimes|date|after:term_start',
-            'oath_date' => 'nullable|date',
-            'appointment_type' => 'nullable|in:ELECTED,APPOINTED,DESIGNATED',
-            'salary_grade' => 'nullable|string|max:20',
-            'plantilla_position' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'term_number' => 'nullable|integer|min:1',
+            'is_current_term' => 'nullable|boolean',
+            
+            // Election Information
+            'election_date' => 'nullable|date',
+            'votes_received' => 'nullable|integer|min:0',
+            'is_elected' => 'nullable|boolean',
+            'appointment_document' => 'nullable|string|max:500',
+            
+            // Status
+            'status' => 'nullable|in:ACTIVE,INACTIVE,SUSPENDED,RESIGNED,TERMINATED,DECEASED',
+            'status_date' => 'nullable|date',
+            'status_reason' => 'nullable|string',
+            
+            // Additional fields
+            'work_experience' => 'nullable|string',
+            'skills_expertise' => 'nullable|string',
+            'trainings_attended' => 'nullable|array',
+            'certifications' => 'nullable|array',
+            'major_accomplishments' => 'nullable|string',
+            'projects_initiated' => 'nullable|array',
+            'performance_notes' => 'nullable|string',
+            'performance_rating' => 'nullable|integer|min:1|max:5',
+            
+            // Emergency Contact
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            
+            // Files
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'documents' => 'nullable|array',
+            
+            // Oath Information
+            'oath_taking_date' => 'nullable|date',
+            'oath_taking_notes' => 'nullable|string',
+            
+            // System
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -172,14 +250,14 @@ class BarangayOfficialController extends Controller
         $validated = $validator->validated();
 
         // Handle photo upload
-        if ($request->hasFile('photo')) {
+        if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists
-            if ($barangayOfficial->photo_path) {
-                Storage::disk('public')->delete($barangayOfficial->photo_path);
+            if ($barangayOfficial->profile_photo) {
+                Storage::disk('public')->delete($barangayOfficial->profile_photo);
             }
             
-            $photoPath = $request->file('photo')->store('officials/photos', 'public');
-            $validated['photo_path'] = $photoPath;
+            $photoPath = $request->file('profile_photo')->store('officials/photos', 'public');
+            $validated['profile_photo'] = $photoPath;
         }
 
         $barangayOfficial->update($validated);
@@ -197,8 +275,8 @@ class BarangayOfficialController extends Controller
     public function destroy(BarangayOfficial $barangayOfficial): JsonResponse
     {
         // Delete photo if exists
-        if ($barangayOfficial->photo_path) {
-            Storage::disk('public')->delete($barangayOfficial->photo_path);
+        if ($barangayOfficial->profile_photo) {
+            Storage::disk('public')->delete($barangayOfficial->profile_photo);
         }
 
         $barangayOfficial->delete();
@@ -291,7 +369,7 @@ class BarangayOfficialController extends Controller
             'performance_rating' => $request->performance_rating,
             'performance_notes' => $request->performance_notes,
             'last_evaluation_date' => now(),
-            'evaluated_by' => $request->get('evaluated_by', auth()->id()),
+            'evaluated_by' => $request->get('evaluated_by', null),
         ]);
 
         return response()->json([
@@ -326,7 +404,7 @@ class BarangayOfficialController extends Controller
             'end_reason' => $request->end_reason,
             'end_notes' => $request->end_notes,
             'archived_at' => now(),
-            'archived_by' => auth()->id(),
+            'archived_by' => null,
         ]);
 
         return response()->json([
@@ -364,7 +442,7 @@ class BarangayOfficialController extends Controller
             'archived_at' => null,
             'archived_by' => null,
             'reactivated_at' => now(),
-            'reactivated_by' => auth()->id(),
+            'reactivated_by' => null,
         ]);
 
         return response()->json([
@@ -451,5 +529,48 @@ class BarangayOfficialController extends Controller
             'data' => $exportData,
             'filename' => 'barangay_officials_' . now()->format('Y_m_d_H_i_s') . '.csv'
         ]);
+    }
+
+    /**
+     * Transform frontend form data to backend API format
+     */
+    private function transformFrontendToBackend(array $data): array
+    {
+        $transformed = [];
+        
+        // Map frontend field names to backend field names
+        $fieldMapping = [
+            'firstName' => 'first_name',
+            'middleName' => 'middle_name', 
+            'lastName' => 'last_name',
+            'birthDate' => 'birth_date',
+            'contactNumber' => 'contact_number',
+            'emailAddress' => 'email_address',
+            'completeAddress' => 'complete_address',
+            'civilStatus' => 'civil_status',
+            'educationalBackground' => 'educational_background',
+            'committeeAssignment' => 'committee_assignment',
+            'termStart' => 'term_start',
+            'termEnd' => 'term_end',
+            'oathTakingDate' => 'oath_taking_date',
+            'oathTakingNotes' => 'oath_taking_notes',
+        ];
+        
+        // Transform field names
+        foreach ($data as $key => $value) {
+            $backendKey = $fieldMapping[$key] ?? $key;
+            $transformed[$backendKey] = $value;
+        }
+        
+        // Set defaults
+        if (!isset($transformed['status'])) {
+            $transformed['status'] = 'ACTIVE';
+        }
+        
+        if (!isset($transformed['is_active'])) {
+            $transformed['is_active'] = true;
+        }
+        
+        return $transformed;
     }
 }

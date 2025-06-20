@@ -7,8 +7,39 @@ import BarangayOfficials from './BarangayOfficials';
 import Calendar from './Calendar';
 import Breadcrumb from '../global/Breadcrumb';
 import { FaUsers, FaHouseUser, FaStamp, FaPen, FaClipboardList, FaUserCheck } from 'react-icons/fa';
+import { DashboardService, type DashboardStatistics } from '../../services/dashboard.service';
 
 const Dashboard: React.FC = () => {
+  const [statistics, setStatistics] = useState<DashboardStatistics>({
+    totalResidents: 0,
+    totalHouseholds: 0,
+    activeBarangayOfficials: 0,
+    totalBlotterCases: 0,
+    totalIssuedClearance: 0,
+    ongoingProjects: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [dashboardService] = useState(new DashboardService());
+
+  // Fetch dashboard statistics on component mount
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardService.getStatistics();
+        if (response.data) {
+          setStatistics(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard statistics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, [dashboardService]);
+
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -38,14 +69,20 @@ const Dashboard: React.FC = () => {
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400"></div>
+            <span className="ml-2 text-gray-600">Loading statistics...</span>
+          </div>
+        ) : (
         <div className="grid grid-cols-3 gap-4">
           {[
-            { title: "Total Residents", value: 40199, icon: FaUsers },
-            { title: "Total Household", value: 20148, icon: FaHouseUser },
-            { title: "Active Barangay Officials", value: 20, icon: FaUserCheck },
-            { title: "Total Blotter Cases", value: 5, icon: FaPen },
-            { title: "Total Issued Clearance", value: 3, icon: FaStamp },
-            { title: "Ongoing Projects", value: 1, icon: FaClipboardList }
+            { title: "Total Residents", value: statistics.totalResidents, icon: FaUsers },
+            { title: "Total Household", value: statistics.totalHouseholds, icon: FaHouseUser },
+            { title: "Active Barangay Officials", value: statistics.activeBarangayOfficials, icon: FaUserCheck },
+            { title: "Total Blotter Cases", value: statistics.totalBlotterCases, icon: FaPen },
+            { title: "Total Issued Clearance", value: statistics.totalIssuedClearance, icon: FaStamp },
+            { title: "Ongoing Projects", value: statistics.ongoingProjects, icon: FaClipboardList }
           ].map((stat, index) => (
             <div
               key={stat.title}
@@ -65,6 +102,7 @@ const Dashboard: React.FC = () => {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       {/* Main Content Grid */}

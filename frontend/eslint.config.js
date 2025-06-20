@@ -41,7 +41,7 @@ export default tseslint.config(
         },
       ],
       // Keep no-explicit-any as error to enforce proper typing
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
 )

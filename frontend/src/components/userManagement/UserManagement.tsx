@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiLock, FiPower } from 'react-icons/fi';
 import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
 import AddNewUser from './AddNewUser';
-import EditUser from './EditUser';
-import ViewUser from './ViewUser';
 import ResetPassword from '../auth/ResetPassword';
 import StatCard from '../global/StatCard';
 import { UsersService } from '../../services/users.service';
 import type { User, UserParams } from '../../services/user.types';
 
 const UserManagement: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [showViewForm, setShowViewForm] = useState(false);
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');  const [currentPage, setCurrentPage] = useState(1);  const [showAddForm, setShowAddForm] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
@@ -165,25 +162,19 @@ const UserManagement: React.FC = () => {
       setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to toggle user status');
     }
   };
-
   const handleViewUser = (userId: number) => {
-    setSelectedUserId(userId);
-    setShowViewForm(true);
+    navigate(`/users/view/${userId}`);
   };
 
   const handleEditUser = (userId: number) => {
-    setSelectedUserId(userId);
-    setShowEditForm(true);
+    navigate(`/users/edit/${userId}`);
   };
   const handleResetPassword = (userId: number, userName: string) => {
     setSelectedUserId(userId);
     setSelectedUserName(userName);
     setShowResetPassword(true);
-  };
-  const handleCloseModals = () => {
+  };  const handleCloseModals = () => {
     setShowAddForm(false);
-    setShowEditForm(false);
-    setShowViewForm(false);
     setShowResetPassword(false);
     setSelectedUserId(null);
     setSelectedUserName('');
@@ -215,30 +206,7 @@ const UserManagement: React.FC = () => {
     return (
       <AddNewUser 
         onClose={handleCloseModals} 
-        onSave={handleAddUser}
-      />
-    );
-  }
-
-  if (showEditForm && selectedUserId) {
-    return (
-      <EditUser 
-        userId={selectedUserId}
-        onClose={handleCloseModals} 
-        onSave={handleUserSaved}
-      />
-    );
-  }
-  if (showViewForm && selectedUserId) {
-    return (
-      <ViewUser 
-        userId={selectedUserId}
-        onClose={handleCloseModals}
-        onEdit={() => {
-          setShowViewForm(false);
-          setShowEditForm(true);
-        }}
-      />
+        onSave={handleAddUser}      />
     );
   }
 

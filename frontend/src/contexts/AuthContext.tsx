@@ -27,6 +27,7 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
+  message: string;
 }
 
 interface LoginCredentials {
@@ -58,6 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState<string>('');
   // Define logout function using useCallback so it can be used in useEffect
   const logout = useCallback((): void => {
     try {
@@ -73,6 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }).catch((error) => {
           console.error('Logout API error:', error);
         });
+
       }
     } catch (error) {
       console.error('Logout error:', error);
@@ -81,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Immediately clear local state and storage
     setUser(null);
     setToken(null);
+    setMessage('');
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     sessionStorage.removeItem('auth_token');
@@ -180,6 +184,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (!response.ok) {
+        setMessage(data.message || 'Login failed');
         throw new Error(data.message || 'Login failed');
       }
 
@@ -188,6 +193,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         setUser(userData);
         setToken(userToken);
+        setMessage('');
         
         // Save to localStorage if remember me is checked
         if (credentials.rememberMe) {
@@ -199,6 +205,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.setItem('auth_user', JSON.stringify(userData));
         }
       } else {
+        setMessage(data.message || 'Login failed');
         throw new Error(data.message || 'Login failed');
       }
     } catch (error) {
@@ -248,7 +255,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error('Registration error:', error);
-      throw error;    } finally {
+      throw error;    
+    } finally {
       setIsLoading(false);
     }
   };
@@ -262,6 +270,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     register,
     logout,
+    message
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

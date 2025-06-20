@@ -5,6 +5,7 @@ import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
 import StatCard from "../global/StatCard";
 import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
+import { useNotificationHelpers } from "../global/NotificationSystem";
 import type { Resident, CreateResidentData, UpdateResidentData, ResidentFormData } from "../../services/resident.types";
 
 interface MappedResident {
@@ -23,6 +24,7 @@ interface MappedResident {
 
 const ResidentManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { showDeleteSuccess, showDeleteError } = useNotificationHelpers();
   
   // API integration states
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ const ResidentManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showViewForm, setShowViewForm] = useState(false);
-  const [selectedResident, setSelectedResident] = useState<unknown>(null);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState({
     total_residents: 0,
@@ -195,8 +197,10 @@ const ResidentManagement: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
-  const handleDeleteResident = async (residentId: number) => {
+    const handleDeleteResident = async (residentId: number) => {
+    const residentToDelete = residents.find(r => r.id === residentId);
+    const residentName = residentToDelete ? residentToDelete.name : 'Resident';
+    
     if (
       window.confirm(
         "Are you sure you want to deactivate this resident? This will change their status to inactive."
@@ -208,15 +212,23 @@ const ResidentManagement: React.FC = () => {
         await residentsService.deleteResident(residentId);
         console.log("Resident deactivated successfully");
         
+        // Show success notification
+        showDeleteSuccess('Resident', residentName);
+        
         // Reload residents to get updated data
         await loadResidents();
         await loadStatistics();
       } catch (error: unknown) {
         console.error("Failed to deactivate resident:", error);
 
+        let errorMessage = "Failed to deactivate resident. Please try again.";
         if (error instanceof Error) {
-          setError(error.message || "Failed to deactivate resident. Please try again.");
-        }        
+          errorMessage = error.message || errorMessage;
+        }
+        
+        // Show error notification
+        showDeleteError('Resident', errorMessage);
+        setError(errorMessage);
       } finally {
         setIsDeleting(null);
       }
@@ -419,7 +431,7 @@ const ResidentManagement: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${resident.status === "Active"
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${resident.status === "ACTIVE"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                             }`}

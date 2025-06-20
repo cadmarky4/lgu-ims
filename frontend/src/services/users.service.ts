@@ -8,6 +8,43 @@ import {
   type UserParams 
 } from './user.types';
 
+// Error interfaces for proper typing
+interface ApiError extends Error {
+  response?: {
+    data?: {
+      message?: string;
+      errors?: Record<string, string[]>;
+    };
+  };
+}
+
+// Helper function to handle API errors consistently
+const handleApiError = (error: unknown, defaultMessage: string): never => {
+  if (error instanceof Error) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data) {
+      throw apiError;
+    }
+    throw new Error(apiError.message || defaultMessage);
+  }
+  throw new Error(defaultMessage);
+};
+
+// Helper function to create wrapped error for consistency
+const createWrappedError = (message: string, originalError?: unknown): ApiError => {
+  const wrappedError = new Error(message) as ApiError;
+  if (originalError instanceof Error) {
+    wrappedError.response = {
+      data: { message: originalError.message || message }
+    };
+  } else {
+    wrappedError.response = {
+      data: { message }
+    };
+  }
+  return wrappedError;
+};
+
 export class UsersService extends BaseApiService {
   
   /**
@@ -63,12 +100,9 @@ export class UsersService extends BaseApiService {
       
       if (response.data) {
         return response.data as User;
-      }
-
-      throw new Error('User not found');
-    } catch (error: unknown) {
+      }      throw new Error('User not found');    } catch (error: unknown) {
       console.error(`Failed to fetch user ${id}:`, error);
-      throw new Error(error.message || 'Failed to fetch user');
+      return handleApiError(error, 'Failed to fetch user');
     }
   }
 
@@ -86,11 +120,9 @@ export class UsersService extends BaseApiService {
 
       if (response.data) {
         return response.data as User;
-      }
-
-      if (response.errors && Object.keys(response.errors).length > 0) {
-        const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as Error).response = {
+      }      if (response.errors && Object.keys(response.errors).length > 0) {
+        const error = createWrappedError('Validation failed');
+        error.response = {
           data: { errors: response.errors }
         };
         throw error;
@@ -98,15 +130,12 @@ export class UsersService extends BaseApiService {
 
       throw new Error(JSON.stringify(response) || 'Failed to create user');
     } catch (error: unknown) {
-      if (error.response && error.response.data) {
-        throw error;
+      const apiError = error as ApiError;
+      if (apiError.response?.data) {
+        throw apiError;
       }
 
-      const wrappedError = new Error(error.message || 'Failed to create user');
-      (wrappedError as Error).response = {
-        data: { message: error.message || 'Failed to create user' }
-      };
-      throw wrappedError;
+      throw createWrappedError('Failed to create user', error);
     }
   }
 
@@ -124,11 +153,9 @@ export class UsersService extends BaseApiService {
 
       if (response.data) {
         return response.data as User;
-      }
-
-      if (response.errors && Object.keys(response.errors).length > 0) {
-        const error = new Error(JSON.stringify(response) || 'Validation failed');
-        (error as Error).response = {
+      }      if (response.errors && Object.keys(response.errors).length > 0) {
+        const error = createWrappedError('Validation failed');
+        error.response = {
           data: { errors: response.errors }
         };
         throw error;
@@ -136,15 +163,12 @@ export class UsersService extends BaseApiService {
 
       throw new Error(JSON.stringify(response) || `Failed to update user #${id}`);
     } catch (error: unknown) {
-      if (error.response && error.response.data) {
-        throw error;
+      const apiError = error as ApiError;
+      if (apiError.response?.data) {
+        throw apiError;
       }
 
-      const wrappedError = new Error(error.message || `Failed to update user #${id}`);
-      (wrappedError as Error).response = {
-        data: { message: error.message || `Failed to update user #${id}` }
-      };
-      throw wrappedError;
+      throw createWrappedError(`Failed to update user #${id}`, error);
     }
   }
 
@@ -155,10 +179,9 @@ export class UsersService extends BaseApiService {
     try {
       await this.request(`/users/${id}`, {
         method: 'DELETE',
-      });
-    } catch (error: unknown) {
+      });    } catch (error: unknown) {
       console.error(`Failed to delete user ${id}:`, error);
-      throw new Error(error.message || 'Failed to delete user');
+      handleApiError(error, 'Failed to delete user');
     }
   }
 
@@ -175,10 +198,9 @@ export class UsersService extends BaseApiService {
         return response.data as User;
       }
 
-      throw new Error('Failed to toggle user status');
-    } catch (error: unknown) {
+      throw new Error('Failed to toggle user status');    } catch (error: unknown) {
       console.error(`Failed to toggle status for user ${id}:`, error);
-      throw new Error(error.message || 'Failed to toggle user status');
+      return handleApiError(error, 'Failed to toggle user status');
     }
   }
 
@@ -193,10 +215,9 @@ export class UsersService extends BaseApiService {
           password: newPassword,
           password_confirmation: newPassword
         }),
-      });
-    } catch (error: unknown) {
+      });    } catch (error: unknown) {
       console.error(`Failed to reset password for user ${id}:`, error);
-      throw new Error(error.message || 'Failed to reset password');
+      return handleApiError(error, 'Failed to reset password');
     }
   }
 
@@ -211,10 +232,9 @@ export class UsersService extends BaseApiService {
         return response.data as User[];
       }
 
-      return [];
-    } catch (error: unknown) {
+      return [];    } catch (error: unknown) {
       console.error(`Failed to fetch users by role ${role}:`, error);
-      throw new Error(error.message || 'Failed to fetch users by role');
+      return handleApiError(error, 'Failed to fetch users by role');
     }
   }
 
@@ -229,10 +249,9 @@ export class UsersService extends BaseApiService {
         return response.data as User[];
       }
 
-      return [];
-    } catch (error: unknown) {
+      return [];    } catch (error: unknown) {
       console.error(`Failed to fetch users by department ${department}:`, error);
-      throw new Error(error.message || 'Failed to fetch users by department');
+      return handleApiError(error, 'Failed to fetch users by department');
     }
   }
   /**

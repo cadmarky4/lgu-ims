@@ -10,26 +10,23 @@ import ProjectPortfolio from './ProjectPortfolio';
 import Breadcrumb from '../global/Breadcrumb';
 import { FaCircleCheck } from 'react-icons/fa6';
 import type { IconType } from 'react-icons';
+import { ProjectsService } from '../../services/projects.service';
+import { type Project as ProjectType } from '../../services/project.types';
 
-interface Project {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  budget: string;
-  progress: number | null;
-  status: 'Active' | 'Pending' | 'Completed';
-  startDate: string | null;
-  completedDate: string | null;
-  priority: 'high' | 'medium' | 'low';
-  teamSize: number;
-  lastUpdated: string;
-}
+// Use the service Project type for the component
+type Project = ProjectType;
 
 interface StatItem {
   title: string;
   value: number;
   icon: IconType;
+}
+
+interface ProjectStatistics {
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  totalBudget: number;
 }
 
 const ProjectsAndPrograms: React.FC = () => {
@@ -38,9 +35,50 @@ const ProjectsAndPrograms: React.FC = () => {
   const [showSelectProjectModal, setShowSelectProjectModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [statistics, setStatistics] = useState<ProjectStatistics>({
+    totalProjects: 0,
+    activeProjects: 0,
+    completedProjects: 0,
+    totalBudget: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const projectsService = new ProjectsService();
+  // Load projects and statistics
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Load projects and statistics in parallel
+      const [projectsResponse, statisticsResponse] = await Promise.all([
+        projectsService.getProjects(),
+        projectsService.getStatistics()
+      ]);
+
+      if (projectsResponse.data) {
+        setProjects(projectsResponse.data);
+      } else {
+        setError('Failed to load projects');
+      }
+
+      if (statisticsResponse.data) {
+        setStatistics(statisticsResponse.data);
+      }
+
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Animation trigger on component mount
   useEffect(() => {
+    loadData();
+    
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 100);
@@ -89,13 +127,12 @@ const ProjectsAndPrograms: React.FC = () => {
       }`} style={{ transitionDelay: '150ms' }}>
         <h3 className="text-base lg:text-lg font-semibold text-darktext mb-4 lg:mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
-        </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        </h3>        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {([
-            { title: "Total Projects", value: 24, icon: FaFolder },
-            { title: "Completed Projects", value: 12, icon: FaCircleCheck },
-            { title: "Active Projects", value: 8, icon: FaHourglassHalf },
-            { title: "Total Budget", value: 2420100, icon: FaDollarSign }
+            { title: "Total Projects", value: statistics.totalProjects, icon: FaFolder },
+            { title: "Completed Projects", value: statistics.completedProjects, icon: FaCircleCheck },
+            { title: "Active Projects", value: statistics.activeProjects, icon: FaHourglassHalf },
+            { title: "Total Budget", value: statistics.totalBudget, icon: FaDollarSign }
           ] as StatItem[]).map((stat, index) => {
             // Format value for display
             const formatValue = (value: number): string => {
@@ -130,13 +167,16 @@ const ProjectsAndPrograms: React.FC = () => {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2">
+        {/* Main Content */}        <div className="lg:col-span-2">
           {/* Project Portfolio */}
           <ProjectPortfolio 
+            projects={projects}
+            loading={loading}
+            error={error}
             onAddProject={handleAddProject} 
             onEditProject={handleEditProject}
             onViewProject={handleViewProject}
+            onProjectsChange={loadData}
           />
         </div>
 
@@ -151,11 +191,11 @@ const ProjectsAndPrograms: React.FC = () => {
           {/* Recent Activity */}
           <RecentActivity />
         </div>
-      </div>
-
-      {/* SelectProject Modal */}
+      </div>      {/* SelectProject Modal */}
       <SelectProject 
         isOpen={showSelectProjectModal}
+        projects={projects}
+        loading={loading}
         onClose={() => setShowSelectProjectModal(false)}
         onSelectProject={handleSelectProjectForEdit}
       />

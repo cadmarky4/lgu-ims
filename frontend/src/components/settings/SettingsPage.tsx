@@ -1,38 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiSettings, FiShield, FiServer, FiLoader } from 'react-icons/fi';
-
-// Types for better type safety
-interface SettingsData {
-  // General Information
-  barangay: string;
-  city: string;
-  province: string;
-  region: string;
-  type: string;
-  contactNumber: string;
-  emailAddress: string;
-  openingHours: string;
-  closingHours: string;
-  primaryLanguage: string;
-  secondaryLanguage: string;
-  
-  // Privacy and Security
-  sessionTimeout: string;
-  maxLoginAttempts: string;
-  dataRetention: string;
-  backupFrequency: string;
-  
-  // System
-  systemName: string;
-  versionNumber: string;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  errors?: Record<string, string[]>;
-}
+import { SettingsService, type SettingsData } from '../../services/settings.service';
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -40,6 +8,7 @@ const SettingsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [settingsService] = useState(new SettingsService());
 
   const [formData, setFormData] = useState<SettingsData>({
     // General Information
@@ -65,33 +34,15 @@ const SettingsPage: React.FC = () => {
     systemName: '',
     versionNumber: ''
   });
-
   const [originalData, setOriginalData] = useState<SettingsData | null>(null);
-
-  // API Base URL - adjust according to your Laravel backend
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
   // Fetch settings from API
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/settings`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: ApiResponse<SettingsData> = await response.json();
+      const result = await settingsService.getSettings();
       
-      if (result.success && result.data) {
+      if (result.data) {
         setFormData(result.data);
         setOriginalData(result.data);
       } else {
@@ -104,7 +55,6 @@ const SettingsPage: React.FC = () => {
       setLoading(false);
     }
   };
-
   // Save settings to API
   const saveSettings = async () => {
     try {
@@ -112,20 +62,9 @@ const SettingsPage: React.FC = () => {
       setErrors({});
       setSuccessMessage('');
 
-      const response = await fetch(`${API_BASE_URL}/settings`, {
-        method: 'PUT', // or POST depending on your Laravel route setup
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await settingsService.updateSettings(formData);
 
-      const result: ApiResponse<SettingsData> = await response.json();
-
-      if (response.ok && result.success) {
+      if (result.data) {
         setSuccessMessage('Settings saved successfully!');
         setOriginalData(formData);
         
@@ -140,6 +79,33 @@ const SettingsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error saving settings:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Reset settings to default values
+  const resetSettings = async () => {
+    try {
+      setSaving(true);
+      setErrors({});
+      setSuccessMessage('');
+
+      const result = await settingsService.resetSettings();
+
+      if (result.data) {
+        setFormData(result.data);
+        setOriginalData(result.data);
+        setSuccessMessage('Settings reset to default values successfully!');
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        console.error('Failed to reset settings:', result.message);
+      }
+    } catch (error) {
+      console.error('Error resetting settings:', error);
       // You might want to show a toast notification here
     } finally {
       setSaving(false);
@@ -595,12 +561,21 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Save Button */}
+        {/* Save and Reset Buttons */}
         <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
           {hasUnsavedChanges() && (
             <p className="text-sm text-amber-600">You have unsaved changes</p>
           )}
-          <div className="ml-auto">
+          <div className="ml-auto flex space-x-2">
+            <button
+              type="button"
+              onClick={resetSettings}
+              disabled={saving}
+              className="px-6 py-2 bg-red-400 hover:bg-red-300 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center space-x-2"
+            >
+              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
+              <span>{saving ? 'Resetting...' : 'Reset to Default'}</span>
+            </button>
             <button
               type="button"
               onClick={saveSettings}

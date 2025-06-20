@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, FileText, Users, TrendingUp, ChevronRight, Filter } from 'lucide-react';
+import { DashboardService } from '../../services/dashboard.service';
 
 interface ActivityItem {
   id: number;
@@ -15,8 +16,12 @@ const RecentActivity: React.FC = () => {
   const [showAll, setShowAll] = useState(false);
   const [animateNewItems, setAnimateNewItems] = useState(false);
   const [animateOut, setAnimateOut] = useState(false);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dashboardService] = useState(new DashboardService());
 
-  const activities: ActivityItem[] = [
+  // Static fallback data
+  const staticActivities: ActivityItem[] = [
     { 
       id: 1, 
       activity: 'Street Lighting project milestone completed', 
@@ -51,29 +56,99 @@ const RecentActivity: React.FC = () => {
     },
     { 
       id: 5, 
-      activity: 'Youth Education training started', 
+      activity: 'Community Center project started', 
       time: '2 weeks ago',
       type: 'started',
-      priority: 'low',
-      category: 'Education'
+      priority: 'high',
+      category: 'Community'
     },
     { 
       id: 6, 
-      activity: 'Budget allocation updated for Q3', 
+      activity: 'Water System improvement approved', 
       time: '3 weeks ago',
-      type: 'updated',
+      type: 'approved',
       priority: 'high',
-      category: 'Finance'
+      category: 'Infrastructure'
     },
     { 
       id: 7, 
-      activity: 'Community feedback session completed', 
+      activity: 'Youth Development program updated', 
+      time: '1 month ago',
+      type: 'updated',
+      priority: 'medium',
+      category: 'Education'
+    },
+    { 
+      id: 8, 
+      activity: 'Emergency Response training completed', 
       time: '1 month ago',
       type: 'completed',
-      priority: 'medium',
-      category: 'Community'
+      priority: 'high',
+      category: 'Safety'
     }
   ];
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardService.getRecentActivities();
+        if (response.data && Array.isArray(response.data)) {
+          // Map backend data to frontend format
+          const mappedActivities: ActivityItem[] = response.data.map((item) => ({
+            id: item.id,
+            activity: item.description,
+            time: item.time,
+            type: mapActivityType(item.type),
+            priority: mapActivityPriority(item.type),
+            category: mapActivityCategory(item.type)
+          }));
+          setActivities(mappedActivities);
+        } else {
+          // Fallback to static data if API returns unexpected format
+          setActivities(staticActivities);
+        }
+      } catch (error) {
+        console.log('Recent activities API not available, using static data');
+        // Fallback to static data if API fails
+        setActivities(staticActivities);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, [dashboardService]);
+
+  // Helper functions to map backend types to frontend format
+  const mapActivityType = (backendType: string): 'completed' | 'submitted' | 'approved' | 'started' | 'updated' => {
+    switch (backendType) {
+      case 'project': return 'updated';
+      case 'resident': return 'submitted';
+      case 'document': return 'approved';
+      case 'blotter': return 'started';
+      default: return 'updated';
+    }
+  };
+
+  const mapActivityPriority = (backendType: string): 'high' | 'medium' | 'low' => {
+    switch (backendType) {
+      case 'project': return 'high';
+      case 'blotter': return 'high';
+      case 'document': return 'medium';
+      case 'resident': return 'medium';
+      default: return 'medium';
+    }
+  };
+
+  const mapActivityCategory = (backendType: string): string => {
+    switch (backendType) {
+      case 'project': return 'Infrastructure';
+      case 'resident': return 'Residents';
+      case 'document': return 'Documents';
+      case 'blotter': return 'Safety';
+      default: return 'General';
+    }
+  };
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -144,12 +219,25 @@ const RecentActivity: React.FC = () => {
       }, 250); // Match the animation duration
     }
   };
-
   // Reset animation when filter changes
   useEffect(() => {
     setAnimateNewItems(true);
     setTimeout(() => setAnimateNewItems(false), 500);
   }, [filter]);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-fade-in-up">
+        <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-smblue-400 pl-4 mb-4">
+          Recent Activity
+        </h3>
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400"></div>
+          <span className="ml-2 text-gray-600">Loading activities...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

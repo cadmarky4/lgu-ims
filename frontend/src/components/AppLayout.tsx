@@ -61,7 +61,6 @@ const AppLayout: React.FC = () => {
     mediaQuery.addEventListener("change", handleMediaChange);
     return () => mediaQuery.removeEventListener("change", handleMediaChange);
   }, []);
-
   return (
     <>
       <Header

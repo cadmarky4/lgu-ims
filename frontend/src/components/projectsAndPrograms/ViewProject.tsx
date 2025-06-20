@@ -1,20 +1,6 @@
 import React from 'react';
 import { X, Calendar, Users, DollarSign, TrendingUp, MapPin, Flag, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
-
-interface Project {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  budget: string;
-  progress: number | null;
-  status: 'Active' | 'Pending' | 'Completed';
-  startDate: string | null;
-  completedDate: string | null;
-  priority: 'high' | 'medium' | 'low';
-  teamSize: number;
-  lastUpdated: string;
-}
+import { type Project } from '../../services/project.types';
 
 interface ViewProjectProps {
   project: Project;

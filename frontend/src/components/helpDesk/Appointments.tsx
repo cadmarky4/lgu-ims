@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Clock, User, Phone, Mail, CheckCircle } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, CheckCircle, Loader, AlertCircle } from "lucide-react";
+import { AppointmentsService } from "../../services/appointments.service";
+import type { CreateAppointmentData } from "../../services/appointment.types";
 import Breadcrumb from "../global/Breadcrumb";
 
 interface AppointmentFormData {
@@ -39,8 +41,23 @@ const AppointmentsPage: React.FC = () => {
     additionalNotes: "",
   });
 
+  // field-related errors for inline display
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState<boolean>(false);
+  // form-post submission loading ni adrian
+  const [loading, setLoading] = useState<boolean>(false);
+  // error na dapat lumabas pag unsuccessful yung submit pero valid naman yung fields (network error, etc.)
+  const [error, setError] = useState<string>("");
+  const [appointmentNumber, setAppointmentNumber] = useState<string>("");
+
+  const appointmentsService = new AppointmentsService();
+
+  // Test function to simulate an error - remove this after testing
+  const testError = () => {
+    console.log("Testing error display...");
+    setError("This is a test error to verify error handling is working correctly.");
+  };
+  // loading ng breadcrumbs ni sean
   const [isLoaded, setIsLoaded] = useState(false);
 
   const departments: string[] = [
@@ -140,30 +157,69 @@ const AppointmentsPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (): void => {
-    if (!validateForm()) {
-      return;
-    }
-
-    // Here you would typically send the data to your backend
+  const handleSubmit = async (): Promise<void> => {
+    if (!validateForm()) return; 
     console.log("Appointment request submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        department: "",
-        purpose: "",
-        preferredDate: "",
-        preferredTime: "",
-        alternativeDate: "",
-        alternativeTime: "",
-        additionalNotes: "",
-      });
-      setErrors({});
-    }, 3000);
+
+    setLoading(true);
+    setError("");
+    console.log("Starting API call...");
+
+    try {      // Transform frontend form data to backend API format
+      const appointmentData: CreateAppointmentData = {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        department: formData.department,
+        purpose: formData.purpose,
+        preferred_date: formData.preferredDate,
+        preferred_time: formData.preferredTime,
+        alternative_date: formData.alternativeDate || undefined,
+        alternative_time: formData.alternativeTime || undefined,
+        additional_notes: formData.additionalNotes || undefined,
+      };
+      const response = await appointmentsService.createAppointment(appointmentData);
+      console.log("API response received:", response);
+
+      setAppointmentNumber(response.appointment_number);
+      setSubmitted(true);
+      console.log("Form submitted successfully with number:", response.appointment_number);
+
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setAppointmentNumber("");
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          department: "",
+          purpose: "",
+          preferredDate: "",
+          preferredTime: "",
+          alternativeDate: "",
+          alternativeTime: "",
+          additionalNotes: "",
+        });
+      }, 5000);
+    } catch (err) {
+      console.error("Error submitting appointment:", err);
+
+      // More detailed error handling
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          setError("Unable to connect to the server. Please check your internet connection and try again.");
+        } else if (err.message.includes('Authentication failed')) {
+          setError("Your session has expired. Please log in again.");
+        } else {
+          setError(err.message || "Failed to submit appointment request");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getFieldClasses = (fieldName: keyof FormErrors, baseClasses: string) => {
@@ -183,8 +239,7 @@ const AppointmentsPage: React.FC = () => {
       }`}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Process Appointment Request
-        </h1>
-        <p className="text-gray-600">
+        </h1>        <p className="text-gray-600">
           Schedule and manage resident appointments with various LGU
           departments.
         </p>
@@ -200,39 +255,57 @@ const AppointmentsPage: React.FC = () => {
               Appointment Successfully Processed!
             </h3>
             <p className="text-green-700">
-              The appointment has been scheduled. A confirmation will be sent to
-              the resident's email.
+              Your appointment request has been submitted with appointment number: <strong>{appointmentNumber}</strong>
+            </p>
+            <p className="text-green-700 text-sm mt-1">
+              A confirmation will be sent to your email address.
             </p>
           </div>
         </div>
       ) : (
-        <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
+        <>          {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-6 flex items-center space-x-3">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-900">Error</h3>
+              <p className="text-red-700">{error}</p>
+              <button
+                onClick={() => setError("")}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+          <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`} style={{ transitionDelay: '200ms' }}>
-          {/* Personal Information */}
-          <div className="col-span-2">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Resident Information
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label
-                htmlFor="fullName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Full Name *
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className={getFieldClasses('fullName', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
-              />
-              {errors.fullName && (
+            {/* Personal Information */}
+            <div className="col-span-2">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Resident Information
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  htmlFor="fullName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Full Name *
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className={getFieldClasses('fullName', 'w-full px-4 py-2 border rounded-lg focus:ring-2')}
+                />
+                {errors.fullName && (
                 <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
               )}
             </div>
@@ -304,13 +377,13 @@ const AppointmentsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Appointment Details */}
-          <div className="col-span-2 mt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              Appointment Details
-            </h2>
-          </div>
+            {/* Appointment Details */}
+            <div className="col-span-2 mt-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Appointment Details
+              </h2>
+            </div>
 
           <div className="mb-6">
             <label
@@ -381,77 +454,82 @@ const AppointmentsPage: React.FC = () => {
               )}
             </div>
 
-            <div>
+              <div>
+                <label
+                  htmlFor="alternativeDate"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Alternative Date
+                </label>
+                <input
+                  id="alternativeDate"
+                  type="date"
+                  name="alternativeDate"
+                  value={formData.alternativeDate}
+                  onChange={handleChange}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="alternativeTime"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Alternative Time
+                </label>
+                <select
+                  id="alternativeTime"
+                  name="alternativeTime"
+                  value={formData.alternativeTime}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a time</option>
+                  {timeSlots.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 col-span-2">
               <label
-                htmlFor="alternativeDate"
+                htmlFor="additionalNotes"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Alternative Date
+                Additional Notes
               </label>
-              <input
-                id="alternativeDate"
-                type="date"
-                name="alternativeDate"
-                value={formData.alternativeDate}
+              <textarea
+                id="additionalNotes"
+                name="additionalNotes"
+                value={formData.additionalNotes}
                 onChange={handleChange}
-                min={new Date().toISOString().split("T")[0]}
+                rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Any additional information or special requirements..."
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="alternativeTime"
-                className="block text-sm font-medium text-gray-700 mb-2"
+            <div className="flex-col @lg/main-form:flex-row mt-6 flex gap-2 @lg/main-form:items-center justify-between">
+              <p className="text-sm text-gray-500">* Required fields</p>            <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="@lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center disabled:opacity-50"
               >
-                Alternative Time
-              </label>
-              <select
-                id="alternativeTime"
-                name="alternativeTime"
-                value={formData.alternativeTime}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select a time</option>
-                {timeSlots.map((time) => (
-                  <option key={time} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
+                {loading ? (
+                  <Loader className="h-5 w-5 mr-2 animate-spin" />
+                ) : (
+                  <Calendar className="h-5 w-5 mr-2" />
+                )}
+                {loading ? "Submitting..." : "Submit Appointment Request"}
+              </button>
             </div>
           </div>
-
-          <div className="mt-6 col-span-2">
-            <label
-              htmlFor="additionalNotes"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Additional Notes
-            </label>
-            <textarea
-              id="additionalNotes"
-              name="additionalNotes"
-              value={formData.additionalNotes}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Any additional information or special requirements..."
-            />
-          </div>
-
-          <div className="flex-col @lg/main-form:flex-row mt-6 flex gap-2 @lg/main-form:items-center justify-between">
-            <p className="text-sm text-gray-500">* Required fields</p>
-            <button
-              onClick={handleSubmit}
-              className="@lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
-            >
-              <Calendar className="h-5 w-5 mr-2" />
-              Submit Appointment Request
-            </button>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Information Cards */}

@@ -7,8 +7,7 @@ namespace App\Models\Schemas;
  * This serves as the single source of truth for all blotter case-related data structure
  */
 class BlotterCaseSchema
-{
-    /**
+{    /**
      * Complete field definitions for blotter cases
      */
     public static function getFields(): array
@@ -20,25 +19,27 @@ class BlotterCaseSchema
             'case_description' => ['type' => 'text', 'required' => true],
             'case_type' => ['type' => 'enum', 'values' => ['CIVIL', 'CRIMINAL', 'ADMINISTRATIVE', 'DISPUTE', 'COMPLAINT', 'NOISE', 'BOUNDARY', 'DOMESTIC', 'OTHERS'], 'required' => true],
             
-            // Complainant Information
+            // Complainant Information (based on frontend fields)
             'complainant_resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
             'complainant_name' => ['type' => 'string', 'max' => 255, 'required' => true],
             'complainant_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
             'complainant_address' => ['type' => 'text', 'required' => true],
+            'complainant_email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
             
-            // Respondent Information
-            'respondent_resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
-            'respondent_name' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'respondent_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'respondent_address' => ['type' => 'text', 'required' => true],
-            
-            // Incident Details
+            // Incident Details (based on frontend fields)
+            'incident_type' => ['type' => 'enum', 'values' => ['Theft', 'Physical Assault', 'Verbal Assault', 'Property Damage', 'Disturbance', 'Trespassing', 'Fraud', 'Harassment', 'Domestic Dispute', 'Noise Complaint', 'Other'], 'required' => true],
             'incident_date' => ['type' => 'date', 'required' => true],
             'incident_time' => ['type' => 'time', 'nullable' => true],
             'incident_location' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'incident_narrative' => ['type' => 'text', 'required' => true],
-            'witnesses' => ['type' => 'json', 'nullable' => true],
-            'evidence_items' => ['type' => 'json', 'nullable' => true],
+            'incident_description' => ['type' => 'text', 'required' => true],
+            'witnesses' => ['type' => 'text', 'nullable' => true],
+            'evidence' => ['type' => 'text', 'nullable' => true],
+            
+            // Respondent Information (based on frontend fields)
+            'respondent_resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
+            'respondent_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
+            'respondent_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
+            'respondent_address' => ['type' => 'text', 'nullable' => true],
             
             // Case Status & Processing
             'status' => ['type' => 'enum', 'values' => ['FILED', 'UNDER_INVESTIGATION', 'MEDIATION', 'HEARING_SCHEDULED', 'SETTLED', 'DISMISSED', 'REFERRED_TO_COURT', 'CLOSED'], 'default' => 'FILED'],

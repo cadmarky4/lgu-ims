@@ -5,6 +5,7 @@ import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
 import StatCard from '../global/StatCard';
 import Breadcrumb from '../global/Breadcrumb';
 import { HouseholdsService } from '../../services/households.service';
+import { useNotificationHelpers } from '../global/NotificationSystem';
 import { type Household, type HouseholdFormData } from '../../services/household.types';
 
 interface MappedHousehold {
@@ -25,6 +26,7 @@ interface MappedHousehold {
 
 const HouseholdManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { showDeleteSuccess, showDeleteError } = useNotificationHelpers();
   
   // API integration states
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +39,7 @@ const HouseholdManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState('All Households');
   const [showAdvanceFilter, setShowAdvanceFilter] = useState(false);
-  const [selectedHousehold, setSelectedHousehold] = useState<unknown>(null);
+  const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
 
   // Data states
   const [households, setHouseholds] = useState<MappedHousehold[]>([]);
@@ -181,8 +183,10 @@ const HouseholdManagement: React.FC = () => {
       setIsLoading(false);
     }
   };  
-
   const handleDeleteHousehold = async (householdId: number) => {
+    const householdToDelete = households.find(h => h.id === householdId);
+    const householdName = householdToDelete ? householdToDelete.householdNumber : 'Household';
+    
     if (
       window.confirm(
         "Are you sure you want to delete this household? This action cannot be undone."
@@ -194,15 +198,23 @@ const HouseholdManagement: React.FC = () => {
         await householdsService.deleteHousehold(householdId);
         console.log("Household deleted successfully");
         
+        // Show success notification
+        showDeleteSuccess('Household', householdName);
+        
         // Reload households to get updated data
         await loadHouseholds();
         await loadStatistics();
       } catch (error: unknown) {
         console.error("Failed to delete household:", error);
+        
+        let errorMessage = "Failed to delete household. Please try again.";
         if (error instanceof Error) {
-          setError(error.message || "Failed to delete household. Please try again.");
+          errorMessage = error.message || errorMessage;
         }
         
+        // Show error notification
+        showDeleteError('Household', errorMessage);
+        setError(errorMessage);
       } finally {
         setIsDeleting(null);
       }
@@ -350,9 +362,6 @@ const HouseholdManagement: React.FC = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Members & Income
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Programs
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status

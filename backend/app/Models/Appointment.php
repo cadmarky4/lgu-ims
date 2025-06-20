@@ -9,90 +9,41 @@ use Carbon\Carbon;
 
 class Appointment extends Model
 {
+    // Use static initialization instead of constructor
     protected $fillable = [
-        'appointment_number',
-        'subject',
-        'purpose',
-        'appointment_type',
-        'resident_id',
-        'appointee_name',
-        'appointee_contact',
-        'appointee_email',
-        'appointee_address',
-        'appointment_date',
-        'appointment_time',
-        'end_time',
-        'duration_minutes',
-        'location',
-        'room_venue',
-        'assigned_official',
-        'assigned_official_name',
-        'department',
-        'status',
-        'date_requested',
-        'confirmed_date',
-        'actual_start_time',
-        'actual_end_time',
-        'original_date',
-        'original_time',
-        'reschedule_reason',
-        'reschedule_count',
-        'required_documents',
-        'documents_submitted',
-        'special_requirements',
-        'all_requirements_met',
-        'meeting_notes',
-        'action_items',
-        'outcome_summary',
-        'resolution_status',
-        'requires_followup',
-        'followup_date',
-        'followup_notes',
-        'followup_assigned_to',
-        'priority',
-        'is_walk_in',
-        'is_emergency',
-        'confirmation_sent',
-        'reminder_sent',
-        'confirmation_sent_at',
-        'reminder_sent_at',
-        'preferred_contact_method',
-        'service_rating',
-        'appointee_feedback',
-        'feedback_received',
-        'attachments',
-        'reference_number',
-        'remarks',
-        'created_by',
-        'updated_by'
+        'appointment_number', 'full_name', 'email', 'phone', 'department', 'purpose',
+        'preferred_date', 'preferred_time', 'alternative_date', 'alternative_time',
+        'additional_notes', 'resident_id', 'appointment_date', 'appointment_time',
+        'end_time', 'duration_minutes', 'location', 'room_venue', 'assigned_official',
+        'assigned_official_name', 'status', 'date_requested', 'confirmed_date',
+        'actual_start_time', 'actual_end_time', 'original_date', 'original_time',
+        'reschedule_reason', 'reschedule_count', 'meeting_notes', 'action_items',
+        'outcome_summary', 'resolution_status', 'priority', 'is_walk_in', 'is_emergency',
+        'confirmation_sent', 'reminder_sent', 'confirmation_sent_at', 'reminder_sent_at',
+        'attachments', 'reference_number', 'remarks', 'created_by', 'updated_by'
     ];
 
     protected $casts = [
+        'preferred_date' => 'date',
+        'alternative_date' => 'date',
         'appointment_date' => 'date',
         'appointment_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'original_time' => 'datetime:H:i',
         'date_requested' => 'date',
-        'confirmed_date' => 'date',
+        'confirmed_date' => 'datetime',
         'actual_start_time' => 'datetime',
         'actual_end_time' => 'datetime',
         'original_date' => 'date',
-        'original_time' => 'datetime:H:i',
-        'followup_date' => 'date',
         'confirmation_sent_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
-        'required_documents' => 'array',
-        'documents_submitted' => 'array',
-        'attachments' => 'array',
-        'all_requirements_met' => 'boolean',
-        'requires_followup' => 'boolean',
+        'duration_minutes' => 'integer',
+        'reschedule_count' => 'integer',
         'is_walk_in' => 'boolean',
         'is_emergency' => 'boolean',
         'confirmation_sent' => 'boolean',
         'reminder_sent' => 'boolean',
-        'feedback_received' => 'boolean',
-        'duration_minutes' => 'integer',
-        'reschedule_count' => 'integer',
-        'service_rating' => 'integer'
+        'attachments' => 'array',
     ];
 
     protected $appends = [
@@ -130,17 +81,21 @@ class Appointment extends Model
     // Computed attributes
     public function getIsTodayAttribute(): bool
     {
-        return $this->appointment_date->isToday();
+        return $this->appointment_date && $this->appointment_date->isToday();
     }
 
     public function getIsUpcomingAttribute(): bool
     {
-        return $this->appointment_date->isFuture();
+        return $this->appointment_date && $this->appointment_date->isFuture();
     }
 
     public function getIsOverdueAttribute(): bool
     {
         if (in_array($this->status, ['COMPLETED', 'CANCELLED', 'NO_SHOW'])) {
+            return false;
+        }
+        
+        if (!$this->appointment_date || !$this->appointment_time) {
             return false;
         }
         
@@ -205,7 +160,7 @@ class Appointment extends Model
     }
 
     // Helper methods
-    public function generateAppointmentNumber(): string
+    public static function generateAppointmentNumber(): string
     {
         $year = date('Y');
         $count = static::whereYear('created_at', $year)->count() + 1;
@@ -327,8 +282,12 @@ class Appointment extends Model
         ]);
     }
 
-    public function calculateEndTime(): Carbon
+    public function calculateEndTime(): ?Carbon
     {
+        if (!$this->appointment_date || !$this->appointment_time || !$this->duration_minutes) {
+            return null;
+        }
+        
         $startTime = Carbon::parse($this->appointment_date->format('Y-m-d') . ' ' . $this->appointment_time->format('H:i:s'));
         return $startTime->addMinutes($this->duration_minutes);
     }
@@ -340,7 +299,7 @@ class Appointment extends Model
 
         static::creating(function ($appointment) {
             if (empty($appointment->appointment_number)) {
-                $appointment->appointment_number = $appointment->generateAppointmentNumber();
+                $appointment->appointment_number = static::generateAppointmentNumber();
             }
             if (empty($appointment->date_requested)) {
                 $appointment->date_requested = now();

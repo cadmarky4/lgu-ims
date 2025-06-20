@@ -101,6 +101,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="max-w-[330px] text-left">
             <h2 className="truncate text-lg font-semibold text-gray-900">
               Welcome, {user?.first_name || 'User'}
+              Welcome, {user?.first_name || 'User'}
             </h2>
             <p className="truncate text-sm text-gray-500">
               {currentDate.toUpperCase()} | {currentTime.toUpperCase()}

@@ -10,31 +10,42 @@ use Carbon\Carbon;
 class BarangayOfficial extends Model
 {
     protected $fillable = [
+        // Personal Information (based on frontend form)
+        'prefix',
         'first_name',
-        'last_name',
         'middle_name',
-        'suffix',
-        'birth_date',
+        'last_name',
         'gender',
+        'birth_date',
         'contact_number',
         'email_address',
-        'address',
+        'complete_address',
+        'civil_status',
+        'educational_background',
+        
+        // Position Information
         'position',
         'position_title',
-        'committee_assignments',
-        'committee_memberships',
+        'committee_assignment',
+        
+        // Term Information
         'term_start',
         'term_end',
         'term_number',
         'is_current_term',
+        
+        // Election Information
         'election_date',
         'votes_received',
         'is_elected',
         'appointment_document',
+        
+        // Status
         'status',
         'status_date',
         'status_reason',
-        'educational_background',
+        
+        // Additional fields
         'work_experience',
         'skills_expertise',
         'trainings_attended',
@@ -43,13 +54,22 @@ class BarangayOfficial extends Model
         'projects_initiated',
         'performance_notes',
         'performance_rating',
+        
+        // Emergency Contact
         'emergency_contact_name',
         'emergency_contact_number',
         'emergency_contact_relationship',
-        'social_media_accounts',
-        'documents',
+        
+        // Files
         'profile_photo',
-        'remarks',
+        'documents',
+        
+        // Oath Information
+        'oath_taking_date',
+        'oath_taking_notes',
+        
+        // System fields
+        'is_active',
         'created_by',
         'updated_by'
     ];
@@ -60,18 +80,16 @@ class BarangayOfficial extends Model
         'term_end' => 'date',
         'election_date' => 'date',
         'status_date' => 'date',
+        'oath_taking_date' => 'date',
         'is_current_term' => 'boolean',
         'is_elected' => 'boolean',
+        'is_active' => 'boolean',
         'votes_received' => 'integer',
         'term_number' => 'integer',
-        'committee_assignments' => 'integer',
         'performance_rating' => 'integer',
-        'committee_memberships' => 'array',
         'trainings_attended' => 'array',
         'certifications' => 'array',
-        'major_accomplishments' => 'array',
         'projects_initiated' => 'array',
-        'social_media_accounts' => 'array',
         'documents' => 'array'
     ];
 
@@ -97,7 +115,13 @@ class BarangayOfficial extends Model
     // Computed attributes
     public function getFullNameAttribute(): string
     {
-        $name = $this->first_name . ' ';
+        $name = '';
+        
+        if ($this->prefix) {
+            $name .= $this->prefix . ' ';
+        }
+        
+        $name .= $this->first_name . ' ';
         
         if ($this->middle_name) {
             $name .= $this->middle_name . ' ';
@@ -105,11 +129,7 @@ class BarangayOfficial extends Model
         
         $name .= $this->last_name;
         
-        if ($this->suffix) {
-            $name .= ' ' . $this->suffix;
-        }
-        
-        return $name;
+        return trim($name);
     }
 
     public function getAgeAttribute(): int

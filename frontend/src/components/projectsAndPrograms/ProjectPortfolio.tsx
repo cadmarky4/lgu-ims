@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Calendar, DollarSign, TrendingUp, ChevronDown, ChevronUp, Eye, Edit3 } from 'lucide-react';
-
-interface Project {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  budget: string;
-  progress: number | null;
-  status: 'Active' | 'Pending' | 'Completed';
-  startDate: string | null;
-  completedDate: string | null;
-  priority: 'high' | 'medium' | 'low';
-  teamSize: number;
-  lastUpdated: string;
-}
+import { type Project } from '../../services/project.types';
 
 interface ProjectPortfolioProps {
+  projects: Project[];
+  loading: boolean;
+  error: string | null;
   onAddProject: () => void;
   onEditProject: (project: Project) => void;
   onViewProject: (project: Project) => void;
+  onProjectsChange: () => void;
 }
 
-const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEditProject, onViewProject }) => {
+const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ 
+  projects, 
+  loading, 
+  error, 
+  onAddProject, 
+  onEditProject, 
+  onViewProject,
+  onProjectsChange
+}) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Projects');
@@ -33,96 +31,8 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
   const [showAll, setShowAll] = useState(false);
   const [animateNewItems, setAnimateNewItems] = useState(false);
   const [animateOut, setAnimateOut] = useState(false);
-
   const categories = ['All Projects', 'Infrastructure', 'Community', 'Health', 'Education', 'Environment'];
   const priorities = ['All Priorities', 'high', 'medium', 'low'];
-
-  const projects: Project[] = [
-    {
-      id: 1,
-      title: 'Street Lighting Enhancement Program',
-      category: 'Infrastructure',
-      description: 'Installation of LED street lights across major roads and pathways to improve safety and security for residents during night time.',
-      budget: '₱450,000',
-      progress: 65,
-      status: 'Active',
-      startDate: 'March 2025',
-      completedDate: null,
-      priority: 'high',
-      teamSize: 8,
-      lastUpdated: '2 days ago'
-    },
-    {
-      id: 2,
-      title: 'Community Health Center Renovation',
-      category: 'Health',
-      description: 'Comprehensive renovation of the barangay health center including new medical equipment and facility upgrades.',
-      budget: '₱850,000',
-      progress: null,
-      status: 'Pending',
-      startDate: 'July 2025',
-      completedDate: null,
-      priority: 'high',
-      teamSize: 12,
-      lastUpdated: '1 week ago'
-    },
-    {
-      id: 3,
-      title: 'Youth Skills Development Program',
-      category: 'Education',
-      description: 'Technical and vocational training program for young residents to develop employable skills and entrepreneurship capabilities.',
-      budget: '₱320,000',
-      progress: 40,
-      status: 'Active',
-      startDate: 'January 2025',
-      completedDate: null,
-      priority: 'medium',
-      teamSize: 5,
-      lastUpdated: '3 days ago'
-    },
-    {
-      id: 4,
-      title: 'Solid Waste Management System',
-      category: 'Environment',
-      description: 'Implementation of segregated waste collection and recycling program with community education component.',
-      budget: '₱850,000',
-      progress: null,
-      status: 'Completed',
-      startDate: 'November 2024',
-      completedDate: 'May 2025',
-      priority: 'medium',
-      teamSize: 10,
-      lastUpdated: '2 weeks ago'
-    },
-    {
-      id: 5,
-      title: 'Digital Library Initiative',
-      category: 'Education',
-      description: 'Establishing computer labs and digital resources for community learning and development.',
-      budget: '₱680,000',
-      progress: 25,
-      status: 'Active',
-      startDate: 'April 2025',
-      completedDate: null,
-      priority: 'low',
-      teamSize: 6,
-      lastUpdated: '5 days ago'
-    },
-    {
-      id: 6,
-      title: 'Senior Citizens Wellness Program',
-      category: 'Community',
-      description: 'Health and wellness activities for senior citizens including regular check-ups and recreational programs.',
-      budget: '₱200,000',
-      progress: 80,
-      status: 'Active',
-      startDate: 'February 2025',
-      completedDate: null,
-      priority: 'medium',
-      teamSize: 4,
-      lastUpdated: '1 day ago'
-    }
-  ];
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -194,14 +104,10 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
         comparison = a.status.localeCompare(b.status);
         break;
       case 'budget':
-        const budgetA = parseInt(a.budget.replace(/[^\d]/g, ''));
-        const budgetB = parseInt(b.budget.replace(/[^\d]/g, ''));
-        comparison = budgetA - budgetB;
+        comparison = parseInt(a.budget.replace(/[^\d]/g, '')) - parseInt(b.budget.replace(/[^\d]/g, ''));
         break;
       case 'progress':
-        const progressA = a.progress || 0;
-        const progressB = b.progress || 0;
-        comparison = progressA - progressB;
+        comparison = (a.progress || 0) - (b.progress || 0);
         break;
     }
     
@@ -377,20 +283,45 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Results Summary */}
-          <div className="text-sm text-gray-600 mb-4">
-            Showing {displayedProjects.length} of {filteredProjects.length} projects
-            {searchTerm && ` for "${searchTerm}"`}
-            {selectedCategory !== 'All Projects' && ` in ${selectedCategory}`}
-            {selectedPriority !== 'All Priorities' && ` with ${selectedPriority} priority`}
-          </div>
-        </div>
-
-        {/* Projects List */}
+          </div>          {/* Results Summary */}
+          {!loading && !error && (
+            <div className="text-sm text-gray-600 mb-4">
+              Showing {displayedProjects.length} of {filteredProjects.length} projects
+              {searchTerm && ` for "${searchTerm}"`}
+              {selectedCategory !== 'All Projects' && ` in ${selectedCategory}`}
+              {selectedPriority !== 'All Priorities' && ` with ${selectedPriority} priority`}
+            </div>
+          )}
+        </div>        {/* Projects List */}
         <div className="p-6 space-y-6">
-          {displayedProjects.map((project, index) => {
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center animate-pulse">
+                <TrendingUp className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500">Loading projects...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-red-400" />
+              </div>
+              <p className="text-red-500 mb-4">{error}</p>
+              <button 
+                onClick={onProjectsChange}
+                className="bg-smblue-400 text-white px-4 py-2 rounded-lg hover:bg-smblue-500 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {/* Projects */}
+          {!loading && !error && displayedProjects.map((project, index) => {
             const shouldAnimateIn = index < 4 || (showAll && animateNewItems && index >= 4);
             const shouldAnimateOut = showAll && animateOut && index >= 4;
             
@@ -485,10 +416,9 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
                 )}
               </div>
             );
-          })}
-          
+          })}          
           {/* Empty State */}
-          {filteredProjects.length === 0 && (
+          {!loading && !error && filteredProjects.length === 0 && (
             <div className="text-center py-12 animate-slide-in-up">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <Search className="w-8 h-8 text-gray-400" />
@@ -514,7 +444,7 @@ const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onAddProject, onEdi
           )}
           
           {/* Show More/Less Button */}
-          {filteredProjects.length > 4 && (
+          {!loading && !error && filteredProjects.length > 4 && (
             <div className="text-center pt-4 border-t border-gray-200">
               <button 
                 onClick={handleShowMore}

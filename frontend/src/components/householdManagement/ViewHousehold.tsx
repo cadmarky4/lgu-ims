@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiHome, FiUsers, FiDollarSign, FiMapPin, FiFileText, FiEdit } from 'react-icons/fi';
+import { HouseholdsService } from '../../services/households.service';
 import type { Household } from '../../services/household.types';
 import Breadcrumb from '../global/Breadcrumb';
 
@@ -21,6 +22,9 @@ const ViewHousehold: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Initialize service
+  const householdsService = new HouseholdsService();
+
   // Load household data when component mounts
   useEffect(() => {
     const loadHousehold = async () => {
@@ -30,54 +34,43 @@ const ViewHousehold: React.FC = () => {
         return;
       }
 
+      // Validate ID is a valid number
+      const householdId = parseInt(id);
+      if (isNaN(householdId) || householdId <= 0) {
+        setError('Invalid household ID');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        // TODO: Backend developer - replace with actual endpoint
-        // const response = await fetch(`/api/households/${id}`);
-        // const householdData = await response.json();
+        setError(null);
         
-        // For now, using mock data - would need to get from API
-        const mockHousehold: Household = {
-          id: 1,
-          household_number: `HH-${id}`,
-          household_type: 'nuclear',
-          house_number: '123',
-          street_sitio: 'Purok 1',
-          complete_address: 'Block 2, San Miguel',
-          barangay: 'San Miguel',
-          ownership_status: 'informal-settler',
-          monthly_income: '10000-25000',
-          primary_income_source: 'Employment',
-          head_resident: {
-            id: 1,
-            first_name: 'Mock',
-            last_name: 'Head',
-            contact_number: '09123456789'
-          },
-          members: [],
-          house_type: 'bamboo',
-          has_electricity: true,
-          has_water_supply: true,
-          has_internet_access: false,
-          four_ps_beneficiary: true,
-          indigent_family: false,
-          has_senior_citizen: true,
-          has_pwd_member: false,
-          remarks: '', 
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+        // Use the getHousehold method to fetch household data
+        const householdData = await householdsService.getHousehold(householdId);
         
-        setHousehold(mockHousehold);
-      } catch (error) {
+        if (!householdData) {
+          setError('Household not found');
+          setLoading(false);
+          return;
+        }
+        
+        setHousehold(householdData);
+      } catch (error: any) {
         console.error('Failed to load household:', error);
-        setError('Failed to load household data');
+        
+        // Check if it's a 404 error (household not found)
+        if (error.message?.includes('404') || error.message?.includes('not found')) {
+          setError('Household not found');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          setError('Unable to connect to server. Please check your connection.');
+        } else {
+          setError('Failed to load household data. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
-    };
-
-    loadHousehold();
+    };    loadHousehold();
   }, [id]);
 
   const handleClose = () => {
@@ -98,18 +91,35 @@ const ViewHousehold: React.FC = () => {
       </main>
     );
   }
-
   if (error || !household) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Household not found'}</p>
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-          >
-            Back to Households
-          </button>
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Household Not Found</h2>
+            <p className="text-gray-600 mb-6">
+              {error === 'Invalid household ID' 
+                ? 'The household ID provided is invalid.'
+                : error === 'Household not found'
+                ? 'The household you are looking for does not exist.'
+                : error || 'Unable to load household data.'}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={handleClose}
+              className="w-full px-6 py-3 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+            >
+              Back to Households List
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </main>
     );

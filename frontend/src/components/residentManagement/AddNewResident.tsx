@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { FiUpload, FiCheck, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText } from "react-icons/fi";
 import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
+import { useNotificationHelpers } from "../../components/global/NotificationSystem";
 import {
   type ResidentFormData,
   type Resident,
   type Purok
 } from "../../services/resident.types";
 
-interface AddNewResidentProps {
-}
-
-const AddNewResident: React.FC<AddNewResidentProps> = () => {
+const AddNewResident: React.FC = () => {
   const navigate = useNavigate();
+  const { showCreateSuccess, showCreateError, showSuccess, showError } = useNotificationHelpers();
+  
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -251,10 +251,10 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
       localStorage.setItem('residentDraft', JSON.stringify(draftData));
       
       // Show success toast notification
-      showToast('Draft saved successfully!', 'success');
+      showSuccess('Draft saved successfully!');
     } catch (error) {
       console.error('Failed to save draft:', error);
-      showToast('Failed to save draft. Please try again.', 'error');
+      showError('Failed to save draft. Please try again.');
     } finally {
       setIsSavingDraft(false);
     }
@@ -276,9 +276,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
 
     try {
       // Use the service's transform method to convert form data to API format
-      const residentData = residentsService.transformFormDataToApiFormat(formData);
-
-      // Use the API service to create the resident
+      const residentData = residentsService.transformFormDataToApiFormat(formData);      // Use the API service to create the resident
       const newResident = await residentsService.createResident(residentData);
 
       console.log("New resident created successfully:", newResident);
@@ -287,9 +285,15 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
       clearDraft();
 
       // Show success toast
+      // linagay ko nalang pareho di ako makapili
       showToast('Resident registered successfully!', 'success');
 
-      // Navigate back to residents list
+      // Show success notification
+      // linagay ko nalang pareho di ako makapili
+      const residentName = `${newResident.first_name} ${newResident.last_name}`;
+      showCreateSuccess('Resident', residentName);
+
+      // Navigate back to resident list after a short delay
       setTimeout(() => {
         navigate('/residents');
       }, 1500);
@@ -300,6 +304,8 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
     } catch (err) {
       console.error("Error saving resident:", err);
 
+      let errorMessage = "Failed to save resident. Please try again.";
+      
       // Handle different types of errors
       if (err instanceof Error) {
         try {
@@ -307,17 +313,19 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
           const errorData = JSON.parse((err instanceof Error ? err.message : 'Unknown error'));
           if (errorData.errors) {
             const errorMessages = Object.values(errorData.errors).flat();
-            setError(`Validation failed: ${errorMessages.join(", ")}`);
+            errorMessage = `Validation failed: ${errorMessages.join(", ")}`;
           } else {
-            setError(errorData.message || "Failed to save resident");
+            errorMessage = errorData.message || "Failed to save resident";
           }
         } catch {
           // If not JSON, use the message as is
-          setError((err instanceof Error ? err.message : 'Unknown error'));
+          errorMessage = (err instanceof Error ? err.message : 'Unknown error');
         }
-      } else {
-        setError("Failed to save resident. Please try again.");
       }
+
+      // Show error notification
+      showCreateError('Resident', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -1202,32 +1210,7 @@ const AddNewResident: React.FC<AddNewResidentProps> = () => {
               <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
             </button>
           </div>
-        </div>
-      </form>
-
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-          <div className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${toast.type === 'success'
-              ? 'bg-green-50 border-green-200 text-green-800'
-              : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-            {toast.type === 'success' ? (
-              <FiCheck className="w-5 h-5 text-green-600" />
-            ) : (
-              <FiX className="w-5 h-5 text-red-600" />
-            )}
-            <span className="text-sm font-medium">{toast.message}</span>
-            <button
-              onClick={() => setToast({ show: false, message: '', type: 'success' })}
-              className="ml-2 text-gray-400 hover:text-gray-600"
-              title="Close notification"
-            >
-              <FiX className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+        </div>      </form>
     </main>
   );
 };

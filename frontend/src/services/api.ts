@@ -62,8 +62,7 @@ export class BaseApiService {
       console.error('API request failed:', error);
       throw error;
     }
-  }
-  protected async requestAll<T>(
+  }  protected async requestAll<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<PaginatedResponse<T>> {
@@ -96,6 +95,23 @@ export class BaseApiService {
 
       if (!response.ok) {
         throw new Error(data.message || 'API request failed');
+      }      // Handle Laravel pagination structure
+      if (data.data && Array.isArray(data.data)) {
+        return {
+          data: data.data,
+          current_page: data.current_page || 1,
+          per_page: data.per_page || 15,
+          total: data.total || 0,
+          last_page: data.last_page || 1,
+          from: data.from || 0,
+          to: data.to || 0,
+          links: data.links || [],
+          prev_page_url: data.prev_page_url || null,
+          next_page_url: data.next_page_url || null,
+          first_page_url: data.first_page_url || '',
+          last_page_url: data.last_page_url || '',
+          path: data.path || ''
+        };
       }
 
       return data;
