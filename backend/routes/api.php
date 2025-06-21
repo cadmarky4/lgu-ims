@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\BarangayOfficialController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReportsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -136,6 +137,18 @@ Route::get('projects/test', function () {
 });
 Route::get('projects/statistics', [ProjectController::class, 'statistics']);
 Route::apiResource('projects', ProjectController::class);
+
+// Reports routes (temporarily outside auth for testing)
+Route::prefix('reports')->group(function () {
+    Route::get('/statistics-overview', [ReportsController::class, 'getStatisticsOverview']);
+    Route::get('/age-group-distribution', [ReportsController::class, 'getAgeGroupDistribution']);
+    Route::get('/special-population-registry', [ReportsController::class, 'getSpecialPopulationRegistry']);
+    Route::get('/monthly-revenue', [ReportsController::class, 'getMonthlyRevenue']);
+    Route::get('/population-distribution-by-purok', [ReportsController::class, 'getPopulationDistributionByPurok']);
+    Route::get('/document-types-issued', [ReportsController::class, 'getDocumentTypesIssued']);
+    Route::get('/most-requested-services', [ReportsController::class, 'getMostRequestedServices']);
+    Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
+});
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

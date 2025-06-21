@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Plus } from 'lucide-react';
 import Breadcrumb from '../global/Breadcrumb';
+import { ProjectsService } from '../../services/projects.service';
+import { type CreateProjectData } from '../../services/project.types';
 
 interface BudgetItem {
   id: string;
@@ -20,6 +22,9 @@ interface UploadedFile {
 const AddNewProject: React.FC = () => {
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const projectsService = new ProjectsService();
   
   const [formData, setFormData] = useState({
     projectName: '',
@@ -189,13 +194,41 @@ const AddNewProject: React.FC = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    // Navigate back to projects after successful submission
-    navigate('/projects');
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Map frontend form data to backend format
+      const projectData: CreateProjectData = {
+        title: formData.projectName,
+        category: formData.category,
+        description: formData.projectDescription,
+        budget: formData.totalBudget,
+        status: 'Pending',
+        startDate: formData.startDate || null,
+        completedDate: null,
+        priority: formData.priorityLevel.toLowerCase() as 'low' | 'medium' | 'high',
+        teamSize: parseInt(formData.expectedBeneficiaries) || 0,
+      };
+
+      // Submit to backend
+      const response = await projectsService.createProject(projectData);
+      
+      if (response.data) {
+        console.log('Project created successfully:', response.data);
+        // Navigate back to projects after successful submission
+        navigate('/projects');
+      } else {
+        throw new Error('Failed to create project');
+      }
+    } catch (err) {
+      console.error('Error creating project:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -234,12 +267,17 @@ const AddNewProject: React.FC = () => {
 
       <div className="p-6 bg-gray-50 min-h-screen animate-fade-in">
         {/* Automatic Breadcrumbs */}
-        <Breadcrumb isLoaded={isLoaded} />
-
-        {/* Header */}
+        <Breadcrumb isLoaded={isLoaded} />        {/* Header */}
         <div className="mb-6 animate-slide-in-up">
           <h1 className="text-2xl font-bold text-gray-900 pl-0">Add New Project</h1>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-slide-in-up" style={{animationDelay: '0.1s'}}>
           {/* Basic Information */}
@@ -738,12 +776,16 @@ const AddNewProject: React.FC = () => {
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </button>            <button
               type="submit"
-              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-400/90 text-white rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer"
+              disabled={loading}
+              className={`px-6 py-2 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer ${
+                loading 
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                  : 'bg-smblue-400 hover:bg-smblue-400/90 text-white'
+              }`}
             >
-              Submit Project
+              {loading ? 'Creating Project...' : 'Submit Project'}
             </button>
           </div>
         </form>
