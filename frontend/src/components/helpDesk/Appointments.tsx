@@ -53,10 +53,11 @@ const AppointmentsPage: React.FC = () => {
   const appointmentsService = new AppointmentsService();
 
   // Test function to simulate an error - remove this after testing
-  const testError = () => {
-    console.log("Testing error display...");
-    setError("This is a test error to verify error handling is working correctly.");
-  };
+  // const testError = () => {
+  //   console.log("Testing error display...");
+  //   setError("This is a test error to verify error handling is working correctly.");
+  // };
+
   // loading ng breadcrumbs ni sean
   const [isLoaded, setIsLoaded] = useState(false);
 
