@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FiClock, FiEye, FiCheck, FiX, FiFileText, FiUser, FiCalendar, FiMoreVertical } from 'react-icons/fi';
-import { apiService } from '../../services';
 import documentsService from '../../services/documents.service';
 import type { DocumentStatus } from '../../services/document.types';
 
@@ -25,7 +24,7 @@ interface QueueItem {
   };
 }
 
-const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
+const DocumentQueue: React.FC<DocumentQueueProps> = () => {
   const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('PENDING');
@@ -69,7 +68,6 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
   useEffect(() => {
     fetchQueueItems();
   }, [selectedStatus]);
-
   const fetchQueueItems = async () => {
     try {
       setLoading(true);
@@ -78,17 +76,30 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
         per_page: 50
       });
       
-      // Mock priority data since API might not have it
-      // ADRIAN PAKI-AYOS ETO NAKA-ANY PA SYA THANKS
-      const itemsWithPriority = response.data.map((item: any) => ({
-        ...item,
-        priority: Math.random() > 0.7 ? 'HIGH' : Math.random() > 0.5 ? 'NORMAL' : 'LOW',
-        estimated_completion: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
+      // Transform the data to match the expected interface
+      const transformedItems = response.data.map((item: any) => ({
+        id: item.id,
+        document_type: item.document_type,
+        resident_name: item.resident?.first_name && item.resident?.last_name ? 
+          `${item.resident.first_name} ${item.resident.last_name}` : 
+          item.applicant_name || 'Unknown',
+        purpose: item.purpose,
+        status: item.status,
+        request_date: item.request_date || item.requested_date || item.created_at,
+        priority: item.priority || 'NORMAL',
+        estimated_completion: item.needed_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        processing_fee: item.processing_fee || 0,
+        resident: {
+          first_name: item.resident?.first_name || item.applicant_name?.split(' ')[0] || 'Unknown',
+          last_name: item.resident?.last_name || item.applicant_name?.split(' ').slice(1).join(' ') || '',
+          mobile_number: item.resident?.mobile_number || item.applicant_contact
+        }
       }));
       
-      setQueueItems(itemsWithPriority);
+      setQueueItems(transformedItems);
     } catch (err) {
       console.error('Failed to fetch queue items:', err);
+      // You could set a fallback error state here if needed
     } finally {
       setLoading(false);
     }

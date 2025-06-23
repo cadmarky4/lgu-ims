@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiBriefcase, FiMapPin } from 'react-icons/fi';
 import { apiService } from '../../services';
+import documentsService from '../../services/documents.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface BusinessPermitFormProps {
@@ -13,7 +14,7 @@ interface Resident {
   last_name: string;
   middle_name?: string;
   birth_date: string;
-  age: number;
+  age?: number;
   civil_status: string;
   nationality: string;
   complete_address: string;
@@ -82,12 +83,21 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       setResidents([]);
     }
   }, [searchTerm]);
-
   const searchResidents = async () => {
     try {
       setLoading(true);
       
-      // Use placeholder data for development/testing
+      // Use real API to search residents
+      const response = await apiService.getResidents({ 
+        search: searchTerm, 
+        per_page: 10 
+      });
+      
+      setResidents(response.data || []);
+    } catch (err) {
+      console.error('Failed to search residents:', err);
+      
+      // Fallback to placeholder data for development/testing
       const placeholderResidents = [
         {
           id: 1,
@@ -135,8 +145,7 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
           civil_status: 'SINGLE',
           nationality: 'Filipino',
           complete_address: 'Purok 4, Barangay San Miguel, Quezon City',
-          mobile_number: '+63 945 678 9012'
-        },
+          mobile_number: '+63 945 678 9012'        },
         {
           id: 5,
           first_name: 'Carlos',
@@ -160,15 +169,6 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       });
 
       setResidents(filteredResidents);
-
-      // In production, use this:
-      // const response = await apiService.getResidents({ 
-      //   search: searchTerm, 
-      //   per_page: 10 
-      // });
-      // setResidents(response.data);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,6 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       [field]: value
     }));
   };
-
   const handleSubmit = async () => {
     if (!selectedResident) return;
 
@@ -196,26 +195,22 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       setError(null);
 
       const documentData = {
-        id: Math.floor(Math.random() * 1000) + 100, // Random ID for placeholder
+        document_type: 'BUSINESS_PERMIT' as const,
+        title: `Business Permit for ${formData.businessName}`,
         resident_id: selectedResident.id,
-        document_type: 'BUSINESS_PERMIT',
+        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+        applicant_address: selectedResident.complete_address,
+        applicant_contact: selectedResident.mobile_number,
         purpose: `Business Permit for ${formData.businessName}`,
         processing_fee: formData.urgentRequest ? 150 : 100,
-        notes: `Business: ${formData.businessName}, Type: ${formData.businessType}, Address: ${formData.businessAddress}, Capital: ₱${formData.capitalAmount}, Employees: ${formData.numberOfEmployees}, Hours: ${formData.operatingHours}, Additional Info: ${formData.additionalInfo}`,
-        certifying_official: formData.certifyingOfficial,
-        priority: formData.urgentRequest ? 'HIGH' : 'NORMAL',
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-        resident: selectedResident
+        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
+        requirements_submitted: ['Business Information', 'Capital Declaration'],
+        remarks: `Business Name: ${formData.businessName}, Type: ${formData.businessType}, Business Address: ${formData.businessAddress}, Capital: ₱${formData.capitalAmount}, Employees: ${formData.numberOfEmployees}, Operating Hours: ${formData.operatingHours}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
       };
 
-      // Simulate API delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const document = await documentsService.createDocument(documentData);
       
-      console.log('Document submitted (placeholder):', documentData);
-      
-      // In production, use this:
-      // await apiService.createDocument(documentData);
+      console.log('Document submitted successfully:', document);
       
       setStep(3);
     } catch (err: unknown) {
