@@ -969,9 +969,10 @@ const HelpDeskPage: React.FC = () => {
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header Section */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
+      {/* <div className={`mb-8 transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      }`}> */}
+      <div className={`mb-8 transition-all duration-700 ease-out`}>
         <div className="flex flex-col @3xl/main:flex-row @3xl/main:items-center @3xl/main:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -982,7 +983,7 @@ const HelpDeskPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 @3xl/main:flex-initial relative">
+            <div className="flex-1 @3xl/main:flex-initial relative z-50">
               <button
                 onClick={() => setShowTicketDropdown(!showTicketDropdown)}
                 className="w-full cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
