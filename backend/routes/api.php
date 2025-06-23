@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\BarangayOfficialController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\FileUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -230,6 +231,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
     });
     Route::apiResource('barangay-officials', BarangayOfficialController::class);
+
+    // File Upload route
+    Route::post('/upload', [FileUploadController::class, 'upload']);
 
     // Temporary test route
     Route::get('/test-appointment-model', function () {

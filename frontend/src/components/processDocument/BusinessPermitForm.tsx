@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiBriefcase, FiMapPin } from 'react-icons/fi';
 import { apiService } from '../../services';
-import documentsService from '../../services/documents.service';
+import { documentsService }from '../../services/documents.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface BusinessPermitFormProps {

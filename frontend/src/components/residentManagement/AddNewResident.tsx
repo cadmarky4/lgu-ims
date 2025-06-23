@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { FiUpload, FiCheck, FiX, FiUser, FiPhone, FiMail, FiMapPin, FiCalendar, FiFileText } from "react-icons/fi";
 import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
+import { uploadFile } from "../../services/storage.service";
 import { useNotificationHelpers } from "../../components/global/NotificationSystem";
 import {
   type ResidentFormData,
@@ -13,42 +14,10 @@ import {
 const AddNewResident: React.FC = () => {
   const navigate = useNavigate();
   const { showCreateSuccess, showCreateError, showSuccess, showError } = useNotificationHelpers();
-  
+
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
-  const [duplicateResidents, setDuplicateResidents] = useState<Resident[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({ show: false, message: '', type: 'success' });
-
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Toast utility function
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
-
-  // Reference data from backend
-  const [puroks, setPuroks] = useState<Purok[]>([]);
-
-  // Initialize form data with proper typing
-  const [formData, setFormData] = useState<ResidentFormData>({
+  const [initialState, setInitialState] = useState<ResidentFormData>({
     // Basic Information
     firstName: "",
     lastName: "",
@@ -103,7 +72,42 @@ const AddNewResident: React.FC = () => {
       fourPsHouseholdId: "",
     },
   });
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [duplicateResidents, setDuplicateResidents] = useState<Resident[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Toast utility function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
+
+
+
+  // Reference data from backend
+  // const [puroks, setPuroks] = useState<Purok[]>([]);
+
+  // Initialize form data with proper typing
+  const [formData, setFormData] = useState<ResidentFormData>(initialState);
+
   // const [formData, setFormData] = useState(initialFormData);
 
   const handleInputChange = (
@@ -205,12 +209,12 @@ const AddNewResident: React.FC = () => {
         // setPuroks(purokResponse);
 
         // Mock data for now
-        setPuroks([
-          { id: 1, name: "Purok 1" },
-          { id: 2, name: "Purok 2" },
-          { id: 3, name: "Purok 3" },
-          { id: 4, name: "Purok 4" },
-        ]);
+        // setPuroks([
+        //   { id: 1, name: "Purok 1" },
+        //   { id: 2, name: "Purok 2" },
+        //   { id: 3, name: "Purok 3" },
+        //   { id: 4, name: "Purok 4" },
+        // ]);
       } catch (err) {
         setError("Failed to load reference data");
         console.error("Error fetching reference data:", err);
@@ -229,6 +233,7 @@ const AddNewResident: React.FC = () => {
       const savedDraft = localStorage.getItem('residentDraft');
       if (savedDraft) {
         const draftData = JSON.parse(savedDraft);
+        setInitialState(draftData);
         setFormData(draftData);
       }
     } catch (error) {
@@ -245,11 +250,11 @@ const AddNewResident: React.FC = () => {
         is_draft: true,
         status: 'draft'
       };
-      
+
       console.log('Saving draft:', draftData);
       // Here you would typically save to localStorage or send to API
       localStorage.setItem('residentDraft', JSON.stringify(draftData));
-      
+
       // Show success toast notification
       showSuccess('Draft saved successfully!');
     } catch (error) {
@@ -268,48 +273,33 @@ const AddNewResident: React.FC = () => {
       console.error('Failed to clear draft:', error);
     }
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // Use the service's transform method to convert form data to API format
-      const residentData = residentsService.transformFormDataToApiFormat(formData);      // Use the API service to create the resident
+      // Add the image URL to the resident data if present
+      const residentData = {
+        ...residentsService.transformFormDataToApiFormat(formData),
+        profile_photo_url: profilePhotoUrl || '',
+      };
       const newResident = await residentsService.createResident(residentData);
 
       console.log("New resident created successfully:", newResident);
-
-      // Clear the draft
       clearDraft();
-
-      // Show success toast
-      // linagay ko nalang pareho di ako makapili
       showToast('Resident registered successfully!', 'success');
-
-      // Show success notification
-      // linagay ko nalang pareho di ako makapili
       const residentName = `${newResident.first_name} ${newResident.last_name}`;
       showCreateSuccess('Resident', residentName);
-
-      // Navigate back to resident list after a short delay
       setTimeout(() => {
         navigate('/residents');
       }, 1500);
-
-      // Call the parent component's onSave callback
-      // onSave(newResident);
-      // onClose();
     } catch (err) {
       console.error("Error saving resident:", err);
-
       let errorMessage = "Failed to save resident. Please try again.";
-      
-      // Handle different types of errors
       if (err instanceof Error) {
         try {
-          // Try to parse JSON error message
           const errorData = JSON.parse((err instanceof Error ? err.message : 'Unknown error'));
           if (errorData.errors) {
             const errorMessages = Object.values(errorData.errors).flat();
@@ -318,12 +308,9 @@ const AddNewResident: React.FC = () => {
             errorMessage = errorData.message || "Failed to save resident";
           }
         } catch {
-          // If not JSON, use the message as is
           errorMessage = (err instanceof Error ? err.message : 'Unknown error');
         }
       }
-
-      // Show error notification
       showCreateError('Resident', errorMessage);
       setError(errorMessage);
     } finally {
@@ -331,20 +318,31 @@ const AddNewResident: React.FC = () => {
     }
   };
 
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Store file for later upload after resident is created
-      // You might want to add this to state if needed
-      console.log("File selected:", file.name);
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfilePhotoPreview(URL.createObjectURL(file));
+      // Upload the file using the storage service
+      try {
+        const result = await uploadFile(file);
+        setProfilePhotoUrl(result.url);
+
+      } catch (err) {
+        setProfilePhotoUrl(null);
+        showError('Failed to upload image.');
+      }
     }
   };
 
   // ADRIAN (CLAUDE) AYUSIN MO TO PLS PLS PLS
   const handleClose = () => {
-    if (JSON.stringify(formData) !== JSON.stringify(formData)) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+    if (JSON.stringify(initialState) !== JSON.stringify(formData)) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave? Your progress will not be saved.')) {
         navigate('/residents');
       }
     } else {
@@ -358,9 +356,8 @@ const AddNewResident: React.FC = () => {
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
-      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+        }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Add New Resident</h1>
         <button
           onClick={handleClose}
@@ -373,18 +370,16 @@ const AddNewResident: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '200ms' }}>
+        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '200ms' }}>
           <p className="text-red-800 text-sm">{error}</p>
         </div>
       )}
 
       {/* Duplicate Warning */}
       {duplicateWarning && (
-        <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '250ms' }}>
+        <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '250ms' }}>
           <p className="text-yellow-800 text-sm font-medium">
             ⚠️ {duplicateWarning}
           </p>
@@ -408,18 +403,16 @@ const AddNewResident: React.FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '300ms' }}>
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '300ms' }}>
           <p className="text-blue-800 text-sm">Loading reference data...</p>
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
         style={{ transitionDelay: '350ms' }}
       >
         {/* Basic Information */}
@@ -468,7 +461,7 @@ const AddNewResident: React.FC = () => {
                 name="middleName"
                 value={formData.middleName}
                 onChange={handleInputChange}
-                placeholder="N/A if not applicable"
+                placeholder="Leave blank if not applicable"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
@@ -760,7 +753,7 @@ const AddNewResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Purok
               </label>
@@ -779,7 +772,7 @@ const AddNewResident: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
 
           {/* Complete Address */}
@@ -889,7 +882,7 @@ const AddNewResident: React.FC = () => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Primary ID Type
@@ -923,6 +916,9 @@ const AddNewResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 PhilHealth Number
@@ -1159,20 +1155,29 @@ const AddNewResident: React.FC = () => {
           </h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-            <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:bg-gray-50 transition"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {profilePhotoPreview ? (
+              <img
+                src={profilePhotoPreview}
+                alt="Profile Preview"
+                className="w-32 h-32 object-cover rounded-full mx-auto mb-4 border"
+              />
+            ) : (
+              <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            )}
             <p className="text-gray-600 mb-2">Upload Profile Photo</p>
-            <p className="text-sm text-gray-500">
-              Click to browse or drag and drop
-            </p>
+            <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
             <input
               type="file"
               accept="image/*"
               className="hidden"
               id="profilePhoto"
+              ref={fileInputRef}
               onChange={handleFileUpload}
             />
-            <label htmlFor="profilePhoto" className="cursor-pointer"></label>
           </div>
         </section>
 
@@ -1210,7 +1215,8 @@ const AddNewResident: React.FC = () => {
               <span>{isSubmitting ? "Saving..." : "Register Resident"}</span>
             </button>
           </div>
-        </div>      </form>
+        </div>
+      </form>
     </main>
   );
 };

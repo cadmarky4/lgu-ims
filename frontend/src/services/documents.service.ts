@@ -144,5 +144,4 @@ export class DocumentsService extends BaseApiService {
 }
 
 // Create singleton instance
-const documentsService = new DocumentsService();
-export default documentsService;
+export const documentsService = new DocumentsService();

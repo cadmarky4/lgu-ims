@@ -128,5 +128,9 @@ export class BaseApiService {
       sessionStorage.removeItem('auth_token');
     }
   }
+
+  public static getStoredToken(): string | null {
+    return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+  }
 }
 

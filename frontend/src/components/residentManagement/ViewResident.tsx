@@ -4,11 +4,12 @@ import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } 
 import Breadcrumb from '../global/Breadcrumb';
 import { residentsService } from '../../services';
 import type { Resident } from '../../services/resident.types';
+import { STORAGE_BASE_URL } from '../../services/storage.service';
 
 const ViewResident: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [resident, setResident] = useState<Resident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +25,11 @@ const ViewResident: React.FC = () => {
 
   // Load resident data when component mounts
   useEffect(() => {
-    const loadResident = async () => {      
+    const loadResident = async () => {
       if (!id) {
         setError('Resident ID not provided');
         setLoading(false);
-        return;      
+        return;
       }
 
       // Validate ID is a valid number
@@ -42,19 +43,20 @@ const ViewResident: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Use the getResident method to fetch resident data
         const residentData = await residentsService.getResident(residentId);
-        
+
         if (!residentData) {
           setError('Resident not found');
           setLoading(false);
           return;
         }
-        
-        setResident(residentData);      } catch (error: any) {
+
+        setResident(residentData);
+      } catch (error: any) {
         console.error('Failed to load resident:', error);
-        
+
         // Check if it's a 404 error (resident not found)
         if (error.message?.includes('404') || error.message?.includes('not found')) {
           setError('Resident not found');
@@ -91,36 +93,36 @@ const ViewResident: React.FC = () => {
   }
   if (error || !resident) {
     return (
-    //   {/* DWYGHT VERSION */}
-    //   <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-    //   {/* Breadcrumbs even on error page */}
-    //   <Breadcrumb isLoaded={true} />
-      
-    //   <div className="flex justify-center items-center flex-1">
-    //     <div className="text-center">
-    //       <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
-    //       <button
-    //         onClick={handleClose}
-    //         className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
-    //       >
-    //         Back to Residents
-    //       </button>
-    //     </div>
-    //   </div>
-    // </main>
+      //   {/* DWYGHT VERSION */}
+      //   <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
+      //   {/* Breadcrumbs even on error page */}
+      //   <Breadcrumb isLoaded={true} />
 
-    // {/* ADRIAN VERSION */}
+      //   <div className="flex justify-center items-center flex-1">
+      //     <div className="text-center">
+      //       <p className="text-red-600 mb-4">{error || 'Resident not found'}</p>
+      //       <button
+      //         onClick={handleClose}
+      //         className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300"
+      //       >
+      //         Back to Residents
+      //       </button>
+      //     </div>
+      //   </div>
+      // </main>
+
+      // {/* ADRIAN VERSION */}
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
         <div className="text-center max-w-md">
           <div className="mb-6">
             <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Resident Not Found</h2>
             <p className="text-gray-600 mb-6">
-              {error === 'Invalid resident ID' 
+              {error === 'Invalid resident ID'
                 ? 'The resident ID provided is invalid.'
                 : error === 'Resident not found'
-                ? 'The resident you are looking for does not exist.'
-                : error || 'Unable to load resident data.'}
+                  ? 'The resident you are looking for does not exist.'
+                  : error || 'Unable to load resident data.'}
             </p>
           </div>
           <div className="space-y-3">
@@ -175,7 +177,7 @@ const ViewResident: React.FC = () => {
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
+
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
@@ -235,9 +237,8 @@ const ViewResident: React.FC = () => {
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
-      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      <div className={`mb-2 flex justify-between items-center transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+        }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">View Resident Profile</h1>
         <div className="flex space-x-2">
           <button
@@ -257,39 +258,37 @@ const ViewResident: React.FC = () => {
         </div>
       </div>
 
-      <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '200ms' }}>
+      <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '200ms' }}>
         {/* Profile Header */}
-        <div className={`flex items-center mb-8 pb-6 border-b border-gray-200 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '300ms' }}>
+        <div className={`flex items-center mb-8 pb-6 border-b border-gray-200 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '300ms' }}>
           <img
-            src={resident.profile_photo_url || '/default-avatar.png'}
+            src={resident.profile_photo_url
+                                            ? `${STORAGE_BASE_URL}/${resident.profile_photo_url}`
+                                            : "https://placehold.co/80"}
             alt={getFullName()}
             className="w-24 h-24 rounded-full object-cover border-4 border-smblue-100"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/default-avatar.png';
+              target.src = "https://placehold.co/80";
             }}
           />
           <div className="ml-6">
             <h2 className="text-2xl font-bold text-darktext">{getFullName()}</h2>
             <p className="text-lg text-gray-600">{getAgeDisplay()}, {formatGender(resident.gender)}</p>
-            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${
-              resident.status === 'ACTIVE' 
-                ? 'bg-green-100 text-green-800' 
+            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${resident.status === 'ACTIVE'
+                ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
-            }`}>
+              }`}>
               {resident.status === 'ACTIVE' ? 'Active' : 'Inactive'}
             </span>
           </div>
         </div>
 
         {/* Basic Information */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '400ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '400ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiUser className="mr-2" />
             Basic Information
@@ -347,9 +346,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Contact Information */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '500ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '500ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiPhone className="mr-2" />
             Contact Information
@@ -387,9 +385,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Family Information */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '600ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '600ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiUsers className="mr-2" />
             Family Information
@@ -431,9 +428,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Government IDs */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '700ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '700ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiFileText className="mr-2" />
             Government IDs & Documents
@@ -475,9 +471,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Health Information */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '800ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '800ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiHeart className="mr-2" />
             Health & Medical Information
@@ -495,36 +490,31 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Special Classifications */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '900ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '900ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 flex items-center">
             <FiMapPin className="mr-2" />
             Special Classifications
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                resident.senior_citizen ? 'bg-green-500' : 'bg-gray-300'
-              }`}></div>
+              <div className={`w-3 h-3 rounded-full mr-2 ${resident.senior_citizen ? 'bg-green-500' : 'bg-gray-300'
+                }`}></div>
               <span className="text-sm text-gray-900">Senior Citizen</span>
             </div>
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                resident.person_with_disability ? 'bg-green-500' : 'bg-gray-300'
-              }`}></div>
+              <div className={`w-3 h-3 rounded-full mr-2 ${resident.person_with_disability ? 'bg-green-500' : 'bg-gray-300'
+                }`}></div>
               <span className="text-sm text-gray-900">Person with Disability</span>
             </div>
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                resident.indigenous_people ? 'bg-green-500' : 'bg-gray-300'
-              }`}></div>
+              <div className={`w-3 h-3 rounded-full mr-2 ${resident.indigenous_people ? 'bg-green-500' : 'bg-gray-300'
+                }`}></div>
               <span className="text-sm text-gray-900">Indigenous People</span>
             </div>
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-2 ${
-                resident.four_ps_beneficiary ? 'bg-green-500' : 'bg-gray-300'
-              }`}></div>
+              <div className={`w-3 h-3 rounded-full mr-2 ${resident.four_ps_beneficiary ? 'bg-green-500' : 'bg-gray-300'
+                }`}></div>
               <span className="text-sm text-gray-900">4Ps Beneficiary</span>
             </div>
           </div>
@@ -553,9 +543,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* System Information */}
-        <section className={`mb-8 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '1000ms' }}>
+        <section className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '1000ms' }}>
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             System Information
           </h3>
@@ -572,9 +561,8 @@ const ViewResident: React.FC = () => {
         </section>
 
         {/* Action Buttons */}
-        <div className={`flex justify-end space-x-4 pt-6 border-t border-gray-200 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`} style={{ transitionDelay: '1100ms' }}>
+        <div className={`flex justify-end space-x-4 pt-6 border-t border-gray-200 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`} style={{ transitionDelay: '1100ms' }}>
           <button
             onClick={handleEdit}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"

@@ -35,15 +35,15 @@ const BarangayOfficialsPage: React.FC = () => {
   const transformApiToComponent = (official: BarangayOfficial) => ({
     id: official.id,
     name: `${official.last_name}, ${official.first_name}${official.middle_name ? ' ' + official.middle_name : ''}`,
-    position: official.position === 'BARANGAY_CAPTAIN' ? 'Barangay Captain' : 
-              official.position === 'KAGAWAD' ? 'Kagawad' : 
-              official.position === 'BARANGAY_SECRETARY' ? 'Secretary' : 
-              official.position,
-    contact: official.contact_number,
+    position: official?.position === 'BARANGAY_CAPTAIN' ? 'Barangay Captain' : 
+              official?.position === 'KAGAWAD' ? 'Kagawad' : 
+              official?.position === 'BARANGAY_SECRETARY' ? 'Secretary' : 
+              official?.position,
+    contact: official?.contact_number,
     term: `${new Date(official.term_start).getFullYear()} - ${new Date(official.term_end).getFullYear()}`,
-    status: official.status === 'ACTIVE' ? 'Active' : 
-            official.status === 'INACTIVE' ? 'Inactive' : 
-            official.status,
+    status: official?.status === 'ACTIVE' ? 'Active' : 
+            official?.status === 'INACTIVE' ? 'Inactive' : 
+            official?.status,
     committee: official.committee_assignment || 'None',
     nationality: 'Filipino', // Default since not in API
     photo: official.profile_photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
@@ -88,21 +88,21 @@ const BarangayOfficialsPage: React.FC = () => {
   };
 
   const filteredOfficials = officials.filter(official => {
-    const matchesSearch = official.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         official.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = official?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         official?.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          official.committee.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = selectedFilter === 'All Active Officials' || 
-                         (selectedFilter === 'Active Only' && official.status === 'Active') ||
-                         (selectedFilter === 'On Leave' && official.status === 'On-Leave') ||
-                         (selectedFilter === 'Inactive' && official.status === 'Inactive');
+                         (selectedFilter === 'Active Only' && official?.status === 'Active') ||
+                         (selectedFilter === 'On Leave' && official?.status === 'On-Leave') ||
+                         (selectedFilter === 'Inactive' && official?.status === 'Inactive');
     
     return matchesSearch && matchesFilter;
   });
   // Organizational chart data
-  const captain = officials.find(official => official.position === 'Barangay Captain');
-  const secretary = officials.find(official => official.position === 'Secretary');
-  const councilors = officials.filter(official => official.position === 'Kagawad').slice(0, 8);
+  const captain = officials.find(official => official?.position === 'Barangay Captain');
+  const secretary = officials.find(official => official?.position === 'Secretary');
+  const councilors = officials.filter(official => official?.position === 'Kagawad').slice(0, 8);
   const handleEditOfficial = async (officialData: any) => {
     try {
       console.log('Updated official data:', officialData);
@@ -125,24 +125,24 @@ const BarangayOfficialsPage: React.FC = () => {
     const apiOfficial = {
       id: official.id,
       prefix: 'Mr.', // Default - could be enhanced
-      firstName: official.name.split(', ')[1]?.split(' ')[0] || '',
-      middleName: official.name.split(', ')[1]?.split(' ')[1] || '',
-      lastName: official.name.split(', ')[0] || '',
+      firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
+      middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
+      lastName: official?.name.split(', ')[0] || '',
       gender: 'Male', // Default - would need to be stored in API
       birthDate: '1985-01-01', // Default - would need to be stored in API
-      contactNumber: official.contact,
+      contactNumber: official?.contact,
       emailAddress: '', // Default - would need to be stored in API
       completeAddress: '', // Default - would need to be stored in API
       civilStatus: 'Single', // Default - would need to be stored in API
       educationalBackground: '', // Default - would need to be stored in API
-      position: official.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' : 
-                official.position === 'Kagawad' ? 'KAGAWAD' : 
-                official.position === 'Secretary' ? 'BARANGAY_SECRETARY' : 
-                official.position,
+      position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' : 
+                official?.position === 'Kagawad' ? 'KAGAWAD' : 
+                official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' : 
+                official?.position,
       committeeAssignment: official.committee !== 'None' ? official.committee : '',
       termStart: official.term.split(' - ')[0] + '-01-01',
       termEnd: official.term.split(' - ')[1] + '-12-31',
-      isActive: official.status === 'Active'
+      isActive: official?.status === 'Active'
     };
     
     setSelectedOfficial(apiOfficial);
@@ -155,24 +155,24 @@ const BarangayOfficialsPage: React.FC = () => {
     const apiOfficial = {
       id: official.id,
       prefix: 'Mr.', // Default - could be enhanced
-      firstName: official.name.split(', ')[1]?.split(' ')[0] || '',
-      middleName: official.name.split(', ')[1]?.split(' ')[1] || '',
-      lastName: official.name.split(', ')[0] || '',
+      firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
+      middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
+      lastName: official?.name.split(', ')[0] || '',
       gender: 'Male', // Default - would need to be stored in API
       birthDate: '1985-01-01', // Default - would need to be stored in API
-      contactNumber: official.contact,
+      contactNumber: official?.contact,
       emailAddress: '', // Default - would need to be stored in API
       completeAddress: '', // Default - would need to be stored in API
       civilStatus: 'Single', // Default - would need to be stored in API
       educationalBackground: '', // Default - would need to be stored in API
-      position: official.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' : 
-                official.position === 'Kagawad' ? 'KAGAWAD' : 
-                official.position === 'Secretary' ? 'BARANGAY_SECRETARY' : 
-                official.position,
+      position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' : 
+                official?.position === 'Kagawad' ? 'KAGAWAD' : 
+                official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' : 
+                official?.position,
       committeeAssignment: official.committee !== 'None' ? official.committee : '',
       termStart: official.term.split(' - ')[0] + '-01-01',
       termEnd: official.term.split(' - ')[1] + '-12-31',
-      isActive: official.status === 'Active'
+      isActive: official?.status === 'Active'
     };
     
     setSelectedOfficial(apiOfficial);
@@ -184,7 +184,7 @@ const BarangayOfficialsPage: React.FC = () => {
   };
 
   const handleDeleteOfficial = async (official: any) => {
-    if (!confirm(`Are you sure you want to delete ${official.name}? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${official?.name}? This action cannot be undone.`)) {
       return;
     }
 
@@ -235,7 +235,7 @@ const BarangayOfficialsPage: React.FC = () => {
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-darktext pl-0">Official Details</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Detailed information about {selectedOfficial.name}
+            Detailed information about {selectedOfficial?.name}
           </p>
         </div>
 
@@ -246,15 +246,15 @@ const BarangayOfficialsPage: React.FC = () => {
               <div className="flex flex-col items-center">
                 <div className="w-48 h-48 bg-gray-300 rounded-full flex items-center justify-center mb-4">
                   <img
-                    src={selectedOfficial.photo}
-                    alt={selectedOfficial.name}
+                    src={selectedOfficial?.photo}
+                    alt={selectedOfficial?.name}
                     className="w-48 h-48 rounded-full object-cover"
                   />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 text-center">{selectedOfficial.name}</h2>
-                <p className="text-lg text-gray-600 text-center">{selectedOfficial.position}</p>
-                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getStatusBadgeColor(selectedOfficial.status)}`}>
-                  {selectedOfficial.status}
+                <h2 className="text-2xl font-bold text-gray-900 text-center">{selectedOfficial?.name}</h2>
+                <p className="text-lg text-gray-600 text-center">{selectedOfficial?.position}</p>
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getStatusBadgeColor(selectedOfficial?.status)}`}>
+                  {selectedOfficial?.status}
                 </span>
               </div>
             </div>
@@ -267,11 +267,11 @@ const BarangayOfficialsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.contact}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.contact}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Nationality</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.nationality}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.nationality}</p>
                     </div>
                   </div>
                 </div>
@@ -281,11 +281,11 @@ const BarangayOfficialsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Committee Assignment</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.committee}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.committee}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Term</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.term}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.term}</p>
                     </div>
                   </div>
                 </div>
@@ -330,7 +330,7 @@ const BarangayOfficialsPage: React.FC = () => {
         <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
           <h1 className="text-2xl font-bold text-darktext pl-0">Official Details</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Detailed information about {selectedOfficial.name}
+            Detailed information about {selectedOfficial?.name}
           </p>
         </div>
 
@@ -341,15 +341,15 @@ const BarangayOfficialsPage: React.FC = () => {
               <div className="flex flex-col items-center">
                 <div className="w-48 h-48 bg-gray-300 rounded-full flex items-center justify-center mb-4">
                   <img
-                    src={selectedOfficial.photo}
-                    alt={selectedOfficial.name}
+                    src={selectedOfficial?.photo}
+                    alt={selectedOfficial?.name}
                     className="w-48 h-48 rounded-full object-cover"
                   />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 text-center">{selectedOfficial.name}</h2>
-                <p className="text-lg text-gray-600 text-center">{selectedOfficial.position}</p>
-                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getStatusBadgeColor(selectedOfficial.status)}`}>
-                  {selectedOfficial.status}
+                <h2 className="text-2xl font-bold text-gray-900 text-center">{selectedOfficial?.name}</h2>
+                <p className="text-lg text-gray-600 text-center">{selectedOfficial?.position}</p>
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getStatusBadgeColor(selectedOfficial?.status)}`}>
+                  {selectedOfficial?.status}
                 </span>
               </div>
             </div>
@@ -362,11 +362,11 @@ const BarangayOfficialsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.contact}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.contact}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Nationality</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.nationality}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.nationality}</p>
                     </div>
                   </div>
                 </div>
@@ -376,11 +376,11 @@ const BarangayOfficialsPage: React.FC = () => {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Committee Assignment</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.committee}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.committee}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Term</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial.term}</p>
+                      <p className="text-sm text-gray-900">{selectedOfficial?.term}</p>
                     </div>
                   </div>
                 </div>
@@ -457,18 +457,18 @@ const BarangayOfficialsPage: React.FC = () => {
               >
                 <div className="flex items-center space-x-4">
                   <img
-                    src={official.photo}
-                    alt={official.name}
+                    src={official?.photo}
+                    alt={official?.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 group-hover:text-smblue-400 transition-colors">
-                      {official.name}
+                      {official?.name}
                     </h4>
-                    <p className="text-sm text-gray-600">{official.position}</p>
+                    <p className="text-sm text-gray-600">{official?.position}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official.status)}`}>
-                        {official.status}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official?.status)}`}>
+                        {official?.status}
                       </span>
                       <span className="text-xs text-gray-500">{official.committee}</span>
                     </div>
@@ -716,28 +716,28 @@ const BarangayOfficialsPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
-                        src={official.photo}
-                        alt={official.name}
+                        src={official?.photo}
+                        alt={official?.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{official.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{official?.name}</div>
                         <div className="text-sm text-gray-500">{official.nationality}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.position}
+                    {official?.position}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {official.contact}
+                    {official?.contact}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {official.term}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official.status)}`}>
-                      {official.status}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official?.status)}`}>
+                      {official?.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -789,13 +789,13 @@ const BarangayOfficialsPage: React.FC = () => {
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={captain.photo}
-                    alt={captain.name}
+                    src={captain?.photo}
+                    alt={captain?.name}
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 </div>
-                <h3 className="font-semibold text-gray-900">{captain.name}</h3>
-                <p className="text-sm text-gray-600">{captain.position}</p>
+                <h3 className="font-semibold text-gray-900">{captain?.name}</h3>
+                <p className="text-sm text-gray-600">{captain?.position}</p>
               </div>
               
               {/* Connection Line */}
@@ -810,13 +810,13 @@ const BarangayOfficialsPage: React.FC = () => {
               <div className="flex flex-col items-center">
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={secretary.photo}
-                    alt={secretary.name}
+                    src={secretary?.photo}
+                    alt={secretary?.name}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                <h3 className="font-medium text-gray-900">{secretary.name}</h3>
-                <p className="text-sm text-gray-600">{secretary.position}</p>
+                <h3 className="font-medium text-gray-900">{secretary?.name}</h3>
+                <p className="text-sm text-gray-600">{secretary?.position}</p>
               </div>
               
               {/* Connection Line to Kagawads */}
@@ -831,13 +831,13 @@ const BarangayOfficialsPage: React.FC = () => {
               <div key={index} className={`flex flex-col items-center transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ animationDelay: `${700 + (index * 100)}ms` }}>
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={councilor.photo}
-                    alt={councilor.name}
+                    src={councilor?.photo}
+                    alt={councilor?.name}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                <h4 className="text-sm font-medium text-gray-900 text-center">{councilor.name}</h4>
-                <p className="text-xs text-gray-600 text-center">{councilor.position}</p>
+                <h4 className="text-sm font-medium text-gray-900 text-center">{councilor?.name}</h4>
+                <p className="text-xs text-gray-600 text-center">{councilor?.position}</p>
               </div>
             ))}
           </div>

@@ -4,6 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 
 import { residentsService } from '../../services';
+import { uploadFile } from '../../services/storage.service';
+
 import { useNotificationHelpers } from '../../components/global/NotificationSystem';
 
 import {
@@ -20,12 +22,12 @@ const EditResident: React.FC = () => {
 
   // Loading and error states for API calls
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);  const [error, setError] = useState<string | null>(null);
-  
-  // Reference data from backend
-  const [puroks, setPuroks] = useState<Purok[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [resident, setResident] = useState<Resident | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   // Helper function to create empty form data
   const createEmptyFormData = (): ResidentFormData => {
     return {
@@ -52,7 +54,7 @@ const EditResident: React.FC = () => {
       street: '',
       purok: '',
       completeAddress: '',
-      
+
       // Family Information
       motherName: '',
       fatherName: '',
@@ -69,7 +71,7 @@ const EditResident: React.FC = () => {
       votersIdNumber: '',
       voterStatus: 'NOT_REGISTERED',
       precinctNumber: '',
-      
+
       // Employment Information
       occupation: '',
       employer: '',
@@ -104,7 +106,9 @@ const EditResident: React.FC = () => {
       lastName: residentData.last_name || '',
       middleName: residentData.middle_name || '',
       suffix: residentData.suffix || '',
-      birthDate: residentData.birth_date || '',
+      birthDate: residentData.birth_date
+        ? new Date(residentData.birth_date).toISOString().slice(0, 10)
+        : '',
       age: residentData.age?.toString() || '',
       birthPlace: residentData.birth_place || '',
       gender: residentData.gender || '',
@@ -195,13 +199,14 @@ const EditResident: React.FC = () => {
 
   // Load resident data when component mounts
   useEffect(() => {
-    const loadResident = async () => {      if (!id) {
+    const loadResident = async () => {
+      if (!id) {
         console.error('No resident ID provided');
         setError('Resident ID not provided');
         setIsLoading(false);
         return;
-      }      
-      try {        
+      }
+      try {
         console.log('Loading resident with ID:', id);
         setIsLoading(true);
         setError(null);
@@ -214,29 +219,30 @@ const EditResident: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        
+
         // Use the getResident method to fetch resident data
         console.log('Fetching resident data from API...');
         const residentData = await residentsService.getResident(residentId);
         console.log('Resident data received:', residentData);
-        
+
         if (!residentData) {
           console.error('No resident data received');
           setError('Resident not found');
           setIsLoading(false);
           return;
         }
-          setResident(residentData);
+        setResident(residentData);
 
         // Populate form with resident data using the conversion function
         console.log('Converting resident data to form data...');
         const formDataConverted = convertResidentToFormData(residentData);
         console.log('Form data converted:', formDataConverted);
         setFormData(formDataConverted);
-        
-        console.log('Resident loaded successfully');} catch (error: any) {
+
+        console.log('Resident loaded successfully');
+      } catch (error: any) {
         console.error('Failed to load resident:', error);
-        
+
         // Check if it's a 404 error (resident not found)
         if (error.message?.includes('404') || error.message?.includes('not found')) {
           setError('Resident not found');
@@ -281,12 +287,6 @@ const EditResident: React.FC = () => {
         // setPuroks(purokResponse);
 
         // For now, using mock data
-        setPuroks([
-          { id: 1, name: 'Purok 1' },
-          { id: 2, name: 'Purok 2' },
-          { id: 3, name: 'Purok 3' },
-          { id: 4, name: 'Purok 4' }
-        ]);
       } catch (err) {
         console.error('Error fetching reference data:', err);
         // Reference data failure is not critical, continue without it
@@ -309,18 +309,20 @@ const EditResident: React.FC = () => {
 
     try {
       // Use the service's transform method to convert form data to API format
-      const updateData = residentsService.transformFormDataToApiFormat(formData);
-
+      const updateData = residentsService.transformFormDataToApiFormat({
+        ...formData,
+        profile_photo_url: profilePhotoUrl || formData.profile_photo_url || '',
+      });
       // Remove the status field as it shouldn't be updated through this form
       delete (updateData as any).status;      // Use the API service to update the resident
       await residentsService.updateResident(resident.id, updateData);
-      
+
       console.log("Resident updated successfully");
-      
+
       // Show success notification
       const residentName = `${resident.first_name} ${resident.last_name}`;
       showUpdateSuccess('Resident', residentName);
-      
+
       // Navigate back to residents list after a short delay to show the notification
       setTimeout(() => {
         navigate('/residents');
@@ -329,7 +331,7 @@ const EditResident: React.FC = () => {
       console.error('Error updating resident:', err);
 
       let errorMessage = 'Failed to update resident. Please try again.';
-      
+
       // Handle different types of errors
       if (err instanceof Error) {
         try {
@@ -370,7 +372,7 @@ const EditResident: React.FC = () => {
         </div>
       </main>
     );
-  }  if (error && !isLoading) {
+  } if (error && !isLoading) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
         <div className="text-center max-w-md">
@@ -378,11 +380,11 @@ const EditResident: React.FC = () => {
             <h1 className="text-6xl font-bold text-gray-400 mb-2">404</h1>
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Resident Not Found</h2>
             <p className="text-gray-600 mb-6">
-              {error === 'Invalid resident ID' 
+              {error === 'Invalid resident ID'
                 ? 'The resident ID provided is invalid.'
                 : error === 'Resident not found'
-                ? 'The resident you are looking for does not exist.'
-                : error || 'Unable to load resident data.'}
+                  ? 'The resident you are looking for does not exist.'
+                  : error || 'Unable to load resident data.'}
             </p>
           </div>
           <div className="space-y-3">
@@ -404,14 +406,22 @@ const EditResident: React.FC = () => {
     );
   }
 
-  // File upload handler
+  // File upload handler (reusable via storageService)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];    if (file && resident?.id) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePhotoPreview(URL.createObjectURL(file));
       try {
-        await residentsService.uploadProfilePhoto(resident.id, file);
-        // You might want to refresh the resident data after upload
+        const result = await uploadFile(file);
+        setProfilePhotoUrl(result.url);
+        // Optionally, update the resident's profile_photo_url in formData
+        setFormData(prev => ({ ...prev, profile_photo_url: result.url }));
+
+        // Log the successful upload
+        console.log(`Profile photo uploaded successfully: ${result.url}`);
       } catch (err) {
-        console.error('Failed to upload profile photo:', err);
+        setProfilePhotoUrl(null);
+        setError('Failed to upload profile photo.');
       }
     }
   };
@@ -518,7 +528,7 @@ const EditResident: React.FC = () => {
                 <option value="IV">IV</option>
               </select>
             </div>
-{/* DINAGDAG NI ADRIAN START */}
+            {/* DINAGDAG NI ADRIAN START */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Household ID
@@ -531,7 +541,7 @@ const EditResident: React.FC = () => {
                 placeholder="No Household Assigned"
               />
             </div>
-{/* DINAGDAG NI ADRIAN END */}
+            {/* DINAGDAG NI ADRIAN END */}
           </div>
 
           {/* Personal Details Group */}
@@ -799,7 +809,7 @@ const EditResident: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Purok
               </label>
@@ -818,7 +828,7 @@ const EditResident: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
 
           {/* Complete Address */}
@@ -1195,8 +1205,19 @@ const EditResident: React.FC = () => {
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">Profile Photo</h2>
           <div className="border-b border-gray-200 mb-6"></div>
 
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-            <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:bg-gray-50 transition"
+            onClick={() => document.getElementById('profilePhoto')?.click()}
+          >
+            {profilePhotoPreview || profilePhotoUrl || resident?.profile_photo_url ? (
+              <img
+                src={profilePhotoPreview || profilePhotoUrl || resident?.profile_photo_url}
+                alt="Profile Preview"
+                className="w-32 h-32 object-cover rounded-full mx-auto mb-4 border"
+              />
+            ) : (
+              <FiUpload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            )}
             <p className="text-gray-600 mb-2">Upload Profile Photo</p>
             <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
             <input
@@ -1206,11 +1227,6 @@ const EditResident: React.FC = () => {
               id="profilePhoto"
               onChange={handleFileUpload}
             />
-            <label
-              htmlFor="profilePhoto"
-              className="cursor-pointer"
-            >
-            </label>
           </div>
         </section>
 
