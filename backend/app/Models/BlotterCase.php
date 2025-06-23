@@ -10,67 +10,31 @@ use Carbon\Carbon;
 class BlotterCase extends Model
 {
     protected $fillable = [
-        'case_number',
-        'case_title',
-        'case_description',
-        'case_type',
-        'complainant_resident_id',
-        'complainant_name',
-        'complainant_contact',
-        'complainant_address',
-        'respondent_resident_id',
-        'respondent_name',
-        'respondent_contact',
-        'respondent_address',
-        'incident_date',
-        'incident_time',
-        'incident_location',
-        'incident_narrative',
-        'witnesses',
-        'evidence_items',
-        'status',
-        'date_filed',
-        'hearing_date',
-        'hearing_time',
-        'hearing_location',
-        'investigating_officer',
-        'mediator_assigned',
-        'lupon_members',
-        'settlement_agreement',
-        'settlement_date',
-        'resolution_type',
-        'attachments',
-        'investigation_report',
-        'mediation_notes',
-        'court_documents',
-        'requires_monitoring',
-        'next_followup_date',
-        'followup_notes',
-        'compliance_status',
-        'priority',
-        'is_urgent',
-        'urgency_reason',
-        'applicable_laws',
-        'ordinance_violated',
-        'legal_basis',
-        'remarks',
-        'created_by',
-        'updated_by'
+        'case_number', 'incident_type', 'incident_description', 'incident_date', 'incident_time',
+        'incident_location', 'complainant_name', 'complainant_contact', 'complainant_address',
+        'complainant_resident_id', 'respondent_name', 'respondent_contact', 'respondent_address',
+        'respondent_resident_id', 'witnesses', 'narrative_report', 'evidence_description',
+        'supporting_documents', 'investigating_officer', 'investigation_date', 'investigation_notes',
+        'status', 'case_classification', 'referral_needed', 'referred_to', 'referral_date',
+        'referral_notes', 'resolution_type', 'resolution_date', 'resolution_description',
+        'settlement_amount', 'case_outcome', 'follow_up_required', 'follow_up_date',
+        'follow_up_notes', 'case_notes', 'remarks', 'created_by', 'updated_by'
     ];
 
     protected $casts = [
         'incident_date' => 'date',
         'incident_time' => 'datetime:H:i',
-        'date_filed' => 'date',
-        'hearing_date' => 'date',
-        'hearing_time' => 'datetime:H:i',
-        'settlement_date' => 'date',
-        'next_followup_date' => 'date',
-        'requires_monitoring' => 'boolean',
-        'is_urgent' => 'boolean',
-        'evidence_items' => 'array',
-        'attachments' => 'array',
-        'court_documents' => 'array'
+        'investigation_date' => 'date',
+        'referral_date' => 'date',
+        'resolution_date' => 'date',
+        'follow_up_date' => 'date',
+        'referral_needed' => 'boolean',
+        'follow_up_required' => 'boolean',
+        'settlement_amount' => 'decimal:2',
+        'witnesses' => 'array',
+        'supporting_documents' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     protected $appends = [
@@ -116,7 +80,10 @@ class BlotterCase extends Model
             return 0;
         }
         
-        return Carbon::parse($this->date_filed)->diffInDays(now());
+        $dateFiled = $this->date_filed ?? $this->created_at;
+        if (!$dateFiled) return 0;
+        
+        return Carbon::parse($dateFiled)->diffInDays(now());
     }
 
     public function getIsOverdueAttribute(): bool

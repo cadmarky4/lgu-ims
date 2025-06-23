@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
+use App\Models\Schemas\ComplaintSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class ComplaintController extends Controller
@@ -57,7 +60,19 @@ class ComplaintController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $complaints,
+            'data' => $complaints->items(),
+            'current_page' => $complaints->currentPage(),
+            'per_page' => $complaints->perPage(),
+            'total' => $complaints->total(),
+            'last_page' => $complaints->lastPage(),
+            'from' => $complaints->firstItem(),
+            'to' => $complaints->lastItem(),
+            'links' => $complaints->linkCollection(),
+            'prev_page_url' => $complaints->previousPageUrl(),
+            'next_page_url' => $complaints->nextPageUrl(),
+            'first_page_url' => $complaints->url(1),
+            'last_page_url' => $complaints->url($complaints->lastPage()),
+            'path' => $complaints->path(),
             'message' => 'Complaints retrieved successfully'
         ]);
     }
@@ -68,30 +83,48 @@ class ComplaintController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
+            // Use frontend field names for validation
+            $validator = Validator::make($request->all(), [
+                // Frontend fields (required)
                 'subject' => 'required|string|max:255',
                 'description' => 'required|string',
-                'category' => 'required|in:INFRASTRUCTURE,PUBLIC_SERVICE,HEALTH_SANITATION,PEACE_ORDER,ENVIRONMENT,CORRUPTION,DISCRIMINATION,NOISE_COMPLAINT,GARBAGE_COLLECTION,WATER_SUPPLY,ELECTRICAL,ROAD_MAINTENANCE,OTHER',
-                'priority' => 'sometimes|in:LOW,NORMAL,HIGH,URGENT',
+                'complaint_category' => 'required|string|max:255',
+                
+                // Frontend fields (optional)
+                'full_name' => 'nullable|string|max:255', // null when anonymous
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20', 
+                'address' => 'nullable|string',
+                'department' => 'nullable|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'urgency' => 'sometimes|in:low,medium,high,critical',
+                'anonymous' => 'boolean',
+                'attachments' => 'nullable|string',
+                
+                // Optional system fields
                 'resident_id' => 'nullable|exists:residents,id',
-                'complainant_name' => 'required|string|max:255',
-                'complainant_contact' => 'nullable|string|max:20',
-                'complainant_email' => 'nullable|email',
-                'complainant_address' => 'nullable|string',
-                'is_anonymous' => 'boolean',
-                'incident_location' => 'nullable|string',
-                'incident_date' => 'nullable|date|before_or_equal:today',
-                'incident_time' => 'nullable|date_format:H:i',
-                'persons_involved' => 'nullable|string',
-                'witnesses' => 'nullable|string',
-                'attachments' => 'nullable|array',
-                'remarks' => 'nullable|string'
             ]);
 
-            $validated['created_by'] = auth()->id();
-            
-            $complaint = Complaint::create($validated);
-            $complaint->load(['resident', 'createdBy']);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Generate complaint number
+            $complaintNumber = $this->generateComplaintNumber();
+
+            // Create complaint with frontend field names
+            $complaint = Complaint::create(array_merge($validator->validated(), [
+                'complaint_number' => $complaintNumber,
+                'status' => 'RECEIVED',
+                'date_received' => now()->toDateString(),
+                'created_by' => Auth::id(),
+            ]));
+
+            $complaint->load(['resident', 'assignedTo']);
 
             return response()->json([
                 'success' => true,
@@ -165,7 +198,7 @@ class ComplaintController extends Controller
                 'remarks' => 'nullable|string'
             ]);
 
-            $validated['updated_by'] = auth()->id();
+            $validated['updated_by'] = Auth::id();
             
             $complaint->update($validated);
             $complaint->load(['resident', 'assignedTo']);
@@ -299,7 +332,7 @@ class ComplaintController extends Controller
             $targetDate = $request->target_resolution_date ? 
                 Carbon::parse($request->target_resolution_date) : null;
 
-            $complaint->acknowledge(auth()->id(), $targetDate);
+            $complaint->acknowledge(Auth::id(), $targetDate);
 
             return response()->json([
                 'success' => true,
@@ -379,7 +412,7 @@ class ComplaintController extends Controller
             $complaint->resolve(
                 $request->resolution_details,
                 $request->resolution_type,
-                auth()->id()
+                Auth::id()
             );
 
             if ($request->recommendations) {
@@ -444,5 +477,29 @@ class ComplaintController extends Controller
                 'message' => 'Failed to submit feedback: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generate a unique complaint number
+     */
+    private function generateComplaintNumber(): string
+    {
+        $prefix = 'CPL';
+        $year = date('Y');
+        $month = date('m');
+        
+        // Get the last complaint number for this month
+        $lastComplaint = Complaint::where('complaint_number', 'like', "{$prefix}{$year}{$month}%")
+            ->orderBy('complaint_number', 'desc')
+            ->first();
+        
+        if ($lastComplaint) {
+            $lastNumber = intval(substr($lastComplaint->complaint_number, -4));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        
+        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

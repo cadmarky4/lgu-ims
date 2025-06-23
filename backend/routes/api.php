@@ -13,6 +13,10 @@ use App\Http\Controllers\Api\SuggestionController;
 use App\Http\Controllers\Api\BlotterCaseController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\BarangayOfficialController;
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReportsController;
+use App\Http\Controllers\Api\FileUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +75,82 @@ Route::prefix('users')->group(function () {
 });
 Route::apiResource('users', UserController::class);
 
+// TEMPORARY: Help Desk routes without authentication for public access
+// These will be moved back under auth middleware when staff authentication is implemented
+
+// Public Help Desk - Appointments
+Route::prefix('appointments')->group(function () {
+    Route::get('/statistics', [AppointmentController::class, 'statistics']);
+    Route::get('/available-slots', [AppointmentController::class, 'getAvailableSlots']);
+    Route::post('/{appointment}/confirm', [AppointmentController::class, 'confirm']);
+    Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
+    Route::post('/{appointment}/complete', [AppointmentController::class, 'complete']);
+    Route::post('/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
+});
+Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
+
+// Public Help Desk - Complaints
+Route::prefix('complaints')->group(function () {
+    Route::get('/statistics', [ComplaintController::class, 'statistics']);
+    Route::post('/{complaint}/assign', [ComplaintController::class, 'assign']);
+    Route::post('/{complaint}/investigate', [ComplaintController::class, 'investigate']);
+    Route::post('/{complaint}/resolve', [ComplaintController::class, 'resolve']);
+    Route::post('/{complaint}/close', [ComplaintController::class, 'close']);
+});
+Route::apiResource('complaints', ComplaintController::class)->only(['index', 'store', 'show', 'update']);
+
+// Public Help Desk - Suggestions
+Route::prefix('suggestions')->group(function () {
+    Route::get('/statistics', [SuggestionController::class, 'statistics']);
+    Route::post('/{suggestion}/review', [SuggestionController::class, 'review']);
+    Route::post('/{suggestion}/approve', [SuggestionController::class, 'approve']);
+    Route::post('/{suggestion}/implement', [SuggestionController::class, 'implement']);
+    Route::post('/{suggestion}/reject', [SuggestionController::class, 'reject']);
+});
+Route::apiResource('suggestions', SuggestionController::class)->only(['index', 'store', 'show', 'update']);
+
+// Public Help Desk - Blotter Cases
+Route::prefix('blotter-cases')->group(function () {
+    Route::get('/statistics', [BlotterCaseController::class, 'statistics']);
+    Route::post('/{blotterCase}/assign-investigator', [BlotterCaseController::class, 'assignInvestigator']);
+    Route::post('/{blotterCase}/investigate', [BlotterCaseController::class, 'investigate']);
+    Route::post('/{blotterCase}/mediate', [BlotterCaseController::class, 'mediate']);
+    Route::post('/{blotterCase}/settle', [BlotterCaseController::class, 'settle']);
+    Route::post('/{blotterCase}/close', [BlotterCaseController::class, 'closeCase']);
+});
+Route::apiResource('blotter-cases', BlotterCaseController::class)->only(['index', 'store', 'show', 'update']);
+
+// Settings - System Configuration (temporarily outside auth for testing)
+Route::get('settings', [SettingController::class, 'index']);
+Route::put('settings', [SettingController::class, 'update']);
+Route::post('settings/reset', [SettingController::class, 'reset']);
+
+// Dashboard routes (temporarily outside auth for testing)
+Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+Route::get('dashboard/demographics', [DashboardController::class, 'demographics']);
+Route::get('dashboard/notifications', [DashboardController::class, 'notifications']);
+Route::get('dashboard/activities', [DashboardController::class, 'activities']);
+Route::get('dashboard/barangay-officials', [DashboardController::class, 'barangayOfficials']);
+
+// Projects routes (temporarily outside auth for testing)  
+Route::get('projects/test', function () {
+    return response()->json(['message' => 'Projects API working']);
+});
+Route::get('projects/statistics', [ProjectController::class, 'statistics']);
+Route::apiResource('projects', ProjectController::class);
+
+// Reports routes (temporarily outside auth for testing)
+Route::prefix('reports')->group(function () {
+    Route::get('/statistics-overview', [ReportsController::class, 'getStatisticsOverview']);
+    Route::get('/age-group-distribution', [ReportsController::class, 'getAgeGroupDistribution']);
+    Route::get('/special-population-registry', [ReportsController::class, 'getSpecialPopulationRegistry']);
+    Route::get('/monthly-revenue', [ReportsController::class, 'getMonthlyRevenue']);
+    Route::get('/population-distribution-by-purok', [ReportsController::class, 'getPopulationDistributionByPurok']);
+    Route::get('/document-types-issued', [ReportsController::class, 'getDocumentTypesIssued']);
+    Route::get('/most-requested-services', [ReportsController::class, 'getMostRequestedServices']);
+    Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
+});
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
@@ -96,16 +176,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{document}/generate-qr', [DocumentController::class, 'generateQR']);
     });
     Route::apiResource('documents', DocumentController::class);
-
-    // Projects - Specific routes BEFORE apiResource
-    Route::prefix('projects')->group(function () {
-        Route::get('/statistics', [ProjectController::class, 'statistics']);
-        Route::post('/{project}/approve', [ProjectController::class, 'approve']);
-        Route::post('/{project}/start', [ProjectController::class, 'start']);
-        Route::post('/{project}/complete', [ProjectController::class, 'complete']);
-        Route::patch('/{project}/progress', [ProjectController::class, 'updateProgress']);
-    });
-    Route::apiResource('projects', ProjectController::class);
     
     // Help Desk - Complaints - Specific routes BEFORE apiResource
     Route::prefix('complaints')->group(function () {
@@ -160,19 +230,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
         Route::post('/{barangayOfficial}/reactivate', [BaramgayOfficialController::class, 'reactivate']);
     });
-    Route::apiResource('barangay-officials', BarangayOfficialController::class);// General utility routes
-    Route::get('/dashboard/statistics', function () {
-        return response()->json([
-            'residents' => \App\Models\Resident::count(),
-            'households' => \App\Models\Household::count(),
-            'documents' => \App\Models\Document::count(),
-            'pending_documents' => \App\Models\Document::where('status', 'PENDING')->count(),
-            'projects' => \App\Models\Project::count(),
-            'active_projects' => \App\Models\Project::where('status', 'IN_PROGRESS')->count(),
-            'complaints' => \App\Models\Complaint::count(),
-            'pending_complaints' => \App\Models\Complaint::where('status', 'PENDING')->count(),
-            'total_budget' => \App\Models\Project::sum('total_budget'),
-            'utilized_budget' => \App\Models\Project::sum('utilized_budget'),
-        ]);
+    Route::apiResource('barangay-officials', BarangayOfficialController::class);
+
+    // File Upload route
+    Route::post('/upload', [FileUploadController::class, 'upload']);
+
+    // Temporary test route
+    Route::get('/test-appointment-model', function () {
+        try {
+            $appointment = new App\Models\Appointment();
+            return response()->json([
+                'success' => true,
+                'message' => 'Model created successfully',
+                'fillable' => $appointment->getFillable(),
+                'casts' => $appointment->getCasts()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Model creation failed',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     });
 });

@@ -7,29 +7,30 @@ namespace App\Models\Schemas;
  * This serves as the single source of truth for all appointment-related data structure
  */
 class AppointmentSchema
-{
-    /**
+{    /**
      * Complete field definitions for appointments
      */
     public static function getFields(): array
     {
         return [
-            // Basic Information
+            // Basic Information (matching frontend)
             'appointment_number' => ['type' => 'string', 'max' => 255, 'required' => true, 'unique' => true],
-            'subject' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'full_name' => ['type' => 'string', 'max' => 255, 'required' => true],
+            'email' => ['type' => 'email', 'max' => 255, 'required' => true],
+            'phone' => ['type' => 'string', 'max' => 20, 'required' => true],
+            'department' => ['type' => 'string', 'max' => 255, 'required' => true],
             'purpose' => ['type' => 'text', 'required' => true],
-            'appointment_type' => ['type' => 'enum', 'values' => ['CONSULTATION', 'MEETING', 'HEARING', 'DOCUMENT_REQUEST', 'COMPLAINT', 'OTHER'], 'required' => true],
             
-            // Resident Information
-            'resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
-            'appointee_name' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'appointee_contact' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'appointee_email' => ['type' => 'email', 'max' => 255, 'nullable' => true],
-            'appointee_address' => ['type' => 'text', 'nullable' => true],
+            // Scheduling Information
+            'preferred_date' => ['type' => 'date', 'required' => true],
+            'preferred_time' => ['type' => 'string', 'max' => 10, 'required' => true],
+            'alternative_date' => ['type' => 'date', 'nullable' => true],
+            'alternative_time' => ['type' => 'string', 'max' => 10, 'nullable' => true],
+            'additional_notes' => ['type' => 'text', 'nullable' => true],
             
-            // Schedule Information
-            'appointment_date' => ['type' => 'date', 'required' => true],
-            'appointment_time' => ['type' => 'time', 'required' => true],
+            // System Processing Fields
+            'appointment_date' => ['type' => 'date', 'nullable' => true], // Final confirmed date
+            'appointment_time' => ['type' => 'time', 'nullable' => true], // Final confirmed time
             'end_time' => ['type' => 'time', 'nullable' => true],
             'duration_minutes' => ['type' => 'integer', 'min' => 15, 'max' => 480, 'nullable' => true],
             
@@ -38,7 +39,6 @@ class AppointmentSchema
             'room_venue' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             'assigned_official' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
             'assigned_official_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'department' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             
             // Status & Dates
             'status' => ['type' => 'enum', 'values' => ['PENDING', 'CONFIRMED', 'RESCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'], 'default' => 'PENDING'],
@@ -53,23 +53,11 @@ class AppointmentSchema
             'reschedule_reason' => ['type' => 'text', 'nullable' => true],
             'reschedule_count' => ['type' => 'integer', 'default' => 0, 'min' => 0],
             
-            // Requirements & Documents
-            'required_documents' => ['type' => 'json', 'nullable' => true],
-            'documents_submitted' => ['type' => 'json', 'nullable' => true],
-            'special_requirements' => ['type' => 'text', 'nullable' => true],
-            'all_requirements_met' => ['type' => 'boolean', 'default' => false],
-            
             // Meeting Details
             'meeting_notes' => ['type' => 'text', 'nullable' => true],
             'action_items' => ['type' => 'text', 'nullable' => true],
             'outcome_summary' => ['type' => 'text', 'nullable' => true],
             'resolution_status' => ['type' => 'enum', 'values' => ['PENDING', 'RESOLVED', 'ONGOING', 'ESCALATED'], 'nullable' => true],
-            
-            // Follow-up
-            'requires_followup' => ['type' => 'boolean', 'default' => false],
-            'followup_date' => ['type' => 'date', 'nullable' => true],
-            'followup_notes' => ['type' => 'text', 'nullable' => true],
-            'followup_assigned_to' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
             
             // Priority & Special Flags
             'priority' => ['type' => 'enum', 'values' => ['LOW', 'NORMAL', 'HIGH', 'URGENT'], 'default' => 'NORMAL'],
@@ -81,12 +69,6 @@ class AppointmentSchema
             'reminder_sent' => ['type' => 'boolean', 'default' => false],
             'confirmation_sent_at' => ['type' => 'datetime', 'nullable' => true],
             'reminder_sent_at' => ['type' => 'datetime', 'nullable' => true],
-            'preferred_contact_method' => ['type' => 'enum', 'values' => ['EMAIL', 'SMS', 'PHONE', 'IN_PERSON'], 'nullable' => true],
-            
-            // Feedback
-            'service_rating' => ['type' => 'integer', 'min' => 1, 'max' => 5, 'nullable' => true],
-            'appointee_feedback' => ['type' => 'text', 'nullable' => true],
-            'feedback_received' => ['type' => 'boolean', 'default' => false],
             
             // Additional
             'attachments' => ['type' => 'json', 'nullable' => true],
