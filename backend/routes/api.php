@@ -158,7 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/export', [BarangayOfficialController::class, 'export']);
         Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
         Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
-        Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
+        Route::post('/{barangayOfficial}/reactivate', [BaramgayOfficialController::class, 'reactivate']);
     });
     Route::apiResource('barangay-officials', BarangayOfficialController::class);// General utility routes
     Route::get('/dashboard/statistics', function () {
