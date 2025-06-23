@@ -228,7 +228,7 @@ class BarangayOfficialController extends Controller
             'emergency_contact_relationship' => 'nullable|string|max:100',
             
             // Files
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'profile_photo' => 'nullable|string|max:500',
             'documents' => 'nullable|array',
             
             // Oath Information

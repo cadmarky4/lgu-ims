@@ -168,6 +168,8 @@ export interface BarangayOfficialFormData {
   
   // System fields
   isActive?: boolean;
+
+  profile_photo?: string; // For frontend, we can use a base64 string or file object
 }
 
 // API data interfaces
@@ -231,6 +233,8 @@ export interface CreateBarangayOfficialData {
   
   // System fields
   is_active?: boolean;
+
+  profile_photo?: string; // For API, this can be a base64 string or file path
 }
 
 export interface UpdateBarangayOfficialData {
@@ -293,6 +297,8 @@ export interface UpdateBarangayOfficialData {
   
   // System fields
   is_active?: boolean;
+
+  profile_photo?: string; // For API, this can be a base64 string or file path
 }
 
 // Filter interface

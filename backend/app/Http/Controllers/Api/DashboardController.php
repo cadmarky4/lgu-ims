@@ -231,7 +231,8 @@ class DashboardController extends Controller
                     'last_name',
                     'position',
                     'email_address as email',
-                    'contact_number as contact'
+                    'contact_number as contact',
+                    'profile_photo',
                 ])
                 ->get()
                 ->map(function ($official) {
@@ -241,7 +242,7 @@ class DashboardController extends Controller
                         'position' => $official->position,
                         'email' => $official->email ?: 'N/A',
                         'contact' => $official->contact ?: 'N/A',
-                        'photo' => $this->getDefaultPhoto($official->first_name, $official->id)
+                        'photo' => $official->profile_photo
                     ];
                 });
 
