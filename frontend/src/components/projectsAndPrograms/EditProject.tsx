@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, Calendar, Plus, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { FiChevronRight } from 'react-icons/fi';
-import type { Project, UpdateProjectData } from '../../services/project.types';
+import type { Project, UpdateProjectData, CreateProjectData } from '../../services/project.types';
+import { ProjectsService } from '../../services/projects.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface EditProjectProps {
@@ -42,7 +43,10 @@ interface UploadedFile {
 const EditProject: React.FC = () => {
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { projectId } = useParams<{ projectId: string }>();
+  const projectsService = new ProjectsService();
   
   const [formData, setFormData] = useState({
     projectName: '',
@@ -131,13 +135,57 @@ const EditProject: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [projectTitle, setProjectTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
-      const timer = setTimeout(() => {
-        setIsLoaded(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }, []);
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Load project data from backend
+  useEffect(() => {
+    const loadProject = async () => {
+      if (!projectId) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await projectsService.getProject(parseInt(projectId));
+        
+        if (response.data) {
+          const project = response.data;
+          // Map backend data to frontend form format
+          setFormData({
+            projectName: project.title || '',
+            category: project.category || '',
+            projectDescription: project.description || '',
+            currentStatus: project.status || 'Pending',
+            progressPercentage: project.progress || 0,
+            startDate: project.startDate || '',
+            endDate: project.completedDate || '',
+            priorityLevel: project.priority ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1) : 'Medium',
+            totalBudget: project.budget || '',
+            fundingSource: 'Government Grant', // Default as backend doesn't have this field
+            amountSpent: '0', // Default as backend doesn't have this field
+            projectManager: 'Project Manager', // Default as backend doesn't have this field
+            expectedBeneficiaries: project.teamSize?.toString() || '0',
+            teamDepartment: 'All Departments', // Default as backend doesn't have this field
+            keyStakeholders: '', // Default as backend doesn't have this field
+            projectLocation: '', // Default as backend doesn't have this field
+            successMetrics: '', // Default as backend doesn't have this field
+            potentialRisks: '' // Default as backend doesn't have this field
+          });
+          setProjectTitle(project.title || 'Edit Project');
+        }
+      } catch (err) {
+        console.error('Error loading project:', err);
+        setError('Failed to load project data');
+      } finally {
+        setLoading(false);
+      }
+    };    loadProject();
+  }, [projectId]);
 
   const teamMembers = Array.from({ length: 8 }, (_, i) => ({
     id: `member-${i + 1}`,
@@ -145,63 +193,6 @@ const EditProject: React.FC = () => {
     position: 'Barangay Captain',
     photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
   }));
-
-  // Mock data based on projectId (in real app, this would come from API)
-  useEffect(() => {
-    if (projectId) {
-      // Simulate fetching project data by ID
-      const mockProjectData = {
-        1: {
-          projectName: 'Street Lighting Enhancement Program',
-          category: 'Infrastructure',
-          projectDescription: 'Installation of LED street lights across major roads and pathways to improve safety and security for residents during night time.',
-          currentStatus: 'Active',
-          progressPercentage: 65,
-          startDate: '2025-03-01',
-          endDate: '2025-08-30',
-          priorityLevel: 'High',
-          totalBudget: '450000',
-          fundingSource: 'Barangay Fund',
-          amountSpent: '292500',
-          projectManager: 'Juan Dela Cruz',
-          expectedBeneficiaries: '8000',
-          teamDepartment: 'All Departments',
-          keyStakeholders: 'Local residents, nearby businesses, barangay council, LGU engineering department, electrical contractors',
-          projectLocation: 'Major roads and pathways throughout the barangay',
-          successMetrics: 'Reduced crime incidents during nighttime, improved pedestrian safety, resident satisfaction survey scores above 85%',
-          potentialRisks: 'Weather delays, equipment supply chain issues, budget overruns due to unexpected site complications'
-        },
-        2: {
-          projectName: 'Community Health Center Renovation',
-          category: 'Health',
-          projectDescription: 'Comprehensive renovation of the barangay health center including new medical equipment and facility upgrades.',
-          currentStatus: 'Pending',
-          progressPercentage: 0,
-          startDate: '2025-07-01',
-          endDate: '2025-12-15',
-          priorityLevel: 'High',
-          totalBudget: '850000',
-          fundingSource: 'Government Grant',
-          amountSpent: '0',
-          projectManager: 'Maria Santos',
-          expectedBeneficiaries: '12000',
-          teamDepartment: 'Health',
-          keyStakeholders: 'Health workers, patients, DOH, barangay council, medical suppliers',
-          projectLocation: 'Barangay Health Center Building',
-          successMetrics: 'Improved patient capacity, reduced waiting times, modern medical equipment operational',
-          potentialRisks: 'Permit delays, construction disruptions to ongoing health services, equipment delivery delays'
-        }
-      };
-
-      const validProjectId = projectId && ['1', '2'].includes(projectId) ? (projectId as '1' | '2') : null;
-      const projectData = validProjectId ? mockProjectData[validProjectId] : null;
-      if (projectData) {
-        setFormData(projectData);
-        setOriginalFormData(projectData);
-        setProjectTitle(projectData.projectName);
-      }
-    }
-  }, [projectId]);
 
   // File upload handlers
   const handleFiles = (files: FileList) => {
@@ -420,13 +411,42 @@ const EditProject: React.FC = () => {
       return total + amount;
     }, 0);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    // Navigate back to projects after successful submission
-    navigate('/projects');
+    if (!projectId) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {      // Map frontend form data to backend format
+      const updateData: UpdateProjectData = {
+        title: formData.projectName,
+        category: formData.category,
+        description: formData.projectDescription,
+        budget: formData.totalBudget,
+        status: formData.currentStatus as 'Active' | 'Pending' | 'Completed',
+        startDate: formData.startDate || null,
+        completedDate: formData.endDate || null,
+        priority: formData.priorityLevel.toLowerCase() as 'low' | 'medium' | 'high',
+        teamSize: parseInt(formData.expectedBeneficiaries) || 0,
+      };
+
+      // Submit to backend
+      const response = await projectsService.updateProject(parseInt(projectId), updateData);
+      
+      if (response.data) {
+        console.log('Project updated successfully:', response.data);
+        // Navigate back to projects after successful submission
+        navigate('/projects');
+      } else {
+        throw new Error('Failed to update project');
+      }
+    } catch (err) {
+      console.error('Error updating project:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update project. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {

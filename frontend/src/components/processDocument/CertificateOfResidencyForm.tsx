@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiHome, FiCalendar } from 'react-icons/fi';
 import { apiService } from '../../services';
+import { documentsService }from '../../services/documents.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface CertificateOfResidencyFormProps {
@@ -13,7 +14,7 @@ interface Resident {
   last_name: string;
   middle_name?: string;
   birth_date: string;
-  age: number;
+  age?: number;
   civil_status: string;
   nationality: string;
   complete_address: string;
@@ -187,7 +188,6 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       [field]: value
     }));
   };
-
   const handleSubmit = async () => {
     if (!selectedResident) return;
 
@@ -196,26 +196,22 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       setError(null);
 
       const documentData = {
-        id: Math.floor(Math.random() * 1000) + 100, // Random ID for placeholder
+        document_type: 'CERTIFICATE_OF_RESIDENCY' as const,
+        title: `Certificate of Residency for ${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
         resident_id: selectedResident.id,
-        document_type: 'CERTIFICATE_RESIDENCY',
+        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+        applicant_address: selectedResident.complete_address,
+        applicant_contact: selectedResident.mobile_number,
         purpose: formData.purpose,
         processing_fee: formData.urgentRequest ? 55 : 30,
-        notes: `Years of Residence: ${formData.yearsOfResidence}, Previous Address: ${formData.previousAddress}, Residency Status: ${formData.residencyStatus}, Additional Info: ${formData.additionalInfo}`,
-        certifying_official: formData.certifyingOfficial,
-        priority: formData.urgentRequest ? 'HIGH' : 'NORMAL',
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-        resident: selectedResident
+        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
+        requirements_submitted: ['Proof of Residency', 'Valid ID'],
+        remarks: `Years of Residence: ${formData.yearsOfResidence}, Previous Address: ${formData.previousAddress}, Residency Status: ${formData.residencyStatus}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
       };
 
-      // Simulate API delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const document = await documentsService.createDocument(documentData);
       
-      console.log('Document submitted (placeholder):', documentData);
-      
-      // In production, use this:
-      // await apiService.createDocument(documentData);
+      console.log('Document submitted successfully:', document);
       
       setStep(3);
     } catch (err: unknown) {

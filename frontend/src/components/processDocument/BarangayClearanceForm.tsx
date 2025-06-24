@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiUser, FiFileText, FiCheck, FiArrowLeft } from 'react-icons/fi';
+import { FiSearch, FiUser, FiCheck, FiArrowLeft } from 'react-icons/fi';
 import { apiService } from '../../services';
+import { documentsService }from '../../services/documents.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface BarangayClearanceFormProps {
@@ -13,7 +14,7 @@ interface Resident {
   last_name: string;
   middle_name?: string;
   birth_date: string;
-  age: number;
+  age?: number;
   civil_status: string;
   nationality: string;
   complete_address: string;
@@ -89,12 +90,21 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       setResidents([]);
     }
   }, [searchTerm]);
-
   const searchResidents = async () => {
     try {
       setLoading(true);
       
-      // Use placeholder data for development/testing
+      // Use real API to search residents
+      const response = await apiService.getResidents({ 
+        search: searchTerm, 
+        per_page: 10 
+      });
+      
+      setResidents(response.data || []);
+    } catch (err) {
+      console.error('Failed to search residents:', err);
+      
+      // Fallback to placeholder data for development/testing
       const placeholderResidents = [
         {
           id: 1,
@@ -167,15 +177,6 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       });
 
       setResidents(filteredResidents);
-
-      // In production, use this:
-      // const response = await apiService.getResidents({ 
-      //   search: searchTerm, 
-      //   per_page: 10 
-      // });
-      // setResidents(response.data);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
     } finally {
       setLoading(false);
     }
@@ -194,7 +195,6 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       [field]: value
     }));
   };
-
   const handleSubmit = async () => {
     if (!selectedResident) return;
 
@@ -203,26 +203,22 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       setError(null);
 
       const documentData = {
-        id: Math.floor(Math.random() * 1000) + 100, // Random ID for placeholder
+        document_type: 'BARANGAY_CLEARANCE' as const,
+        title: `Barangay Clearance for ${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
         resident_id: selectedResident.id,
-        document_type: 'BARANGAY_CLEARANCE',
+        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+        applicant_address: selectedResident.complete_address,
+        applicant_contact: selectedResident.mobile_number,
         purpose: formData.purpose,
         processing_fee: formData.urgentRequest ? 100 : 50,
-        notes: `Valid ID: ${formData.validIdPresented}, Years of Residency: ${formData.yearsOfResidency}, Additional Info: ${formData.additionalInfo}`,
-        certifying_official: formData.certifyingOfficial,
-        priority: formData.urgentRequest ? 'HIGH' : 'NORMAL',
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-        resident: selectedResident
+        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
+        requirements_submitted: [formData.validIdPresented],
+        remarks: `Valid ID: ${formData.validIdPresented}, Years of Residency: ${formData.yearsOfResidency}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
       };
 
-      // Simulate API delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const document = await documentsService.createDocument(documentData);
       
-      console.log('Document submitted (placeholder):', documentData);
-      
-      // In production, use this:
-      // await apiService.createDocument(documentData);
+      console.log('Document submitted successfully:', document);
       
       setStep(3);
     } catch (err: unknown) {

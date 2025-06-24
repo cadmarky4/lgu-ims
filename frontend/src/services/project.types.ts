@@ -40,6 +40,5 @@ export interface CreateProjectData {
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {
-  id: number;
 }
 

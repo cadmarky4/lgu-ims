@@ -225,6 +225,8 @@ export class ResidentsService extends BaseApiService {
 
             // Default values
             status: "ACTIVE" as ResidentStatus,
+
+            profile_photo_url: formData.profile_photo_url || null,
         };
     }
 

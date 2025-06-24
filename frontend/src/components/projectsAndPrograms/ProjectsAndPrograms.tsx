@@ -50,8 +50,7 @@ const ProjectsAndPrograms: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Load projects and statistics in parallel
+        // Load projects and statistics in parallel
       const [projectsResponse, statisticsResponse] = await Promise.all([
         projectsService.getProjects(),
         projectsService.getStatistics()
@@ -168,8 +167,7 @@ const ProjectsAndPrograms: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Main Content */}        <div className="lg:col-span-2">
-          {/* Project Portfolio */}
-          <ProjectPortfolio 
+          {/* Project Portfolio */}          <ProjectPortfolio 
             projects={projects}
             loading={loading}
             error={error}
@@ -178,9 +176,9 @@ const ProjectsAndPrograms: React.FC = () => {
             onViewProject={handleViewProject}
             onProjectsChange={loadData}
           />
-        </div>
+          {/* Debug info */}        </div>
 
-        {/* Right Sidebar */} 
+        {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-4 lg:space-y-6">
           {/* Project Quick Actions */}
           <ProjectQuickActions 

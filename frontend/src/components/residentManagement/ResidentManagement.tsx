@@ -5,6 +5,7 @@ import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
 import StatCard from "../global/StatCard";
 import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
+import { STORAGE_BASE_URL } from "../../services/storage.service";
 import { useNotificationHelpers } from "../global/NotificationSystem";
 import type { Resident, CreateResidentData, UpdateResidentData, ResidentFormData } from "../../services/resident.types";
 
@@ -107,7 +108,8 @@ const ResidentManagement: React.FC = () => {
         originalData: resident,
       }));
       
-      setResidents(mappedResidents);
+      // Sort residents by status and then by name
+      setResidents(mappedResidents.sort((a, b) => a.status.localeCompare(b.status) || a.name.localeCompare(b.name)));
       setPagination({
         current_page: response.current_page,
         last_page: response.last_page,
@@ -395,8 +397,9 @@ const ResidentManagement: React.FC = () => {
                         <div className="flex items-center">
                           <img
                             src={
-                              resident.originalData.profile_photo_url ||
-                              "https://placehold.co/80"
+                              resident.originalData.profile_photo_url
+                                ? `${STORAGE_BASE_URL}/${resident.originalData.profile_photo_url}`
+                                : "https://placehold.co/80"
                             }
                             alt={
                               resident.name ||

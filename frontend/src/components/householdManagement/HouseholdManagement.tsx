@@ -379,14 +379,14 @@ const HouseholdManagement: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  households.map((household) => (
+                  households.map((household) => {return (
                     <tr key={household.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {household.householdNumber}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {household.houseType} • {household.ownershipStatus}
+                          {household.houseType.toLocaleUpperCase()} • {household.ownershipStatus.toUpperCase()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -402,7 +402,7 @@ const HouseholdManagement: React.FC = () => {
                           {household.memberCount} members
                         </div>
                         <div className="text-sm text-gray-500">
-                          Income: {household.monthlyIncome?.replace('-', ' - ₱').replace('below-', 'Below ₱').replace('above-', 'Above ₱')}
+                          Income: {household.monthlyIncome?.replace('below-', 'Below ₱').replace('above-', 'Above ₱').replace('-', ' - ₱')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -460,7 +460,7 @@ const HouseholdManagement: React.FC = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  )})
                 )}
               </tbody>
             </table>

@@ -387,6 +387,8 @@ export class BarangayOfficialsService extends BaseApiService {
     // System fields
     if (formData.isActive !== undefined) apiData.is_active = formData.isActive;
 
+    apiData.profile_photo = formData.profile_photo || undefined;
+
     return apiData;
   }
 
@@ -405,13 +407,13 @@ export class BarangayOfficialsService extends BaseApiService {
       contactNumber: official.contact_number,
       emailAddress: official.email_address || '',
       completeAddress: official.complete_address || '',
-      civilStatus: official.civil_status || '',
+      civilStatus: official.civil_status!,
       educationalBackground: official.educational_background || '',
       
       // Position Information
       position: official.position,
       positionTitle: official.position_title || '',
-      committeeAssignment: official.committee_assignment || '',
+      committeeAssignment: official.committee_assignment!,
       
       // Term Information
       termStart: official.term_start,
@@ -454,6 +456,8 @@ export class BarangayOfficialsService extends BaseApiService {
       
       // System fields
       isActive: official.is_active,
+
+      profile_photo: official.profile_photo || '',
     };
   }
 }

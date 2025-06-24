@@ -199,6 +199,8 @@ export interface CreateResidentData {
   
   // System Fields
   status: ResidentStatus;
+
+  profile_photo_url: string | null;
 }
 
 export type UpdateResidentData = Partial<CreateResidentData>;
@@ -263,6 +265,8 @@ export interface ResidentFormData {
     fourPsBeneficiary: boolean;
     fourPsHouseholdId: string;
   };
+
+  profile_photo_url?: string; // Optional field for profile photo URL
 }
 
 // Statistics interface
