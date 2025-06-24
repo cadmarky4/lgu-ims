@@ -460,7 +460,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white"
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer no-underline"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -476,7 +476,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
               <select
                 value={documentTypeFilter}
                 onChange={(e) => setDocumentTypeFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer no-underline"
               >
                 <option value="ALL">All Document Types</option>
                 {documentTypes.map((type) => (
@@ -577,14 +577,14 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                           setSelectedDocument(document);
                           setShowProcessModal(true);
                         }}
-                        className="text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
+                        className="cursor-pointer no-underline text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
                         title="Review & Process (Approve/Reject)"
                       >
                         <FiClipboard className="h-4 w-4" />
                       </button>
                                 <button
                         onClick={() => handlePrintDocument(document)}
-                        className="text-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
+                        className="cursor-pointer no-underlinetext-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
                         title="Print Certificate"
                       >
                         <FiPrinter className="h-4 w-4" />
@@ -708,7 +708,7 @@ const ProcessDocumentModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Process Document Request
@@ -778,14 +778,14 @@ const ProcessDocumentModal: React.FC<{
               type="button"
               onClick={onClose}
               disabled={processing}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer no-underline"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={processing}
-              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 flex items-center space-x-2 cursor-pointer no-underline"
             >
               {processing && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

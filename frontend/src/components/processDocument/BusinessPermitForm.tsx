@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiBriefcase, FiMapPin } from 'react-icons/fi';
 import { apiService } from '../../services';
+import { documentsService }from '../../services/documents.service';
 import Breadcrumb from '../global/Breadcrumb';
 
 interface BusinessPermitFormProps {
@@ -13,7 +14,7 @@ interface Resident {
   last_name: string;
   middle_name?: string;
   birth_date: string;
-  age: number;
+  age?: number;
   civil_status: string;
   nationality: string;
   complete_address: string;
@@ -82,12 +83,21 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       setResidents([]);
     }
   }, [searchTerm]);
-
   const searchResidents = async () => {
     try {
       setLoading(true);
       
-      // Use placeholder data for development/testing
+      // Use real API to search residents
+      const response = await apiService.getResidents({ 
+        search: searchTerm, 
+        per_page: 10 
+      });
+      
+      setResidents(response.data || []);
+    } catch (err) {
+      console.error('Failed to search residents:', err);
+      
+      // Fallback to placeholder data for development/testing
       const placeholderResidents = [
         {
           id: 1,
@@ -135,8 +145,7 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
           civil_status: 'SINGLE',
           nationality: 'Filipino',
           complete_address: 'Purok 4, Barangay San Miguel, Quezon City',
-          mobile_number: '+63 945 678 9012'
-        },
+          mobile_number: '+63 945 678 9012'        },
         {
           id: 5,
           first_name: 'Carlos',
@@ -160,15 +169,6 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       });
 
       setResidents(filteredResidents);
-
-      // In production, use this:
-      // const response = await apiService.getResidents({ 
-      //   search: searchTerm, 
-      //   per_page: 10 
-      // });
-      // setResidents(response.data);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,6 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       [field]: value
     }));
   };
-
   const handleSubmit = async () => {
     if (!selectedResident) return;
 
@@ -196,26 +195,22 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       setError(null);
 
       const documentData = {
-        id: Math.floor(Math.random() * 1000) + 100, // Random ID for placeholder
+        document_type: 'BUSINESS_PERMIT' as const,
+        title: `Business Permit for ${formData.businessName}`,
         resident_id: selectedResident.id,
-        document_type: 'BUSINESS_PERMIT',
+        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+        applicant_address: selectedResident.complete_address,
+        applicant_contact: selectedResident.mobile_number,
         purpose: `Business Permit for ${formData.businessName}`,
         processing_fee: formData.urgentRequest ? 150 : 100,
-        notes: `Business: ${formData.businessName}, Type: ${formData.businessType}, Address: ${formData.businessAddress}, Capital: ₱${formData.capitalAmount}, Employees: ${formData.numberOfEmployees}, Hours: ${formData.operatingHours}, Additional Info: ${formData.additionalInfo}`,
-        certifying_official: formData.certifyingOfficial,
-        priority: formData.urgentRequest ? 'HIGH' : 'NORMAL',
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-        resident: selectedResident
+        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
+        requirements_submitted: ['Business Information', 'Capital Declaration'],
+        remarks: `Business Name: ${formData.businessName}, Type: ${formData.businessType}, Business Address: ${formData.businessAddress}, Capital: ₱${formData.capitalAmount}, Employees: ${formData.numberOfEmployees}, Operating Hours: ${formData.operatingHours}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
       };
 
-      // Simulate API delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const document = await documentsService.createDocument(documentData);
       
-      console.log('Document submitted (placeholder):', documentData);
-      
-      // In production, use this:
-      // await apiService.createDocument(documentData);
+      console.log('Document submitted successfully:', document);
       
       setStep(3);
     } catch (err: unknown) {
@@ -283,7 +278,7 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       <div className="text-center">
         <button
           onClick={() => onNavigate('addNewResident')}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer no-underline"
         >
           <FiUser className="w-4 h-4 mr-2" />
           Add New Resident
@@ -544,14 +539,14 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
         <div className="flex justify-end space-x-4 mt-6">
           <button
             onClick={() => setStep(1)}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
           >
             Back
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !formData.businessName || !formData.businessType || !formData.businessAddress || !formData.businessDescription || !formData.capitalAmount || !formData.operatingHours || !formData.certifyingOfficial}
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer no-underline"
           >
             {submitting && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -611,7 +606,7 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       <div className="flex justify-center space-x-4">
         <button
           onClick={() => onNavigate('process-document')}
-          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors cursor-pointer no-underline"
         >
           View All Requests
         </button>
@@ -633,7 +628,7 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
               urgentRequest: false
             });
           }}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
         >
           New Application
         </button>

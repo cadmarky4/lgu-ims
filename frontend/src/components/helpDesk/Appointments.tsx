@@ -53,10 +53,11 @@ const AppointmentsPage: React.FC = () => {
   const appointmentsService = new AppointmentsService();
 
   // Test function to simulate an error - remove this after testing
-  const testError = () => {
-    console.log("Testing error display...");
-    setError("This is a test error to verify error handling is working correctly.");
-  };
+  // const testError = () => {
+  //   console.log("Testing error display...");
+  //   setError("This is a test error to verify error handling is working correctly.");
+  // };
+
   // loading ng breadcrumbs ni sean
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -454,7 +455,7 @@ const AppointmentsPage: React.FC = () => {
               )}
             </div>
 
-              <div>
+              {/* <div>
                 <label
                   htmlFor="alternativeDate"
                   className="block text-sm font-medium text-gray-700 mb-2"
@@ -493,7 +494,7 @@ const AppointmentsPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
             </div>
 
             <div className="mt-6 col-span-2">

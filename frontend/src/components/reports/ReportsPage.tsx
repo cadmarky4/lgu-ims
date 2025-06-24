@@ -13,21 +13,141 @@ import ResponsiveAreaChart from "./ResponsiveAreaChart";
 import ResponsiveBarGraph from "./ResponsiveBarGraph";
 import ResponsivePieChart from "./ResponsivePieChart";
 import ResponsiveServicesTable from "./ResponsiveServicesTable";
+import { ReportsService } from "../../services/reports.service";
+import type {
+  AgeGroupDistribution,
+  SpecialPopulationRegistry,
+  MonthlyRevenue,
+  PopulationDistributionByPurok,
+  DocumentTypesIssued,
+  MostRequestedService,
+  FilterOptions,
+} from "../../services/reports.types";
 import Breadcrumb from "../global/Breadcrumb";
 
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
-  const [selectedQuarter, setSelectedQuarter] =
-    useState<string>("All Quarters");
-  const [selectedPurok, setSelectedPurok] = useState<string>("Purok 1");
+  const [selectedQuarter, setSelectedQuarter] = useState<string>("All Quarters");
+  const [selectedPurok, setSelectedPurok] = useState<string>("All");
+
+  // State for data
+  const [statisticsOverviewData, setStatisticsOverviewData] = useState<any[]>([]);
+  const [ageGroupDistributionData, setAgeGroupDistributionData] = useState<AgeGroupDistribution[]>([]);
+  const [specialPopulationRegistryData, setSpecialPopulationRegistryData] = useState<SpecialPopulationRegistry[]>([]);
+  const [revenueData, setRevenueData] = useState<MonthlyRevenue[]>([]);
+  const [populationDistributionByPurokData, setPopulationDistributionByPurokData] = useState<PopulationDistributionByPurok[]>([]);
+  const [documentsIssuedData, setDocumentsIssuedData] = useState<DocumentTypesIssued[]>([]);
+  const [mostRequestedServicesData, setMostRequestedServicesData] = useState<MostRequestedService[]>([]);
+  
+  // State for filter options
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    years: [],
+    quarters: ["Q1", "Q2", "Q3", "Q4", "All Quarters"],
+    puroks: []
+  });
+
+  // Loading states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Service instance
+  const reportsService = new ReportsService();
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const yearOptions = Array.from({ length: 2025 - 2010 + 1 }, (_, i) =>
-    (2010 + i).toString()
-  );
-  // hardcoded muna hihihi
-  const quarterOptions = ["Q1", "Q2", "Q3", "Q4", "All Quarters"];
-  const purokOptions = ["Purok 1", "Purok 2", "Purok 3", "Purok 4"];
+  // di na sya hardcoded hihi
+  // const yearOptions = Array.from({ length: 2025 - 2010 + 1 }, (_, i) =>
+  //   (2010 + i).toString()
+  // );
+  // // hardcoded muna hihihi
+  // const quarterOptions = ["Q1", "Q2", "Q3", "Q4", "All Quarters"];
+  // const purokOptions = ["Purok 1", "Purok 2", "Purok 3", "Purok 4"];
+
+  // Load filter options on component mount
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const response = await reportsService.getFilterOptions();
+        if (response.data) {
+          setFilterOptions(response.data);
+          // Add "All" option to puroks
+          response.data.puroks.unshift("All");
+        }
+      } catch (err) {
+        console.error('Error loading filter options:', err);
+      }
+    };
+
+    loadFilterOptions();
+  }, []);
+
+  // Load data when filters change
+  useEffect(() => {
+    const loadReportsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const filters = {
+          year: selectedYear,
+          quarter: selectedQuarter === "All Quarters" ? undefined : selectedQuarter,
+          purok: selectedPurok === "All" ? undefined : selectedPurok,
+        };
+
+        // Load all reports data in parallel
+        const [
+          statisticsResponse,
+          ageGroupResponse,
+          specialPopulationResponse,
+          revenueResponse,
+          populationDistResponse,
+          documentsResponse,
+          servicesResponse,
+        ] = await Promise.all([
+          reportsService.getStatisticsOverview(filters),
+          reportsService.getAgeGroupDistribution(filters),
+          reportsService.getSpecialPopulationRegistry(filters),
+          reportsService.getMonthlyRevenue(filters),
+          reportsService.getPopulationDistributionByPurok(filters),
+          reportsService.getDocumentTypesIssued(filters),
+          reportsService.getMostRequestedServices(filters),
+        ]);
+
+        // Transform statistics overview to the format expected by the UI
+        if (statisticsResponse.data) {
+          const stats = statisticsResponse.data;
+          setStatisticsOverviewData([
+            {
+              label: "Total Residents",
+              value: stats.totalResidents,
+              icon: FaUsers,
+            },
+            {
+              label: "Total Household",
+              value: stats.totalHouseholds,
+              icon: FaHouseUser,
+            },
+            {
+              label: "Active Barangay Officials",
+              value: stats.activeBarangayOfficials,
+              icon: FaUserCheck,
+            },
+            {
+              label: "Total Blotter Cases",
+              value: stats.totalBlotterCases,
+              icon: FaPen,
+            },
+            {
+              label: "Total Issued Clearance",
+              value: stats.totalIssuedClearance,
+              icon: FaStamp,
+            },
+            {
+              label: "Ongoing Projects",
+              value: stats.ongoingProjects,
+              icon: FaClipboardList,
+            },
+          ]);
+        }
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -37,129 +157,61 @@ export default function ReportsPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const statisticsOverviewData = [
-    {
-      label: "Total Residents",
-      value: 40199,
-      icon: FaUsers,
-    },
-    {
-      label: "Total Household",
-      value: 20148,
-      icon: FaHouseUser,
-    },
-    {
-      label: "Active Barangay Officials",
-      value: 20,
-      icon: FaUserCheck,
-    },
-    {
-      label: "Total Blotter Cases",
-      value: 5,
-      icon: FaPen,
-    },
-    {
-      label: "Total Issued Clearance",
-      value: 3,
-      icon: FaStamp,
-    },
-    {
-      label: "Ongoing Projects",
-      value: 1,
-      icon: FaClipboardList,
-    },
-  ];
+  // di na sya hardcoded hihi
+  // const statisticsOverviewData = [
+  //   {
+  //     label: "Total Residents",
+  //     value: 40199,
+  //     icon: FaUsers,
+  //   },
+  //   {
+  //     label: "Total Household",
+  //     value: 20148,
+  //     icon: FaHouseUser,
+  //   },
+  //   {
+  //     label: "Active Barangay Officials",
+  //     value: 20,
+  //     icon: FaUserCheck,
+  //   },
+  //   {
+  //     label: "Total Blotter Cases",
+  //     value: 5,
+  //     icon: FaPen,
+  //   },
+  //   {
+  //     label: "Total Issued Clearance",
+  //     value: 3,
+  //     icon: FaStamp,
+  //   },
+  //   {
+  //     label: "Ongoing Projects",
+  //     value: 1,
+  //     icon: FaClipboardList,
+  //   },
+  // ];
 
-  const ageGroupDistributionData = [
-    { name: "Children (0-7)", percentage: 32 },
-    { name: "Adults (18-59)", percentage: 24 },
-    { name: "Senior Citizens (60+)", percentage: 44 },
-  ];
+        // Set other data
+        if (ageGroupResponse.data) setAgeGroupDistributionData(ageGroupResponse.data);
+        if (specialPopulationResponse.data) setSpecialPopulationRegistryData(specialPopulationResponse.data);
+        if (revenueResponse.data) setRevenueData(revenueResponse.data);
+        if (populationDistResponse.data) setPopulationDistributionByPurokData(populationDistResponse.data);
+        if (documentsResponse.data) setDocumentsIssuedData(documentsResponse.data);
+        if (servicesResponse.data) setMostRequestedServicesData(servicesResponse.data);
 
-  const specialPopulationRegistryData = [
-    { name: "Senior Citizens", percentage: 42 },
-    { name: "PWD", percentage: 12 },
-    { name: "Solo Parents", percentage: 26 },
-    { name: "4Ps Beneficiaries", percentage: 20 },
-  ];
-
-  const revenueData = Array.from({ length: 12 }, (_, index) => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return {
-      timeLabel: months[index],
-      value: Math.floor(Math.random() * (42000 - 15000 + 1)) + 15000,
+      } catch (err) {
+        console.error('Error loading reports data:', err);
+        setError('Failed to load reports data');
+      } finally {
+        setLoading(false);
+      }
     };
-  });
 
-  const populationDistributionByPurokData = Array.from(
-    { length: 4 },
-    (_, index) => {
-      return {
-        label: `Purok ${index + 1}`,
-        value: Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000,
-      };
+    // Only load data if we have filter options
+    if (filterOptions.years.length > 0) {
+      loadReportsData();
     }
-  );
-
-  const documentsIssuedData = [
-    { label: "Barangay Clearance", value: 120 },
-    { label: "Certificate of Residency", value: 85 },
-    { label: "Certificate of Indigency", value: 60 },
-    { label: "Business Permit", value: 45 },
-    { label: "Other Documents", value: 30 },
-  ];
-
-  const mostRequestedServicesData = [
-    {
-      service: "Barangay Clearance",
-      requested: 150,
-      completed: 140,
-      avgProcessingTimeInDays: 2,
-      feesCollected: 7500,
-    },
-    {
-      service: "Certificate of Residency",
-      requested: 120,
-      completed: 115,
-      avgProcessingTimeInDays: 3,
-      feesCollected: 6000,
-    },
-    {
-      service: "Certificate of Indigency",
-      requested: 90,
-      completed: 85,
-      avgProcessingTimeInDays: 1,
-      feesCollected: 4500,
-    },
-    {
-      service: "Business Permit",
-      requested: 60,
-      completed: 55,
-      avgProcessingTimeInDays: 5,
-      feesCollected: 12000,
-    },
-    {
-      service: "Other Documents",
-      requested: 40,
-      completed: 35,
-      avgProcessingTimeInDays: 4,
-      feesCollected: 2000,
-    },
-  ];
-
+  }, [selectedYear, selectedQuarter, selectedPurok, filterOptions.years.length]);
   return (
     //FIGMA BG
     // <div className="p-6 bg-smblue-50 min-h-screen">
@@ -176,7 +228,23 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-bold text-darktext pl-0">Reports</h1>
       </div>
 
-      {/* Filter options */}
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}      {/* Loading indicator */}
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400"></div>
+          <span className="ml-2 text-gray-600">Loading reports data...</span>
+        </div>
+      )}
+
+      {/* Content - only show when not loading */}
+      {!loading && (
+        <>
+          {/* Filter options */}
       <section className={`@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`} style={{ transitionDelay: '100ms' }}>
@@ -189,8 +257,7 @@ export default function ReportsPage() {
               onChange={(e) => setSelectedYear(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
               title="Filter year"
-            >
-              {yearOptions.map((year) => (
+            >              {filterOptions.years.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
@@ -205,8 +272,7 @@ export default function ReportsPage() {
               onChange={(e) => setSelectedQuarter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
               title="Filter quarter"
-            >
-              {quarterOptions.map((quarter) => (
+            >              {filterOptions.quarters.map((quarter) => (
                 <option key={quarter} value={quarter}>
                   {quarter}
                 </option>
@@ -221,8 +287,7 @@ export default function ReportsPage() {
               onChange={(e) => setSelectedPurok(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
               title="Filter purok"
-            >
-              {purokOptions.map((purok) => (
+            >              {filterOptions.puroks.map((purok) => (
                 <option key={purok} value={purok}>
                   {purok}
                 </option>
@@ -329,18 +394,16 @@ export default function ReportsPage() {
 
           <ResponsivePieChart data={documentsIssuedData} />
         </article>
-      </section>
-
-      {/* Table of Most Requested Services */}
+      </section>      {/* Table of Most Requested Services */}
       <section className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
         <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`} style={{ transitionDelay: '550ms' }}>
           Most Requested Services
-        </h3>
-
-        <ResponsiveServicesTable data={mostRequestedServicesData} />
+        </h3>        <ResponsiveServicesTable data={mostRequestedServicesData} />
       </section>
+        </>
+      )}
     </main>
   );
 }

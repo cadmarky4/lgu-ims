@@ -37,6 +37,7 @@ class Project extends Model
         'beneficiary_criteria',
         'status',
         'progress_percentage',
+        'team_size',
         'project_manager_id',
         'approving_official_id',
         'approved_date',

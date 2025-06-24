@@ -5,6 +5,7 @@ import { FaUsers, FaWheelchair, FaUserFriends, FaChild } from "react-icons/fa";
 import StatCard from "../global/StatCard";
 import Breadcrumb from "../global/Breadcrumb";
 import { residentsService } from "../../services";
+import { STORAGE_BASE_URL } from "../../services/storage.service";
 import { useNotificationHelpers } from "../global/NotificationSystem";
 import type { Resident, CreateResidentData, UpdateResidentData, ResidentFormData } from "../../services/resident.types";
 
@@ -107,7 +108,8 @@ const ResidentManagement: React.FC = () => {
         originalData: resident,
       }));
       
-      setResidents(mappedResidents);
+      // Sort residents by status and then by name
+      setResidents(mappedResidents.sort((a, b) => a.status.localeCompare(b.status) || a.name.localeCompare(b.name)));
       setPagination({
         current_page: response.current_page,
         last_page: response.last_page,
@@ -337,7 +339,7 @@ const ResidentManagement: React.FC = () => {
             <button
               onClick={openAddForm}
               disabled={loading}
-              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer no-underline"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Resident</span>
@@ -395,8 +397,9 @@ const ResidentManagement: React.FC = () => {
                         <div className="flex items-center">
                           <img
                             src={
-                              resident.originalData.profile_photo_url ||
-                              "https://placehold.co/80"
+                              resident.originalData.profile_photo_url
+                                ? `${STORAGE_BASE_URL}/${resident.originalData.profile_photo_url}`
+                                : "https://placehold.co/80"
                             }
                             alt={
                               resident.name ||
@@ -443,21 +446,21 @@ const ResidentManagement: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
-                            className="text-smblue-400 hover:text-smblue-300"
+                            className="text-smblue-400 hover:text-smblue-300 cursor-pointer no-underline"
                             title="View resident details"
                             onClick={() => openViewForm(resident)}
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button
-                            className="text-smblue-400 hover:text-smblue-300"
+                            className="text-smblue-400 hover:text-smblue-300 cursor-pointer no-underline"
                             title="Edit resident"
                             onClick={() => openEditForm(resident)}
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button
-                            className={`text-red-600 hover:text-red-900 ${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`text-red-600 hover:text-red-900 cursor-pointer no-underline${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title={isDeleting === resident.id ? "Deactivating..." : "Deactivate resident"}
                             onClick={() => handleDeleteResident(resident.id)}
                             disabled={isDeleting === resident.id || isLoading}
@@ -492,7 +495,7 @@ const ResidentManagement: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <button
-                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer no-underline"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1 || loading}
               >
@@ -520,7 +523,7 @@ const ResidentManagement: React.FC = () => {
                 }
               )}
               <button
-                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300 disabled:opacity-50"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300 disabled:opacity-50 cursor-pointer no-underline"
                 onClick={() =>
                   setCurrentPage(
                     Math.min(pagination.last_page, currentPage + 1)

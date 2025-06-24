@@ -50,6 +50,14 @@ class Resident extends Model
     }
 
     /**
+     * Accessor for profile photo URL
+     */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->attributes['profile_photo_url'] ?? null;
+    }
+
+    /**
      * Relationships
      */
     public function household()

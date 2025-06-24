@@ -18,13 +18,16 @@ class ResidentSchema
             'first_name' => ['type' => 'string', 'max' => 255, 'required' => true],
             'last_name' => ['type' => 'string', 'max' => 255, 'required' => true],
             'middle_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'suffix' => ['type' => 'string', 'max' => 10, 'nullable' => true],            'birth_date' => ['type' => 'date', 'required' => true, 'before' => 'today'],
+            'suffix' => ['type' => 'string', 'max' => 10, 'nullable' => true],
+            'birth_date' => ['type' => 'date', 'required' => true, 'before' => 'today'],
             'age' => ['type' => 'integer', 'min' => 0, 'max' => 150, 'nullable' => true], // Computed from birth_date
             'birth_place' => ['type' => 'string', 'max' => 255, 'required' => true],
             'gender' => ['type' => 'enum', 'values' => ['MALE', 'FEMALE'], 'required' => true],
             'civil_status' => ['type' => 'enum', 'values' => ['SINGLE', 'MARRIED', 'WIDOWED', 'DIVORCED', 'SEPARATED'], 'required' => true],
             'nationality' => ['type' => 'string', 'max' => 100, 'required' => true],
             'religion' => ['type' => 'string', 'max' => 100, 'nullable' => true],
+            // Profile Photo
+            'profile_photo_url' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             
             // Contact Information
             'mobile_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],

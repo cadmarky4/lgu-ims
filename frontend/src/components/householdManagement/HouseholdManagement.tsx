@@ -335,7 +335,7 @@ const HouseholdManagement: React.FC = () => {
             {/* Add Button */}
             <button 
               onClick={openAddHousehold}
-              className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
+              className="cursor-pointer no-underline bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Household</span>
@@ -379,14 +379,14 @@ const HouseholdManagement: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  households.map((household) => (
+                  households.map((household) => {return (
                     <tr key={household.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {household.householdNumber}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {household.houseType} • {household.ownershipStatus}
+                          {household.houseType.toLocaleUpperCase()} • {household.ownershipStatus.toUpperCase()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -402,7 +402,7 @@ const HouseholdManagement: React.FC = () => {
                           {household.memberCount} members
                         </div>
                         <div className="text-sm text-gray-500">
-                          Income: {household.monthlyIncome?.replace('-', ' - ₱').replace('below-', 'Below ₱').replace('above-', 'Above ₱')}
+                          Income: {household.monthlyIncome?.replace('below-', 'Below ₱').replace('above-', 'Above ₱').replace('-', ' - ₱')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -430,21 +430,21 @@ const HouseholdManagement: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <button 
                             onClick={() => openViewForm(household)}
-                            className="text-smblue-400 hover:text-smblue-300"
+                            className="cursor-pointer no-underline text-smblue-400 hover:text-smblue-300"
                             title="View household details"
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => openEditForm(household)}
-                            className="text-yellow-600 hover:text-yellow-900"
+                            className="cursor-pointer no-underline text-yellow-600 hover:text-yellow-900"
                             title="Edit household"
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => handleDeleteHousehold(household.id)}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            className="cursor-pointer no-underline text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             title="Delete household"
                             disabled={isDeleting === household.id}
                           >
@@ -460,7 +460,7 @@ const HouseholdManagement: React.FC = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  )})
                 )}
               </tbody>
             </table>

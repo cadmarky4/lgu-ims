@@ -44,7 +44,8 @@ return new class extends Migration
             
             // Status & Dates
             $table->enum('status', ['PENDING', 'CONFIRMED', 'RESCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'])->default('PENDING');
-            $table->date('date_requested');
+            $table->date('date_requested')->nullable();
+            // $table->date('date_requested');
             $table->datetime('confirmed_date')->nullable();
             $table->datetime('actual_start_time')->nullable();
             $table->datetime('actual_end_time')->nullable();

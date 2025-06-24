@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardService, type BarangayOfficial } from '../../services/dashboard.service';
+import { STORAGE_BASE_URL } from '../../services/storage.service';
 
 const BarangayOfficials: React.FC = () => {
   const [officials, setOfficials] = useState<BarangayOfficial[]>([]);
@@ -128,7 +129,7 @@ const BarangayOfficials: React.FC = () => {
             <h4 className="text-md font-medium text-gray-800 mb-3">Barangay Captain</h4>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <img
-                src={captain.photo}
+                src={captain.photo ? `${STORAGE_BASE_URL}/${captain.photo}` : 'https://via.placeholder.com/150'}
                 alt={captain.name}
                 className="w-12 h-12 rounded-full object-cover"
               />
@@ -149,7 +150,7 @@ const BarangayOfficials: React.FC = () => {
               {councilors.map((official) => (
                 <div key={official.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   <img
-                    src={official.photo}
+                    src={official.photo ? `${STORAGE_BASE_URL}/${official.photo}` : 'https://via.placeholder.com/150'}
                     alt={official.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />

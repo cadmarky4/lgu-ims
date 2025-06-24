@@ -697,7 +697,7 @@ const HelpDeskPage: React.FC = () => {
                 </label>
                 {isEditMode ? (
                   <input
-                    type="text"
+                    type="time"
                     value={editedTicket.appointmentTime || ""}
                     onChange={(e) =>
                       handleEditChange("appointmentTime", e.target.value)
@@ -969,9 +969,10 @@ const HelpDeskPage: React.FC = () => {
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header Section */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
+      {/* <div className={`mb-8 transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      }`}> */}
+      <div className={`mb-8 transition-all duration-700 ease-out`}>
         <div className="flex flex-col @3xl/main:flex-row @3xl/main:items-center @3xl/main:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -982,7 +983,7 @@ const HelpDeskPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 @3xl/main:flex-initial relative">
+            <div className="flex-1 @3xl/main:flex-initial relative z-10">
               <button
                 onClick={() => setShowTicketDropdown(!showTicketDropdown)}
                 className="w-full cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -1269,7 +1270,7 @@ const HelpDeskPage: React.FC = () => {
 
       {/* Modal */}
       {showModal && modalTicket && (
-        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
               <div className="flex items-center justify-between">

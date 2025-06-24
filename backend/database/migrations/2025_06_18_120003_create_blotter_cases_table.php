@@ -17,22 +17,31 @@ return new class extends Migration
             
             // Basic Case Information
             $table->string('case_number')->unique();
-            $table->string('case_title');
-            $table->text('case_description');
-            $table->enum('case_type', ['CIVIL', 'CRIMINAL', 'ADMINISTRATIVE', 'DISPUTE', 'COMPLAINT', 'NOISE', 'BOUNDARY', 'DOMESTIC', 'OTHERS']);
+            // $table->string('case_title');
+            $table->string('case_title')->nullable();
+            // $table->text('case_description');
+            $table->text('case_description')->nullable();
+            $table->enum('case_type', ['CIVIL', 'CRIMINAL', 'ADMINISTRATIVE', 'DISPUTE', 'COMPLAINT', 'NOISE', 'BOUNDARY', 'DOMESTIC', 'OTHERS'])->nullable();
+            // $table->enum('case_type', ['CIVIL', 'CRIMINAL', 'ADMINISTRATIVE', 'DISPUTE', 'COMPLAINT', 'NOISE', 'BOUNDARY', 'DOMESTIC', 'OTHERS']);
             
             // Complainant Information (based on frontend fields)
-            $table->string('complainant_name');
+            // $table->string('complainant_name');
+            $table->string('complainant_name')->nullable();
             $table->string('complainant_contact', 20)->nullable();
-            $table->text('complainant_address');
+            // $table->text('complainant_address');
+            $table->text('complainant_address')->nullable();
             $table->string('complainant_email')->nullable();
             
             // Incident Details (based on frontend fields)
-            $table->enum('incident_type', ['Theft', 'Physical Assault', 'Verbal Assault', 'Property Damage', 'Disturbance', 'Trespassing', 'Fraud', 'Harassment', 'Domestic Dispute', 'Noise Complaint', 'Other']);
-            $table->date('incident_date');
+            $table->enum('incident_type', ['Theft', 'Physical Assault', 'Verbal Assault', 'Property Damage', 'Disturbance', 'Trespassing', 'Fraud', 'Harassment', 'Domestic Dispute', 'Noise Complaint', 'Other'])->nullable();
+            // $table->enum('incident_type', ['Theft', 'Physical Assault', 'Verbal Assault', 'Property Damage', 'Disturbance', 'Trespassing', 'Fraud', 'Harassment', 'Domestic Dispute', 'Noise Complaint', 'Other']);
+            // $table->date('incident_date');
+            $table->date('incident_date')->nullable();
             $table->time('incident_time')->nullable();
-            $table->string('incident_location');
-            $table->text('incident_description');
+            // $table->string('incident_location');
+            $table->string('incident_location')->nullable();
+            // $table->text('incident_description');
+            $table->text('incident_description')->nullable();
             $table->text('witnesses')->nullable();
             $table->text('evidence')->nullable();
             
@@ -43,7 +52,8 @@ return new class extends Migration
             
             // Case Status & Processing
             $table->enum('status', ['FILED', 'UNDER_INVESTIGATION', 'MEDIATION', 'HEARING_SCHEDULED', 'SETTLED', 'DISMISSED', 'REFERRED_TO_COURT', 'CLOSED'])->default('FILED');
-            $table->date('date_filed');
+            // $table->date('date_filed');
+            $table->date('date_filed')->nullable();
             
             // Hearing Information
             $table->date('hearing_date')->nullable();
