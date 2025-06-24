@@ -53,7 +53,8 @@ const BarangayOfficialsPage: React.FC = () => {
   // Load officials data
   useEffect(() => {
     loadOfficials();
-  }, []); const loadOfficials = async () => {
+  }, []); 
+  const loadOfficials = async () => {
     try {
       setIsLoading(true);
       setError(null);

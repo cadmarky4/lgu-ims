@@ -39,6 +39,8 @@ import Blotter from "./components/helpDesk/Blotter";
 import Complaints from "./components/helpDesk/Complaints";
 import Suggestions from "./components/helpDesk/Suggestions";
 import "./index.css";
+import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
+import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
 
 // Wrapper components to handle navigation prop
 const ProcessDocumentWrapper = () => {
@@ -179,7 +181,17 @@ const router = createBrowserRouter([
       },
       {
         path: "officials",
-        element: <BarangayOfficialsPage />,
+        children: [
+          {
+            index: true,
+            element: <BarangayOfficialsPage />,
+          },
+          {
+            path: "officials/add",
+            element: <AddBarangayOfficial />,
+          }
+        ]
+        // element: <BarangayOfficialsPage />,
       },
       {
         path: "projects",
