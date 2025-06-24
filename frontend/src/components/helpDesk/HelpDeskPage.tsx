@@ -697,7 +697,7 @@ const HelpDeskPage: React.FC = () => {
                 </label>
                 {isEditMode ? (
                   <input
-                    type="text"
+                    type="time"
                     value={editedTicket.appointmentTime || ""}
                     onChange={(e) =>
                       handleEditChange("appointmentTime", e.target.value)
