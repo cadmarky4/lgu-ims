@@ -84,22 +84,22 @@ class BlotterCaseController extends Controller
         // Use frontend field names for validation
         $validator = Validator::make($request->all(), [
             // Frontend complainant fields
-            'complainantName' => 'required|string|max:255',
-            'complainantAddress' => 'required|string',
-            'complainantContact' => 'required|string|max:20',
-            'complainantEmail' => 'nullable|email|max:255',
+            'complainant_name' => 'required|string|max:255',
+            'complainant_address' => 'required|string',
+            'complainant_contact' => 'required|string|max:20',
+            'complainant_email' => 'nullable|email|max:255',
             
             // Frontend incident fields
-            'incidentType' => 'required|in:Theft,Physical Assault,Verbal Assault,Property Damage,Disturbance,Trespassing,Fraud,Harassment,Domestic Dispute,Noise Complaint,Other',
-            'incidentDate' => 'required|date',
-            'incidentTime' => 'required|date_format:H:i',
-            'incidentLocation' => 'required|string|max:255',
-            'incidentDescription' => 'required|string',
+            'incident_type' => 'required|in:Theft,Physical Assault,Verbal Assault,Property Damage,Disturbance,Trespassing,Fraud,Harassment,Domestic Dispute,Noise Complaint,Other',
+            'incident_date' => 'required|date',
+            'incident_time' => 'required|date_format:H:i',
+            'incident_location' => 'required|string|max:255',
+            'incident_description' => 'required|string',
             
             // Frontend respondent fields (optional)
-            'respondentName' => 'nullable|string|max:255',
-            'respondentAddress' => 'nullable|string',
-            'respondentContact' => 'nullable|string|max:20',
+            'respondent_name' => 'nullable|string|max:255',
+            'respondent_address' => 'nullable|string',
+            'respondent_contact' => 'nullable|string|max:20',
             
             // Frontend additional fields
             'witnesses' => 'nullable|string',
@@ -125,22 +125,22 @@ class BlotterCaseController extends Controller
             'created_by' => Auth::id(),
             
             // Map complainant fields
-            'complainant_name' => $validated['complainantName'],
-            'complainant_address' => $validated['complainantAddress'],
-            'complainant_contact' => $validated['complainantContact'],
-            'complainant_email' => $validated['complainantEmail'] ?? null,
+            'complainant_name' => $validated['complainant_name'],
+            'complainant_address' => $validated['complainant_address'],
+            'complainant_contact' => $validated['complainant_contact'],
+            'complainant_email' => $validated['complainant_email'] ?? null,
             
             // Map incident fields
-            'incident_type' => $validated['incidentType'],
-            'incident_date' => $validated['incidentDate'],
-            'incident_time' => $validated['incidentTime'],
-            'incident_location' => $validated['incidentLocation'],
-            'incident_description' => $validated['incidentDescription'],
+            'incident_type' => $validated['incident_type'],
+            'incident_date' => $validated['incident_date'],
+            'incident_time' => $validated['incident_time'],
+            'incident_location' => $validated['incident_location'],
+            'incident_description' => $validated['incident_description'],
             
             // Map respondent fields
-            'respondent_name' => $validated['respondentName'] ?? null,
-            'respondent_address' => $validated['respondentAddress'] ?? null,
-            'respondent_contact' => $validated['respondentContact'] ?? null,
+            'respondent_name' => $validated['respondent_name'] ?? null,
+            'respondent_address' => $validated['respondent_address'] ?? null,
+            'respondent_contact' => $validated['respondent_contact'] ?? null,
             
             // Map additional fields
             'witnesses' => $validated['witnesses'] ?? null,

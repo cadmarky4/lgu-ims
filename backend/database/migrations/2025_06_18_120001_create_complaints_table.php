@@ -23,7 +23,9 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->boolean('anonymous')->default(false);
               // Complaint Details (based on frontend fields)
-            $table->enum('complaint_category', ['Public Services', 'Infrastructure', 'Health and Sanitation', 'Education', 'Social Welfare', 'Environmental Concerns', 'Public Safety', 'Government Services', 'Corruption/Misconduct', 'Other']);
+            // $table->enum('complaint_category', ['Public Services', 'Infrastructure', 'Health and Sanitation', 'Education', 'Social Welfare', 'Environmental Concerns', 'Public Safety', 'Government Services', 'Corruption/Misconduct', 'Other']);
+            // adrian san mahahanap yung mga insert into dito?
+            $table->enum('complaint_category', ['Public Services', 'Infrastructure', 'Health and Sanitation', 'Education', 'Social Welfare', 'Environmental Concerns', 'Public Safety', 'Government Services', 'Corruption/Misconduct', 'Other'])->nullable();
             $table->enum('department', ['Mayors Office', 'Engineering Department', 'Health Department', 'Social Welfare', 'Treasury', 'Human Resources', 'Environmental Management', 'Public Safety', 'Education', 'General Services'])->nullable();
             $table->string('subject');
             $table->text('description');
@@ -51,7 +53,8 @@ return new class extends Migration
             
             // Status & Timeline
             $table->enum('status', ['RECEIVED', 'ACKNOWLEDGED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED', 'DISMISSED'])->default('RECEIVED');
-            $table->date('date_received');
+            // $table->date('date_received');
+            $table->date('date_received')->nullable();
             $table->date('acknowledged_date')->nullable();
             $table->date('target_resolution_date')->nullable();
             $table->date('actual_resolution_date')->nullable();

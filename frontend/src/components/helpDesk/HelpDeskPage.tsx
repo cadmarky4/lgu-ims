@@ -969,9 +969,7 @@ const HelpDeskPage: React.FC = () => {
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header Section */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      <div className={`mb-8 transition-all duration-700 ease-out`}>
         <div className="flex flex-col @3xl/main:flex-row @3xl/main:items-center @3xl/main:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
