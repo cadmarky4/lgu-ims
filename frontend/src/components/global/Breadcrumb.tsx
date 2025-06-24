@@ -111,7 +111,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ className = '', isLoaded = true
           {breadcrumb.isClickable ? (
             <button
               onClick={() => handleBreadcrumbClick(breadcrumb.path)}
-              className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer hover:underline"
+              className="text-smblue-400 hover:text-smblue-600 transition-colors duration-200 cursor-pointer"
             >
               {breadcrumb.label}
             </button>
