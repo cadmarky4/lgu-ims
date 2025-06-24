@@ -455,7 +455,7 @@ const AppointmentsPage: React.FC = () => {
               )}
             </div>
 
-              <div>
+              {/* <div>
                 <label
                   htmlFor="alternativeDate"
                   className="block text-sm font-medium text-gray-700 mb-2"
@@ -494,7 +494,7 @@ const AppointmentsPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
             </div>
 
             <div className="mt-6 col-span-2">
