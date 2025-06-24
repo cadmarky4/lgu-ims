@@ -983,7 +983,7 @@ const HelpDeskPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 @3xl/main:flex-initial relative z-50">
+            <div className="flex-1 @3xl/main:flex-initial relative z-10">
               <button
                 onClick={() => setShowTicketDropdown(!showTicketDropdown)}
                 className="w-full cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -1270,7 +1270,7 @@ const HelpDeskPage: React.FC = () => {
 
       {/* Modal */}
       {showModal && modalTicket && (
-        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
               <div className="flex items-center justify-between">
