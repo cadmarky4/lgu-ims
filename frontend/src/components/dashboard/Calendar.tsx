@@ -199,7 +199,7 @@ const Calendar = () => {
                 <button
                 key={day}
                 onClick={() => handleDateClick(day)}
-                className={`p-2 h-12 text-sm text-center rounded transition-all duration-200 transform hover:scale-102 active:scale-98 hover:shadow-sm animate-fade-in-scale relative ${
+                className={`p-2 h-12 text-sm text-center rounded transition-all duration-200 transform hover:scale-102 active:scale-98 hover:shadow-sm animate-fade-in-scale relative cursor-pointer no-underline ${
                     isToday(day) 
                         ? 'bg-smblue-400 text-white hover:bg-smblue-500 shadow-md animate-pulse-slow' 
                         : 'text-gray-700 hover:bg-gray-50'
@@ -227,7 +227,7 @@ const Calendar = () => {
         <div className="mt-6 pt-4 border-t border-gray-100">
             <button
             onClick={handleAddAgenda}
-            className="w-full flex items-center justify-center gap-2 bg-smblue-400 text-white px-4 py-3 rounded-lg hover:bg-smblue-300 transition-all duration-150 transform shadow-sm hover:shadow-md"
+            className="cursor-pointer no-underline w-full flex items-center justify-center gap-2 bg-smblue-400 text-white px-4 py-3 rounded-lg hover:bg-smblue-300 transition-all duration-150 transform shadow-sm hover:shadow-md"
             >
             <FiPlus className="w-4 h-4" />
             <span className="text-sm font-medium">Add Agenda</span>

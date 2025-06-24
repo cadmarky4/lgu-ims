@@ -469,22 +469,22 @@ const BarangayOfficialsPage: React.FC = () => {
         {/* Quick Actions */}
         <div className={`bg-smblue-400 rounded-2xl p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '350ms' }}>
           <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-white border-opacity-30 pl-4">Quick Actions</h3>
-          <div className="space-y-4">            <button
-            onClick={() => {
-              setSelectedOfficial(null); // Set to null for creating new official
-              setShowEditForm(true);
-            }}
-            className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
-          >
-            <FiUsers className="w-5 h-5 text-white" />
-            <span className="font-medium text-white">Add New Official</span>
-          </button>
-            <button
+          <div className="space-y-4">            <button 
+              onClick={() => {
+                setSelectedOfficial(null); // Set to null for creating new official
+                setShowEditForm(true);
+              }}
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
+            >
+              <FiUsers className="w-5 h-5 text-white" />
+              <span className="font-medium text-white cursor-pointer no-underline">Add New Official</span>
+            </button>
+            <button 
               onClick={() => {
                 console.log('Update Officers button clicked');
                 setShowOfficerSelection(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
             >
               <FiEdit className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
@@ -493,7 +493,7 @@ const BarangayOfficialsPage: React.FC = () => {
             {/* <button 
               onClick={loadOfficials}
               disabled={isLoading}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className=" w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer no-underline"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -511,7 +511,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 console.log('File Leave button clicked');
                 setShowFileLeave(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
             >
               <FiFileText className="w-5 h-5 text-white" />
               <span className="font-medium text-white">File Leave</span>
