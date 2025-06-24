@@ -5,18 +5,23 @@ import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
 import AddNewUser from './AddNewUser';
 import ResetPassword from '../auth/ResetPassword';
 import StatCard from '../global/StatCard';
+import Breadcrumb from '../global/Breadcrumb'; // Update this path to match your project structure
 import { UsersService } from '../../services/users.service';
 import type { User, UserParams } from '../../services/user.types';
 
 const UserManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');  const [currentPage, setCurrentPage] = useState(1);  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-    // Service integration state
+  const [isLoaded, setIsLoaded] = useState(false); // Add isLoaded state
+  
+  // Service integration state
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +39,23 @@ const UserManagement: React.FC = () => {
   });
   
   const usersService = new UsersService();
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    loadData();
+    
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Create a loadData function that combines your existing useEffect logic
+  const loadData = () => {
+    fetchUsers();
+    fetchStats();
+  };
+
   // Fetch users data
   useEffect(() => {
     fetchUsers();
@@ -45,7 +67,9 @@ const UserManagement: React.FC = () => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [searchTerm, roleFilter, statusFilter]);const fetchUsers = async () => {
+  }, [searchTerm, roleFilter, statusFilter]);
+
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -86,6 +110,7 @@ const UserManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
   const fetchStats = async () => {
     try {
       const statsResponse = await usersService.getUserStatistics();
@@ -129,6 +154,7 @@ const UserManagement: React.FC = () => {
   const getStatusBadgeColor = (isActive: boolean) => {
     return isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
+
   const getStatusText = (isActive: boolean) => {
     return isActive ? 'Active' : 'Inactive';
   };
@@ -136,6 +162,7 @@ const UserManagement: React.FC = () => {
   const formatRoleName = (role: string) => {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
+
   const handleAddUser = async (userData: any) => {
     await handleUserSaved(userData);
   };
@@ -152,6 +179,7 @@ const UserManagement: React.FC = () => {
       setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to delete user');
     }
   };
+
   const handleToggleStatus = async (userId: number) => {
     try {
       setError(null);
@@ -162,6 +190,7 @@ const UserManagement: React.FC = () => {
       setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to toggle user status');
     }
   };
+
   const handleViewUser = (userId: number) => {
     navigate(`/users/view/${userId}`);
   };
@@ -169,16 +198,20 @@ const UserManagement: React.FC = () => {
   const handleEditUser = (userId: number) => {
     navigate(`/users/edit/${userId}`);
   };
+
   const handleResetPassword = (userId: number, userName: string) => {
     setSelectedUserId(userId);
     setSelectedUserName(userName);
     setShowResetPassword(true);
-  };  const handleCloseModals = () => {
+  };
+
+  const handleCloseModals = () => {
     setShowAddForm(false);
     setShowResetPassword(false);
     setSelectedUserId(null);
     setSelectedUserName('');
   };
+
   const handleUserSaved = async (user: unknown) => {
     console.log('User saved:', user);
     // Refresh the users list
@@ -191,6 +224,7 @@ const UserManagement: React.FC = () => {
     alert('Password reset successfully!');
     handleCloseModals();
   };
+
   const filteredUsers = useMemo(() => {
     if (!Array.isArray(users)) {
       console.warn('Users is not an array:', users);
@@ -202,11 +236,13 @@ const UserManagement: React.FC = () => {
     // The API already returns filtered results based on search, role, and status
     return users;
   }, [users]);
+
   if (showAddForm) {
     return (
       <AddNewUser 
         onClose={handleCloseModals} 
-        onSave={handleAddUser}      />
+        onSave={handleAddUser}
+      />
     );
   }
 
@@ -223,19 +259,29 @@ const UserManagement: React.FC = () => {
 
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      {/* Page Header */}      <div className="mb-2">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb isLoaded={isLoaded} />
+
+      {/* Page Header */}
+      <div className={`mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">User Management</h1>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className={`mb-4 p-4 bg-red-50 border border-red-200 rounded-lg transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+        }`}>
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
       {/* Statistics Overview */}
-      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+      <section className={`w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
@@ -260,11 +306,13 @@ const UserManagement: React.FC = () => {
             value={stats.newThisMonth} 
             icon={FaUserPlus}
           />
-              </div>
+        </div>
       </section>
 
       {/* Users Section */}
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">System Users</h3>
           
@@ -287,40 +335,40 @@ const UserManagement: React.FC = () => {
               <FiPlus className="w-4 h-4" />
               <span>Add New User</span>
             </button>
-            </div>
+          </div>
             
           {/* Filters */}
-            <div className="flex gap-3">
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+          <div className="flex gap-3">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                aria-label="Filter by role"
-              >
-                <option value="">All Roles</option>
-                <option value="SUPER_ADMIN">Super Admin</option>
-                <option value="ADMIN">Admin</option>
-                <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
-                <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
-                <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
-                <option value="KAGAWAD">Kagawad</option>
-                <option value="SK_CHAIRPERSON">SK Chairperson</option>
-                <option value="SK_KAGAWAD">SK Kagawad</option>
-                <option value="STAFF">Staff</option>
-                <option value="USER">User</option>
-              </select>
+              aria-label="Filter by role"
+            >
+              <option value="">All Roles</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+              <option value="ADMIN">Admin</option>
+              <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
+              <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
+              <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
+              <option value="KAGAWAD">Kagawad</option>
+              <option value="SK_CHAIRPERSON">SK Chairperson</option>
+              <option value="SK_KAGAWAD">SK Kagawad</option>
+              <option value="STAFF">Staff</option>
+              <option value="USER">User</option>
+            </select>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                aria-label="Filter by status"
-              >
-                <option value="">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Pending">Pending</option>
-              </select>
+              aria-label="Filter by status"
+            >
+              <option value="">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Pending">Pending</option>
+            </select>
           </div>
         </div>
 
@@ -337,7 +385,8 @@ const UserManagement: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            </thead>            <tbody className="bg-white divide-y divide-gray-200">
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
@@ -394,7 +443,8 @@ const UserManagement: React.FC = () => {
                       {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Never logged in'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">                        <button 
+                      <div className="flex items-center space-x-2">
+                        <button 
                           className="text-smblue-400 hover:text-smblue-300"
                           title="View user details"
                           onClick={() => handleViewUser(user.id)}
@@ -407,7 +457,8 @@ const UserManagement: React.FC = () => {
                           onClick={() => handleEditUser(user.id)}
                         >
                           <FiEdit className="w-4 h-4" />
-                        </button>                        <button 
+                        </button>
+                        <button 
                           className="text-yellow-600 hover:text-yellow-900"
                           title="Reset password"
                           onClick={() => handleResetPassword(user.id, `${user.first_name} ${user.last_name}`)}
@@ -435,7 +486,9 @@ const UserManagement: React.FC = () => {
               )}
             </tbody>
           </table>
-        </div>        {/* Pagination */}
+        </div>
+
+        {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
@@ -493,5 +546,4 @@ const UserManagement: React.FC = () => {
   );
 };
 
-export default UserManagement; 
-
+export default UserManagement;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiDownload } from "react-icons/fi";
 import {
   FaUsers,
@@ -13,12 +13,14 @@ import ResponsiveAreaChart from "./ResponsiveAreaChart";
 import ResponsiveBarGraph from "./ResponsiveBarGraph";
 import ResponsivePieChart from "./ResponsivePieChart";
 import ResponsiveServicesTable from "./ResponsiveServicesTable";
+import Breadcrumb from "../global/Breadcrumb";
 
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedQuarter, setSelectedQuarter] =
     useState<string>("All Quarters");
   const [selectedPurok, setSelectedPurok] = useState<string>("Purok 1");
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const yearOptions = Array.from({ length: 2025 - 2010 + 1 }, (_, i) =>
     (2010 + i).toString()
@@ -26,6 +28,14 @@ export default function ReportsPage() {
   // hardcoded muna hihihi
   const quarterOptions = ["Q1", "Q2", "Q3", "Q4", "All Quarters"];
   const purokOptions = ["Purok 1", "Purok 2", "Purok 3", "Purok 4"];
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const statisticsOverviewData = [
     {
@@ -156,12 +166,20 @@ export default function ReportsPage() {
 
     // AI BG
     <main className="@container/main p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      <div className="mb-2">
+      {/* Breadcrumb */}
+      <Breadcrumb isLoaded={isLoaded} />
+
+      {/* Header */}
+      <div className={`mb-2 transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">Reports</h1>
       </div>
 
       {/* Filter options */}
-      <section className="@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border">
+      <section className={`@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '100ms' }}>
         {/* Dropdowns */}
         <section className="grid grid-cols-2 @lg/filter:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
@@ -226,7 +244,9 @@ export default function ReportsPage() {
       </section>
 
       {/* Stats overview */}
-      <section className="w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm">
+      <section className={`w-full bg-white flex flex-col gap-3 border p-6 rounded-2xl border-gray-100 shadow-sm transition-all duration-700 ease-out ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
         <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
           Statistics Overview
         </h3>
@@ -251,7 +271,9 @@ export default function ReportsPage() {
       {/* Population stats */}
       <section className="grid grid-cols-1 @xl/main:grid-cols-2 gap-4">
         <article className="w-full flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '300ms' }}>
             Age Group Distribution
           </h3>
 
@@ -262,7 +284,9 @@ export default function ReportsPage() {
         </article>
 
         <article className="w-full flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '350ms' }}>
             Special Population Registry
           </h3>
 
@@ -277,7 +301,9 @@ export default function ReportsPage() {
       <section className="min-h-[450px] w-full grid gap-4 grid-cols-2 @4xl/main:grid-cols-[2fr_3fr_2fr]">
         {/* Tailwind is mobile-first, i may have to keep reminding myself that :) */}
         <article className="@4xl/main:flex @4xl/main:flex-col shadow-sm rounded-2xl border col-span-2 border-gray-100 p-6 bg-white @4xl/main:order-1 @4xl/main:col-span-1">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '400ms' }}>
             Monthly Revenue Collection
           </h3>
 
@@ -285,7 +311,9 @@ export default function ReportsPage() {
         </article>
 
         <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white col-span-2 min-h-[450px] @xl/main:col-span-1">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '450ms' }}>
             Population Distribution by Purok/Sitio
           </h3>
 
@@ -293,7 +321,9 @@ export default function ReportsPage() {
         </article>
 
         <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white min-h-[450px] col-span-2 @4xl/main:order-3 @xl/main:col-span-1">
-          <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+          <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`} style={{ transitionDelay: '500ms' }}>
             Document Types Issued
           </h3>
 
@@ -303,7 +333,9 @@ export default function ReportsPage() {
 
       {/* Table of Most Requested Services */}
       <section className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white">
-        <h3 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">
+        <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '550ms' }}>
           Most Requested Services
         </h3>
 
@@ -312,4 +344,3 @@ export default function ReportsPage() {
     </main>
   );
 }
-
