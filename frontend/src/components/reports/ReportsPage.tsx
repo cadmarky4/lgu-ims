@@ -54,13 +54,13 @@ export default function ReportsPage() {
   const reportsService = new ReportsService();
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // di na sya hardcoded hihi
-  // const yearOptions = Array.from({ length: 2025 - 2010 + 1 }, (_, i) =>
-  //   (2010 + i).toString()
-  // );
-  // // hardcoded muna hihihi
-  // const quarterOptions = ["Q1", "Q2", "Q3", "Q4", "All Quarters"];
-  // const purokOptions = ["Purok 1", "Purok 2", "Purok 3", "Purok 4"];
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load filter options on component mount
   useEffect(() => {
@@ -149,48 +149,6 @@ export default function ReportsPage() {
           ]);
         }
 
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // di na sya hardcoded hihi
-  // const statisticsOverviewData = [
-  //   {
-  //     label: "Total Residents",
-  //     value: 40199,
-  //     icon: FaUsers,
-  //   },
-  //   {
-  //     label: "Total Household",
-  //     value: 20148,
-  //     icon: FaHouseUser,
-  //   },
-  //   {
-  //     label: "Active Barangay Officials",
-  //     value: 20,
-  //     icon: FaUserCheck,
-  //   },
-  //   {
-  //     label: "Total Blotter Cases",
-  //     value: 5,
-  //     icon: FaPen,
-  //   },
-  //   {
-  //     label: "Total Issued Clearance",
-  //     value: 3,
-  //     icon: FaStamp,
-  //   },
-  //   {
-  //     label: "Ongoing Projects",
-  //     value: 1,
-  //     icon: FaClipboardList,
-  //   },
-  // ];
-
         // Set other data
         if (ageGroupResponse.data) setAgeGroupDistributionData(ageGroupResponse.data);
         if (specialPopulationResponse.data) setSpecialPopulationRegistryData(specialPopulationResponse.data);
@@ -218,7 +176,6 @@ export default function ReportsPage() {
 
     // AI BG
     <main className="@container/main p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
-      {/* Breadcrumb */}
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
@@ -244,8 +201,8 @@ export default function ReportsPage() {
       {/* Content - only show when not loading */}
       {!loading && (
         <>
-          {/* Filter options */}
-      <section className={`@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border transition-all duration-700 ease-out ${
+      {/* Filter options */}
+       <section className={`@container/filter w-full rounded-2xl grid grid-col-1 items-end gap-4 p-6 bg-white shadow-sm border-gray-100 border transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`} style={{ transitionDelay: '100ms' }}>
         {/* Dropdowns */}
