@@ -290,7 +290,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       <div className="text-center">
         <button
           onClick={() => onNavigate('addNewResident')}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer no-underline "
         >
           <FiUser className="w-4 h-4 mr-2" />
           Add New Resident
@@ -475,15 +475,15 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
 
         <div className="flex justify-end space-x-4 mt-6">
           <button
-            onClick={() => setStep(1)}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={() => setStep(1)} 
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
           >
             Back
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || !formData.purpose || !formData.validIdPresented || !formData.yearsOfResidency || !formData.certifyingOfficial}
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer no-underline"
           >
             {submitting && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -524,7 +524,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       <div className="flex justify-center space-x-4">
         <button
           onClick={() => onNavigate('process-document')}
-          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
+          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors cursor-pointer no-underline"
         >
           View All Requests
         </button>
@@ -542,7 +542,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
               urgentRequest: false
             });
           }}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
         >
           New Request
         </button>

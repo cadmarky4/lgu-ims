@@ -337,7 +337,7 @@ const ResidentManagement: React.FC = () => {
             <button
               onClick={openAddForm}
               disabled={loading}
-              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-4 bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer no-underline"
             >
               <FiPlus className="w-4 h-4" />
               <span>Add New Resident</span>
@@ -443,21 +443,21 @@ const ResidentManagement: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
-                            className="text-smblue-400 hover:text-smblue-300"
+                            className="text-smblue-400 hover:text-smblue-300 cursor-pointer no-underline"
                             title="View resident details"
                             onClick={() => openViewForm(resident)}
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button
-                            className="text-smblue-400 hover:text-smblue-300"
+                            className="text-smblue-400 hover:text-smblue-300 cursor-pointer no-underline"
                             title="Edit resident"
                             onClick={() => openEditForm(resident)}
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
                           <button
-                            className={`text-red-600 hover:text-red-900 ${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`text-red-600 hover:text-red-900 cursor-pointer no-underline${isDeleting === resident.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title={isDeleting === resident.id ? "Deactivating..." : "Deactivate resident"}
                             onClick={() => handleDeleteResident(resident.id)}
                             disabled={isDeleting === resident.id || isLoading}
@@ -492,7 +492,7 @@ const ResidentManagement: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <button
-                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer no-underline"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1 || loading}
               >
@@ -520,7 +520,7 @@ const ResidentManagement: React.FC = () => {
                 }
               )}
               <button
-                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300 disabled:opacity-50"
+                className="px-3 py-1 text-sm bg-smblue-400 text-white rounded hover:bg-smblue-300 disabled:opacity-50 cursor-pointer no-underline"
                 onClick={() =>
                   setCurrentPage(
                     Math.min(pagination.last_page, currentPage + 1)

@@ -35,7 +35,7 @@ const QuickActions: React.FC = () => {
         {actions.map((action) => (
           <button
             key={action.id}
-            className="flex items-center space-x-3 bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 text-left shadow-sm"
+            className="cursor-pointer no-underline flex items-center space-x-3 bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 text-left shadow-sm"
           >
             <action.icon className="w-5 h-5 flex-shrink-0 text-white" />
             <span className="text-sm font-medium text-white">{action.title}</span>

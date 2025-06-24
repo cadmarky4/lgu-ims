@@ -569,14 +569,14 @@ const BarangayOfficialsPage: React.FC = () => {
               className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
             >
               <FiUsers className="w-5 h-5 text-white" />
-              <span className="font-medium text-white">Add New Official</span>
+              <span className="font-medium text-white cursor-pointer no-underline">Add New Official</span>
             </button>
             <button 
               onClick={() => {
                 console.log('Update Officers button clicked');
                 setShowOfficerSelection(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
             >
               <FiEdit className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
@@ -585,7 +585,7 @@ const BarangayOfficialsPage: React.FC = () => {
             <button 
               onClick={loadOfficials}
               disabled={isLoading}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className=" w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer no-underline"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -603,7 +603,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 console.log('File Leave button clicked');
                 setShowFileLeave(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
             >
               <FiFileText className="w-5 h-5 text-white" />
               <span className="font-medium text-white">File Leave</span>
