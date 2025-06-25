@@ -78,39 +78,119 @@
         "birthDate": "Birth Date",
         "age": "Age (automatically calculated)",
         "birthPlace": "Birth Place",
+
         "gender": "Gender",
         "civilStatus": "Civil Status",
         "nationality": "Nationality",
         "religion": "Religion",
-        "employmentStatus": "Employment Status",
         "educationalAttainment": "Educational Attainment",
+
+        "employmentStatus": "Employment Status",
         "occupation": "Occupation",
         "employer": "Employer",
         "monthlyIncome": "Monthly Income",
+
         "mobileNumber": "Mobile Number",
         "landlineNumber": "Landline Number",
         "emailAddress": "Email Address",
-        "houseNumber": "House/Unit Number",
-        "street": "Street",
-        "purok": "Purok",
+
+        "streetAddress": "Street Address",
         "completeAddress": "Complete Address",
+
         "motherName": "Mother's Name",
         "fatherName": "Father's Name",
         "emergencyContactName": "Emergency Contact Name",
         "emergencyContactNumber": "Emergency Contact Number",
         "emergencyContactRelationship": "Emergency Contact Relationship",
+        
         "primaryIdType": "Primary ID Type",
         "idNumber": "ID Number",
         "philhealthNumber": "PhilHealth Number",
         "sssNumber": "SSS Number",
         "tinNumber": "TIN Number",
+
         "votersIdNumber": "Voter's ID Number",
         "voterStatus": "Voter Status",
         "precinctNumber": "Precinct Number",
+
         "medicalConditions": "Medical Conditions",
         "allergies": "Allergies",
+
         "householdId": "Household ID"
       },
+
+      "civilStatusOptions": {
+        "single": "Single",
+        "liveIn": "Live-in",
+        "married": "Married",
+        "widowed": "Widowed",
+        "divorced": "Divorced",
+        "separated": "Separated",
+        "annulled": "Annulled",
+        "preferNotToSay": "Prefer not to say"
+      },
+
+      "educationalAttainmentEnumOptions": {
+        "noFormalEducation": "No Formal Education",
+        "elementaryUndergraduate": "Elementary Undergraduate",
+        "elementaryGraduate": "Elementary Graduate",
+        "highSchoolUndergraduate": "High School Undergraduate",
+        "highSchoolGraduate": "High School Graduate",
+        "collegeUndergraduate": "College Undergraduate",
+        "collegeGraduate": "College Graduate",
+        "postGraduate": "Post Graduate (MA/MS/PhD)",
+        "vocational": "Vocational/Technical Course",
+        "other": "Other"
+      },
+
+      "genderOptions": {
+        "male": "Male",
+        "female": "Female",
+        "nonBinary": "Non-binary",
+        "preferNotToSay": "Prefer not to say"
+      },
+
+      "educationalAttainmentOptions": {
+        "noFormalEducation": "No Formal Education",
+        "elementaryUndergraduate": "Elementary Undergraduate",
+        "elementaryGraduate": "Elementary Graduate",
+        "highSchoolUndergraduate": "High School Undergraduate",
+        "highSchoolGraduate": "High School Graduate",
+        "collegeUndergraduate": "College Undergraduate",
+        "collegeGraduate": "College Graduate",
+        "postGraduate": "Post Graduate (MA/MS/PhD)",
+        "vocational": "Vocational/Technical Course",
+        "other": "Other"
+      },
+
+      "employmentStatusOptions": {
+        "employed": "Employed",
+        "unemployed": "Unemployed",
+        "selfEmployed": "Self-Employed",
+        "retired": "Retired",
+        "student": "Student",
+        "overseasWorker": "Overseas Filipino Worker (OFW)"
+      },
+
+      "religionOptions": {
+        "catholic": "Catholic",
+        "iglesiaNiCristo": "Iglesia ni Cristo",
+        "evangelical": "Evangelical",
+        "protestant": "Protestant",
+        "islam": "Islam",
+        "buddhist": "Buddhist",
+        "hindu": "Hindu",
+        "seventhDayAdventist": "Seventh-day Adventist",
+        "jehovahsWitness": "Jehovah's Witness",
+        "bornAgainChristian": "Born Again Christian",
+        "orthodox": "Orthodox",
+        "judaism": "Judaism",
+        "atheist": "Atheist",
+        "aglipayan": "Aglipayan",
+        "preferNotToSay": "Prefer not to say",
+        "other": "Other"
+      },
+
       "placeholders": {
         "firstName": "Enter first name here...",
         "lastName": "Enter last name here...",
@@ -125,7 +205,7 @@
         "landlineNumber": "(02) XXXX-XXXX",
         "emailAddress": "resident@gmail.com",
         "houseNumber": "e.g. 123, Blk 4 Lot 5",
-        "street": "e.g. Rizal Street",
+        "streetAddress": "e.g. Rizal Street",
         "completeAddress": "Enter complete address...",
         "motherName": "Search existing residents or enter new",
         "fatherName": "Search existing residents or enter new",

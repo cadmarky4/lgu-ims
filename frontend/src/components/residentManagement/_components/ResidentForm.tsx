@@ -2,7 +2,7 @@
 // components/residents/form/ResidentForm.tsx - Main form component
 // ============================================================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { FiX } from 'react-icons/fi';
@@ -11,13 +11,18 @@ import { ResidentFormSection } from './ResidentFormSection';
 import { ResidentFormField } from './ResidentFormField';
 import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { DuplicateWarning } from './DuplicateWarning';
-import { LoadingSpinner } from '@/components/__shared/LoadingSpinner'
+import { LoadingSpinner } from '@/components/__shared/LoadingSpinner';
 
 interface ResidentFormProps {
   mode: 'create' | 'edit';
   residentId?: number;
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
 }
 
 export const ResidentForm: React.FC<ResidentFormProps> = ({
@@ -27,9 +32,17 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   onSuccess
 }) => {
   const { t } = useTranslation();
+
+
+
+  const [provinceOptions, setProvinceOptions] = useState<SelectOption[]>([]);
+  const [cityOptions, setCityOptions] = useState<SelectOption[]>([]);
+  const [barangayOptions, setBarangayOptions] = useState<SelectOption[]>([]);
+
+
+
   const {
     form,
-    resident,
     isLoadingResident,
     profilePhotoPreview,
     duplicateWarning,
@@ -52,7 +65,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     );
   }
 
-  const title = mode === 'create' 
+  const title = mode === 'create'
     ? t('residents.form.addTitle')
     : t('residents.form.editTitle');
 
@@ -141,8 +154,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 placeholder={t('residents.form.options.selectGender')}
                 required
                 options={[
-                  { value: 'MALE', label: 'Male' },
-                  { value: 'FEMALE', label: 'Female' },
+                  { value: 'MALE', label: t('residents.form.genderOptions.male') },
+                  { value: 'FEMALE', label: t('residents.form.genderOptions.female') },
+                  { value: 'NON_BINARY', label: t('residents.form.genderOptions.nonBinary') },
+                  { value: 'PREFER_NOT_TO_SAY', label: t('residents.form.genderOptions.preferNotToSay') },
                 ]}
               />
             </div>
@@ -155,37 +170,102 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 placeholder={t('residents.form.options.selectCivilStatus')}
                 required
                 options={[
-                  { value: 'SINGLE', label: 'Single' },
-                  { value: 'MARRIED', label: 'Married' },
-                  { value: 'WIDOWED', label: 'Widowed' },
-                  { value: 'DIVORCED', label: 'Divorced' },
-                  { value: 'SEPARATED', label: 'Separated' },
+                  { value: 'SINGLE', label: t('residents.form.civilStatusOptions.single') },
+                  { value: 'LIVE_IN', label: t('residents.form.civilStatusOptions.liveIn') },
+                  { value: 'MARRIED', label: t('residents.form.civilStatusOptions.married') },
+                  { value: 'WIDOWED', label: t('residents.form.civilStatusOptions.widowed') },
+                  { value: 'DIVORCED', label: t('residents.form.civilStatusOptions.divorced') },
+                  { value: 'SEPARATED', label: t('residents.form.civilStatusOptions.separated') },
+                  { value: 'ANNULLED', label: t('residents.form.civilStatusOptions.annulled') },
+                  { value: 'PREFER_NOT_TO_SAY', label: t('residents.form.civilStatusOptions.preferNotToSay') },
                 ]}
               />
               <ResidentFormField
                 name="nationality"
                 label={t('residents.form.fields.nationality')}
+                type="select"
                 placeholder={t('residents.form.placeholders.nationality')}
                 required
+                options={[
+                  { value: 'FILIPINO', label: 'Filipino' },
+                  { value: 'FOREIGN', label: 'Foreign' },
+                ]}
               />
               <ResidentFormField
                 name="religion"
                 label={t('residents.form.fields.religion')}
+                type="select"
                 placeholder={t('residents.form.placeholders.religion')}
+                required
+                options={[
+                  { value: 'CATHOLIC', label: t('residents.form.religionOptions.catholic') },
+                  { value: 'IGLESIA_NI_CRISTO', label: t('residents.form.religionOptions.iglesiaNiCristo') },
+                  { value: 'EVANGELICAL', label: t('residents.form.religionOptions.evangelical') },
+                  { value: 'PROTESTANT', label: t('residents.form.religionOptions.protestant') },
+                  { value: 'ISLAM', label: t('residents.form.religionOptions.islam') },
+                  { value: 'BUDDHIST', label: t('residents.form.religionOptions.buddhist') },
+                  { value: 'HINDU', label: t('residents.form.religionOptions.hindu') },
+                  { value: 'SEVENTH_DAY_ADVENTIST', label: t('residents.form.religionOptions.seventhDayAdventist') },
+                  { value: 'JEHOVAHS_WITNESS', label: t('residents.form.religionOptions.jehovahsWitness') },
+                  { value: 'BORN_AGAIN_CHRISTIAN', label: t('residents.form.religionOptions.bornAgainChristian') },
+                  { value: 'ORTHODOX', label: t('residents.form.religionOptions.orthodox') },
+                  { value: 'JUDAISM', label: t('residents.form.religionOptions.judaism') },
+                  { value: 'ATHEIST', label: t('residents.form.religionOptions.atheist') },
+                  { value: 'AGLIPAYAN', label: t('residents.form.religionOptions.aglipayan') },
+                  { value: 'OTHER', label: t('residents.form.options.other') },
+                  { value: 'PREFER_NOT_TO_SAY', label: t('residents.form.religionOptions.preferNotToSay') },
+                ]}
               />
+            </div>
+          </ResidentFormSection>
+
+          {/* Employment and Education */}
+          <ResidentFormSection title={t('residents.form.sections.employmentEducation')}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <ResidentFormField
+                name="educational_attainment"
+                label={t('residents.form.fields.educationalAttainment')}
+                type="select"
+                placeholder={t('residents.form.options.selectEducationalAttainment')}
+                options={[
+                  { value: 'NO_FORMAL_EDUCATION', label: t('residents.form.educationalAttainmentOptions.noFormalEducation') },
+                  { value: 'ELEMENTARY_UNDERGRADUATE', label: t('residents.form.educationalAttainmentOptions.elementaryUndergraduate') },
+                  { value: 'ELEMENTARY_GRADUATE', label: t('residents.form.educationalAttainmentOptions.elementaryGraduate') },
+                  { value: 'HIGH_SCHOOL_UNDERGRADUATE', label: t('residents.form.educationalAttainmentOptions.highSchoolUndergraduate') },
+                  { value: 'HIGH_SCHOOL_GRADUATE', label: t('residents.form.educationalAttainmentOptions.highSchoolGraduate') },
+                  { value: 'COLLEGE_UNDERGRADUATE', label: t('residents.form.educationalAttainmentOptions.collegeUndergraduate') },
+                  { value: 'COLLEGE_GRADUATE', label: t('residents.form.educationalAttainmentOptions.collegeGraduate') },
+                  { value: 'POST_GRADUATE', label: t('residents.form.educationalAttainmentOptions.postGraduate') },
+                  { value: 'VOCATIONAL', label: t('residents.form.educationalAttainmentOptions.vocational') },
+                  { value: 'OTHER', label: t('residents.form.options.other') },
+                ]}
+              />
+
               <ResidentFormField
                 name="employment_status"
                 label={t('residents.form.fields.employmentStatus')}
                 type="select"
                 placeholder={t('residents.form.options.selectEmploymentStatus')}
                 options={[
-                  { value: 'EMPLOYED', label: 'Employed' },
-                  { value: 'UNEMPLOYED', label: 'Unemployed' },
-                  { value: 'SELF_EMPLOYED', label: 'Self Employed' },
-                  { value: 'RETIRED', label: 'Retired' },
-                  { value: 'STUDENT', label: 'Student' },
-                  { value: 'OFW', label: 'OFW' },
+                  { value: 'EMPLOYED', label: t('residents.form.employmentStatusOptions.employed') },
+                  { value: 'UNEMPLOYED', label: t('residents.form.employmentStatusOptions.unemployed') },
+                  { value: 'SELF_EMPLOYED', label: t('residents.form.employmentStatusOptions.selfEmployed') },
+                  { value: 'RETIRED', label: t('residents.form.employmentStatusOptions.retired') },
+                  { value: 'STUDENT', label: t('residents.form.employmentStatusOptions.student') },
+                  { value: 'OFW', label: t('residents.form.employmentStatusOptions.overseasWorker') },
                 ]}
+              />
+
+              <ResidentFormField
+                name="occupation"
+                label={t('residents.form.fields.occupation')}
+                placeholder={t('residents.form.placeholders.occupation')}
+              />
+
+              <ResidentFormField
+                name="employer"
+                label={t('residents.form.fields.employer')}
+                placeholder={t('residents.form.placeholders.employer')}
               />
             </div>
           </ResidentFormSection>
@@ -217,14 +297,47 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="house_number"
-                label={t('residents.form.fields.houseNumber')}
-                placeholder={t('residents.form.placeholders.houseNumber')}
+                name="region"
+                label={t('residents.form.fields.region')}
+                type="select"
+                placeholder={t('residents.form.placeholders.region')}
+                required
+                options={[]} // Populate with region options
               />
               <ResidentFormField
-                name="street"
-                label={t('residents.form.fields.street')}
-                placeholder={t('residents.form.placeholders.street')}
+                name="province"
+                label={t('residents.form.fields.province')}
+                type="select"
+                placeholder={t('residents.form.placeholders.province')}
+                required
+                options={[]} // Populate with province options
+                disabled={!form.watch('region')}
+              />
+              <ResidentFormField
+                name="city"
+                label={t('residents.form.fields.city')}
+                type="select"
+                placeholder={t('residents.form.placeholders.city')}
+                required
+                options={[]} // Populate with city options
+                disabled={!form.watch('province')}
+              />
+              <ResidentFormField
+                name="barangay"
+                label={t('residents.form.fields.barangay')}
+                type="select"
+                placeholder={t('residents.form.placeholders.barangay')}
+                required
+                options={[]} // Populate with barangay options
+                disabled={!form.watch('city')}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <ResidentFormField
+                name="street_address"
+                label={t('residents.form.fields.streetAddress')}
+                placeholder={t('residents.form.placeholders.streetAddress')}
               />
             </div>
 
@@ -296,6 +409,17 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               </button>
             )}
 
+            {mode === 'create' && (
+              <button
+                type="button"
+                onClick={saveDraft}
+                disabled={isSubmitting}
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                <span>{t('residents.form.actions.clearDraft')}</span>
+              </button>
+            )}
+
             <div className={`flex space-x-4 ${mode === 'edit' ? 'w-full justify-end' : ''}`}>
               <button
                 type="button"
@@ -314,13 +438,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 )}
                 <span>
-                  {isSubmitting 
-                    ? (mode === 'create' 
-                        ? t('residents.form.actions.registering') 
-                        : t('residents.form.actions.updating'))
-                    : (mode === 'create' 
-                        ? t('residents.form.actions.register') 
-                        : t('residents.form.actions.update'))
+                  {isSubmitting
+                    ? (mode === 'create'
+                      ? t('residents.form.actions.registering')
+                      : t('residents.form.actions.updating'))
+                    : (mode === 'create'
+                      ? t('residents.form.actions.register')
+                      : t('residents.form.actions.update'))
                   }
                 </span>
               </button>

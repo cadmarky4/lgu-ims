@@ -5,14 +5,17 @@
 import { z } from 'zod';
 
 // Enum schemas
-export const GenderSchema = z.enum(['MALE', 'FEMALE']);
+export const GenderSchema = z.enum(['MALE', 'FEMALE', 'NON_BINARY', 'PREFER_NOT_TO_SAY']);
 
 export const CivilStatusSchema = z.enum([
   'SINGLE',
+  'LIVE_IN',
   'MARRIED',
   'WIDOWED',
   'DIVORCED',
-  'SEPARATED'
+  'SEPARATED',
+  'ANNULLED',
+  'PREFER_NOT_TO_SAY'
 ]);
 
 export const EmploymentStatusSchema = z.enum([
@@ -77,14 +80,16 @@ export const ReligionSchema = z.enum([
 ]);
 
 export const EducationalAttainmentSchema = z.enum([
-  'ELEMENTARY',
-  'HIGH_SCHOOL',
-  'COLLEGE',
-  'VOCATIONAL',
+  'NO_FORMAL_EDUCATION',
+  'ELEMENTARY_UNDERGRADUATE',
+  'ELEMENTARY_GRADUATE',
+  'HIGH_SCHOOL_UNDERGRADUATE',
+  'HIGH_SCHOOL_GRADUATE',
+  'COLLEGE_UNDERGRADUATE',
+  'COLLEGE_GRADUATE',
   'POST_GRADUATE',
-  'DOCTORATE',
-  'NOT_APPLICABLE',
-  'PREFER_NOT_TO_SAY'
+  'VOCATIONAL',
+  'OTHER'
 ]);
 
 // Household schema
@@ -103,13 +108,17 @@ export const ResidentFormDataSchema = z.object({
   birth_date: z.string().min(1, 'residents.form.error.birthDateRequired'),
   age: z.string().optional(),
   birth_place: z.string().min(1, 'residents.form.error.birthPlaceRequired'),
-
   gender: GenderSchema,
+  
   civil_status: CivilStatusSchema,
   nationality: NationalitySchema,
   religion: ReligionSchema,
-  employment_status: EmploymentStatusSchema,
+
+  // Employment and Education
   educational_attainment: EducationalAttainmentSchema,
+  employment_status: EmploymentStatusSchema,
+  occupation: z.string().optional(),
+  employer: z.string().optional(),
   
   // Contact Information
   mobile_number: z.string().optional(),
@@ -142,11 +151,7 @@ export const ResidentFormDataSchema = z.object({
   voters_id_number: z.string().optional(),
   voter_status: VoterStatusSchema,
   precinct_number: z.string().optional(),
-  
-  // Employment
-  occupation: z.string().optional(),
-  employer: z.string().optional(),
-  monthly_income: z.string().optional(),
+
   
   // Health & Medical
   medical_conditions: z.string().optional(),
@@ -250,7 +255,7 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       nationality: 'FILIPINO',
       religion: 'CATHOLIC',
       employment_status: 'UNEMPLOYED',
-      educational_attainment: 'HIGH_SCHOOL',
+      educational_attainment: 'NO_FORMAL_EDUCATION',
       mobile_number: '',
       landline_number: '',
       email_address: '',
@@ -272,7 +277,6 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       precinct_number: '',
       occupation: '',
       employer: '',
-      monthly_income: '',
       medical_conditions: '',
       allergies: '',
       senior_citizen: false,
@@ -321,7 +325,6 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     precinct_number: resident.precinct_number || '',
     occupation: resident.occupation || '',
     employer: resident.employer || '',
-    monthly_income: '', // Not in current schema
     medical_conditions: resident.medical_conditions || '',
     allergies: resident.allergies || '',
     senior_citizen: resident.senior_citizen || false,

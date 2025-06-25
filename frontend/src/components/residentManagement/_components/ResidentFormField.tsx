@@ -12,6 +12,7 @@ interface ResidentFormFieldProps {
   type?: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select';
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
   readOnly?: boolean;
   rows?: number;
   options?: Array<{ value: string; label: string }>;
@@ -24,6 +25,7 @@ export const ResidentFormField: React.FC<ResidentFormFieldProps> = ({
   type = 'text',
   placeholder,
   required = false,
+  disabled = false,
   readOnly = false,
   rows = 3,
   options = [],
@@ -48,6 +50,7 @@ export const ResidentFormField: React.FC<ResidentFormFieldProps> = ({
             placeholder={placeholder}
             rows={rows}
             readOnly={readOnly}
+            disabled={disabled}
             className={baseClassName}
           />
         );
@@ -75,6 +78,7 @@ export const ResidentFormField: React.FC<ResidentFormFieldProps> = ({
             type={type}
             placeholder={placeholder}
             readOnly={readOnly}
+            disabled={disabled}
             className={baseClassName}
           />
         );
