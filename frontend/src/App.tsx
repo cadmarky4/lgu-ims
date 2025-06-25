@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./components/_global/NotificationSystem";
-import ProtectedRoute from "./components/_auth/ProtectedRoute";
+import ProtectedRoute from "./components/_auth/ProtectedRoute"; 
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./components/dashboard/Dashboard";
 import ResidentManagement from "./components/residentManagement/ResidentManagement";
