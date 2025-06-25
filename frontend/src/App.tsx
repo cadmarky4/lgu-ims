@@ -242,38 +242,38 @@ const router = createBrowserRouter([
     ],
   },
   // Standalone Print Routes (outside AppLayout to avoid headers/navigation)
-  // {
-  //   path: "/print/barangay-clearance/:documentId",
-  //   element: (
-  //     <ProtectedRoute requireAuth={true}>
-  //       <BarangayClearancePrint />
-  //     </ProtectedRoute>
-  //   ),
-  // },
-  // {
-  //   path: "/print/certificate-residency/:documentId",
-  //   element: (
-  //     <ProtectedRoute requireAuth={true}>
-  //       <CertificateOfResidencyPrint />
-  //     </ProtectedRoute>
-  //   ),
-  // },
-  // {
-  //   path: "/print/certificate-indigency/:documentId",
-  //   element: (
-  //     <ProtectedRoute requireAuth={true}>
-  //       <CertificateOfIndigencyPrint />
-  //     </ProtectedRoute>
-  //   ),
-  // },
-  // {
-  //   path: "/print/business-permit/:documentId",
-  //   element: (
-  //     <ProtectedRoute requireAuth={true}>
-  //       <BusinessPermitPrint />
-  //     </ProtectedRoute>
-  //   ),
-  // },
+  {
+    path: "/print/barangay-clearance/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <BarangayClearancePrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/certificate-residency/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <CertificateOfResidencyPrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/certificate-indigency/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <CertificateOfIndigencyPrint />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/print/business-permit/:documentId",
+    element: (
+      <ProtectedRoute requireAuth={true}>
+        <BusinessPermitPrint />
+      </ProtectedRoute>
+    ),
+  },
 ]);
 
 // Main App Component

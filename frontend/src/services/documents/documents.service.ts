@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { BaseApiService } from '@/services/__shared/api';
-import { 
+import {
   DocumentSchema,
   DocumentParamsSchema,
   DocumentStatisticsSchema,
@@ -94,7 +94,7 @@ export class DocumentsService extends BaseApiService {
       '/documents',
       responseSchema,
       {
-        method: 'POST',
+      method: 'POST',
         data: validatedData,
       }
     );
@@ -293,7 +293,7 @@ export class DocumentsService extends BaseApiService {
       `/documents/${id}/reject`,
       responseSchema,
       {
-        method: 'POST',
+      method: 'POST',
         data: validatedData,
       }
     );
@@ -322,7 +322,7 @@ export class DocumentsService extends BaseApiService {
       `/documents/${id}/release`,
       responseSchema,
       {
-        method: 'POST',
+      method: 'POST',
         data: validatedData,
       }
     );
@@ -352,7 +352,7 @@ export class DocumentsService extends BaseApiService {
       `/documents/${id}/cancel`,
       responseSchema,
       {
-        method: 'POST',
+      method: 'POST',
         data: { reason },
       }
     );

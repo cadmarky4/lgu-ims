@@ -71,7 +71,7 @@ export function useDocumentQueue() {
 
   // Filtered documents
   const filteredDocuments = useMemo(() => {
-    if (!documentsData?.data) return [];
+    if (!documentsData?.data || !Array.isArray(documentsData.data)) return [];
     
     return documentsData.data.filter((doc: Document) => {
       const searchMatch = filters.searchTerm === '' || 
@@ -232,6 +232,12 @@ export function useDocumentQueue() {
     documents: filteredDocuments,
     statistics,
     statusCounts,
+    pagination: documentsData ? {
+      current_page: documentsData.current_page,
+      last_page: documentsData.last_page,
+      per_page: documentsData.per_page,
+      total: documentsData.total,
+    } : undefined,
     
     // State
     filters,

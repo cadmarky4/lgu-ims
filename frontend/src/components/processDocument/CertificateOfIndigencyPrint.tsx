@@ -1,7 +1,14 @@
-import React, { useEffect, useState } from 'react';
+// ============================================================================
+// processDocument/CertificateOfIndigencyPrint.tsx - Modern Certificate of Indigency Print
+// ============================================================================
+
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { documentsService } from '../../services/documents/documents.service';
-import type { DocumentRequest } from '../../services/documents/documents.types';
+import { FiPrinter, FiX, FiAlertCircle } from 'react-icons/fi';
+
+import { LoadingSpinner } from '../__shared/LoadingSpinner';
+import { useDocument } from '@/services/documents/useDocuments';
+import type { Document } from '@/services/documents/documents.types';
 
 const CertificateHeader: React.FC = () => (
   <div className="text-center mb-8">
@@ -62,48 +69,13 @@ const CertificateFooter: React.FC<CertificateFooterProps> = ({
 const CertificateOfIndigencyPrint: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
-  const [document, setDocument] = useState<DocumentRequest | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (documentId) {
-      fetchDocument();
-    }
-  }, [documentId]);
-
-  const fetchDocument = async () => {
-    try {
-      setLoading(true);
-      
-      // For development, use placeholder data
-      const placeholderDocument: DocumentRequest = {
-        id: parseInt(documentId || '1'),
-        document_type: 'CERTIFICATE_OF_INDIGENCY',
-        resident_id: 2,
-        resident_name: 'Maria Santos',
-        purpose: 'Medical Assistance',
-        status: 'APPROVED',
-        request_date: '2024-01-14T14:20:00Z',
-        processing_fee: 0,
-        certifying_official: 'Hon. Juan Dela Cruz - Punong Barangay',
-        notes: 'Income: Below poverty line, Household members: 5',
-        resident: {
-          first_name: 'Maria',
-          last_name: 'Santos',
-          complete_address: 'Purok 2, Brgy. Sikatuna Village, Samal, Bataan',
-          mobile_number: '+63 923 456 7890'
-        }
-      };
-      
-      setDocument(placeholderDocument);
-    } catch (err) {
-      console.error('Failed to fetch document:', err);
-      setError('Failed to load document');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // Modern TanStack Query data fetching
+  const { 
+    data: document, 
+    isLoading, 
+    error 
+  } = useDocument(documentId || '', !!documentId);
 
   const handlePrint = () => {
     window.print();
@@ -113,25 +85,31 @@ const CertificateOfIndigencyPrint: React.FC = () => {
     navigate('/process-document');
   };
 
-  if (loading) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-600">Loading document...</p>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !document) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Document not found'}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-md">
+          <FiAlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Document Not Found</h3>
+          <p className="text-red-600 mb-6">
+            {error?.message || 'The requested document could not be found or loaded.'}
+          </p>
           <button
             onClick={handleClose}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-smblue-400 text-white px-6 py-2 rounded-lg hover:bg-smblue-500 transition-colors"
           >
             Back to Documents
           </button>
@@ -140,12 +118,64 @@ const CertificateOfIndigencyPrint: React.FC = () => {
     );
   }
 
+  // Validate document type
+  if (document.document_type !== 'CERTIFICATE_OF_INDIGENCY') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-md">
+          <FiAlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Invalid Document Type</h3>
+          <p className="text-orange-600 mb-6">
+            This document is not a Certificate of Indigency. Expected: Certificate of Indigency, Got: {document.document_type.replace(/_/g, ' ')}
+          </p>
+          <button
+            onClick={handleClose}
+            className="bg-smblue-400 text-white px-6 py-2 rounded-lg hover:bg-smblue-500 transition-colors"
+          >
+            Back to Documents
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Format applicant name
+  const applicantName = document.applicant_name || 
+    `${document.resident?.first_name || ''} ${document.resident?.middle_name || ''} ${document.resident?.last_name || ''}`.trim() ||
+    'N/A';
+
+  // Format address
+  const applicantAddress = document.applicant_address || 
+    document.resident?.complete_address || 
+    'Brgy. Sikatuna Village, Samal, Bataan';
+
+  // Generate OR number
+  const orNumber = document.document_number || `OR-${document.id.toString().padStart(6, '0')}`;
+
+  // Format date issued
+  const dateIssued = document.approved_date ? 
+    new Date(document.approved_date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }) : 
+    new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+  // Format indigency-specific information
+  const indigencyReason = document.indigency_reason;
+  const monthlyIncome = document.monthly_income;
+  const familySize = document.family_size;
+
   return (
     <>
       <style>{`
         @media print {
           @page {
-            margin: 0;
+            margin: 0.5in;
             size: A4;
           }
           * {
@@ -153,7 +183,6 @@ const CertificateOfIndigencyPrint: React.FC = () => {
             color: black !important;
             background: white !important;
             box-shadow: none !important;
-            border: none !important;
             text-shadow: none !important;
           }
           body {
@@ -166,79 +195,102 @@ const CertificateOfIndigencyPrint: React.FC = () => {
           }
           .certificate-content {
             page-break-inside: avoid;
-            height: 100vh;
+            height: auto;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 1in !important;
+            padding: 0 !important;
             margin: 0 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+        
+        @media screen {
+          .certificate-content {
+            min-height: calc(100vh - 6rem);
           }
         }
       `}</style>
-      <div className="min-h-screen bg-white">
+      
+      <div className="min-h-screen bg-gray-50 print:bg-white">
         {/* Print Controls - Hidden when printing */}
-                <div className="print:hidden fixed top-4 right-4 z-10 space-x-2">
+        <div className="no-print print:hidden fixed top-4 right-4 z-10 space-x-2">
           <button
             onClick={handlePrint}
-            className="bg-smblue-400 text-white px-6 py-3 rounded-lg hover:bg-smblue-500 shadow-lg font-medium cursor-pointer no-underline"
+            className="bg-smblue-400 text-white px-6 py-3 rounded-lg hover:bg-smblue-500 shadow-lg font-medium transition-colors flex items-center space-x-2"
           >
-            🖨️ Print Certificate
+            <FiPrinter className="w-4 h-4" />
+            <span>Print Certificate</span>
           </button>
           <button
             onClick={handleClose}
-            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 shadow-lg cursor-pointer no-underline"
+            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 shadow-lg transition-colors flex items-center space-x-2"
           >
-            Close
+            <FiX className="w-4 h-4" />
+            <span>Close</span>
           </button>
         </div>
 
         {/* Certificate Content */}
-        <div className="max-w-4xl mx-auto p-8 certificate-content">
-          <div className="bg-white p-8">
-          <CertificateHeader />
-          
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800 underline mb-6">CERTIFICATE OF INDIGENCY</h1>
-          </div>
-
-          <div className="mb-8">
-            <p className="text-base leading-relaxed text-justify mb-4">
-              <span className="font-semibold">TO WHOM IT MAY CONCERN:</span>
-            </p>
+        <div className="max-w-4xl mx-auto p-8 certificate-content print:p-0">
+          <div className="bg-white p-8 shadow-lg print:shadow-none print:p-6">
+            <CertificateHeader />
             
-            <p className="text-base leading-relaxed text-justify mb-6">
-              This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
-              of legal age, Filipino citizen, and a resident of 
-              <span className="font-semibold"> {document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
-              is among the indigent families in our barangay.
-            </p>
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-gray-800 underline mb-6">CERTIFICATE OF INDIGENCY</h1>
+            </div>
 
-            <p className="text-base leading-relaxed text-justify mb-6">
-              That the aforementioned person belongs to an <span className="font-semibold">INDIGENT FAMILY</span> whose 
-              income falls below the poverty threshold as determined by the local government.
-            </p>
+            <div className="mb-8">
+              <p className="text-base leading-relaxed text-justify mb-4">
+                <span className="font-semibold">TO WHOM IT MAY CONCERN:</span>
+              </p>
+              
+              <p className="text-base leading-relaxed text-justify mb-6">
+                This is to certify that <span className="font-semibold underline">{applicantName.toUpperCase()}</span>, 
+                of legal age, Filipino citizen, and a resident of 
+                <span className="font-semibold"> {applicantAddress}</span>, 
+                is among the indigent families in our barangay.
+              </p>
 
-            <p className="text-base leading-relaxed text-justify mb-6">
-              This certification is issued upon the request of the above-named person for 
-              <span className="font-semibold"> {document.purpose.toLowerCase()}</span> and for whatever legal purpose 
-              it may serve him/her best.
-            </p>
+              <p className="text-base leading-relaxed text-justify mb-6">
+                That the aforementioned person belongs to an <span className="font-semibold">INDIGENT FAMILY</span> whose 
+                income falls below the poverty threshold as determined by the local government.
+              </p>
 
-            <p className="text-base leading-relaxed text-justify">
-              Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
-              <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-              <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
-            </p>
+              {/* Additional indigency information if available */}
+              {(indigencyReason || monthlyIncome !== undefined || familySize !== undefined) && (
+                <p className="text-base leading-relaxed text-justify mb-6">
+                  <span className="font-semibold">Additional Information:</span>
+                  {indigencyReason && <span> Reason: {indigencyReason}.</span>}
+                  {monthlyIncome !== undefined && <span> Monthly Income: ₱{monthlyIncome.toLocaleString()}.</span>}
+                  {familySize !== undefined && <span> Family Size: {familySize} members.</span>}
+                </p>
+              )}
+
+              <p className="text-base leading-relaxed text-justify mb-6">
+                This certification is issued upon the request of the above-named person for 
+                <span className="font-semibold"> {document.purpose?.toLowerCase() || 'general purposes'}</span> and for whatever legal purpose 
+                it may serve him/her best.
+              </p>
+
+              <p className="text-base leading-relaxed text-justify">
+                Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
+                <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
+                <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
+              </p>
+            </div>
+
+            <CertificateFooter 
+              certifyingOfficial={document.certifying_official}
+              dateIssued={dateIssued}
+              orNumber={orNumber}
+              amountPaid={document.processing_fee}
+            />
           </div>
-
-          <CertificateFooter 
-            certifyingOfficial={document.certifying_official}
-            dateIssued={document.processed_date}
-            orNumber={'OR-' + document.id.toString().padStart(6, '0')}
-            amountPaid={document.processing_fee}
-          />
         </div>
-      </div>
       </div>
     </>
   );
