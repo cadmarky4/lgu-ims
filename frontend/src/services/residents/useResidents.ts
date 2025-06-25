@@ -8,9 +8,8 @@ import {
   useQueryClient, 
   useInfiniteQuery 
 } from '@tanstack/react-query';
-import type { Resident, ResidentParams } from './residents.types';
+import type { Resident, ResidentParams, ResidentFormData } from './residents.types';
 import { residentsService } from '@/services/residents/residents.service';
-import type { ResidentFormData } from './residents-form.types';
 
 // Query keys
 export const residentsKeys = {

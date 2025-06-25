@@ -15,6 +15,8 @@ import {
   type ResidentParams,
   type ResidentStatistics,
   type AgeGroupStatistics,
+  ResidentFormDataSchema, 
+  type ResidentFormData 
 } from '@/services/residents/residents.types';
 
 import { 
@@ -23,7 +25,6 @@ import {
   type PaginatedResponse 
 } from '@/services/__shared/types';
 import { apiClient } from '@/services/__shared/client';
-import { ResidentFormDataSchema, type ResidentFormData } from './residents-form.types';
 
 export class ResidentsService extends BaseApiService {
   /**

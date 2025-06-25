@@ -11,7 +11,7 @@ import { ResidentFormSection } from './ResidentFormSection';
 import { ResidentFormField } from './ResidentFormField';
 import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { DuplicateWarning } from './DuplicateWarning';
-import { LoadingSpinner } from '@/components/__shared/LoadingSpinner';
+import { LoadingSpinner } from '@/components/__shared/LoadingSpinner'
 
 interface ResidentFormProps {
   mode: 'create' | 'edit';

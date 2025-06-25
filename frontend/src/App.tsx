@@ -82,14 +82,6 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/signup",
-    element: (
-      <ProtectedRoute requireAuth={false}>
-        <SignupPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: "/",
     element: (
       <ProtectedRoute requireAuth={true}>
@@ -99,11 +91,11 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        // element: <Navigate to="/dashboard" replace />,
       },
       {
         path: "dashboard",
-        element: <Dashboard />,
+        // element: <Dashboard />,
       },
       {
         path: "residents",
