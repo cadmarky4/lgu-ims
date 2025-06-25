@@ -230,7 +230,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
           </div>
         )}
         
-                {residents.length > 0 && (
+                {residents.length > 0 && searchTerm && (
           <div className="mt-2 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
             {residents.map((resident) => (
               <div
@@ -356,7 +356,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
             {/* Valid ID Field - Custom field with manual handling */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Valid ID Presented *
+                Valid ID Presented <span className="text-red-500">*</span>
               </label>
               <select
                 onChange={(e) => handleValidIdChange(e.target.value)}
@@ -372,7 +372,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
             {/* Years of Residency - Custom field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Years of Residency *
+                Years of Residency <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -386,7 +386,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
             {/* Certifying Official - Custom field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Certifying Official *
+                Certifying Official <span className="text-red-500">*</span>
               </label>
               <select
                 onChange={(e) => handleCertifyingOfficialChange(e.target.value)}

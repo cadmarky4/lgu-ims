@@ -43,39 +43,39 @@ export const DocumentFormDataSchema = z.object({
   purpose: z.string().min(1, 'Purpose is required'),
   
   // Contact Information
-  applicant_address: z.string().optional(),
-  applicant_contact: z.string().optional(),
-  applicant_email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  applicant_address: z.string().nullable().optional(),
+  applicant_contact: z.string().nullable().optional(),
+  applicant_email: z.string().email('Invalid email address').nullable().optional().or(z.literal('')),
   
   // Request Details
   priority: DocumentPrioritySchema,
-  needed_date: z.string().optional(),
+  needed_date: z.string().nullable().optional(),
   processing_fee: z.number().min(0, 'Processing fee must be a valid amount'),
   
   // Document Specific Fields (all nullable for unified table)
   // Barangay Clearance specific
-  clearance_purpose: z.string().optional(),
-  clearance_type: z.string().optional(),
+  clearance_purpose: z.string().nullable().optional(),
+  clearance_type: z.string().nullable().optional(),
   
   // Business Permit specific  
-  business_name: z.string().optional(),
-  business_type: z.string().optional(),
-  business_address: z.string().optional(),
-  business_owner: z.string().optional(),
+  business_name: z.string().nullable().optional(),
+  business_type: z.string().nullable().optional(),
+  business_address: z.string().nullable().optional(),
+  business_owner: z.string().nullable().optional(),
   
   // Certificate of Indigency specific
-  indigency_reason: z.string().optional(),
-  monthly_income: z.number().optional(),
-  family_size: z.number().optional(),
+  indigency_reason: z.string().nullable().optional(),
+  monthly_income: z.number().nullable().optional(),
+  family_size: z.number().nullable().optional(),
   
   // Certificate of Residency specific
-  residency_period: z.string().optional(),
-  previous_address: z.string().optional(),
+  residency_period: z.string().nullable().optional(),
+  previous_address: z.string().nullable().optional(),
   
   // Processing Information
-  requirements_submitted: z.array(z.string()).optional(),
-  notes: z.string().optional(),
-  remarks: z.string().optional(),
+  requirements_submitted: z.array(z.string()).nullable().optional(),
+  notes: z.string().nullable().optional(),
+  remarks: z.string().nullable().optional(),
 });
 
 // Main Document schema with system fields
@@ -85,21 +85,21 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
   payment_status: PaymentStatusSchema,
   
   // System tracking fields
-  document_number: z.string().optional(),
-  serial_number: z.string().optional(), // Auto-generated serial number for each document
+  document_number: z.string().nullable().optional(),
+  serial_number: z.string().nullable().optional(), // Auto-generated serial number for each document
   request_date: z.string(),
-  processed_date: z.string().optional(),
-  approved_date: z.string().optional(), 
-  released_date: z.string().optional(),
+  processed_date: z.string().nullable().optional(),
+  approved_date: z.string().nullable().optional(), 
+  released_date: z.string().nullable().optional(),
   
   // Officials
-  certifying_official: z.string().optional(),
-  processed_by: z.number().optional(),
-  approved_by: z.number().optional(),
-  released_by: z.number().optional(),
+  certifying_official: z.string().nullable().optional(),
+  processed_by: z.number().nullable().optional(),
+  approved_by: z.number().nullable().optional(),
+  released_by: z.number().nullable().optional(),
   
   // Additional tracking
-  expiry_date: z.string().optional(),
+  expiry_date: z.string().nullable().optional(),
   
   // Timestamps
   date_added: z.string(),
@@ -110,49 +110,49 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
     id: z.number(),
     first_name: z.string(),
     last_name: z.string(),
-    middle_name: z.string().optional(),
-    suffix: z.string().optional(),
+    middle_name: z.string().nullable().optional(),
+    suffix: z.string().nullable().optional(),
     complete_address: z.string(),
-    mobile_number: z.string().optional(),
-    email_address: z.string().optional(),
-  }).optional(),
+    mobile_number: z.string().nullable().optional(),
+    email_address: z.string().nullable().optional(),
+  }).nullable().optional(),
   
   processed_by_user: z.object({
     id: z.number(),
     name: z.string(),
     role: z.string(),
-    position: z.string().optional(),
-  }).optional(),
+    position: z.string().nullable().optional(),
+  }).nullable().optional(),
   
   approved_by_user: z.object({
     id: z.number(), 
     name: z.string(),
     role: z.string(),
-    position: z.string().optional(),
-  }).optional(),
+    position: z.string().nullable().optional(),
+  }).nullable().optional(),
   
   released_by_user: z.object({
     id: z.number(),
     name: z.string(),
     role: z.string(),
-    position: z.string().optional(),
-  }).optional(),
+    position: z.string().nullable().optional(),
+  }).nullable().optional(),
 });
 
 // Query parameters schema  
 export const DocumentParamsSchema = z.object({
-  page: z.number().min(1).optional(),
-  per_page: z.number().min(1).max(100).optional(),
-  search: z.string().optional(),
-  document_type: DocumentTypeSchema.optional(),
-  status: DocumentStatusSchema.optional(),
-  priority: DocumentPrioritySchema.optional(),
-  payment_status: PaymentStatusSchema.optional(),
-  resident_id: z.number().optional(),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
-  sort_by: z.string().optional(),
-  sort_order: z.enum(['asc', 'desc']).optional(),
+  page: z.number().min(1).nullable().optional(),
+  per_page: z.number().min(1).max(100).nullable().optional(),
+  search: z.string().nullable().optional(),
+  document_type: DocumentTypeSchema.nullable().optional(),
+  status: DocumentStatusSchema.nullable().optional(),
+  priority: DocumentPrioritySchema.nullable().optional(),
+  payment_status: PaymentStatusSchema.nullable().optional(),
+  resident_id: z.number().nullable().optional(),
+  date_from: z.string().nullable().optional(),
+  date_to: z.string().nullable().optional(),
+  sort_by: z.string().nullable().optional(),
+  sort_order: z.enum(['asc', 'desc']).nullable().optional(),
 });
 
 // Statistics schemas
@@ -187,7 +187,7 @@ export const DocumentTimelineItemSchema = z.object({
   date: z.string(),
   status: z.string(),
   description: z.string(),
-  user_name: z.string().optional(),
+  user_name: z.string().nullable().optional(),
 });
 
 export const DocumentTrackingSchema = z.object({
@@ -198,21 +198,21 @@ export const DocumentTrackingSchema = z.object({
 // Document action schemas
 export const ProcessDocumentDataSchema = z.object({
   status: DocumentStatusSchema,
-  processing_fee: z.number().optional(),
-  document_number: z.string().optional(),
-  certifying_official: z.string().optional(),
-  notes: z.string().optional(),
+  processing_fee: z.number().nullable().optional(),
+  document_number: z.string().nullable().optional(),
+  certifying_official: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 export const RejectDocumentDataSchema = z.object({
   reason: z.string().min(1, 'Rejection reason is required'),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 export const ReleaseDocumentDataSchema = z.object({
-  document_number: z.string().optional(),
-  released_to: z.string().optional(),
-  notes: z.string().optional(),
+  document_number: z.string().nullable().optional(),
+  released_to: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 // Processing history schema
@@ -220,16 +220,16 @@ export const ProcessingHistoryItemSchema = z.object({
   id: z.number(),
   document_id: z.string(),
   action: z.string(),
-  status_from: z.string().optional(),
+  status_from: z.string().nullable().optional(),
   status_to: z.string(),
   processed_by: z.number(),
   processed_by_user: z.object({
     id: z.number(),
     name: z.string(),
     role: z.string(),
-    position: z.string().optional(),
+    position: z.string().nullable().optional(),
   }),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
   processed_at: z.string(),
 });
 

@@ -314,12 +314,13 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
 
             {/* Document Type Filter */}
             <div className="relative">
+              <FiClipboard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <select
                 value={filters.documentType || 'ALL'}
                 onChange={(e) => updateFilters({ 
                   documentType: e.target.value === 'ALL' ? undefined : e.target.value as any
                 })}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
               >
                 <option value="ALL">All Document Types</option>
                 {documentTypes.map((type) => (
@@ -598,7 +599,7 @@ const ProcessDocumentModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-[rgba(0,0,0,0.2)] bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Process Document Request

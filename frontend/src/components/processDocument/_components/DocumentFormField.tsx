@@ -1,5 +1,5 @@
 // ============================================================================
-// DocumentFormField.tsx - Reusable form field (following ResidentFormField pattern)
+// DocumentFormField.tsx 
 // ============================================================================
 
 import React from 'react';

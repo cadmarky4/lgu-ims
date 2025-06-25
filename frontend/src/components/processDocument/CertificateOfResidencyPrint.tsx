@@ -48,10 +48,10 @@ const CertificateFooter: React.FC<CertificateFooterProps> = ({
         {orNumber && (
           <p className="text-sm mb-2">O.R. Number: {orNumber}</p>
         )}
-        {amountPaid !== undefined && amountPaid > 0 && (
-          <p className="text-sm">Amount Paid: ₱{amountPaid.toFixed(2)}</p>
+        {amountPaid !== undefined && Number(amountPaid) > 0 && (
+          <p className="text-sm">Amount Paid: ₱{Number(amountPaid).toFixed(2)}</p>
         )}
-        {amountPaid === 0 && (
+        {amountPaid !== undefined && Number(amountPaid) === 0 && (
           <p className="text-sm">Amount Paid: FREE</p>
         )}
       </div>
@@ -150,7 +150,7 @@ const CertificateOfResidencyPrint: React.FC = () => {
     'Brgy. Sikatuna Village, Samal, Bataan';
 
   // Generate OR number
-  const orNumber = document.document_number || `OR-${document.id.toString().padStart(6, '0')}`;
+  const orNumber = document.document_number || `OR-${(document.id || 0).toString().padStart(6, '0')}`;
 
   // Format date issued
   const dateIssued = document.approved_date ? 

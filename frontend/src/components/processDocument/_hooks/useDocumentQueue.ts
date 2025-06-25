@@ -39,7 +39,7 @@ export function useDocumentQueue() {
   
   // State
   const [filters, setFilters] = useState<QueueFilters>({
-    status: 'PENDING',
+    status: 'ALL',
     searchTerm: '',
   });
 
