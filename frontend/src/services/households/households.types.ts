@@ -67,7 +67,7 @@ export interface Household {
     middle_name?: string;
     relationship: string;
   }>;
-}
+} 
 
 // Frontend form data interface (camelCase for forms)
 export interface HouseholdFormData {
