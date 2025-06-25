@@ -11,7 +11,7 @@ import {
     ResidentFormDataSchema,
     transformResidentToFormData,
     type ResidentFormData 
-} from '@/services/residents/residents-form.types'; 
+} from '@/services/residents/residents.types'; 
 
 import { 
     useResident ,
