@@ -41,6 +41,7 @@ import Suggestions from "./components/helpDesk/Suggestions";
 import "./index.css";
 import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
 import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
+import ListBarangayOfficalsToEdit from "./components/barangayOfficials/ListBarangayOfficalsToEdit";
 
 // Wrapper components to handle navigation prop
 const ProcessDocumentWrapper = () => {
@@ -189,6 +190,10 @@ const router = createBrowserRouter([
           {
             path: "add",
             element: <AddBarangayOfficial />,
+          },
+          {
+            path: "edit",
+            element: <ListBarangayOfficalsToEdit />,
           },
           {
             path: "edit/:id",
