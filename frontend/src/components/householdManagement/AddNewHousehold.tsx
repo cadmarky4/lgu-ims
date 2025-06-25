@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiX, FiTrash2 } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb';
-import { HouseholdsService } from '../../services/households.service';
-import { ResidentsService } from '../../services/residents.service';
-import { useNotificationHelpers } from '../global/NotificationSystem';
-import { type HouseholdFormData } from '../../services/household.types';
-import { type Resident } from '../../services/resident.types';
-import { type Barangay } from '../../services/types';
+import Breadcrumb from '../_global/Breadcrumb';
+import { HouseholdsService } from '../../services/households/households.service';
+import { ResidentsService } from '../../services/residents/useResidents';
+import { useNotificationHelpers } from '../_global/NotificationSystem';
+import { type HouseholdFormData } from '../../services/households/households.types';
+import { type Resident } from '../../services/residents/residents.types';
+import { type Barangay } from '../../services/__shared/types';
 
 // Common relationship options
 const RELATIONSHIP_OPTIONS = [

@@ -35,7 +35,7 @@ const CertificateHeader: React.FC = () => (
       <h1 className="text-lg font-bold text-gray-800">REPUBLIC OF THE PHILIPPINES</h1>
       <h2 className="text-base font-semibold text-gray-700">PROVINCE OF BATAAN</h2>
       <h3 className="text-base font-semibold text-gray-700">MUNICIPALITY OF SAMAL</h3>
-      <h4 className="text-lg font-bold text-gray-800">BARANGAY SAN MIGUEL</h4>
+      <h4 className="text-lg font-bold text-gray-800">Brgy. Sikatuna Village</h4>
     </div>
     <div className="border-t-2 border-b-2 border-black py-2 mb-6">
       <h2 className="text-xl font-bold text-gray-800">OFFICE OF THE PUNONG BARANGAY</h2>
@@ -111,7 +111,7 @@ export const BarangayClearanceTemplate: React.FC<CertificateTemplateProps> = ({ 
           <p className="text-base leading-relaxed text-justify mb-6">
             This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
             of legal age, {document.resident.civil_status || 'N/A'}, {document.resident.nationality || 'Filipino'} citizen, 
-            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Barangay San Miguel, Samal, Bataan'}</span>, 
+            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
             is personally known to me and is a person of good moral character and reputation in the community.
           </p>
 
@@ -124,7 +124,7 @@ export const BarangayClearanceTemplate: React.FC<CertificateTemplateProps> = ({ 
           <p className="text-base leading-relaxed text-justify">
             Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
             <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-            <span className="font-semibold">{new Date().getFullYear()}</span> at Barangay San Miguel, Samal, Bataan, Philippines.
+            <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export const CertificateOfResidencyTemplate: React.FC<CertificateTemplateProps> 
             }) : 'N/A'}, 
             {document.resident.civil_status || 'N/A'}, {document.resident.nationality || 'Filipino'} citizen, 
             is a <span className="font-semibold">BONAFIDE RESIDENT</span> of 
-            <span className="font-semibold"> {document.resident.complete_address || 'Barangay San Miguel, Samal, Bataan'}</span>.
+            <span className="font-semibold"> {document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>.
           </p>
 
           <p className="text-base leading-relaxed text-justify mb-6">
@@ -192,7 +192,7 @@ export const CertificateOfResidencyTemplate: React.FC<CertificateTemplateProps> 
           <p className="text-base leading-relaxed text-justify">
             Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
             <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-            <span className="font-semibold">{new Date().getFullYear()}</span> at Barangay San Miguel, Samal, Bataan, Philippines.
+            <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
           </p>
         </div>
 
@@ -242,7 +242,7 @@ export const CertificateOfIndigencyTemplate: React.FC<CertificateTemplateProps> 
           <p className="text-base leading-relaxed text-justify mb-6">
             This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
             of legal age, {document.resident.civil_status || 'N/A'}, {document.resident.nationality || 'Filipino'} citizen, 
-            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Barangay San Miguel, Samal, Bataan'}</span>, 
+            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
             belongs to an <span className="font-semibold">INDIGENT FAMILY</span> in this barangay.
           </p>
 
@@ -255,7 +255,7 @@ export const CertificateOfIndigencyTemplate: React.FC<CertificateTemplateProps> 
           <p className="text-base leading-relaxed text-justify">
             Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
             <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-            <span className="font-semibold">{new Date().getFullYear()}</span> at Barangay San Miguel, Samal, Bataan, Philippines.
+            <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
           </p>
         </div>
 
@@ -305,7 +305,7 @@ export const BusinessPermitTemplate: React.FC<CertificateTemplateProps> = ({ doc
           <p className="text-base leading-relaxed text-justify mb-6">
             This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
             of legal age, {document.resident.civil_status || 'N/A'}, {document.resident.nationality || 'Filipino'} citizen, 
-            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Barangay San Miguel, Samal, Bataan'}</span>, 
+            and a resident of <span className="font-semibold">{document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
             has been <span className="font-semibold">GRANTED PERMISSION</span> to operate a small business within the territorial 
             jurisdiction of this barangay.
           </p>
@@ -323,7 +323,7 @@ export const BusinessPermitTemplate: React.FC<CertificateTemplateProps> = ({ doc
           <p className="text-base leading-relaxed text-justify">
             Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
             <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-            <span className="font-semibold">{new Date().getFullYear()}</span> at Barangay San Miguel, Samal, Bataan, Philippines.
+            <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
           </p>
         </div>
 

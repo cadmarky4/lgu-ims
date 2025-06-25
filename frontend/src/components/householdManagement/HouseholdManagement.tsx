@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { FaUsers, FaHome, FaUserFriends, FaDollarSign } from 'react-icons/fa';
-import StatCard from '../global/StatCard';
-import Breadcrumb from '../global/Breadcrumb';
-import { HouseholdsService } from '../../services/households.service';
-import { useNotificationHelpers } from '../global/NotificationSystem';
-import { type Household, type HouseholdFormData } from '../../services/household.types';
+import StatCard from '../_global/StatCard';
+import Breadcrumb from '../_global/Breadcrumb';
+import { HouseholdsService } from '../../services/households/households.service';
+import { useNotificationHelpers } from '../_global/NotificationSystem';
+import { type Household, type HouseholdFormData } from '../../services/households/households.types';
 
 interface MappedHousehold {
   id: number,

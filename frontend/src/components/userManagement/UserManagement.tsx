@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiLock, FiPower } from 'react-icons/fi';
 import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
 import AddNewUser from './AddNewUser';
-import ResetPassword from '../auth/ResetPassword';
-import StatCard from '../global/StatCard';
-import Breadcrumb from '../global/Breadcrumb'; // Update this path to match your project structure
-import { UsersService } from '../../services/users.service';
-import type { User, UserParams } from '../../services/user.types';
+import ResetPassword from '../_auth/ResetPassword';
+import StatCard from '../_global/StatCard';
+import { UsersService } from '../../services/users/users.service';
+import type { User, UserParams } from '../../services/users/users.types';
+import Breadcrumb from '../_global/Breadcrumb';
 
 const UserManagement: React.FC = () => {
   const navigate = useNavigate();

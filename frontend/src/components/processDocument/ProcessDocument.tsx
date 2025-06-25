@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSearch, FiFilter, FiPrinter, FiEye, FiClipboard, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
-import { documentsService } from '../../services/documents.service';
-import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/document.types';
-import Breadcrumb from '../global/Breadcrumb';
+import { documentsService } from '../../services/documents/documents.service';
+import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/documents/documents.types';
+import Breadcrumb from '../_global/Breadcrumb';
 
 interface ProcessDocumentProps {
   onNavigate: (page: string) => void;
@@ -151,7 +151,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         resident: {
           first_name: 'Juan',
           last_name: 'Dela Cruz',
-          complete_address: 'Purok 1, Barangay San Miguel',
+          complete_address: 'Purok 1, Brgy. Sikatuna Village',
           mobile_number: '+63 912 345 6789'
         }
       },
@@ -169,7 +169,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         resident: {
           first_name: 'Maria',
           last_name: 'Santos',
-          complete_address: 'Purok 2, Barangay San Miguel',
+          complete_address: 'Purok 2, Brgy. Sikatuna Village',
           mobile_number: '+63 923 456 7890'
         }
       },
@@ -187,7 +187,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         resident: {
           first_name: 'Roberto',
           last_name: 'Garcia',
-          complete_address: 'Purok 3, Barangay San Miguel',
+          complete_address: 'Purok 3, Brgy. Sikatuna Village',
           mobile_number: '+63 934 567 8901'
         }
       },
@@ -205,7 +205,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         resident: {
           first_name: 'Ana',
           last_name: 'Reyes',
-          complete_address: 'Purok 4, Barangay San Miguel',
+          complete_address: 'Purok 4, Brgy. Sikatuna Village',
           mobile_number: '+63 945 678 9012'
         }
       },
@@ -223,7 +223,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         resident: {
           first_name: 'Carlos',
           last_name: 'Mendoza',
-          complete_address: 'Purok 1, Barangay San Miguel',
+          complete_address: 'Purok 1, Brgy. Sikatuna Village',
           mobile_number: '+63 956 789 0123'
         }
       }

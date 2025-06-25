@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Shield, AlertTriangle, User, CheckCircle, Phone, Loader, AlertCircle } from "lucide-react";
-import { BlotterService } from "../../services/blotter.service";
-import type { CreateBlotterData, IncidentType } from "../../services/blotter.types";
-import Breadcrumb from "../global/Breadcrumb";
+import { BlotterService } from "../../services/helpDesk/blotters/blotters.service";
+import type { CreateBlotterData, IncidentType } from "../../services/helpDesk/blotters/blotters.types";
+import Breadcrumb from "../_global/Breadcrumb";
 
 interface BlotterFormData {
   // Complainant Information

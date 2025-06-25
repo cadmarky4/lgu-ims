@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
+import Breadcrumb from '../_global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
-import { uploadFile } from '../../services/storage.service';
+import type { BarangayOfficialFormData } from '../../services/officials/barangayOfficials.types';
+import { uploadFile } from '../../services/__shared/_storage/storage.service';
 
 interface EditBarangayOfficialProps {
   onClose: () => void;

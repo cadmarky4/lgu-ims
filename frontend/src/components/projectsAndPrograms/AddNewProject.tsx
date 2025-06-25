@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Plus } from 'lucide-react';
-import Breadcrumb from '../global/Breadcrumb';
-import { ProjectsService } from '../../services/projects.service';
-import { type CreateProjectData } from '../../services/project.types';
+import Breadcrumb from '../_global/Breadcrumb';
+import { ProjectsService } from '../../services/projects/projects.service';
+import { type CreateProjectData } from '../../services/projects/project.types';
 
 interface BudgetItem {
   id: string;

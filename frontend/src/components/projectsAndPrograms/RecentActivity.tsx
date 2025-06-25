@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, FileText, Users, TrendingUp, ChevronRight, Filter } from 'lucide-react';
-import { DashboardService } from '../../services/dashboard.service';
+import { DashboardService } from '../../services/dashboard/dashboard.service';
 
 interface ActivityItem {
   id: number;

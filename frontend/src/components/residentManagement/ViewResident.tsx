@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 import { residentsService } from '../../services';
-import type { Resident } from '../../services/resident.types';
-import { STORAGE_BASE_URL } from '../../services/storage.service';
+import type { Resident } from '../../services/residents/residents.types';
+import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 
 const ViewResident: React.FC = () => {
   const { id } = useParams<{ id: string }>();
