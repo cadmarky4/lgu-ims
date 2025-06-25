@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FiX, FiSearch, FiEdit3, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
-import { type Project } from '../../services/project.types';
+import { type Project } from '../../services/projects/project.types';
 
 interface SelectProjectProps {
   isOpen: boolean;

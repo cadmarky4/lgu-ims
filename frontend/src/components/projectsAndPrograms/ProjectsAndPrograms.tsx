@@ -4,14 +4,14 @@ import { FaFolder, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
 import ViewProject from './ViewProject';
 import ProjectQuickActions from './ProjectQuickActions';
 import SelectProject from './SelectProject';
-import StatCard from '../global/StatCard';
+import StatCard from '../_global/StatCard';
 import RecentActivity from './RecentActivity';
 import ProjectPortfolio from './ProjectPortfolio';
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 import { FaCircleCheck } from 'react-icons/fa6';
 import type { IconType } from 'react-icons';
-import { ProjectsService } from '../../services/projects.service';
-import { type Project as ProjectType } from '../../services/project.types';
+import { ProjectsService } from '../../services/projects/projects.service';
+import { type Project as ProjectType } from '../../services/projects/project.types';
 
 // Use the service Project type for the component
 type Project = ProjectType;

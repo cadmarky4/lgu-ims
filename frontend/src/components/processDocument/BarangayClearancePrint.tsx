@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { documentsService } from '../../services/documents.service';
-import type { DocumentRequest } from '../../services/document.types';
+import { documentsService } from '../../services/documents/documents.service';
+import type { DocumentRequest } from '../../services/documents/documents.types';
 
 interface CertificateHeaderProps {}
 
@@ -11,7 +11,7 @@ const CertificateHeader: React.FC<CertificateHeaderProps> = () => (
       <h1 className="text-lg font-bold text-gray-800">REPUBLIC OF THE PHILIPPINES</h1>
       <h2 className="text-base font-semibold text-gray-700">PROVINCE OF BATAAN</h2>
       <h3 className="text-base font-semibold text-gray-700">MUNICIPALITY OF SAMAL</h3>
-      <h4 className="text-lg font-bold text-gray-800">BARANGAY SAN MIGUEL</h4>
+      <h4 className="text-lg font-bold text-gray-800">Brgy. Sikatuna Village</h4>
     </div>
     <div className="border-t-2 border-b-2 border-black py-2 mb-6">
       <h2 className="text-xl font-bold text-gray-800">OFFICE OF THE PUNONG BARANGAY</h2>
@@ -95,7 +95,7 @@ const BarangayClearancePrint: React.FC = () => {
             first_name: 'Juan',
             last_name: 'Dela Cruz',
             middle_name: 'Santos',
-            complete_address: 'Purok 1, Barangay San Miguel, Samal, Bataan',
+            complete_address: 'Purok 1, Brgy. Sikatuna Village, Samal, Bataan',
             mobile_number: '+63 912 345 6789'
           }
         };
@@ -218,7 +218,7 @@ const BarangayClearancePrint: React.FC = () => {
             <p className="text-base leading-relaxed text-justify mb-6">
               This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
               of legal age, Filipino citizen, 
-              and a resident of <span className="font-semibold">{document.resident.complete_address || 'Barangay San Miguel, Samal, Bataan'}</span>, 
+              and a resident of <span className="font-semibold">{document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
               is personally known to me and is a person of good moral character and reputation in the community.
             </p>
 
@@ -231,7 +231,7 @@ const BarangayClearancePrint: React.FC = () => {
             <p className="text-base leading-relaxed text-justify">
               Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
               <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-              <span className="font-semibold">{new Date().getFullYear()}</span> at Barangay San Miguel, Samal, Bataan, Philippines.
+              <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
             </p>
           </div>
 

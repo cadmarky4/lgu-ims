@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiClock, FiEye, FiCheck, FiX, FiFileText, FiUser, FiCalendar, FiMoreVertical } from 'react-icons/fi';
-import { documentsService }from '../../services/documents.service';
-import type { DocumentStatus } from '../../services/document.types';
+import { documentsService }from '../../services/documents/documents.service';
+import type { DocumentStatus } from '../../services/documents/documents.types';
 
 interface DocumentQueueProps {
   onNavigate: (page: string) => void;

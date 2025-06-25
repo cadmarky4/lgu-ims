@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardService, type BarangayOfficial } from '../../services/dashboard.service';
-import { STORAGE_BASE_URL } from '../../services/storage.service';
+import { DashboardService, type BarangayOfficial } from '../../services/dashboard/dashboard.service';
+import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 
 const BarangayOfficials: React.FC = () => {
   const [officials, setOfficials] = useState<BarangayOfficial[]>([]);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock, User, Phone, Mail, CheckCircle, Loader, AlertCircle } from "lucide-react";
 import { AppointmentsService } from "../../services/appointments.service";
 import type { CreateAppointmentData } from "../../services/appointment.types";
-import Breadcrumb from "../global/Breadcrumb";
+import Breadcrumb from "../_global/Breadcrumb";
 
 interface AppointmentFormData {
   fullName: string;

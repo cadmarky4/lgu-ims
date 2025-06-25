@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardService, type DashboardNotification } from '../../services/dashboard.service';
+import { DashboardService, type DashboardNotification } from '../../services/dashboard/dashboard.service';
 
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);

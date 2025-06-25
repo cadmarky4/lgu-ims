@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiShield } from 'react-icons/fi';
-import { UsersService } from '../../services/users.service';
-import type { User } from '../../services/user.types';
+import { UsersService } from '../../services/users/users.service';
+import type { User } from '../../services/users/users.types';
 
 interface ViewUserProps {
   userId: number;

@@ -1,13 +1,13 @@
-import { AuthService } from './auth.service';
-import { ResidentsService } from './residents.service';
-import { HouseholdsService } from './households.service';
-import { DocumentsService } from './documents.service';
-import { UsersService } from './users.service';
-import { ComplaintsService } from './complaints.service';
-import { SuggestionsService } from './suggestions.service';
-import { BlotterService } from './blotter.service';
-import { AppointmentsService } from './appointments.service';
-import { BarangayOfficialsService } from './barangayOfficials.service';
+import { AuthService } from './__shared/_auth/auth.service';
+import { ResidentsService } from './residents/residents.service';
+import { HouseholdsService } from './households/households.service';
+import { DocumentsService } from './documents/documents.service';
+import { UsersService } from './users/users.service';
+import { ComplaintsService } from './helpDesk/complaints/complaints.service';
+import { SuggestionsService } from './helpDesk/suggestions/suggestions.service';
+import { BlotterService } from './helpDesk/blotters/blotters.service';
+import { AppointmentsService } from './helpDesk/appointments/appointments.service';
+import { BarangayOfficialsService } from './officials/barangayOfficials.service';
 
 // Create singleton instances
 export const authService = new AuthService();
@@ -39,7 +39,6 @@ export {
 export const apiService = {
   // Auth
   login: authService.login.bind(authService),
-  register: authService.register.bind(authService),
   logout: authService.logout.bind(authService),
   getCurrentUser: authService.getCurrentUser.bind(authService),
   

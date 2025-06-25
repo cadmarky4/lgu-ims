@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { setAuthErrorHandler, clearAuthErrorHandler } from '../services/auth-error-handler';
+import { setAuthErrorHandler, clearAuthErrorHandler } from '../services/__shared/_auth/auth-error-handler';
 
 // Types
 interface User {
