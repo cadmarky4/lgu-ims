@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
+import Breadcrumb from '../_global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
+import type { BarangayOfficialFormData } from '@/services/officials/barangayOfficials.types';
 import { useFileUpload } from '@/services/__shared/__hooks/useFileUpload';
 import { useNavigate } from 'react-router-dom';
 

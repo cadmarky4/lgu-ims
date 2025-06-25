@@ -159,6 +159,7 @@ const BarangayOfficialsPage: React.FC = () => {
     setSelectedOfficial(apiOfficial);
     // setShowEditForm(true);
   };
+  
   const handleViewOfficial = (official: any) => {
     setSelectedOfficial(official);
     setShowViewModal(true);
