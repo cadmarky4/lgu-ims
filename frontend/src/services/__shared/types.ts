@@ -1,5 +1,26 @@
 import { z } from 'zod';
 
+export const GenderSchema = z.enum(['MALE', 'FEMALE']);
+
+export const CivilStatusSchema = z.enum([
+  'SINGLE',
+  'MARRIED',
+  'WIDOWED',
+  'DIVORCED',
+  'SEPARATED'
+]);
+
+export const EducationalAttainmentSchema = z.enum([
+  'ELEMENTARY',
+  'HIGH_SCHOOL',
+  'COLLEGE',
+  'VOCATIONAL',
+  'POST_GRADUATE',
+  'DOCTORATE',
+  'NOT_APPLICABLE',
+  'PREFER_NOT_TO_SAY'
+]);
+
 // Base API response schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
@@ -34,3 +55,5 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
 // Type exports
 export type ApiResponse<T = unknown> = z.infer<ReturnType<typeof ApiResponseSchema<z.ZodType<T>>>>;
 export type PaginatedResponse<T> = z.infer<ReturnType<typeof PaginatedResponseSchema<z.ZodType<T>>>>;
+export type CivilStatus = z.infer<typeof CivilStatusSchema>;
+export type EducationalAttainment = z.infer<typeof EducationalAttainmentSchema>;
