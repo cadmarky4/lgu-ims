@@ -10,9 +10,8 @@ import {
 } from '@tanstack/react-query';
 
 import { useNotifications } from '@/components/_global/NotificationSystem';
-import type { Resident, ResidentParams } from './residents.types';
+import type { Resident, ResidentParams, ResidentFormData } from './residents.types';
 import { residentsService } from '@/services/residents/residents.service';
-import type { ResidentFormData } from './residents-form.types';
 import { useTranslation } from 'react-i18next';
 
 // Query keys

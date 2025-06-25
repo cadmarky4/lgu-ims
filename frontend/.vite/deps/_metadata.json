@@ -1,8 +1,133 @@
 {
-  "hash": "aabe9dde",
-  "configHash": "29b63e84",
-  "lockfileHash": "cf832866",
-  "browserHash": "ba670c54",
-  "optimized": {},
-  "chunks": {}
+  "hash": "aaa97b9d",
+  "configHash": "7003bb65",
+  "lockfileHash": "fb1c2ad7",
+  "browserHash": "e0d3d50a",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "d400ab9c",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "38581b6d",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "038858c3",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "a6fddf22",
+      "needsInterop": false
+    },
+    "@tanstack/react-query": {
+      "src": "../../node_modules/@tanstack/react-query/build/modern/index.js",
+      "file": "@tanstack_react-query.js",
+      "fileHash": "02d806e2",
+      "needsInterop": false
+    },
+    "react-icons/fi": {
+      "src": "../../node_modules/react-icons/fi/index.mjs",
+      "file": "react-icons_fi.js",
+      "fileHash": "79f674dd",
+      "needsInterop": false
+    },
+    "react-i18next": {
+      "src": "../../node_modules/react-i18next/dist/es/index.js",
+      "file": "react-i18next.js",
+      "fileHash": "291ba19a",
+      "needsInterop": false
+    },
+    "react-icons/fa": {
+      "src": "../../node_modules/react-icons/fa/index.mjs",
+      "file": "react-icons_fa.js",
+      "fileHash": "08acd821",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "6e9e4520",
+      "needsInterop": false
+    },
+    "i18next": {
+      "src": "../../node_modules/i18next/dist/esm/i18next.js",
+      "file": "i18next.js",
+      "fileHash": "2a606043",
+      "needsInterop": false
+    },
+    "i18next-browser-languagedetector": {
+      "src": "../../node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js",
+      "file": "i18next-browser-languagedetector.js",
+      "fileHash": "2a74d2bc",
+      "needsInterop": false
+    },
+    "react-icons/bi": {
+      "src": "../../node_modules/react-icons/bi/index.mjs",
+      "file": "react-icons_bi.js",
+      "fileHash": "b5c23d5b",
+      "needsInterop": false
+    },
+    "recharts": {
+      "src": "../../node_modules/recharts/es6/index.js",
+      "file": "recharts.js",
+      "fileHash": "9997dd3e",
+      "needsInterop": false
+    },
+    "react-hook-form": {
+      "src": "../../node_modules/react-hook-form/dist/index.esm.mjs",
+      "file": "react-hook-form.js",
+      "fileHash": "b40fc9d3",
+      "needsInterop": false
+    },
+    "@react-hook/resize-observer": {
+      "src": "../../node_modules/@react-hook/resize-observer/dist/module/index.js",
+      "file": "@react-hook_resize-observer.js",
+      "fileHash": "b06bd4ef",
+      "needsInterop": false
+    },
+    "zod": {
+      "src": "../../node_modules/zod/dist/esm/index.js",
+      "file": "zod.js",
+      "fileHash": "ec49bbe5",
+      "needsInterop": false
+    },
+    "@hookform/resolvers/zod": {
+      "src": "../../node_modules/@hookform/resolvers/zod/dist/zod.mjs",
+      "file": "@hookform_resolvers_zod.js",
+      "fileHash": "190711f0",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "f48c389c",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-ZJH3ZUDM": {
+      "file": "chunk-ZJH3ZUDM.js"
+    },
+    "chunk-KWTILEX7": {
+      "file": "chunk-KWTILEX7.js"
+    },
+    "chunk-J4ZUNRB2": {
+      "file": "chunk-J4ZUNRB2.js"
+    },
+    "chunk-DQW77RHJ": {
+      "file": "chunk-DQW77RHJ.js"
+    },
+    "chunk-4MBMRILA": {
+      "file": "chunk-4MBMRILA.js"
+    }
+  }
 }
