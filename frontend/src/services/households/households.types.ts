@@ -1,152 +1,245 @@
-// Household-specific types and interfaces
+// ============================================================================
+// types/households.ts - Zod schemas and type definitions
+// ============================================================================
 
-export type HouseholdType = 
-  | 'nuclear'
-  | 'extended'
-  | 'single'
-  | 'single-parent'
-  | 'other';
+import { z } from 'zod';
 
-export type MonthlyIncomeRange = 
-  | 'below-10000'
-  | '10000-25000'
-  | '25000-50000'
-  | '50000-100000'
-  | 'above-100000';
+// Enum schemas
+export const HouseholdTypeSchema = z.enum([
+  'NUCLEAR',
+  'EXTENDED', 
+  'SINGLE',
+  'SINGLE_PARENT',
+  'OTHER'
+]);
 
-export type HouseType = 
-  | 'concrete'
-  | 'semi-concrete'
-  | 'wood'
-  | 'bamboo'
-  | 'mixed';
+export const MonthlyIncomeRangeSchema = z.enum([
+  'BELOW_10000',
+  'RANGE_10000_25000',
+  'RANGE_25000_50000', 
+  'RANGE_50000_100000',
+  'ABOVE_100000'
+]);
 
-export type OwnershipStatus = 
-  | 'owned'
-  | 'rented'
-  | 'shared'
-  | 'informal-settler';
+export const HouseTypeSchema = z.enum([
+  'CONCRETE',
+  'SEMI_CONCRETE',
+  'WOOD',
+  'BAMBOO',
+  'MIXED'
+]);
 
-// Backend Household interface (snake_case for API)
-export interface Household {
-  id: number;
-  household_number: string;
-  household_type: HouseholdType;
-  head_resident_id?: number;
-  house_number: string;
-  street_sitio: string;
-  barangay: string;
-  complete_address: string;
-  monthly_income?: MonthlyIncomeRange;
-  primary_income_source?: string;
-  four_ps_beneficiary: boolean;
-  indigent_family: boolean;
-  has_senior_citizen: boolean;
-  has_pwd_member: boolean;
-  house_type?: HouseType;
-  ownership_status?: OwnershipStatus;
-  has_electricity: boolean;
-  has_water_supply: boolean;
-  has_internet_access: boolean;
-  remarks?: string;
-  created_by?: number;
-  updated_by?: number;
-  created_at: string;
-  updated_at: string;
-  head_resident?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    middle_name?: string;
-    contact_number?: string;
+export const OwnershipStatusSchema = z.enum([
+  'OWNED',
+  'RENTED',
+  'SHARED',
+  'INFORMAL_SETTLER'
+]);
+
+export const HouseholdStatusSchema = z.enum([
+  'ACTIVE',
+  'INACTIVE',
+  'TRANSFERRED'
+]);
+
+export const RelationshipTypeSchema = z.enum([
+  'HEAD',
+  'SPOUSE',
+  'SON',
+  'DAUGHTER',
+  'FATHER',
+  'MOTHER',
+  'BROTHER',
+  'SISTER',
+  'GRANDFATHER',
+  'GRANDMOTHER',
+  'GRANDSON',
+  'GRANDDAUGHTER',
+  'UNCLE',
+  'AUNT',
+  'NEPHEW',
+  'NIECE',
+  'COUSIN',
+  'IN_LAW',
+  'BOARDER',
+  'OTHER'
+]);
+
+// Head resident schema (simplified)
+export const HeadResidentSchema = z.object({
+  id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  middle_name: z.string().optional(),
+  contact_number: z.string().optional(),
+});
+
+// Household member schema
+export const HouseholdMemberSchema = z.object({
+  id: z.number(),
+  first_name: z.string(),
+  last_name: z.string(),
+  middle_name: z.string().optional(),
+  relationship: z.string(),
+});
+
+export const HouseholdFormDataSchema = z.object({
+  // Basic Information
+  household_number: z.string().min(1, 'households.form.error.householdNumberRequired'),
+  household_type: HouseholdTypeSchema,
+  head_resident_id: z.number().optional(),
+  
+  // Address Information
+  house_number: z.string().min(1, 'households.form.error.houseNumberRequired'),
+  street_sitio: z.string().min(1, 'households.form.error.streetSitioRequired'),
+  barangay: z.string().min(1, 'households.form.error.barangayRequired'),
+  complete_address: z.string().min(1, 'households.form.error.completeAddressRequired'),
+  
+  // Income Information
+  monthly_income: MonthlyIncomeRangeSchema.optional(),
+  primary_income_source: z.string().optional(),
+  
+  // Classifications
+  four_ps_beneficiary: z.boolean(),
+  indigent_family: z.boolean(),
+  has_senior_citizen: z.boolean(),
+  has_pwd_member: z.boolean(),
+  
+  // House Details
+  house_type: HouseTypeSchema.optional(),
+  ownership_status: OwnershipStatusSchema.optional(),
+  
+  // Utilities
+  has_electricity: z.boolean(),
+  has_water_supply: z.boolean(),
+  has_internet_access: z.boolean(),
+  
+  // Additional Information
+  remarks: z.string().optional(),
+});
+
+// Main Household schema
+export const HouseholdSchema = HouseholdFormDataSchema.extend({
+  id: z.number(),
+  created_by: z.number().optional(),
+  updated_by: z.number().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  
+  // Relationships
+  head_resident: HeadResidentSchema.optional(),
+  members: z.array(HouseholdMemberSchema).optional(),
+});
+
+// Query parameters schema
+export const HouseholdParamsSchema = z.object({
+  page: z.number().min(1).optional(),
+  per_page: z.number().min(1).max(100).optional(),
+  search: z.string().optional(),
+  household_type: HouseholdTypeSchema.optional(),
+  barangay: z.string().optional(),
+  monthly_income: MonthlyIncomeRangeSchema.optional(),
+  house_type: HouseTypeSchema.optional(),
+  ownership_status: OwnershipStatusSchema.optional(),
+  four_ps_beneficiary: z.boolean().optional(),
+  indigent_family: z.boolean().optional(),
+  has_senior_citizen: z.boolean().optional(),
+  has_pwd_member: z.boolean().optional(),
+  has_electricity: z.boolean().optional(),
+  has_water_supply: z.boolean().optional(),
+  has_internet_access: z.boolean().optional(),
+  status: HouseholdStatusSchema.optional(),
+});
+
+// Statistics schemas
+export const HouseholdStatisticsSchema = z.object({
+  total_households: z.number(),
+  active_households: z.number(),
+  inactive_households: z.number(),
+  by_barangay: z.record(z.number()),
+  by_household_type: z.record(z.number()),
+  by_house_type: z.record(z.number()),
+  by_ownership_status: z.record(z.number()),
+  by_monthly_income: z.record(z.number()),
+  classifications: z.object({
+    four_ps_beneficiaries: z.number(),
+    indigent_families: z.number(),
+    with_senior_citizens: z.number(),
+    with_pwd_members: z.number(),
+  }),
+  utilities: z.object({
+    with_electricity: z.number(),
+    with_water_supply: z.number(),
+    with_internet_access: z.number(),
+  }),
+});
+
+// Special lists response schema
+export const SpecialListResponseSchema = z.object({
+  data: z.array(HouseholdSchema),
+  count: z.number(),
+});
+
+export type HouseholdFormData = z.infer<typeof HouseholdFormDataSchema>;
+
+export const transformHouseholdToFormData = (household: Household | null): HouseholdFormData => {
+  if (!household) {
+    return {
+      household_number: '',
+      household_type: 'NUCLEAR',
+      head_resident_id: undefined,
+      house_number: '',
+      street_sitio: '',
+      barangay: '',
+      complete_address: '',
+      monthly_income: undefined,
+      primary_income_source: '',
+      four_ps_beneficiary: false,
+      indigent_family: false,
+      has_senior_citizen: false,
+      has_pwd_member: false,
+      house_type: undefined,
+      ownership_status: undefined,
+      has_electricity: false,
+      has_water_supply: false,
+      has_internet_access: false,
+      remarks: '',
+    };
+  }
+
+  return {
+    household_number: household.household_number,
+    household_type: household.household_type as HouseholdType,
+    head_resident_id: household.head_resident_id,
+    house_number: household.house_number,
+    street_sitio: household.street_sitio,
+    barangay: household.barangay,
+    complete_address: household.complete_address,
+    monthly_income: household.monthly_income as MonthlyIncomeRange,
+    primary_income_source: household.primary_income_source || '',
+    four_ps_beneficiary: household.four_ps_beneficiary || false,
+    indigent_family: household.indigent_family || false,
+    has_senior_citizen: household.has_senior_citizen || false,
+    has_pwd_member: household.has_pwd_member || false,
+    house_type: household.house_type as HouseType,
+    ownership_status: household.ownership_status as OwnershipStatus,
+    has_electricity: household.has_electricity || false,
+    has_water_supply: household.has_water_supply || false,
+    has_internet_access: household.has_internet_access || false,
+    remarks: household.remarks || '',
   };
-  members?: Array<{
-    id: number;
-    first_name: string;
-    last_name: string;
-    middle_name?: string;
-    relationship: string;
-  }>;
-} 
+};
 
-// Frontend form data interface (camelCase for forms)
-export interface HouseholdFormData {
-  householdId: string;
-  householdType: HouseholdType | '';
-  barangay: string;
-  streetSitio: string;
-  houseNumber: string;
-  completeAddress: string;
-  householdHeadSearch: string;
-  memberSearch: string;
-  monthlyIncome: MonthlyIncomeRange | '';
-  primaryIncomeSource: string;
-  householdClassification: {
-    fourPsBeneficiary: boolean;
-    indigentFamily: boolean;
-    hasSeniorCitizen: boolean;
-    hasPwdMember: boolean;
-  };
-  houseType: HouseType | '';
-  ownershipStatus: OwnershipStatus | '';
-  utilitiesAccess: {
-    electricity: boolean;
-    waterSupply: boolean;
-    internetAccess: boolean;
-  };
-  remarks: string;
-  headResidentId?: number;
-  members?: Array<{
-    residentId: number;
-    relationship: string;
-  }>;
-}
-
-// Household creation request (what we send to API)
-export interface CreateHouseholdRequest {
-  household_number?: string;
-  household_type: HouseholdType;
-  head_resident_id?: number;
-  house_number: string;
-  street_sitio: string;
-  barangay: string;
-  complete_address: string;
-  monthly_income?: MonthlyIncomeRange;
-  primary_income_source?: string;
-  four_ps_beneficiary: boolean;
-  indigent_family: boolean;
-  has_senior_citizen: boolean;
-  has_pwd_member: boolean;
-  house_type?: HouseType;
-  ownership_status?: OwnershipStatus;
-  has_electricity: boolean;
-  has_water_supply: boolean;
-  has_internet_access: boolean;
-  remarks?: string;
-  member_ids?: Array<{
-    resident_id: number;
-    relationship: string;
-  }>;
-}
-
-// Household statistics interface
-export interface HouseholdStatistics {
-  total_households: number;
-  by_barangay: Array<{ barangay: string; count: number }>;
-  by_household_type: Array<{ household_type: string; count: number }>;
-  by_house_type: Array<{ house_type: string; count: number }>;
-  by_ownership_status: Array<{ ownership_status: string; count: number }>;
-  by_monthly_income: Array<{ monthly_income: string; count: number }>;
-  classifications: {
-    four_ps_beneficiaries: number;
-    indigent_families: number;
-    with_senior_citizens: number;
-    with_pwd_members: number;
-  };
-  utilities: {
-    with_electricity: number;
-    with_water_supply: number;
-    with_internet_access: number;
-  };
-}
-
+// Type exports
+export type HouseholdType = z.infer<typeof HouseholdTypeSchema>;
+export type MonthlyIncomeRange = z.infer<typeof MonthlyIncomeRangeSchema>;
+export type HouseType = z.infer<typeof HouseTypeSchema>;
+export type OwnershipStatus = z.infer<typeof OwnershipStatusSchema>;
+export type HouseholdStatus = z.infer<typeof HouseholdStatusSchema>;
+export type RelationshipType = z.infer<typeof RelationshipTypeSchema>;
+export type HeadResident = z.infer<typeof HeadResidentSchema>;
+export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
+export type Household = z.infer<typeof HouseholdSchema>;
+export type HouseholdParams = z.infer<typeof HouseholdParamsSchema>;
+export type HouseholdStatistics = z.infer<typeof HouseholdStatisticsSchema>;
+export type SpecialListResponse = z.infer<typeof SpecialListResponseSchema>;
