@@ -98,6 +98,11 @@ export const HouseholdSchema = z.object({
 // Main Resident schema
 export const ResidentSchema = ResidentFormDataSchema.extend({
   id: z.number(),
+
+  four_ps_beneficiary: z.boolean(),
+  four_ps_household_id: z.string().nullable().optional(),
+
+  status: ResidentStatusSchema,
   
   created_at: z.string(),
   updated_at: z.string(),
@@ -107,18 +112,21 @@ export const ResidentSchema = ResidentFormDataSchema.extend({
 export const ResidentParamsSchema = z.object({
   page: z.number().min(1).optional(),
   per_page: z.number().min(1).max(100).optional(),
+
   search: z.string().optional(),
+
   status: ResidentStatusSchema.optional(),
   gender: GenderSchema.optional(),
-  purok: z.string().optional(),
   civil_status: CivilStatusSchema.optional(),
   employment_status: EmploymentStatusSchema.optional(),
   voter_status: VoterStatusSchema.optional(),
+
   household_id: z.number().optional(),
   senior_citizen: z.boolean().optional(),
   person_with_disability: z.boolean().optional(),
   indigenous_people: z.boolean().optional(),
   four_ps_beneficiary: z.boolean().optional(),
+
   age_from: z.number().min(0).optional(),
   age_to: z.number().min(0).optional(),
 });
@@ -128,13 +136,15 @@ export const ResidentStatisticsSchema = z.object({
   total_residents: z.number(),
   active_residents: z.number(),
   inactive_residents: z.number(),
+
   senior_citizens: z.number(),
   pwd_residents: z.number(),
   four_ps_beneficiaries: z.number(),
   registered_voters: z.number(),
+
   male_residents: z.number(),
   female_residents: z.number(),
-  by_purok: z.record(z.number()),
+
   by_age_group: z.record(z.number()),
   by_civil_status: z.record(z.number()),
   by_employment_status: z.record(z.number()),

@@ -4,6 +4,7 @@ import {
   EducationalAttainmentSchema,
   EmploymentStatusSchema,
   GenderSchema,
+  IdTypeSchema,
   NationalitySchema,
   ReligionSchema,
   VoterStatusSchema,
@@ -24,20 +25,24 @@ export const ResidentFormDataSchema = z.object({
   middle_name: z.string().optional(),
   suffix: z.string().optional(),
   birth_date: z.string().min(1, 'residents.form.error.birthDateRequired'),
-  age: z.string().optional(),
   birth_place: z.string().min(1, 'residents.form.error.birthPlaceRequired'),
 
   gender: GenderSchema,
   civil_status: CivilStatusSchema,
   nationality: NationalitySchema,
   religion: ReligionSchema,
-  employment_status: EmploymentStatusSchema,
   educational_attainment: EducationalAttainmentSchema,
+  school_attended: z.string().optional(),
+
+  // Employment Information
+  employment_status: EmploymentStatusSchema,
+  occupation: z.string().optional(),
+  employer: z.string().optional(),
   
   // Contact Information
   mobile_number: z.string().optional(),
   landline_number: z.string().optional(),
-  email_address: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
+  email_address: z.union([z.string().email('residents.form.error.emailAddressValid'), z.literal('')]).optional(),
 
   // Address Information
   region: z.string().optional(),
@@ -45,9 +50,8 @@ export const ResidentFormDataSchema = z.object({
   city: z.string().optional(),
   barangay: z.string().optional(),
 
-  house_number: z.string().optional(),
-  street: z.string().optional(),
-  complete_address: z.string().min(1, 'Complete address is required'),
+  street_address: z.string().optional(),
+  complete_address: z.string().min(1, 'residents.form.error.completeAddressRequired'),
   
   // Family Information
   mother_name: z.string().optional(),
@@ -57,32 +61,35 @@ export const ResidentFormDataSchema = z.object({
   emergency_contact_relationship: z.string().optional(),
   
   // Government IDs
-  primary_id_type: z.string().optional(),
+  primary_id_type: z.union([IdTypeSchema, z.literal('')]).optional(),
   id_number: z.string().optional(),
   philhealth_number: z.string().optional(),
   sss_number: z.string().optional(),
   tin_number: z.string().optional(),
-  voters_id_number: z.string().optional(),
+
   voter_status: VoterStatusSchema,
+  voters_id_number: z.string().optional(),
   precinct_number: z.string().optional(),
-  
-  // Employment
-  occupation: z.string().optional(),
-  employer: z.string().optional(),
-  monthly_income: z.string().optional(),
   
   // Health & Medical
   medical_conditions: z.string().optional(),
   allergies: z.string().optional(),
   
   // Special Classifications - Make all optional
+  student: z.boolean().optional(),
+  out_of_school_youth: z.boolean().optional(),
+
+  lgbtq: z.boolean().optional(),
+  sexuality: z.string().nullable().optional(),
+  gender_identity: z.string().nullable().optional(),
+
   senior_citizen: z.boolean(),
+
   person_with_disability: z.boolean(),
   disability_type: z.string().nullable().optional(),
+
   indigenous_people: z.boolean(),
   indigenous_group: z.string().nullable().optional(),
-  four_ps_beneficiary: z.boolean(),
-  four_ps_household_id: z.string().nullable().optional(),
   
   // Profile photo
   profile_photo_url: z.string().optional(),
@@ -98,45 +105,55 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       middle_name: '',
       suffix: '',
       birth_date: '',
-      age: '',
       birth_place: '',
+
       gender: 'MALE',
       civil_status: 'SINGLE',
       nationality: 'FILIPINO',
       religion: 'CATHOLIC',
-      employment_status: 'UNEMPLOYED',
       educational_attainment: 'HIGH_SCHOOL',
+
+      employment_status: 'UNEMPLOYED',
+      occupation: '',
+      employer: '',
+
       mobile_number: '',
       landline_number: '',
       email_address: '',
-      house_number: '',
-      street: '',
+
+      region: '',
+      province: '',
+      city: '',
+      barangay: '',
+
+      street_address: '',
       complete_address: '',
+
       mother_name: '',
       father_name: '',
       emergency_contact_name: '',
       emergency_contact_number: '',
       emergency_contact_relationship: '',
+
       primary_id_type: '',
       id_number: '',
       philhealth_number: '',
       sss_number: '',
       tin_number: '',
-      voters_id_number: '',
+
       voter_status: 'NOT_REGISTERED',
+      voters_id_number: '',
       precinct_number: '',
-      occupation: '',
-      employer: '',
-      monthly_income: '',
+
       medical_conditions: '',
       allergies: '',
+
       senior_citizen: false,
       person_with_disability: false,
       disability_type: '',
       indigenous_people: false,
       indigenous_group: '',
-      four_ps_beneficiary: false,
-      four_ps_household_id: '',
+      
       profile_photo_url: '',
     };
   }
@@ -147,45 +164,55 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     middle_name: resident.middle_name || '',
     suffix: resident.suffix || '',
     birth_date: resident.birth_date ? new Date(resident.birth_date).toISOString().slice(0, 10) : '',
-    age: resident.age?.toString() || '',
     birth_place: resident.birth_place,
+
     gender: resident.gender as Gender || 'MALE',
     civil_status: resident.civil_status as CivilStatus || 'SINGLE',
     nationality: resident.nationality as Nationality || 'FILIPINO',
     religion: resident.religion as Religion || 'CATHOLIC',
-    employment_status: resident.employment_status as EmploymentStatus || 'UNEMPLOYED',
     educational_attainment: resident.educational_attainment as EducationalAttainment || 'HIGH_SCHOOL',
+
+    employment_status: resident.employment_status as EmploymentStatus || 'UNEMPLOYED',
+    occupation: resident.occupation || '',
+    employer: resident.employer || '',
+    
     mobile_number: resident.mobile_number || '',
     landline_number: resident.landline_number || '',
     email_address: resident.email_address || '',
-    house_number: resident.house_number || '',
-    street: resident.street || '',
+
+    region: resident.region || '',
+    province: resident.province || '',
+    city: resident.city || '',
+    barangay: resident.barangay || '',
+    
+    street_address: resident.street_address || '',
     complete_address: resident.complete_address,
+
     mother_name: resident.mother_name || '',
     father_name: resident.father_name || '',
     emergency_contact_name: resident.emergency_contact_name || '',
     emergency_contact_number: resident.emergency_contact_number || '',
     emergency_contact_relationship: resident.emergency_contact_relationship || '',
+
     primary_id_type: resident.primary_id_type || '',
     id_number: resident.id_number || '',
     philhealth_number: resident.philhealth_number || '',
     sss_number: resident.sss_number || '',
     tin_number: resident.tin_number || '',
-    voters_id_number: resident.voters_id_number || '',
+
     voter_status: resident.voter_status || 'NOT_REGISTERED',
+    voters_id_number: resident.voters_id_number || '',
     precinct_number: resident.precinct_number || '',
-    occupation: resident.occupation || '',
-    employer: resident.employer || '',
-    monthly_income: '', // Not in current schema
+
     medical_conditions: resident.medical_conditions || '',
     allergies: resident.allergies || '',
+
     senior_citizen: resident.senior_citizen || false,
     person_with_disability: resident.person_with_disability || false,
     disability_type: resident.disability_type || '',
     indigenous_people: resident.indigenous_people || false,
     indigenous_group: resident.indigenous_group || '',
-    four_ps_beneficiary: resident.four_ps_beneficiary || false,
-    four_ps_household_id: resident.four_ps_household_id || '',
+
     profile_photo_url: resident.profile_photo_url || '',
   };
 };

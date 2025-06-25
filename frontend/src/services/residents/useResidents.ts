@@ -8,9 +8,12 @@ import {
   useQueryClient, 
   useInfiniteQuery 
 } from '@tanstack/react-query';
+
+import { useNotifications } from '@/components/_global/NotificationSystem';
 import type { Resident, ResidentParams } from './residents.types';
 import { residentsService } from '@/services/residents/residents.service';
 import type { ResidentFormData } from './residents-form.types';
+import { useTranslation } from 'react-i18next';
 
 // Query keys
 export const residentsKeys = {
@@ -23,10 +26,10 @@ export const residentsKeys = {
   ageGroups: () => [...residentsKeys.all, 'ageGroups'] as const,
   search: (term: string) => [...residentsKeys.all, 'search', term] as const,
   specialLists: () => [...residentsKeys.all, 'specialLists'] as const,
-  seniorCitizens: (purok?: string) => [...residentsKeys.specialLists(), 'seniors', purok] as const,
-  pwd: (purok?: string) => [...residentsKeys.specialLists(), 'pwd', purok] as const,
-  fourPs: (purok?: string) => [...residentsKeys.specialLists(), 'fourPs', purok] as const,
-  householdHeads: (purok?: string) => [...residentsKeys.specialLists(), 'householdHeads', purok] as const,
+  seniorCitizens: () => [...residentsKeys.specialLists(), 'seniors'] as const,
+  pwd: () => [...residentsKeys.specialLists(), 'pwd'] as const,
+  fourPs: () => [...residentsKeys.specialLists(), 'fourPs'] as const,
+  householdHeads: () => [...residentsKeys.specialLists(), 'householdHeads'] as const,
 };
 
 // Queries
@@ -73,34 +76,34 @@ export function useResidentSearch(searchTerm: string, enabled = true) {
 }
 
 // Special lists
-export function useSeniorCitizens(purok?: string) {
+export function useSeniorCitizens() {
   return useQuery({
-    queryKey: residentsKeys.seniorCitizens(purok),
-    queryFn: () => residentsService.getSeniorCitizens(purok),
+    queryKey: residentsKeys.seniorCitizens(),
+    queryFn: () => residentsService.getSeniorCitizens(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
-export function usePWD(purok?: string) {
+export function usePWD() {
   return useQuery({
-    queryKey: residentsKeys.pwd(purok),
-    queryFn: () => residentsService.getPWD(purok),
+    queryKey: residentsKeys.pwd(),
+    queryFn: () => residentsService.getPWD(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
-export function useFourPs(purok?: string) {
+export function useFourPs() {
   return useQuery({
-    queryKey: residentsKeys.fourPs(purok),
-    queryFn: () => residentsService.getFourPs(purok),
+    queryKey: residentsKeys.fourPs(),
+    queryFn: () => residentsService.getFourPs(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
-export function useHouseholdHeads(purok?: string) {
+export function useHouseholdHeads() {
   return useQuery({
-    queryKey: residentsKeys.householdHeads(purok),
-    queryFn: () => residentsService.getHouseholdHeads(purok),
+    queryKey: residentsKeys.householdHeads(),
+    queryFn: () => residentsService.getHouseholdHeads(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -108,6 +111,8 @@ export function useHouseholdHeads(purok?: string) {
 // Mutations
 export function useCreateResident() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const { showNotification } = useNotifications();
 
   return useMutation({
     mutationFn: (data: ResidentFormData) => residentsService.createResident(data),
@@ -119,13 +124,26 @@ export function useCreateResident() {
         newResident
       );
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const title = t('residents.form.messages.createErrorTitle');
+      const message = t('residents.form.messages.createError');
+
+      showNotification({
+        type: 'error',
+        title: title,
+        message: message,
+      });
+
+      console.error('Create Resident Error:', error);
     },
   });
 }
 
 export function useUpdateResident() {
   const queryClient = useQueryClient();
+
+  const { t } = useTranslation();
+  const { showNotification } = useNotifications();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: ResidentFormData }) =>
@@ -138,13 +156,25 @@ export function useUpdateResident() {
         updatedResident
       );
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const title = t('residents.form.messages.updateErrorTitle');
+      const message = t('residents.form.messages.updateError');
+      showNotification({
+        type: 'error',
+        title: title,
+        message: message,
+      });
+      console.error('Update Resident Error:', error);
+      // Handle error notification or logging here
     },
   });
 }
 
 export function useDeleteResident() {
   const queryClient = useQueryClient();
+
+  const { t } = useTranslation();
+  const { showNotification } = useNotifications();
 
   return useMutation({
     mutationFn: (id: number) => residentsService.deleteResident(id),
@@ -153,13 +183,24 @@ export function useDeleteResident() {
       queryClient.invalidateQueries({ queryKey: residentsKeys.statistics() });
       queryClient.removeQueries({ queryKey: residentsKeys.detail(deletedId) });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const title = t('residents.messages.deleteErrorTitle');
+      const message = t('residents.messages.deleteError');
+      showNotification({
+        type: 'error',
+        title: title,
+        message: message,
+      });
+      console.error('Delete Resident Error:', error);
     },
   });
 }
 
 export function useUploadProfilePhoto() {
   const queryClient = useQueryClient();
+
+  const { t } = useTranslation();
+  const { showNotification } = useNotifications();
 
   return useMutation({
     mutationFn: ({ id, photo }: { id: number; photo: File }) =>
@@ -171,7 +212,17 @@ export function useUploadProfilePhoto() {
       );
       queryClient.invalidateQueries({ queryKey: residentsKeys.lists() });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const title = t('residents.form.messages.uploadErrorTitle');
+      const message = t('residents.form.messages.uploadError');
+
+      showNotification({
+        type: 'error',
+        title: title,
+        message: message,
+      });
+
+      console.error('Upload Profile Photo Error:', error);
     },
   });
 }
@@ -192,5 +243,3 @@ export function useInfiniteResidents(params: Omit<ResidentParams, 'page'> = {}) 
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
-
-// Export all hooks for easier imports
