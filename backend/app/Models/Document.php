@@ -2,371 +2,357 @@
 
 namespace App\Models;
 
+use App\Models\Schemas\DocumentSchema;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 class Document extends Model
 {
-    protected $fillable = [
-        'document_number',
-        'document_type',
-        'title',
-        'description',
-        'resident_id',
-        'applicant_name',
-        'applicant_address',
-        'applicant_contact',
-        'purpose',
-        'requested_date',
-        'needed_date',
-        'priority',
-        'status',
-        'approved_date',
-        'released_date',
-        'expiry_date',
-        'processed_by',
-        'approved_by',
-        'released_by',
-        'processing_fee',
-        'amount_paid',
-        'payment_status',
-        'payment_method',
-        'receipt_number',
-        'payment_date',
-        'requirements_submitted',
-        'attachments',
-        'remarks',
-        'rejection_reason',
-        'qr_code',
-        'verification_code',
-        'created_by',
-        'updated_by'
-    ];
+    use HasFactory;
 
-    protected $casts = [
-        'requested_date' => 'date',
-        'needed_date' => 'date',
-        'approved_date' => 'date',
-        'released_date' => 'date',
-        'expiry_date' => 'date',
-        'payment_date' => 'date',
-        'processing_fee' => 'decimal:2',
-        'amount_paid' => 'decimal:2',
-        'requirements_submitted' => 'array',
-        'attachments' => 'array'
-    ];
-
-    protected $appends = [
-        'is_expired',
-        'days_pending',
-        'balance_due'
-    ];
-
-    // Relationships
-    public function resident(): BelongsTo
+    /**
+     * Get fillable fields from schema
+     */
+    protected $fillable;
+    
+    /**
+     * Get casts from schema
+     */
+    protected $casts;
+    
+    public function __construct(array $attributes = [])
     {
-        return $this->belongsTo(Resident::class);
+        // Set fillable and casts from schema
+        $this->fillable = DocumentSchema::getFillableFields();
+        $this->casts = DocumentSchema::getCasts();
+        
+        parent::__construct($attributes);
     }
 
-    public function processedBy(): BelongsTo
+    /**
+     * Computed attributes
+     */
+    public function getDocumentTypeDisplayAttribute(): string
     {
-        return $this->belongsTo(User::class, 'processed_by');
+        $types = DocumentSchema::getDocumentTypes();
+        return $types[$this->document_type] ?? $this->document_type;
     }
 
-    public function approvedBy(): BelongsTo
+    public function getPriorityDisplayAttribute(): string
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        $priorities = DocumentSchema::getPriorityOptions();
+        return $priorities[$this->priority] ?? ucfirst($this->priority);
     }
 
-    public function releasedBy(): BelongsTo
+    public function getStatusDisplayAttribute(): string
     {
-        return $this->belongsTo(User::class, 'released_by');
+        $statuses = DocumentSchema::getStatusOptions();
+        return $statuses[$this->status] ?? ucfirst($this->status);
     }
 
-    public function createdBy(): BelongsTo
+    public function getPaymentStatusDisplayAttribute(): string
     {
-        return $this->belongsTo(User::class, 'created_by');
+        $paymentStatuses = DocumentSchema::getPaymentStatusOptions();
+        return $paymentStatuses[$this->payment_status] ?? ucfirst($this->payment_status);
     }
 
-    public function updatedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    // Computed attributes
     public function getIsExpiredAttribute(): bool
     {
         return $this->expiry_date && $this->expiry_date->isPast();
     }
 
-    public function getDaysPendingAttribute(): int
+    public function getIsExpiringSoonAttribute(): bool
     {
-        if (in_array($this->status, ['RELEASED', 'REJECTED', 'CANCELLED'])) {
-            return 0;
+        if (!$this->expiry_date) {
+            return false;
         }
         
-        return Carbon::parse($this->requested_date)->diffInDays(now());
+        return $this->expiry_date->diffInDays(now()) <= 30 && $this->expiry_date->isFuture();
     }
 
-    public function getBalanceDueAttribute(): float
+    public function getProcessingDaysAttribute(): int
     {
-        return max(0, $this->processing_fee - $this->amount_paid);
+        if (!$this->request_date) {
+            return 0;
+        }
+
+        $endDate = $this->released_date ?? now();
+        return $this->request_date->diffInDays($endDate);
     }
 
-    // Scopes
-    public function scopePending(Builder $query): Builder
+    public function getIsOverdueAttribute(): bool
     {
-        return $query->whereIn('status', ['PENDING', 'UNDER_REVIEW']);
+        if (!$this->needed_date || in_array($this->status, ['released', 'rejected', 'cancelled'])) {
+            return false;
+        }
+        
+        return $this->needed_date->isPast();
     }
 
-    public function scopeApproved(Builder $query): Builder
+    public function getFormattedDocumentNumberAttribute(): string
     {
-        return $query->where('status', 'APPROVED');
+        return $this->document_number ?? 'N/A';
     }
 
-    public function scopeReadyForPickup(Builder $query): Builder
+    public function getFormattedSerialNumberAttribute(): string
     {
-        return $query->where('status', 'READY_FOR_PICKUP');
+        return $this->serial_number ?? 'N/A';
     }
 
-    public function scopeReleased(Builder $query): Builder
+    /**
+     * Relationships
+     */
+    public function resident()
     {
-        return $query->where('status', 'RELEASED');
+        return $this->belongsTo(Resident::class);
     }
 
-    public function scopeByType(Builder $query, string $type): Builder
+    public function processedByUser()
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function approvedByUser()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function releasedByUser()
+    {
+        return $this->belongsTo(User::class, 'released_by');
+    }
+
+    /**
+     * Scopes
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeProcessing($query)
+    {
+        return $query->where('status', 'processing');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    public function scopeReleased($query)
+    {
+        return $query->where('status', 'released');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    public function scopeByDocumentType($query, $type)
     {
         return $query->where('document_type', $type);
     }
 
-    public function scopeHighPriority(Builder $query): Builder
+    public function scopeByPriority($query, $priority)
     {
-        return $query->whereIn('priority', ['HIGH', 'URGENT']);
+        return $query->where('priority', $priority);
     }
 
-    public function scopeOverdue(Builder $query): Builder
+    public function scopeByPaymentStatus($query, $status)
+    {
+        return $query->where('payment_status', $status);
+    }
+
+    public function scopeUrgent($query)
+    {
+        return $query->whereIn('priority', ['urgent', 'rush']);
+    }
+
+    public function scopeOverdue($query)
     {
         return $query->where('needed_date', '<', now())
-                    ->whereNotIn('status', ['RELEASED', 'REJECTED', 'CANCELLED']);
+                    ->whereNotIn('status', ['released', 'rejected', 'cancelled']);
     }
 
-    public function scopeUnpaid(Builder $query): Builder
+    public function scopeExpired($query)
     {
-        return $query->where('payment_status', 'UNPAID')
-                    ->where('processing_fee', '>', 0);
+        return $query->where('expiry_date', '<', now());
     }
 
-    public function scopeExpired(Builder $query): Builder
+    public function scopeExpiringSoon($query, $days = 30)
     {
-        return $query->where('expiry_date', '<', now())
-                    ->where('status', 'RELEASED');
+        return $query->whereBetween('expiry_date', [now(), now()->addDays($days)]);
     }
 
-    // Helper methods
-    public function generateDocumentNumber(): string
+    public function scopeRequestedThisMonth($query)
     {
-        $year = date('Y');
-        $typeCode = $this->getTypeCode();
-        $count = static::where('document_type', $this->document_type)
-                      ->whereYear('created_at', $year)
-                      ->count() + 1;
-        
-        return "{$typeCode}-{$year}-" . str_pad($count, 4, '0', STR_PAD_LEFT);
+        return $query->whereMonth('request_date', now()->month)
+                    ->whereYear('request_date', now()->year);
     }
 
-    private function getTypeCode(): string
+    public function scopeRequestedThisYear($query)
     {
-        $codes = [
-            'BARANGAY_CLEARANCE' => 'BC',
-            'CERTIFICATE_OF_RESIDENCY' => 'CR',
-            'CERTIFICATE_OF_INDIGENCY' => 'CI',
-            'BUSINESS_PERMIT' => 'BP',
-            'BUILDING_PERMIT' => 'BLD',
-            'ELECTRICAL_PERMIT' => 'EP',
-            'SANITARY_PERMIT' => 'SP',
-            'FENCING_PERMIT' => 'FP',
-            'EXCAVATION_PERMIT' => 'EXP',
-            'CERTIFICATE_OF_GOOD_MORAL' => 'CGM',
-            'FIRST_TIME_JOB_SEEKER' => 'FTJS',
-            'SOLO_PARENT_CERTIFICATE' => 'SPC',
-            'SENIOR_CITIZEN_ID' => 'SCID',
-            'PWD_ID' => 'PWDID',
-            'CERTIFICATE_OF_COHABITATION' => 'COC',
-            'DEATH_CERTIFICATE' => 'DC',
-            'BIRTH_CERTIFICATE_COPY' => 'BCC',
-            'MARRIAGE_CONTRACT_COPY' => 'MCC',
-            'OTHER' => 'OTH'
-        ];
-
-        return $codes[$this->document_type] ?? 'DOC';
+        return $query->whereYear('request_date', now()->year);
     }
 
-    public function generateQRCode(): string
+    public function scopeReleasedThisMonth($query)
     {
-        return $this->document_number . '-' . Str::random(8);
+        return $query->whereMonth('released_date', now()->month)
+                    ->whereYear('released_date', now()->year);
     }
 
-    public function generateVerificationCode(): string
+    public function scopeByResident($query, $residentId)
     {
-        return Str::upper(Str::random(6));
+        return $query->where('resident_id', $residentId);
     }
 
-    public function startProcessing(int $userId): void
+    /**
+     * Helper methods for document-specific data
+     */
+    public function isBarangayClearance(): bool
     {
-        $this->update([
-            'status' => 'UNDER_REVIEW',
-            'processed_by' => $userId
-        ]);
+        return $this->document_type === 'BARANGAY_CLEARANCE';
     }
 
-    public function approve(int $userId, Carbon $expiryDate = null): void
+    public function isBusinessPermit(): bool
     {
-        $updateData = [
-            'status' => 'APPROVED',
-            'approved_by' => $userId,
-            'approved_date' => now()
-        ];
-
-        if ($expiryDate) {
-            $updateData['expiry_date'] = $expiryDate;
-        }
-
-        // Generate QR code and verification code for approved documents
-        if (empty($this->qr_code)) {
-            $updateData['qr_code'] = $this->generateQRCode();
-        }
-        if (empty($this->verification_code)) {
-            $updateData['verification_code'] = $this->generateVerificationCode();
-        }
-
-        $this->update($updateData);
+        return $this->document_type === 'BUSINESS_PERMIT';
     }
 
-    public function reject(int $userId, string $reason): void
+    public function isCertificateOfIndigency(): bool
     {
-        $this->update([
-            'status' => 'REJECTED',
-            'rejection_reason' => $reason,
-            'updated_by' => $userId
-        ]);
+        return $this->document_type === 'CERTIFICATE_OF_INDIGENCY';
     }
 
-    public function markReadyForPickup(): void
+    public function isCertificateOfResidency(): bool
     {
-        $this->update([
-            'status' => 'READY_FOR_PICKUP'
-        ]);
+        return $this->document_type === 'CERTIFICATE_OF_RESIDENCY';
     }
 
-    public function release(int $userId): void
+    public function hasRequiredDocuments(): bool
     {
-        $this->update([
-            'status' => 'RELEASED',
-            'released_by' => $userId,
-            'released_date' => now()
-        ]);
+        return !empty($this->requirements_submitted);
     }
 
-    public function cancel(string $reason = null): void
+    public function canBeProcessed(): bool
     {
-        $this->update([
-            'status' => 'CANCELLED',
-            'remarks' => $reason
-        ]);
-    }
-
-    public function putOnHold(string $reason): void
-    {
-        $this->update([
-            'status' => 'ON_HOLD',
-            'remarks' => $reason
-        ]);
-    }
-
-    public function addPayment(float $amount, string $method, string $receiptNumber = null): void
-    {
-        $newAmountPaid = $this->amount_paid + $amount;
-        $paymentStatus = 'PARTIAL';
-
-        if ($newAmountPaid >= $this->processing_fee) {
-            $paymentStatus = 'PAID';
-        }
-
-        $this->update([
-            'amount_paid' => $newAmountPaid,
-            'payment_status' => $paymentStatus,
-            'payment_method' => $method,
-            'receipt_number' => $receiptNumber,
-            'payment_date' => now()
-        ]);
-    }
-
-    public function waiveFee(int $userId, string $reason = null): void
-    {
-        $this->update([
-            'payment_status' => 'WAIVED',
-            'remarks' => $reason,
-            'updated_by' => $userId
-        ]);
-    }
-
-    public function isPaymentComplete(): bool
-    {
-        return $this->payment_status === 'PAID' || 
-               $this->payment_status === 'WAIVED' ||
-               $this->processing_fee == 0;
+        return $this->status === 'pending' && $this->hasRequiredDocuments();
     }
 
     public function canBeApproved(): bool
     {
-        return $this->status === 'UNDER_REVIEW' && $this->isPaymentComplete();
+        return $this->status === 'processing';
     }
 
     public function canBeReleased(): bool
     {
-        return $this->status === 'READY_FOR_PICKUP' || 
-               ($this->status === 'APPROVED' && $this->isPaymentComplete());
+        return $this->status === 'approved' && $this->payment_status === 'paid';
     }
 
-    public function getEstimatedProcessingDays(): int
+    public function canBeRejected(): bool
     {
-        $processingDays = [
-            'BARANGAY_CLEARANCE' => 1,
-            'CERTIFICATE_OF_RESIDENCY' => 1,
-            'CERTIFICATE_OF_INDIGENCY' => 2,
-            'BUSINESS_PERMIT' => 7,
-            'BUILDING_PERMIT' => 14,
-            'ELECTRICAL_PERMIT' => 7,
-            'SANITARY_PERMIT' => 5,
-            'FENCING_PERMIT' => 7,
-            'EXCAVATION_PERMIT' => 10,
-            'CERTIFICATE_OF_GOOD_MORAL' => 3,
-            'FIRST_TIME_JOB_SEEKER' => 1,
-            'SOLO_PARENT_CERTIFICATE' => 3,
-            'SENIOR_CITIZEN_ID' => 2,
-            'PWD_ID' => 2,
-            'CERTIFICATE_OF_COHABITATION' => 2,
-            'OTHER' => 3
-        ];
-
-        return $processingDays[$this->document_type] ?? 3;
+        return !in_array($this->status, ['released', 'rejected', 'cancelled']);
     }
 
-    // Boot method
+    /**
+     * Boot the model
+     */
     protected static function boot()
     {
         parent::boot();
-
+        
+        // Auto-generate document number and serial number when creating
         static::creating(function ($document) {
-            if (empty($document->document_number)) {
-                $document->document_number = $document->generateDocumentNumber();
+            if (!$document->document_number) {
+                $document->document_number = static::generateDocumentNumber($document->document_type);
             }
-            if (empty($document->requested_date)) {
-                $document->requested_date = now();
+            
+            if (!$document->serial_number) {
+                $document->serial_number = static::generateSerialNumber();
+            }
+            
+            // Set request_date if not provided
+            if (!$document->request_date) {
+                $document->request_date = now();
             }
         });
+
+        // Update processed_date when status changes to processing
+        static::updating(function ($document) {
+            if ($document->isDirty('status')) {
+                switch ($document->status) {
+                    case 'processing':
+                        if (!$document->processed_date) {
+                            $document->processed_date = now();
+                        }
+                        break;
+                    case 'approved':
+                        if (!$document->approved_date) {
+                            $document->approved_date = now();
+                        }
+                        break;
+                    case 'released':
+                        if (!$document->released_date) {
+                            $document->released_date = now();
+                        }
+                        break;
+                }
+            }
+        });
+    }
+
+    /**
+     * Generate document number based on document type
+     */
+    protected static function generateDocumentNumber(string $documentType): string
+    {
+        $prefix = match ($documentType) {
+            'BARANGAY_CLEARANCE' => 'BC',
+            'CERTIFICATE_OF_RESIDENCY' => 'CR',
+            'CERTIFICATE_OF_INDIGENCY' => 'CI',
+            'BUSINESS_PERMIT' => 'BP',
+            'BUILDING_PERMIT' => 'BDP',
+            'FIRST_TIME_JOB_SEEKER' => 'FTJS',
+            'SENIOR_CITIZEN_ID' => 'SCI',
+            'PWD_ID' => 'PWD',
+            'BARANGAY_ID' => 'BID',
+            default => 'DOC',
+        };
+
+        $year = now()->year;
+        $month = now()->format('m');
+        
+        // Get next sequence number for this document type and month
+        $lastDocument = static::where('document_type', $documentType)
+            ->whereYear('request_date', $year)
+            ->whereMonth('request_date', $month)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = 1;
+        if ($lastDocument && $lastDocument->document_number) {
+            // Extract sequence from last document number
+            $parts = explode('-', $lastDocument->document_number);
+            if (count($parts) >= 4) {
+                $sequence = (int) end($parts) + 1;
+            }
+        }
+
+        return sprintf('%s-%d-%s-%04d', $prefix, $year, $month, $sequence);
+    }
+
+    /**
+     * Generate unique serial number
+     */
+    protected static function generateSerialNumber(): string
+    {
+        do {
+            $serialNumber = 'SN-' . now()->format('Y') . '-' . strtoupper(Str::random(8));
+        } while (static::where('serial_number', $serialNumber)->exists());
+
+        return $serialNumber;
     }
 }

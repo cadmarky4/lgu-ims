@@ -151,6 +151,24 @@ Route::prefix('reports')->group(function () {
     Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
 });
 
+Route::prefix('documents')->group(function () {
+    Route::get('/', [DocumentController::class, 'index']);
+    Route::post('/', [DocumentController::class, 'store']);
+    Route::get('/statistics', [DocumentController::class, 'statistics']);
+    Route::get('/overdue', [DocumentController::class, 'overdue']);
+    Route::get('/pending', [DocumentController::class, 'pending']);
+    Route::get('/{id}', [DocumentController::class, 'show']);
+    Route::put('/{id}', [DocumentController::class, 'update']);
+    Route::delete('/{id}', [DocumentController::class, 'destroy']);
+    Route::get('/{id}/tracking', [DocumentController::class, 'tracking']);
+    Route::get('/{id}/history', [DocumentController::class, 'history']);
+    Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
+    Route::post('/{id}/process', [DocumentController::class, 'process']);
+    Route::post('/{id}/reject', [DocumentController::class, 'reject']);
+    Route::post('/{id}/release', [DocumentController::class, 'release']);
+    Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
+});
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
@@ -166,14 +184,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Documents - Specific routes BEFORE apiResource
     Route::prefix('documents')->group(function () {
+        Route::get('/', [DocumentController::class, 'index']);
+        Route::post('/', [DocumentController::class, 'store']);
         Route::get('/statistics', [DocumentController::class, 'statistics']);
-        Route::get('/search', [DocumentController::class, 'search']);
-        Route::get('/by-type/{type}', [DocumentController::class, 'byType']);
-        Route::post('/{document}/approve', [DocumentController::class, 'approve']);
-        Route::post('/{document}/reject', [DocumentController::class, 'reject']);
-        Route::post('/{document}/release', [DocumentController::class, 'release']);
-        Route::get('/{document}/track', [DocumentController::class, 'track']);
-        Route::get('/{document}/generate-qr', [DocumentController::class, 'generateQR']);
+        Route::get('/overdue', [DocumentController::class, 'overdue']);
+        Route::get('/pending', [DocumentController::class, 'pending']);
+        Route::get('/{id}', [DocumentController::class, 'show']);
+        Route::put('/{id}', [DocumentController::class, 'update']);
+        Route::delete('/{id}', [DocumentController::class, 'destroy']);
+        Route::get('/{id}/tracking', [DocumentController::class, 'tracking']);
+        Route::get('/{id}/history', [DocumentController::class, 'history']);
+        Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
+        Route::post('/{id}/process', [DocumentController::class, 'process']);
+        Route::post('/{id}/reject', [DocumentController::class, 'reject']);
+        Route::post('/{id}/release', [DocumentController::class, 'release']);
+        Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
     });
     Route::apiResource('documents', DocumentController::class);
     
