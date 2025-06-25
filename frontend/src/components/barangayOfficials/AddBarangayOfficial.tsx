@@ -3,7 +3,7 @@ import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
 import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
-import { uploadFile } from '../../services/storage.service';
+import { useFileUpload } from '@/services/__shared/__hooks/useFileUpload';
 import { useNavigate } from 'react-router-dom';
 
 // will be implemented properly in the future
@@ -19,6 +19,7 @@ const AddBarangayOfficial = () => {  // Loading and error states for API calls
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
+  const uploadFile = useFileUpload();
 
   const handleOnClose = () => {
     navigate('/officials');
@@ -168,7 +169,11 @@ const AddBarangayOfficial = () => {  // Loading and error states for API calls
 
       if (selectedFile) {
         // Use uploadFile to upload the photo and get the URL
-        const uploadResult = await uploadFile(selectedFile);
+        const uploadResult = await uploadFile.mutateAsync({
+          file: selectedFile,
+          isPublic: true,
+          // idk yung folder
+        });
         photoUrl = uploadResult?.url || null;
       }
 

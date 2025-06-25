@@ -3,10 +3,10 @@ import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 import Breadcrumb from '../_global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
 import type { BarangayOfficialFormData } from '../../services/officials/barangayOfficials.types';
-import { uploadFile } from '../../services/__shared/_storage/storage.service';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { convertOfficialToFormData } from './utils/convertOfficialToFormData';
+import { useFileUpload } from '@/services/__shared/__hooks/useFileUpload';
 
 // interface EditBarangayOfficialProps {
 //   onClose: () => void;
@@ -15,6 +15,7 @@ import { convertOfficialToFormData } from './utils/convertOfficialToFormData';
 // }
 
 const EditBarangayOfficial = () => {  // Loading and error states for API calls
+  const uploadFile = useFileUpload();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +149,11 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
 
       if (selectedFile) {
         // Use uploadFile to upload the photo and get the URL
-        const uploadResult = await uploadFile(selectedFile);
+        const uploadResult = await uploadFile.mutateAsync({
+          file: selectedFile,
+          isPublic: true,
+          // folder idk
+        });
         photoUrl = uploadResult?.url || null;
       }
 
