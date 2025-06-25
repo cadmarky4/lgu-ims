@@ -19,13 +19,13 @@ import {
 // Form data schema that matches the UI structure
 export const ResidentFormDataSchema = z.object({
   // Basic Information
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  first_name: z.string().min(1, 'residents.form.error.firstNameRequired'),
+  last_name: z.string().min(1, 'residents.form.error.lastNameRequired'),
   middle_name: z.string().optional(),
   suffix: z.string().optional(),
-  birth_date: z.string().min(1, 'Birth date is required'),
+  birth_date: z.string().min(1, 'residents.form.error.birthDateRequired'),
   age: z.string().optional(),
-  birth_place: z.string().min(1, 'Birth place is required'),
+  birth_place: z.string().min(1, 'residents.form.error.birthPlaceRequired'),
 
   gender: GenderSchema,
   civil_status: CivilStatusSchema,
@@ -76,15 +76,13 @@ export const ResidentFormDataSchema = z.object({
   allergies: z.string().optional(),
   
   // Special Classifications - Make all optional
-  special_classifications:  z.object({
-    senior_citizen: z.boolean(),
-    person_with_disability: z.boolean(),
-    disability_type: z.string().nullable().optional(),
-    indigenous_people: z.boolean(),
-    indigenous_group: z.string().nullable().optional(),
-    four_ps_beneficiary: z.boolean(),
-    four_ps_household_id: z.string().nullable().optional(),
-  }),
+  senior_citizen: z.boolean(),
+  person_with_disability: z.boolean(),
+  disability_type: z.string().nullable().optional(),
+  indigenous_people: z.boolean(),
+  indigenous_group: z.string().nullable().optional(),
+  four_ps_beneficiary: z.boolean(),
+  four_ps_household_id: z.string().nullable().optional(),
   
   // Profile photo
   profile_photo_url: z.string().optional(),
@@ -132,15 +130,13 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       monthly_income: '',
       medical_conditions: '',
       allergies: '',
-      special_classifications: {
-        senior_citizen: false,
-        person_with_disability: false,
-        disability_type: '',
-        indigenous_people: false,
-        indigenous_group: '',
-        four_ps_beneficiary: false,
-        four_ps_household_id: '',
-      },
+      senior_citizen: false,
+      person_with_disability: false,
+      disability_type: '',
+      indigenous_people: false,
+      indigenous_group: '',
+      four_ps_beneficiary: false,
+      four_ps_household_id: '',
       profile_photo_url: '',
     };
   }
@@ -160,7 +156,7 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     employment_status: resident.employment_status as EmploymentStatus || 'UNEMPLOYED',
     educational_attainment: resident.educational_attainment as EducationalAttainment || 'HIGH_SCHOOL',
     mobile_number: resident.mobile_number || '',
-    landline_number: resident.telephone_number || '',
+    landline_number: resident.landline_number || '',
     email_address: resident.email_address || '',
     house_number: resident.house_number || '',
     street: resident.street || '',
@@ -183,15 +179,13 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     monthly_income: '', // Not in current schema
     medical_conditions: resident.medical_conditions || '',
     allergies: resident.allergies || '',
-    special_classifications: {
-      senior_citizen: resident.senior_citizen || false,
-      person_with_disability: resident.person_with_disability || false,
-      disability_type: resident.disability_type || '',
-      indigenous_people: resident.indigenous_people || false,
-      indigenous_group: resident.indigenous_group || '',
-      four_ps_beneficiary: resident.four_ps_beneficiary || false,
-      four_ps_household_id: resident.four_ps_household_id || '',
-    },
+    senior_citizen: resident.senior_citizen || false,
+    person_with_disability: resident.person_with_disability || false,
+    disability_type: resident.disability_type || '',
+    indigenous_people: resident.indigenous_people || false,
+    indigenous_group: resident.indigenous_group || '',
+    four_ps_beneficiary: resident.four_ps_beneficiary || false,
+    four_ps_household_id: resident.four_ps_household_id || '',
     profile_photo_url: resident.profile_photo_url || '',
   };
 };

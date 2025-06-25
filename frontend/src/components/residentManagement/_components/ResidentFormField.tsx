@@ -89,7 +89,7 @@ export const ResidentFormField: React.FC<ResidentFormFieldProps> = ({
       {renderField()}
       {fieldError && (
         <p className="mt-1 text-sm text-red-600">
-          {fieldError.message as string}
+          {t(fieldError.message as string)}
         </p>
       )}
     </div>

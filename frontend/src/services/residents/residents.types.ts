@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { z } from 'zod';
+import { ResidentFormDataSchema } from './residents-form.types';
 
 // Enum schemas
 export const GenderSchema = z.enum(['MALE', 'FEMALE']);
@@ -95,86 +96,9 @@ export const HouseholdSchema = z.object({
 });
 
 // Main Resident schema
-export const ResidentSchema = z.object({
+export const ResidentSchema = ResidentFormDataSchema.extend({
   id: z.number(),
   
-  // Basic Information
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  middle_name: z.string().nullable().optional(),
-  suffix: z.string().nullable().optional(),
-  birth_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format')
-    .refine(
-      (val) => {
-        const today = new Date();
-        const date = new Date(val);
-        // Only compare date part, ignore time
-        return date <= new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      },
-      { message: 'Birth date cannot be in the future' }
-    ),
-  age: z.number().min(0, 'Age must be at least 0').optional(),
-  birth_place: z.string().min(1, 'Birth place is required'),
-
-  gender: GenderSchema,
-  civil_status: CivilStatusSchema,
-  nationality: NationalitySchema,
-  religion: ReligionSchema,
-  employment_status: EmploymentStatusSchema,
-  educational_attainment: EducationalAttainmentSchema,
-  
-  // Contact Information
-  mobile_number: z.string().nullable().optional(),
-  telephone_number: z.string().nullable().optional(),
-  email_address: z.string().email().nullable().optional(),
-  complete_address: z.string().min(1, 'Complete address is required'),
-  house_number: z.string().nullable().optional(),
-  street: z.string().nullable().optional(),
-  purok: z.string().nullable().optional(),
-  
-  // Family Information
-  household_id: z.number().nullable().optional(),
-  household: HouseholdSchema.nullable().optional(),
-  is_household_head: z.boolean(),
-  relationship_to_head: z.string().nullable().optional(),
-  mother_name: z.string().nullable().optional(),
-  father_name: z.string().nullable().optional(),
-  emergency_contact_name: z.string().nullable().optional(),
-  emergency_contact_number: z.string().nullable().optional(),
-  emergency_contact_relationship: z.string().nullable().optional(),
-  
-  // Government IDs
-  primary_id_type: IdTypeSchema.nullable().optional(),
-  id_number: z.string().nullable().optional(),
-  philhealth_number: z.string().nullable().optional(),
-  sss_number: z.string().nullable().optional(),
-  tin_number: z.string().nullable().optional(),
-  voters_id_number: z.string().nullable().optional(),
-  voter_status: VoterStatusSchema,
-  precinct_number: z.string().nullable().optional(),
-  
-  // Employment Information
-  occupation: z.string().nullable().optional(),
-  employer: z.string().nullable().optional(),
-  
-  // Health & Medical
-  medical_conditions: z.string().nullable().optional(),
-  allergies: z.string().nullable().optional(),
-  
-  // Special Classifications
-  senior_citizen: z.boolean(),
-  person_with_disability: z.boolean(),
-  disability_type: z.string().nullable().optional(),
-  indigenous_people: z.boolean(),
-  indigenous_group: z.string().nullable().optional(),
-  four_ps_beneficiary: z.boolean(),
-  four_ps_household_id: z.string().nullable().optional(),
-  
-  // System Fields
-  status: ResidentStatusSchema,
-  profile_photo_url: z.string().url().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

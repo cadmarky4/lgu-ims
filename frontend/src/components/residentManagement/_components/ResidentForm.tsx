@@ -84,19 +84,19 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <ResidentFormSection title={t('residents.form.sections.basicInfo')}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="firstName"
+                name="first_name"
                 label={t('residents.form.fields.firstName')}
                 placeholder={t('residents.form.placeholders.firstName')}
                 required
               />
               <ResidentFormField
-                name="lastName"
+                name="last_name"
                 label={t('residents.form.fields.lastName')}
                 placeholder={t('residents.form.placeholders.lastName')}
                 required
               />
               <ResidentFormField
-                name="middleName"
+                name="middle_name"
                 label={t('residents.form.fields.middleName')}
                 placeholder={t('residents.form.placeholders.middleName')}
               />
@@ -117,7 +117,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="birthDate"
+                name="birth_date"
                 label={t('residents.form.fields.birthDate')}
                 type="date"
                 required
@@ -129,7 +129,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 readOnly
               />
               <ResidentFormField
-                name="birthPlace"
+                name="birth_place"
                 label={t('residents.form.fields.birthPlace')}
                 placeholder={t('residents.form.placeholders.birthPlace')}
                 required
@@ -149,7 +149,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ResidentFormField
-                name="civilStatus"
+                name="civil_status"
                 label={t('residents.form.fields.civilStatus')}
                 type="select"
                 placeholder={t('residents.form.options.selectCivilStatus')}
@@ -174,7 +174,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 placeholder={t('residents.form.placeholders.religion')}
               />
               <ResidentFormField
-                name="employmentStatus"
+                name="employment_status"
                 label={t('residents.form.fields.employmentStatus')}
                 type="select"
                 placeholder={t('residents.form.options.selectEmploymentStatus')}
@@ -194,20 +194,20 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <ResidentFormSection title={t('residents.form.sections.contactInfo')}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="mobileNumber"
+                name="mobile_number"
                 label={t('residents.form.fields.mobileNumber')}
                 type="tel"
                 placeholder={t('residents.form.placeholders.mobileNumber')}
               />
               <ResidentFormField
-                name="landlineNumber"
+                name="landline_number"
                 label={t('residents.form.fields.landlineNumber')}
                 type="tel"
                 placeholder={t('residents.form.placeholders.landlineNumber')}
               />
               <div className="md:col-span-2">
                 <ResidentFormField
-                  name="emailAddress"
+                  name="email_address"
                   label={t('residents.form.fields.emailAddress')}
                   type="email"
                   placeholder={t('residents.form.placeholders.emailAddress')}
@@ -217,7 +217,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="houseNumber"
+                name="house_number"
                 label={t('residents.form.fields.houseNumber')}
                 placeholder={t('residents.form.placeholders.houseNumber')}
               />
@@ -229,7 +229,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             </div>
 
             <ResidentFormField
-              name="completeAddress"
+              name="complete_address"
               label={t('residents.form.fields.completeAddress')}
               type="textarea"
               placeholder={t('residents.form.placeholders.completeAddress')}
@@ -241,12 +241,12 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <ResidentFormSection title={t('residents.form.sections.familyInfo')}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
-                name="motherName"
+                name="mother_name"
                 label={t('residents.form.fields.motherName')}
                 placeholder={t('residents.form.placeholders.motherName')}
               />
               <ResidentFormField
-                name="fatherName"
+                name="father_name"
                 label={t('residents.form.fields.fatherName')}
                 placeholder={t('residents.form.placeholders.fatherName')}
               />
@@ -254,19 +254,19 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ResidentFormField
-                name="emergencyContactName"
+                name="emergency_contact_name"
                 label={t('residents.form.fields.emergencyContactName')}
                 placeholder={t('residents.form.placeholders.emergencyContactName')}
               />
               <ResidentFormField
-                name="emergencyContactNumber"
+                name="emergency_contact_number"
                 label={t('residents.form.fields.emergencyContactNumber')}
                 type="tel"
                 placeholder={t('residents.form.placeholders.emergencyContactNumber')}
               />
               <div className="md:col-span-2">
                 <ResidentFormField
-                  name="emergencyContactRelationship"
+                  name="emergency_contact_relationship"
                   label={t('residents.form.fields.emergencyContactRelationship')}
                   placeholder={t('residents.form.placeholders.emergencyContactRelationship')}
                 />

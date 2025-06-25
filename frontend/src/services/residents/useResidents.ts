@@ -8,15 +8,9 @@ import {
   useQueryClient, 
   useInfiniteQuery 
 } from '@tanstack/react-query';
-import type { CreateResidentData, Resident, ResidentParams, UpdateResidentData } from './residents.types';
+import type { Resident, ResidentParams } from './residents.types';
 import { residentsService } from '@/services/residents/residents.service';
-
-const STALE_TIME_RESIDENTS_LIST = 5 * 60 * 1000; // 5 minutes
-const STALE_TIME_RESIDENT_DETAIL = 10 * 60 * 1000; // 10 minutes
-const STALE_TIME_STATISTICS = 15 * 60 * 1000; // 15 minutes
-const STALE_TIME_AGE_GROUPS = 15 * 60 * 1000; // 15 minutes
-const STALE_TIME_SEARCH = 2 * 60 * 1000; // 2 minutes
-const STALE_TIME_SPECIAL_LISTS = 10 * 60 * 1000; // 10 minutes
+import type { ResidentFormData } from './residents-form.types';
 
 // Query keys
 export const residentsKeys = {
@@ -116,7 +110,7 @@ export function useCreateResident() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateResidentData) => residentsService.createResident(data),
+    mutationFn: (data: ResidentFormData) => residentsService.createResident(data),
     onSuccess: (newResident: Resident) => {
       queryClient.invalidateQueries({ queryKey: residentsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: residentsKeys.statistics() });
@@ -134,7 +128,7 @@ export function useUpdateResident() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateResidentData }) =>
+    mutationFn: ({ id, data }: { id: number; data: ResidentFormData }) =>
       residentsService.updateResident(id, data),
     onSuccess: (updatedResident: Resident) => {
       queryClient.invalidateQueries({ queryKey: residentsKeys.lists() });

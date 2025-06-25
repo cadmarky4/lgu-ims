@@ -186,6 +186,9 @@
         "invalidDate": "Please enter a valid date",
         "invalidPhone": "Please enter a valid phone number"
       },
+      "error": {
+        
+      },
       "messages": {
         "loadingResident": "Loading resident data...",
         "loadingReferenceData": "Loading reference data...",
