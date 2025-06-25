@@ -14,8 +14,7 @@ import type {
   DocumentFormData,
   ProcessDocumentData,
   RejectDocumentData,
-  ReleaseDocumentData,
-  ProcessingHistoryItem
+  ReleaseDocumentData
 } from './documents.types';
 import { documentsService } from '@/services/documents/documents.service';
 
