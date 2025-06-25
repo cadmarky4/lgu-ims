@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiHome, FiUsers, FiDollarSign, FiMapPin, FiFileText, FiEdit } from 'react-icons/fi';
-import { HouseholdsService } from '../../services/households.service';
-import type { Household } from '../../services/household.types';
-import Breadcrumb from '../global/Breadcrumb';
+import { HouseholdsService } from '../../services/households/households.service';
+import type { Household } from '../../services/households/households.types';
+import Breadcrumb from '../_global/Breadcrumb';
 
 const ViewHousehold: React.FC = () => {
   const { id } = useParams<{ id: string }>();

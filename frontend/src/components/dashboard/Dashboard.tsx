@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import StatCard from '../global/StatCard';
+import StatCard from '../_global/StatCard';
 import ResidentsChart from './ResidentsChart';
 import QuickActions from './QuickActions';
 import Notifications from './Notifications';
 import BarangayOfficials from './BarangayOfficials';
 import Calendar from './Calendar';
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 import { FaUsers, FaHouseUser, FaStamp, FaPen, FaClipboardList, FaUserCheck } from 'react-icons/fa';
-import { DashboardService, type DashboardStatistics } from '../../services/dashboard.service';
+import { DashboardService, type DashboardStatistics } from '../../services/dashboard/dashboard.service';
 
 const Dashboard: React.FC = () => {
   const [statistics, setStatistics] = useState<DashboardStatistics>({

@@ -1,0 +1,210 @@
+{
+  "residents": {
+    "title": "Pamamahala ng mga Residente",
+    "addNew": "Magdagdag ng Bagong Residente",
+    "search": "Maghanap ng mga residente ayon sa pangalan o address...",
+    "statistics": {
+      "title": "Buod ng mga Datos",
+      "totalResidents": "Kabuuang Residente",
+      "pwd": "PWD",
+      "seniorCitizens": "Senior Citizens",
+      "children": "Mga Bata"
+    },
+    "table": {
+      "headers": {
+        "resident": "Residente",
+        "contact": "Impormasyon sa Pakikipag-ugnayan",
+        "address": "Address",
+        "category": "Kategorya",
+        "status": "Katayuan",
+        "actions": "Mga Aksyon"
+      },
+      "noResults": "Walang nahanap na residente",
+      "noResultsSearch": "Walang nahanap na residente na tumugma sa \"{{searchTerm}}\"",
+      "yearsOld": "taong gulang"
+    },
+    "actions": {
+      "view": "Tingnan ang detalye ng residente",
+      "edit": "I-edit ang residente",
+      "delete": "I-deactivate ang residente",
+      "deleting": "Nagde-deactivate..."
+    },
+    "status": {
+      "active": "Aktibo",
+      "inactive": "Hindi Aktibo",
+      "deceased": "Namatay",
+      "transferred": "Nalipat"
+    },
+    "categories": {
+      "regular": "Regular",
+      "seniorCitizen": "Senior Citizen",
+      "pwd": "PWD",
+      "fourPs": "4Ps",
+      "householdHead": "Ulo ng Pamilya",
+      "indigenous": "Katutubo"
+    },
+    "messages": {
+      "loading": "Naglo-load ng mga residente...",
+      "loadError": "Hindi ma-load ang mga residente. Subukan ulit.",
+      "statisticsError": "Hindi ma-load ang mga estadistika.",
+      "createError": "Hindi nagawa ang residente. Subukan ulit.",
+      "updateError": "Hindi na-update ang residente. Subukan ulit.",
+      "deleteConfirm": "Sigurado ka bang gusto mong i-deactivate ang residenteng ito? Magiging inactive ang kanyang status.",
+      "deleteSuccess": "Matagumpay na na-deactivate ang residente",
+      "deleteError": "Hindi na-deactivate ang residente. Subukan ulit."
+    },
+    "pagination": {
+      "showing": "Nagpapakita ng {{from}} hanggang {{to}} sa {{total}} na resulta",
+      "previous": "Nakaraan",
+      "next": "Susunod"
+    },
+    "form": {
+      "addTitle": "Magdagdag ng Bagong Residente",
+      "editTitle": "I-edit ang Profile ng Residente",
+      "sections": {
+        "basicInfo": "Pangunahing Impormasyon",
+        "contactInfo": "Impormasyon sa Pakikipag-ugnayan",
+        "familyInfo": "Impormasyon sa Pamilya",
+        "governmentIds": "Government IDs at Dokumento",
+        "healthMedical": "Kalusugan at Medikal na Impormasyon",
+        "specialClassifications": "Mga Espesyal na Klasipikasyon",
+        "profilePhoto": "Larawan ng Profile"
+      },
+      "fields": {
+        "firstName": "Unang Pangalan",
+        "lastName": "Apelyido",
+        "middleName": "Gitnang Pangalan",
+        "suffix": "Suffix",
+        "birthDate": "Petsa ng Kapanganakan",
+        "age": "Edad (awtomatikong kinakalkula)",
+        "birthPlace": "Lugar ng Kapanganakan",
+        "gender": "Kasarian",
+        "civilStatus": "Civil Status",
+        "nationality": "Nasyonalidad",
+        "religion": "Relihiyon",
+        "employmentStatus": "Status ng Trabaho",
+        "educationalAttainment": "Naabot na Edukasyon",
+        "occupation": "Trabaho",
+        "employer": "Employer",
+        "monthlyIncome": "Buwanang Kita",
+        "mobileNumber": "Mobile Number",
+        "landlineNumber": "Landline Number",
+        "emailAddress": "Email Address",
+        "houseNumber": "Numero ng Bahay",
+        "street": "Kalye",
+        "purok": "Purok",
+        "completeAddress": "Kumpletong Address",
+        "motherName": "Pangalan ng Ina",
+        "fatherName": "Pangalan ng Ama",
+        "emergencyContactName": "Pangalan ng Emergency Contact",
+        "emergencyContactNumber": "Number ng Emergency Contact",
+        "emergencyContactRelationship": "Relasyon sa Emergency Contact",
+        "primaryIdType": "Uri ng Primary ID",
+        "idNumber": "Numero ng ID",
+        "philhealthNumber": "PhilHealth Number",
+        "sssNumber": "SSS Number",
+        "tinNumber": "TIN Number",
+        "votersIdNumber": "Voter's ID Number",
+        "voterStatus": "Status ng Botante",
+        "precinctNumber": "Numero ng Presinto",
+        "medicalConditions": "Mga Kondisyong Medikal",
+        "allergies": "Mga Allergy",
+        "householdId": "Household ID"
+      },
+      "placeholders": {
+        "firstName": "Ilagay ang unang pangalan...",
+        "lastName": "Ilagay ang apelyido...",
+        "middleName": "Iwanang walang laman kung hindi naaangkop",
+        "birthPlace": "Ilagay ang lugar ng kapanganakan...",
+        "nationality": "Ilagay ang nasyonalidad...",
+        "religion": "Ilagay ang relihiyon...",
+        "educationalAttainment": "hal. Nagtapos ng High School, Kolehiyo...",
+        "occupation": "hal. Guro, Inhinyero, Magsasaka...",
+        "employer": "Pangalan ng kumpanya o pinagtatrabahuhan...",
+        "mobileNumber": "+63 XXX XXX XXXX",
+        "landlineNumber": "(02) XXXX-XXXX",
+        "emailAddress": "resident@gmail.com",
+        "houseNumber": "hal. 123, Blk 4 Lot 5",
+        "street": "hal. Rizal Street",
+        "completeAddress": "Ilagay ang kumpletong address...",
+        "motherName": "Hanapin sa listahan o maglagay ng bago",
+        "fatherName": "Hanapin sa listahan o maglagay ng bago",
+        "emergencyContactName": "Buong pangalan ng emergency contact",
+        "emergencyContactNumber": "+63 XXX XXX XXXX",
+        "emergencyContactRelationship": "hal. Kapatid, Kaibigan, Kamag-anak...",
+        "idNumber": "Ilagay ang ID Number",
+        "philhealthNumber": "XX-XXXXXXXXX-X",
+        "sssNumber": "XX-XXXXXXX-X",
+        "tinNumber": "XXX-XXX-XXX-XXX",
+        "votersIdNumber": "Ilagay ang Voter's ID Number",
+        "precinctNumber": "Ilagay ang precinct number...",
+        "medicalConditions": "Ilista ang anumang kondisyong medikal, gamot, o alalahanin sa kalusugan...",
+        "allergies": "Ilista ang anumang kilalang allergy (pagkain, gamot, kapaligiran)..."
+      },
+      "options": {
+        "selectGender": "Pumili ng Kasarian",
+        "selectCivilStatus": "Pumili ng Sibil na Katayuan",
+        "selectEmploymentStatus": "Pumili ng Katayuang Pangtrabaho",
+        "selectIdType": "Pumili ng Uri ng ID",
+        "selectSuffix": "Pumili ng Suffix",
+        "selectPurok": "Pumili ng Purok"
+      },
+      "specialClassifications": {
+        "title": "Espesyal na Klasipikasyon",
+        "description": "Lagyan ng tsek ang naaangkop:",
+        "seniorCitizen": "Senior Citizen (60+)",
+        "personWithDisability": "Taong May Kapansanan",
+        "indigenousPeople": "Katutubong Mamamayan",
+        "fourPsBeneficiary": "Benepisyaryo ng 4Ps",
+        "disabilityType": "Uri ng Kapansanan",
+        "indigenousGroup": "Grupong Katutubo",
+        "fourPsHouseholdId": "4Ps Household ID",
+        "disabilityTypePlaceholder": "Tukuyin ang uri ng kapansanan...",
+        "indigenousGroupPlaceholder": "Tukuyin ang grupong katutubo...",
+        "fourPsHouseholdIdPlaceholder": "Ilagay ang 4Ps Household ID..."
+      },
+      "profilePhoto": {
+        "upload": "Mag-upload ng Larawan ng Profile",
+        "clickToBrowse": "I-click upang pumili o i-drag and drop",
+        "uploadError": "Nabigong mag-upload ng larawan."
+      },
+      "actions": {
+        "saveDraft": "I-save ang Draft",
+        "savingDraft": "Sini-save ang Draft...",
+        "cancel": "Kanselahin",
+        "register": "Irehistro ang Residente",
+        "update": "I-update ang Residente",
+        "registering": "Ini-save...",
+        "updating": "Ina-update...",
+        "close": "Isara"
+      },
+      "validation": {
+        "required": "Kailangang punan ang patlang na ito",
+        "email": "Maglagay ng wastong email address",
+        "minLength": "Dapat ay hindi bababa sa {{min}} karakter",
+        "maxLength": "Dapat ay hindi hihigit sa {{max}} karakter",
+        "invalidDate": "Maglagay ng wastong petsa",
+        "invalidPhone": "Maglagay ng wastong numero ng telepono"
+      },
+      "messages": {
+        "loadingResident": "Kinukuha ang datos ng residente...",
+        "loadingReferenceData": "Kinukuha ang reference data...",
+        "duplicateWarning": "May nakitang {{count}} posibleng duplicate. Pakisigurado na ito ay hindi doble.",
+        "duplicatesFound": "Mga kaparehong residente na natagpuan:",
+        "unsavedChanges": "May hindi naisave na pagbabago. Sigurado ka bang nais mong umalis? Mawawala ang iyong progreso.",
+        "unsavedChangesEdit": "Mawawala ang anumang hindi naisave na pagbabago. Sigurado ka bang nais mong umalis?",
+        "draftSaved": "Matagumpay na naisave ang draft!",
+        "draftSaveError": "Nabigong i-save ang draft. Pakisubukang muli.",
+        "createSuccess": "Matagumpay na nairehistro ang residente!",
+        "updateSuccess": "Matagumpay na na-update ang residente!",
+        "createError": "Nabigong i-save ang residente. Pakisubukang muli.",
+        "updateError": "Nabigong i-update ang residente. Pakisubukang muli.",
+        "validationError": "Hindi pumasa sa beripikasyon: {{errors}}",
+        "networkError": "Hindi makakonekta sa server. Pakisuri ang iyong koneksyon.",
+        "notFound": "Hindi natagpuan ang residente",
+        "invalidId": "Hindi wasto ang ibinigay na resident ID.",
+        "loadError": "Hindi makuha ang datos ng residente."
+      }
+    }
+  }
+}

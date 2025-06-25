@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { SuggestionsService } from "../../services/suggestions.service";
 import type { CreateSuggestionData } from "../../services/suggestion.types";
-import Breadcrumb from "../global/Breadcrumb";
+import Breadcrumb from "../_global/Breadcrumb";
 
 interface SuggestionFormData {
   // Personal Information

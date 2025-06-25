@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiInfo } from 'react-icons/fi';
 import { apiService } from '../../services';
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 
 interface CertificateOfIndigencyFormProps {
   onNavigate: (page: string) => void;
@@ -95,7 +95,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           age: 39,
           civil_status: 'MARRIED',
           nationality: 'Filipino',
-          complete_address: 'Purok 1, Barangay San Miguel, Quezon City',
+          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
           mobile_number: '+63 912 345 6789'
         },
         {
@@ -107,7 +107,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           age: 34,
           civil_status: 'SINGLE',
           nationality: 'Filipino',
-          complete_address: 'Purok 2, Barangay San Miguel, Quezon City',
+          complete_address: 'Purok 2, Brgy. Sikatuna Village, Quezon City',
           mobile_number: '+63 923 456 7890'
         },
         {
@@ -119,7 +119,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           age: 45,
           civil_status: 'MARRIED',
           nationality: 'Filipino',
-          complete_address: 'Purok 3, Barangay San Miguel, Quezon City',
+          complete_address: 'Purok 3, Brgy. Sikatuna Village, Quezon City',
           mobile_number: '+63 934 567 8901'
         },
         {
@@ -131,7 +131,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           age: 29,
           civil_status: 'SINGLE',
           nationality: 'Filipino',
-          complete_address: 'Purok 4, Barangay San Miguel, Quezon City',
+          complete_address: 'Purok 4, Brgy. Sikatuna Village, Quezon City',
           mobile_number: '+63 945 678 9012'
         },
         {
@@ -143,7 +143,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           age: 41,
           civil_status: 'WIDOWED',
           nationality: 'Filipino',
-          complete_address: 'Purok 1, Barangay San Miguel, Quezon City',
+          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
           mobile_number: '+63 956 789 0123'
         }
       ];

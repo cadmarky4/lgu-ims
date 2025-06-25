@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { ReportsService } from "../../services/reports.service";
+import { ReportsService } from "../../services/reports/reports.service";
 import type {
   StatisticsOverview,
   FilterOptions,
-} from "../../services/reports.types";
+} from "../../services/reports/reports.types";
 
 export default function ReportsPageSimple() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");

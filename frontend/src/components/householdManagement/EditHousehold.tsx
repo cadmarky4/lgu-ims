@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiX, FiTrash2 } from 'react-icons/fi';
-import { HouseholdsService } from '../../services/households.service';
-import { ResidentsService } from '../../services/residents.service';
-import { useNotificationHelpers } from '../global/NotificationSystem';
-import { type HouseholdFormData, type Household } from '../../services/household.types';
-import { type Resident } from '../../services/resident.types'
+import { HouseholdsService } from '../../services/households/households.service';
+import { ResidentsService } from '../../services/residents/useResidents';
+import { useNotificationHelpers } from '../_global/NotificationSystem';
+import { type HouseholdFormData, type Household } from '../../services/households/households.types';
+import { type Resident } from '../../services/residents/residents.types'
 
 // Common relationship options
 const RELATIONSHIP_OPTIONS = [

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck, FiCalendar, FiFileText, FiUser } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 
 interface FileLeaveProps {
   onClose: () => void;

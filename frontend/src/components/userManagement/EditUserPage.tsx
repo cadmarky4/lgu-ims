@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiSave, FiUser } from 'react-icons/fi';
-import { UsersService } from '../../services/users.service';
-import type { User, UserFormData } from '../../services/user.types';
+import { UsersService } from '../../services/users/users.service';
+import type { User, UserFormData } from '../../services/users/users.types';
 
 const EditUserPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 // import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter, FiChevronRight } from 'react-icons/fi';
 import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
+import Breadcrumb from '../_global/Breadcrumb'; // Import your existing breadcrumb component
 import EditBarangayOfficial from './EditBarangayOfficial';
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficial } from '../../services/barangayOfficials.types';
+import type { BarangayOfficial } from '../../services/officials/barangayOfficials.types';
 import FileLeave from './FileLeave';
-import { STORAGE_BASE_URL } from '../../services/storage.service';
+import { STORAGE_BASE_URL } from '../../services/__shared/_storage/storage.service';
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');

@@ -13,7 +13,7 @@ import ResponsiveAreaChart from "./ResponsiveAreaChart";
 import ResponsiveBarGraph from "./ResponsiveBarGraph";
 import ResponsivePieChart from "./ResponsivePieChart";
 import ResponsiveServicesTable from "./ResponsiveServicesTable";
-import { ReportsService } from "../../services/reports.service";
+import { ReportsService } from "../../services/reports/reports.service";
 import type {
   AgeGroupDistribution,
   SpecialPopulationRegistry,
@@ -22,8 +22,8 @@ import type {
   DocumentTypesIssued,
   MostRequestedService,
   FilterOptions,
-} from "../../services/reports.types";
-import Breadcrumb from "../global/Breadcrumb";
+} from "../../services/reports/reports.types";
+import Breadcrumb from "../_global/Breadcrumb";
 
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
