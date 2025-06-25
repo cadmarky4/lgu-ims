@@ -2,30 +2,87 @@ import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
+import type { BarangayOfficial, BarangayOfficialFormData } from '../../services/barangayOfficials.types';
 import { uploadFile } from '../../services/storage.service';
+import { useParams } from 'react-router-dom';
 
-interface EditBarangayOfficialProps {
-  onClose: () => void;
-  onSave: (officialData: any) => void;
-  official?: any;
-}
+// interface EditBarangayOfficialProps {
+//   onClose: () => void;
+//   onSave: (officialData: any) => void;
+//   official?: any;
+// }
 
-const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, onSave, official }) => {  // Loading and error states for API calls
+const EditBarangayOfficial = () => {  // Loading and error states for API calls
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const [official, setOfficial] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleOnClose = () => {
+
+  }
+
+  const handleOnSave = (official: any) => {
+
+  }
+
+  // Transform API data to form data format
+  const convertOfficialToFormData = (official: BarangayOfficial): BarangayOfficialFormData => ({
+    prefix: official.prefix,
+    firstName: official.first_name,
+    middleName: official.middle_name,
+    lastName: official.last_name,
+    gender: official.gender,
+    contactNumber: official.contact_number,
+    emailAddress: official.email_address,
+    completeAddress: official.complete_address,
+    civilStatus: official.civil_status,
+    educationalBackground: official.educational_background,
+  
+    position: official.position,
+  
+    termStart: official.term_start,
+    termEnd: official.term_end,
+    termNumber: official.term_number,
+    isCurrentTerm: official.is_current_term,
+  
+    electionDate: official.election_date,
+    votesReceived: official.votes_received,
+    isElected: official.is_elected,
+    appointmentDocument: official.appointment_document,
+  
+    status: official.status,
+    statusDate: official.status_date,
+    statusReason: official.status_reason,
+  
+    workExperience: official.work_experience,
+    skillsExpertise: official.skills_expertise,
+    trainingsAttended: official.trainings_attended,
+    certifications: official.certifications,
+    majorAccomplishments: official.major_accomplishments,
+    projectsInitiated: official.projects_initiated,
+    performanceNotes: official.performance_notes,
+    performanceRating: official.performance_rating,
+  
+    emergencyContactName: official.emergency_contact_name,
+    emergencyContactNumber: official.emergency_contact_number,
+    emergencyContactRelationship: official.emergency_contact_relationship,
+  
+    documents: official.documents,
+  
+    oathTakingDate: official.oath_taking_date,
+    oathTakingNotes: official.oath_taking_notes,
+  
+    isActive: official.is_active,
+  
+    profile_photo: official.profile_photo,
+  });
+  
 
   console.log(official);
-
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -101,33 +158,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
       console.error('Failed to clear draft:', error);
     }
   };
-  // Load draft data on component mount
-  useEffect(() => {
-    loadDraftData();
-    
-    // Initialize form data from official prop if provided
-    if (official) {
-      setFormData({
-        prefix: official.prefix || 'Mr.',
-        firstName: official.firstName || '',
-        middleName: official.middleName || '',
-        lastName: official.lastName || '',
-        gender: official.gender || 'Male',
-        birthDate: official.birthDate || '',
-        contactNumber: official.contactNumber || '',
-        emailAddress: official.emailAddress || '',
-        completeAddress: official.completeAddress || '',
-        civilStatus: official.civilStatus || 'Single',
-        educationalBackground: official.educationalBackground || '',
-        position: official.position || 'KAGAWAD',
-        committeeAssignment: official.committeeAssignment || '',
-        termStart: official.termStart || '',
-        termEnd: official.termEnd || '',
-        isActive: official.isActive !== undefined ? official.isActive : true,
-        profile_photo: official.profile_photo || null
-      });
-    }
-  }, [official]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -177,11 +208,11 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
         // Creating: create new official
         result = await barangayOfficialsService.createBarangayOfficial(submitData);
       }
-      onSave(result);
+      handleOnSave(result);
       clearDraft();
       showToast(`Official ${official?.id ? 'updated' : 'created'} successfully!`, 'success');
       setTimeout(() => {
-        onClose();
+        handleOnClose();
       }, 1000);
     } catch (err: unknown) {
       console.error('Error saving official:', err);
@@ -198,6 +229,104 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
       setIsSubmitting(false);
     }
   };
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // load officials
+  useEffect(() => {
+      const loadOfficial = async () => {
+        if (!id) {
+          console.error('No official ID provided');
+          setError('Official ID not provided');
+          setIsLoading(false);
+          return;
+        }
+        try {
+          console.log('Loading official with ID:', id);
+          setIsLoading(true);
+          setError(null);
+  
+          // Validate ID is a valid number
+          const officialId = parseInt(id);
+          if (isNaN(officialId) || officialId <= 0) {
+            console.error('Invalid official ID:', id);
+            setError('Invalid official ID');
+            setIsLoading(false);
+            return;
+          }
+  
+          // Use the getResident method to fetch resident data
+          console.log('Fetching official data from API...');
+          const officialData = await barangayOfficialsService.getBarangayOfficial(officialId);
+          console.log('Official data received:', officialData);
+  
+          if (!officialData) {
+            console.error('No official data received');
+            setError('Official not found');
+            setIsLoading(false);
+            return;
+          }
+          setOfficial(officialData);
+  
+          // Populate form with resident data using the conversion function
+          console.log('Converting resident data to form data...');
+          const formDataConverted = convertOfficialToFormData(officialData);
+          console.log('Form data converted:', formDataConverted);
+          setFormData(formDataConverted); 
+  
+          console.log('Resident loaded successfully');
+        } catch (error: any) {
+          console.error('Failed to load resident:', error);
+  
+          // Check if it's a 404 error (resident not found)
+          if (error.message?.includes('404') || error.message?.includes('not found')) {
+            setError('Resident not found');
+          } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+            setError('Unable to connect to server. Please check your connection.');
+          } else {
+            setError('Failed to load resident data. Please try again.');
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+  
+      loadOfficial();
+    }, [id]);
+
+  // Load draft data on component mount
+  useEffect(() => {
+    loadDraftData();
+    
+    // Initialize form data from official prop if provided
+    if (official) {
+      setFormData({
+        prefix: official.prefix || 'Mr.',
+        firstName: official.firstName || '',
+        middleName: official.middleName || '',
+        lastName: official.lastName || '',
+        gender: official.gender || 'Male',
+        birthDate: official.birthDate || '',
+        contactNumber: official.contactNumber || '',
+        emailAddress: official.emailAddress || '',
+        completeAddress: official.completeAddress || '',
+        civilStatus: official.civilStatus || 'Single',
+        educationalBackground: official.educationalBackground || '',
+        position: official.position || 'KAGAWAD',
+        committeeAssignment: official.committeeAssignment || '',
+        termStart: official.termStart || '',
+        termEnd: official.termEnd || '',
+        isActive: official.isActive !== undefined ? official.isActive : true,
+        profile_photo: official.profile_photo || null
+      });
+    }
+  }, [official]);
 
   return (
     <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
@@ -557,7 +686,7 @@ const EditBarangayOfficial: React.FC<EditBarangayOfficialProps> = ({ onClose, on
             <div className="flex space-x-4">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleOnClose}
                 disabled={isSubmitting}
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
               >

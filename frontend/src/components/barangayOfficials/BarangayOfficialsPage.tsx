@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 // import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter, FiChevronRight } from 'react-icons/fi';
-import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter } from 'react-icons/fi';
+import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFilter } from 'react-icons/fi';
 import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 import EditBarangayOfficial from './EditBarangayOfficial';
 import { barangayOfficialsService } from '../../services';
 import type { BarangayOfficial } from '../../services/barangayOfficials.types';
 import FileLeave from './FileLeave';
 import { STORAGE_BASE_URL } from '../../services/storage.service';
+import { useNavigate } from 'react-router-dom';
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,7 +22,7 @@ const BarangayOfficialsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showFileLeave, setShowFileLeave] = useState(false);
-  // const [selectedOfficial, setSelectedOfficial] = useState(null);
+  const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -214,17 +215,17 @@ const BarangayOfficialsPage: React.FC = () => {
   }
 
   // Show Edit Form component
-  if (showEditForm) {
-    return (
-      <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <EditBarangayOfficial
-          onClose={() => setShowEditForm(false)}
-          onSave={handleEditOfficial}
-          official={selectedOfficial}
-        />
-      </div>
-    );
-  }
+  // if (showEditForm) {
+  //   return (
+  //     <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+  //       <EditBarangayOfficial
+  //         onClose={() => setShowEditForm(false)}
+  //         onSave={handleEditOfficial}
+  //         official={selectedOfficial}
+  //       />
+  //     </div>
+  //   );
+  // }
 
   // Show Officer Selection component
 
@@ -360,7 +361,7 @@ const BarangayOfficialsPage: React.FC = () => {
             {filteredOfficials.map((official, index) => (
               <div
                 key={official.id}
-                onClick={() => handleSelectOfficerToEdit(official)}
+                onClick={() => navigate(`/officials/edit/${official.id}`)}
                 className={`border border-gray-200 rounded-lg p-4 hover:border-smblue-400 hover:shadow-md transition-all duration-200 cursor-pointer group transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                 style={{ animationDelay: `${400 + (index * 50)}ms` }}
               >
@@ -473,9 +474,9 @@ const BarangayOfficialsPage: React.FC = () => {
           <div className="space-y-4">            <button
             onClick={() => {
               setSelectedOfficial(null); // Set to null for creating new official
-              setShowEditForm(true);
+              navigate('/officials/add');
             }}
-            className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
+            className="cursor-pointer w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
           >
             <FiUsers className="w-5 h-5 text-white" />
             <span className="font-medium text-white">Add New Official</span>
@@ -485,7 +486,7 @@ const BarangayOfficialsPage: React.FC = () => {
                 console.log('Update Officers button clicked');
                 setShowOfficerSelection(true);
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
+              className="cursor-pointer w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
             >
               <FiEdit className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
