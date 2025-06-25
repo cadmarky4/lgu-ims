@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { documentsService } from '../../services/documents/documents.service';
 import type { DocumentRequest } from '../../services/documents/documents.types';
 
-interface CertificateHeaderProps {}
+// interface CertificateHeaderProps {}
 
-const CertificateHeader: React.FC<CertificateHeaderProps> = () => (
+const CertificateHeader = () => (
   <div className="text-center mb-8">
     <div className="mb-4">
       <h1 className="text-lg font-bold text-gray-800">REPUBLIC OF THE PHILIPPINES</h1>

@@ -6,6 +6,7 @@ import {
   GenderSchema,
   NationalitySchema,
   ReligionSchema,
+  VoterStatusSchema,
   type CivilStatus,
   type EducationalAttainment,
   type EmploymentStatus,
@@ -26,12 +27,12 @@ export const ResidentFormDataSchema = z.object({
   age: z.string().optional(),
   birth_place: z.string().min(1, 'Birth place is required'),
 
-  gender: GenderSchema.default('MALE'),
-  civil_status: CivilStatusSchema.default('SINGLE'),
-  nationality: NationalitySchema.default('FILIPINO'),
-  religion: ReligionSchema.default('CATHOLIC'),
-  employment_status: EmploymentStatusSchema.default('UNEMPLOYED'),
-  educational_attainment: EducationalAttainmentSchema.default('HIGH_SCHOOL'),
+  gender: GenderSchema,
+  civil_status: CivilStatusSchema,
+  nationality: NationalitySchema,
+  religion: ReligionSchema,
+  employment_status: EmploymentStatusSchema,
+  educational_attainment: EducationalAttainmentSchema,
   
   // Contact Information
   mobile_number: z.string().optional(),
@@ -62,7 +63,7 @@ export const ResidentFormDataSchema = z.object({
   sss_number: z.string().optional(),
   tin_number: z.string().optional(),
   voters_id_number: z.string().optional(),
-  voter_status: z.string().optional(), // Make optional, handle default in defaultValues
+  voter_status: VoterStatusSchema,
   precinct_number: z.string().optional(),
   
   // Employment
@@ -76,12 +77,12 @@ export const ResidentFormDataSchema = z.object({
   
   // Special Classifications - Make all optional
   special_classifications:  z.object({
-    senior_citizen: z.boolean().default(false),
-    person_with_disability: z.boolean().default(false),
+    senior_citizen: z.boolean(),
+    person_with_disability: z.boolean(),
     disability_type: z.string().nullable().optional(),
-    indigenous_people: z.boolean().default(false),
+    indigenous_people: z.boolean(),
     indigenous_group: z.string().nullable().optional(),
-    four_ps_beneficiary: z.boolean().default(false),
+    four_ps_beneficiary: z.boolean(),
     four_ps_household_id: z.string().nullable().optional(),
   }),
   
@@ -152,12 +153,12 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     birth_date: resident.birth_date ? new Date(resident.birth_date).toISOString().slice(0, 10) : '',
     age: resident.age?.toString() || '',
     birth_place: resident.birth_place,
-    gender: resident.gender as Gender,
-    civil_status: resident.civil_status as CivilStatus,
-    nationality: resident.nationality as Nationality,
-    religion: resident.religion as Religion,
-    employment_status: resident.employment_status as EmploymentStatus,
-    educational_attainment: resident.educational_attainment as EducationalAttainment,
+    gender: resident.gender as Gender || 'MALE',
+    civil_status: resident.civil_status as CivilStatus || 'SINGLE',
+    nationality: resident.nationality as Nationality || 'FILIPINO',
+    religion: resident.religion as Religion || 'CATHOLIC',
+    employment_status: resident.employment_status as EmploymentStatus || 'UNEMPLOYED',
+    educational_attainment: resident.educational_attainment as EducationalAttainment || 'HIGH_SCHOOL',
     mobile_number: resident.mobile_number || '',
     landline_number: resident.telephone_number || '',
     email_address: resident.email_address || '',

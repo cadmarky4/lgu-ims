@@ -40,5 +40,5 @@ export interface CreateProjectData {
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {
+  nonce?: string,
 }
-

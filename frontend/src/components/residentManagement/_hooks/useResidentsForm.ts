@@ -45,7 +45,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
   });
 
   const { watch, setValue, reset } = form;
-  const watchedValues = watch(['firstName', 'lastName', 'birthDate']);
+  const watchedValues = watch(['first_name', 'last_name', 'birth_date']);
   
   // Queries and mutations
   const { data: resident, isLoading: isLoadingResident } = useResident(
@@ -133,7 +133,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
         folder: 'residents',
         isPublic: true 
       });
-      setValue('profilePhotoUrl', result.url);
+      setValue('profile_photo_url', result.url);
       setProfilePhotoPreview(result.url);
       return result.url;
     } catch (error) {
