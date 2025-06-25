@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
 import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficial, BarangayOfficialFormData } from '../../services/barangayOfficials.types';
+import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
 import { uploadFile } from '../../services/storage.service';
 import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { convertOfficialToFormData } from './utils/convertOfficialToFormData';
 
 // interface EditBarangayOfficialProps {
 //   onClose: () => void;
@@ -19,70 +21,23 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
   const [isLoaded, setIsLoaded] = useState(false);
   const { id } = useParams<{ id: string }>();
   const [official, setOfficial] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // comment out muna, l8tr na lang gamitin hihi
+  // const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleOnClose = () => {
-
+    navigate('/officials');
   }
 
-  const handleOnSave = (official: any) => {
+  const handleOnSave = async (official: any) => {
+    try {
+      console.log('Updated official data:', official);
+    } catch (err) {
+      console.error('Error handling official update:', err);
+    }
+  };
 
-  }
-
-  // Transform API data to form data format
-  const convertOfficialToFormData = (official: BarangayOfficial): BarangayOfficialFormData => ({
-    prefix: official.prefix,
-    firstName: official.first_name,
-    middleName: official.middle_name,
-    lastName: official.last_name,
-    gender: official.gender,
-    contactNumber: official.contact_number,
-    emailAddress: official.email_address,
-    completeAddress: official.complete_address,
-    civilStatus: official.civil_status,
-    educationalBackground: official.educational_background,
-  
-    position: official.position,
-  
-    termStart: official.term_start,
-    termEnd: official.term_end,
-    termNumber: official.term_number,
-    isCurrentTerm: official.is_current_term,
-  
-    electionDate: official.election_date,
-    votesReceived: official.votes_received,
-    isElected: official.is_elected,
-    appointmentDocument: official.appointment_document,
-  
-    status: official.status,
-    statusDate: official.status_date,
-    statusReason: official.status_reason,
-  
-    workExperience: official.work_experience,
-    skillsExpertise: official.skills_expertise,
-    trainingsAttended: official.trainings_attended,
-    certifications: official.certifications,
-    majorAccomplishments: official.major_accomplishments,
-    projectsInitiated: official.projects_initiated,
-    performanceNotes: official.performance_notes,
-    performanceRating: official.performance_rating,
-  
-    emergencyContactName: official.emergency_contact_name,
-    emergencyContactNumber: official.emergency_contact_number,
-    emergencyContactRelationship: official.emergency_contact_relationship,
-  
-    documents: official.documents,
-  
-    oathTakingDate: official.oath_taking_date,
-    oathTakingNotes: official.oath_taking_notes,
-  
-    isActive: official.is_active,
-  
-    profile_photo: official.profile_photo,
-  });
-  
-
-  console.log(official);
+  // console.log(official);
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -98,6 +53,7 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
       setToast({ show: false, message: '', type: 'success' });
     }, 3000);
   };
+
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -241,15 +197,16 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
   // load officials
   useEffect(() => {
       const loadOfficial = async () => {
+        // NO ID
         if (!id) {
           console.error('No official ID provided');
           setError('Official ID not provided');
-          setIsLoading(false);
+          // setIsLoading(false);
           return;
         }
         try {
           console.log('Loading official with ID:', id);
-          setIsLoading(true);
+          // setIsLoading(true);
           setError(null);
   
           // Validate ID is a valid number
@@ -257,7 +214,7 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
           if (isNaN(officialId) || officialId <= 0) {
             console.error('Invalid official ID:', id);
             setError('Invalid official ID');
-            setIsLoading(false);
+            // setIsLoading(false);
             return;
           }
   
@@ -269,7 +226,7 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
           if (!officialData) {
             console.error('No official data received');
             setError('Official not found');
-            setIsLoading(false);
+            // setIsLoading(false);
             return;
           }
           setOfficial(officialData);
@@ -279,6 +236,7 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
           const formDataConverted = convertOfficialToFormData(officialData);
           console.log('Form data converted:', formDataConverted);
           setFormData(formDataConverted); 
+          console.log('New form data:', formData);
   
           console.log('Resident loaded successfully');
         } catch (error: any) {
@@ -293,39 +251,17 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
             setError('Failed to load resident data. Please try again.');
           }
         } finally {
-          setIsLoading(false);
+          // setIsLoading(false);
         }
       };
   
       loadOfficial();
+      console.log("I LIKE PIZZAS");
     }, [id]);
 
   // Load draft data on component mount
   useEffect(() => {
     loadDraftData();
-    
-    // Initialize form data from official prop if provided
-    if (official) {
-      setFormData({
-        prefix: official.prefix || 'Mr.',
-        firstName: official.firstName || '',
-        middleName: official.middleName || '',
-        lastName: official.lastName || '',
-        gender: official.gender || 'Male',
-        birthDate: official.birthDate || '',
-        contactNumber: official.contactNumber || '',
-        emailAddress: official.emailAddress || '',
-        completeAddress: official.completeAddress || '',
-        civilStatus: official.civilStatus || 'Single',
-        educationalBackground: official.educationalBackground || '',
-        position: official.position || 'KAGAWAD',
-        committeeAssignment: official.committeeAssignment || '',
-        termStart: official.termStart || '',
-        termEnd: official.termEnd || '',
-        isActive: official.isActive !== undefined ? official.isActive : true,
-        profile_photo: official.profile_photo || null
-      });
-    }
   }, [official]);
 
   return (
