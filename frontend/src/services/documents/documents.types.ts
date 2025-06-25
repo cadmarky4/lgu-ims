@@ -38,19 +38,19 @@ export const PaymentStatusSchema = z.enum([
 export const DocumentFormDataSchema = z.object({
   // Basic Document Information
   document_type: DocumentTypeSchema,
-  resident_id: z.number().min(1, 'documents.form.error.residentRequired'),
-  applicant_name: z.string().min(1, 'documents.form.error.applicantNameRequired'),
-  purpose: z.string().min(1, 'documents.form.error.purposeRequired'),
+  resident_id: z.number().min(1, 'Resident is required'),
+  applicant_name: z.string().min(1, 'Applicant name is required'),
+  purpose: z.string().min(1, 'Purpose is required'),
   
   // Contact Information
   applicant_address: z.string().optional(),
   applicant_contact: z.string().optional(),
-  applicant_email: z.string().email('documents.form.error.invalidEmail').optional().or(z.literal('')),
+  applicant_email: z.string().email('Invalid email address').optional().or(z.literal('')),
   
   // Request Details
   priority: DocumentPrioritySchema.default('NORMAL'),
   needed_date: z.string().optional(),
-  processing_fee: z.number().min(0, 'documents.form.error.invalidFee').default(0),
+  processing_fee: z.number().min(0, 'Processing fee must be a valid amount').default(0),
   
   // Document Specific Fields (all nullable for unified table)
   // Barangay Clearance specific
@@ -86,6 +86,7 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
   
   // System tracking fields
   document_number: z.string().optional(),
+  serial_number: z.string().optional(), // Auto-generated serial number for each document
   request_date: z.string(),
   processed_date: z.string().optional(),
   approved_date: z.string().optional(), 
@@ -199,7 +200,7 @@ export const ProcessDocumentDataSchema = z.object({
 });
 
 export const RejectDocumentDataSchema = z.object({
-  reason: z.string().min(1, 'documents.form.error.reasonRequired'),
+  reason: z.string().min(1, 'Rejection reason is required'),
   notes: z.string().optional(),
 });
 
