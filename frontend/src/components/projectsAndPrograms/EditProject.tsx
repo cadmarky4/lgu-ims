@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, Calendar, Plus, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { FiChevronRight } from 'react-icons/fi';
-import type { Project, UpdateProjectData, CreateProjectData } from '../../services/project.types';
-import { ProjectsService } from '../../services/projects.service';
-import Breadcrumb from '../global/Breadcrumb';
+import type { Project, UpdateProjectData, CreateProjectData } from '../../services/projects/project.types';
+import { ProjectsService } from '../../services/projects/projects.service';
+import Breadcrumb from '../_global/Breadcrumb';
 
 interface EditProjectProps {
   onClose: () => void;

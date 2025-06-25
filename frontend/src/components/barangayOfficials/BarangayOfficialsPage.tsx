@@ -7,18 +7,16 @@ import { useNavigate } from 'react-router-dom';
 
 // 3. Project services & types
 import { barangayOfficialsService } from '../../services';
-import { STORAGE_BASE_URL } from '../../services/storage.service';
-// import type { BarangayOfficial } from '../../services/barangayOfficials.types';
+import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 
 // 4. Local components
-import Breadcrumb from '../global/Breadcrumb';
+import Breadcrumb from '../_global/Breadcrumb';
 // import EditBarangayOfficial from './EditBarangayOfficial';
 import FileLeave from './FileLeave';
 
 // 5. Utils
 import { getStatusBadgeColor } from './utils/getStatusBadgeColor';
 import { transformApiToComponent } from './utils/transformApiToComponent';
-
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');

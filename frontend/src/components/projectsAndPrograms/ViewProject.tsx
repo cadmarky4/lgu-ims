@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Calendar, Users, DollarSign, TrendingUp, MapPin, Flag, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
-import { type Project } from '../../services/project.types';
+import { type Project } from '../../services/projects/project.types';
 
 interface ViewProjectProps {
   project: Project;
@@ -56,7 +56,7 @@ const ViewProject: React.FC<ViewProjectProps> = ({ project, isOpen, onClose }) =
 
   // Sample additional data for the project view
   const projectDetails = {
-    location: 'Barangay San Miguel, Zone 1-3',
+    location: 'Brgy. Sikatuna Village, Zone 1-3',
     projectManager: 'Juan Dela Cruz',
     expectedBeneficiaries: '12,000 residents',
     fundingSource: 'Barangay Fund',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { UsersService } from '../../services/users.service';
-import type { UserFormData, User } from '../../services/user.types';
+import { UsersService } from '../../services/users/users.service';
+import type { UserFormData, User } from '../../services/users/users.types';
 
 interface AddNewUserProps {
   onClose: () => void;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Calendar, DollarSign, TrendingUp, ChevronDown, ChevronUp, Eye, Edit3 } from 'lucide-react';
-import { type Project } from '../../services/project.types';
+import { type Project } from '../../services/projects/project.types';
 
 interface ProjectPortfolioProps {
   projects: Project[];

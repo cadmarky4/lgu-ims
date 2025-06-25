@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiSave, FiUser } from 'react-icons/fi';
-import { UsersService } from '../../services/users.service';
-import type { User, UserFormData } from '../../services/user.types';
+import { UsersService } from '../../services/users/users.service';
+import type { User, UserFormData } from '../../services/users/users.types';
 
 interface EditUserProps {
   userId: number;

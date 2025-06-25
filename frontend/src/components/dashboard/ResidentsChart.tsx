@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { DashboardService, type ResidentDemographics } from '../../services/dashboard.service';
+import { DashboardService, type ResidentDemographics } from '../../services/dashboard/dashboard.service';
 
 const ResidentsChart: React.FC = () => {
   const [demographics, setDemographics] = useState<ResidentDemographics>({
