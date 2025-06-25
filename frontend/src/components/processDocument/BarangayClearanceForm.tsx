@@ -1,35 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft } from 'react-icons/fi';
-import { apiService } from '../../services';
-import { documentsService }from '../../services/documents/documents.service';
+import { useResidents } from '../../services/residents/useResidents';
+import { useDocumentForm } from './_hooks/useDocumentForm';
+import { type DocumentFormData } from '../../services/documents/documents.types';
+import { type Resident } from '../../services/residents/residents.types';
 import Breadcrumb from '../_global/Breadcrumb';
 
 interface BarangayClearanceFormProps {
   onNavigate: (page: string) => void;
 }
 
-interface Resident {
-  id: number;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  birth_date: string;
-  age?: number;
-  civil_status: string;
-  nationality: string;
-  complete_address: string;
-  mobile_number?: string;
-  email_address?: string;
-}
-
 const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigate }) => {
   const [step, setStep] = useState(1);
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -40,6 +24,29 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
     additionalInfo: '',
     urgentRequest: false
   });
+
+  // Use our new document form hook
+  const documentForm = useDocumentForm({
+    documentType: 'BARANGAY_CLEARANCE',
+    onSuccess: (document) => {
+      console.log('Document created successfully:', document);
+      setStep(3);
+    },
+    onError: (error) => {
+      console.error('Failed to create document:', error);
+    }
+  });
+
+  // Use residents query for search  
+  const { 
+    data: residentsData, 
+    isLoading: searchLoading 
+  } = useResidents({ 
+    search: searchTerm, 
+    per_page: 10 
+  });
+
+  const residents = residentsData?.data || [];
 
   const validIds = [
     'National ID (PhilSys)',
@@ -83,109 +90,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchResidents();
-    } else {
-      setResidents([]);
-    }
-  }, [searchTerm]);
-  const searchResidents = async () => {
-    try {
-      setLoading(true);
-      
-      // Use real API to search residents
-      const response = await apiService.getResidents({ 
-        search: searchTerm, 
-        per_page: 10 
-      });
-      
-      setResidents(response.data || []);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
-      
-      // Fallback to placeholder data for development/testing
-      const placeholderResidents = [
-        {
-          id: 1,
-          first_name: 'Juan',
-          last_name: 'Dela Cruz',
-          middle_name: 'Santos',
-          birth_date: '1985-03-15',
-          age: 39,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 912 345 6789'
-        },
-        {
-          id: 2,
-          first_name: 'Maria',
-          last_name: 'Gonzalez',
-          middle_name: 'Reyes',
-          birth_date: '1990-07-22',
-          age: 34,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 2, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 923 456 7890'
-        },
-        {
-          id: 3,
-          first_name: 'Roberto',
-          last_name: 'Garcia',
-          middle_name: 'Cruz',
-          birth_date: '1978-11-08',
-          age: 45,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 3, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 934 567 8901'
-        },
-        {
-          id: 4,
-          first_name: 'Ana',
-          last_name: 'Torres',
-          middle_name: 'Lopez',
-          birth_date: '1995-01-12',
-          age: 29,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 4, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 945 678 9012'
-        },
-        {
-          id: 5,
-          first_name: 'Carlos',
-          last_name: 'Mendoza',
-          middle_name: 'Silva',
-          birth_date: '1982-09-30',
-          age: 41,
-          civil_status: 'WIDOWED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 956 789 0123'
-        }
-      ];
-
-      // Filter residents based on search term
-      const filteredResidents = placeholderResidents.filter(resident => {
-        const fullName = `${resident.first_name} ${resident.middle_name} ${resident.last_name}`.toLowerCase();
-        return fullName.includes(searchTerm.toLowerCase()) ||
-               resident.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               resident.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-
-      setResidents(filteredResidents);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResidentSelect = (resident: Resident) => {
     setSelectedResident(resident);
     setSearchTerm(`${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.trim());
-    setResidents([]);
     setStep(2);
   };
 
@@ -195,37 +102,27 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       [field]: value
     }));
   };
+
   const handleSubmit = async () => {
     if (!selectedResident) return;
 
-    try {
-      setSubmitting(true);
-      setError(null);
+    const documentData: DocumentFormData = {
+      document_type: 'BARANGAY_CLEARANCE',
+      resident_id: selectedResident.id,
+      applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+      applicant_address: selectedResident.complete_address,
+      applicant_contact: selectedResident.mobile_number,
+      purpose: formData.purpose,
+      processing_fee: formData.urgentRequest ? 100 : 50,
+      priority: formData.urgentRequest ? 'HIGH' : 'NORMAL',
+      requirements_submitted: [formData.validIdPresented],
+      remarks: `Valid ID: ${formData.validIdPresented}, Years of Residency: ${formData.yearsOfResidency}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`,
+      // Additional fields for our schema
+      applicant_email: selectedResident.email_address || '',
+      needed_date: '',
+    };
 
-      const documentData = {
-        document_type: 'BARANGAY_CLEARANCE' as const,
-        title: `Barangay Clearance for ${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
-        resident_id: selectedResident.id,
-        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
-        applicant_address: selectedResident.complete_address,
-        applicant_contact: selectedResident.mobile_number,
-        purpose: formData.purpose,
-        processing_fee: formData.urgentRequest ? 100 : 50,
-        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
-        requirements_submitted: [formData.validIdPresented],
-        remarks: `Valid ID: ${formData.validIdPresented}, Years of Residency: ${formData.yearsOfResidency}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
-      };
-
-      const document = await documentsService.createDocument(documentData);
-      
-      console.log('Document submitted successfully:', document);
-      
-      setStep(3);
-    } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to submit request');
-    } finally {
-      setSubmitting(false);
-    }
+    await documentForm.handleSubmit(documentData);
   };
 
   const renderStep1 = () => (
@@ -251,7 +148,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
           />
         </div>
         
-        {loading && (
+        {searchLoading && (
           <div className="mt-2 text-sm text-gray-500">Searching...</div>
         )}
         
@@ -346,7 +243,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       {/* Clearance Details Form */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
-          Barangay Clearance Details
+          Barangay Clearance Detailsss
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,9 +360,16 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
           )}
         </div>
 
-        {error && (
+        {/* Display error if exists */}
+        {documentForm.error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
+            <p className="text-red-800 text-sm">{documentForm.error}</p>
+            <button 
+              onClick={documentForm.clearError}
+              className="mt-2 text-red-600 underline text-sm"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -478,13 +382,13 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || !formData.purpose || !formData.validIdPresented || !formData.yearsOfResidency || !formData.certifyingOfficial}
+            disabled={documentForm.isSubmitting || !formData.purpose || !formData.validIdPresented || !formData.yearsOfResidency || !formData.certifyingOfficial}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer no-underline"
           >
-            {submitting && (
+            {documentForm.isSubmitting && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{submitting ? 'Submitting...' : 'Submit Request'}</span>
+            <span>{documentForm.isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
           </button>
         </div>
       </div>

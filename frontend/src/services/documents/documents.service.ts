@@ -13,6 +13,7 @@ import {
   ProcessDocumentDataSchema,
   RejectDocumentDataSchema,
   ReleaseDocumentDataSchema,
+  ProcessingHistoryItemSchema,
   type Document,
   type DocumentParams,
   type DocumentStatistics,
@@ -20,6 +21,7 @@ import {
   type ProcessDocumentData,
   type RejectDocumentData,
   type ReleaseDocumentData,
+  type ProcessingHistoryItem,
   DocumentFormDataSchema, 
   type DocumentFormData 
 } from '@/services/documents/documents.types';
@@ -404,48 +406,23 @@ export class DocumentsService extends BaseApiService {
   }
 
   /**
-   * Generate QR code for document
+   * Get processing history with user roles
    */
-  async generateQRCode(id: string): Promise<string> {
+  async getProcessingHistory(id: string): Promise<ProcessingHistoryItem[]> {
     if (!id || id.trim() === '') {
       throw new Error('Invalid document ID');
     }
 
-    const responseSchema = ApiResponseSchema(z.object({
-      qr_code: z.string(),
-    }));
+    const responseSchema = ApiResponseSchema(z.array(ProcessingHistoryItemSchema));
     
     const response = await this.request(
-      `/documents/${id}/qr-code`,
-      responseSchema,
-      { method: 'POST' }
-    );
-
-    if (!response.data?.qr_code) {
-      throw new Error('Failed to generate QR code');
-    }
-
-    return response.data.qr_code;
-  }
-
-  /**
-   * Verify document using QR code
-   */
-  async verifyDocument(qrCode: string): Promise<Document> {
-    if (!qrCode.trim()) {
-      throw new Error('QR code is required');
-    }
-
-    const responseSchema = ApiResponseSchema(DocumentSchema);
-    
-    const response = await this.request(
-      `/documents/verify/${encodeURIComponent(qrCode)}`,
+      `/documents/${id}/history`,
       responseSchema,
       { method: 'GET' }
     );
 
     if (!response.data) {
-      throw new Error('Document not found or invalid QR code');
+      throw new Error('Failed to get processing history');
     }
 
     return response.data;

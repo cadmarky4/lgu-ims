@@ -1,34 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiInfo } from 'react-icons/fi';
-import { apiService } from '../../services';
+import { useResidents } from '../../services/residents/useResidents';
+import { useDocumentForm } from './_hooks/useDocumentForm';
+import { type DocumentFormData } from '../../services/documents/documents.types';
+import { type Resident } from '../../services/residents/residents.types';
 import Breadcrumb from '../_global/Breadcrumb';
 
 interface CertificateOfIndigencyFormProps {
   onNavigate: (page: string) => void;
 }
 
-interface Resident {
-  id: number;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  birth_date: string;
-  age: number;
-  civil_status: string;
-  nationality: string;
-  complete_address: string;
-  mobile_number?: string;
-  monthly_income?: number;
-}
-
 const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({ onNavigate }) => {
   const [step, setStep] = useState(1);
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -39,6 +24,29 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
     additionalInfo: '',
     declarationAgreed: false
   });
+
+  // Use our new document form hook
+  const documentForm = useDocumentForm({
+    documentType: 'CERTIFICATE_OF_INDIGENCY',
+    onSuccess: (document) => {
+      console.log('Certificate of Indigency created successfully:', document);
+      setStep(3);
+    },
+    onError: (error) => {
+      console.error('Failed to create certificate of indigency:', error);
+    }
+  });
+
+  // Use residents query for search
+  const { 
+    data: residentsData, 
+    isLoading: searchLoading 
+  } = useResidents({ 
+    search: searchTerm, 
+    per_page: 10 
+  });
+
+  const residents = residentsData?.data || [];
 
   const commonPurposes = [
     'Medical Assistance',
@@ -72,109 +80,9 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchResidents();
-    } else {
-      setResidents([]);
-    }
-  }, [searchTerm]);
-
-  const searchResidents = async () => {
-    try {
-      setLoading(true);
-      
-      // Use placeholder data for development/testing
-      const placeholderResidents = [
-        {
-          id: 1,
-          first_name: 'Juan',
-          last_name: 'Dela Cruz',
-          middle_name: 'Santos',
-          birth_date: '1985-03-15',
-          age: 39,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 912 345 6789'
-        },
-        {
-          id: 2,
-          first_name: 'Maria',
-          last_name: 'Gonzalez',
-          middle_name: 'Reyes',
-          birth_date: '1990-07-22',
-          age: 34,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 2, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 923 456 7890'
-        },
-        {
-          id: 3,
-          first_name: 'Roberto',
-          last_name: 'Garcia',
-          middle_name: 'Cruz',
-          birth_date: '1978-11-08',
-          age: 45,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 3, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 934 567 8901'
-        },
-        {
-          id: 4,
-          first_name: 'Ana',
-          last_name: 'Torres',
-          middle_name: 'Lopez',
-          birth_date: '1995-01-12',
-          age: 29,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 4, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 945 678 9012'
-        },
-        {
-          id: 5,
-          first_name: 'Carlos',
-          last_name: 'Mendoza',
-          middle_name: 'Silva',
-          birth_date: '1982-09-30',
-          age: 41,
-          civil_status: 'WIDOWED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 956 789 0123'
-        }
-      ];
-
-      // Filter residents based on search term
-      const filteredResidents = placeholderResidents.filter(resident => {
-        const fullName = `${resident.first_name} ${resident.middle_name} ${resident.last_name}`.toLowerCase();
-        return fullName.includes(searchTerm.toLowerCase()) ||
-               resident.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               resident.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-
-      setResidents(filteredResidents);
-
-      // In production, use this:
-      // const response = await apiService.getResidents({ 
-      //   search: searchTerm, 
-      //   per_page: 10 
-      // });
-      // setResidents(response.data);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResidentSelect = (resident: Resident) => {
     setSelectedResident(resident);
     setSearchTerm(`${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.trim());
-    setResidents([]);
     setStep(2);
   };
 
@@ -188,37 +96,23 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
   const handleSubmit = async () => {
     if (!selectedResident || !formData.declarationAgreed) return;
 
-    try {
-      setSubmitting(true);
-      setError(null);
+    const documentData: DocumentFormData = {
+      document_type: 'CERTIFICATE_OF_INDIGENCY',
+      resident_id: selectedResident.id,
+      applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
+      applicant_address: selectedResident.complete_address,
+      applicant_contact: selectedResident.mobile_number,
+      purpose: formData.purpose,
+      processing_fee: 0, // Always FREE by law
+      priority: 'NORMAL',
+      requirements_submitted: ['Declaration of Indigency'],
+      remarks: `Monthly Income: ₱${formData.monthlyIncome}, Household Members: ${formData.householdMembers}, Source: ${formData.sourceOfIncome}, Additional Info: ${formData.additionalInfo}`,
+      // Additional fields for our schema
+      applicant_email: selectedResident.email_address || '',
+      needed_date: '',
+    };
 
-      const documentData = {
-        id: Math.floor(Math.random() * 1000) + 100, // Random ID for placeholder
-        resident_id: selectedResident.id,
-        document_type: 'CERTIFICATE_INDIGENCY',
-        purpose: formData.purpose,
-        processing_fee: 0, // Always FREE by law
-        notes: `Monthly Income: ₱${formData.monthlyIncome}, Household Members: ${formData.householdMembers}, Source: ${formData.sourceOfIncome}, Additional Info: ${formData.additionalInfo}`,
-        priority: 'NORMAL',
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-        resident: selectedResident
-      };
-
-      // Simulate API delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Document submitted (placeholder):', documentData);
-      
-      // In production, use this:
-      // await apiService.createDocument(documentData);
-      
-      setStep(3);
-    } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to submit request');
-    } finally {
-      setSubmitting(false);
-    }
+    await documentForm.handleSubmit(documentData);
   };
 
   const renderStep1 = () => (
@@ -244,7 +138,7 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           />
         </div>
         
-        {loading && (
+        {searchLoading && (
           <div className="mt-2 text-sm text-gray-500">Searching...</div>
         )}
         
@@ -470,9 +364,16 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           </p>
         </div>
 
-        {error && (
+        {/* Display error if exists */}
+        {documentForm.error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
+            <p className="text-red-800 text-sm">{documentForm.error}</p>
+            <button 
+              onClick={documentForm.clearError}
+              className="mt-2 text-red-600 underline text-sm"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -485,13 +386,13 @@ const CertificateOfIndigencyForm: React.FC<CertificateOfIndigencyFormProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || !formData.purpose || !formData.monthlyIncome || !formData.householdMembers || !formData.sourceOfIncome || !formData.declarationAgreed}
+            disabled={documentForm.isSubmitting || !formData.purpose || !formData.monthlyIncome || !formData.householdMembers || !formData.sourceOfIncome || !formData.declarationAgreed}
             className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer no-underline"
           >
-            {submitting && (
+            {documentForm.isSubmitting && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{submitting ? 'Submitting...' : 'Submit Request'}</span>
+            <span>{documentForm.isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
           </button>
         </div>
       </div>

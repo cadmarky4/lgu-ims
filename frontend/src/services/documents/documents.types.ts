@@ -48,9 +48,9 @@ export const DocumentFormDataSchema = z.object({
   applicant_email: z.string().email('Invalid email address').optional().or(z.literal('')),
   
   // Request Details
-  priority: DocumentPrioritySchema.default('NORMAL'),
+  priority: DocumentPrioritySchema,
   needed_date: z.string().optional(),
-  processing_fee: z.number().min(0, 'Processing fee must be a valid amount').default(0),
+  processing_fee: z.number().min(0, 'Processing fee must be a valid amount'),
   
   // Document Specific Fields (all nullable for unified table)
   // Barangay Clearance specific
@@ -100,7 +100,6 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
   
   // Additional tracking
   expiry_date: z.string().optional(),
-  qr_code: z.string().optional(),
   
   // Timestamps
   date_added: z.string(),
@@ -121,16 +120,22 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
   processed_by_user: z.object({
     id: z.number(),
     name: z.string(),
+    role: z.string(),
+    position: z.string().optional(),
   }).optional(),
   
   approved_by_user: z.object({
     id: z.number(), 
     name: z.string(),
+    role: z.string(),
+    position: z.string().optional(),
   }).optional(),
   
   released_by_user: z.object({
     id: z.number(),
     name: z.string(),
+    role: z.string(),
+    position: z.string().optional(),
   }).optional(),
 });
 
@@ -210,6 +215,24 @@ export const ReleaseDocumentDataSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Processing history schema
+export const ProcessingHistoryItemSchema = z.object({
+  id: z.number(),
+  document_id: z.string(),
+  action: z.string(),
+  status_from: z.string().optional(),
+  status_to: z.string(),
+  processed_by: z.number(),
+  processed_by_user: z.object({
+    id: z.number(),
+    name: z.string(),
+    role: z.string(),
+    position: z.string().optional(),
+  }),
+  notes: z.string().optional(),
+  processed_at: z.string(),
+});
+
 // Type exports
 export type DocumentType = z.infer<typeof DocumentTypeSchema>;
 export type DocumentStatus = z.infer<typeof DocumentStatusSchema>;  
@@ -224,6 +247,7 @@ export type DocumentTracking = z.infer<typeof DocumentTrackingSchema>;
 export type ProcessDocumentData = z.infer<typeof ProcessDocumentDataSchema>;
 export type RejectDocumentData = z.infer<typeof RejectDocumentDataSchema>;
 export type ReleaseDocumentData = z.infer<typeof ReleaseDocumentDataSchema>;
+export type ProcessingHistoryItem = z.infer<typeof ProcessingHistoryItemSchema>;
 
 // Transform function to handle date/time formatting and form data mapping
 export const transformDocumentToFormData = (document: Document | null): DocumentFormData => {

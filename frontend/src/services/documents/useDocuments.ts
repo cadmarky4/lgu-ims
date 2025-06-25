@@ -14,7 +14,8 @@ import type {
   DocumentFormData,
   ProcessDocumentData,
   RejectDocumentData,
-  ReleaseDocumentData 
+  ReleaseDocumentData,
+  ProcessingHistoryItem
 } from './documents.types';
 import { documentsService } from '@/services/documents/documents.service';
 
@@ -28,6 +29,7 @@ export const documentsKeys = {
   statistics: () => [...documentsKeys.all, 'statistics'] as const,
   search: (term: string) => [...documentsKeys.all, 'search', term] as const,
   tracking: (id: string) => [...documentsKeys.all, 'tracking', id] as const,
+  history: (id: string) => [...documentsKeys.all, 'history', id] as const,
   byResident: (residentId: number) => [...documentsKeys.all, 'byResident', residentId] as const,
   byType: (type: string) => [...documentsKeys.all, 'byType', type] as const,
   byStatus: (status: string) => [...documentsKeys.all, 'byStatus', status] as const,
@@ -283,27 +285,12 @@ export function useCancelDocument() {
   });
 }
 
-export function useGenerateQRCode() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => documentsService.generateQRCode(id),
-    onSuccess: (qrCode: string, id: string) => {
-      // Update the document cache with the new QR code
-      queryClient.invalidateQueries({ queryKey: documentsKeys.detail(id) });
-    },
-    onError: (error: any) => {
-      console.error('Generate QR code error:', error);
-    },
-  });
-}
-
-export function useVerifyDocument() {
-  return useMutation({
-    mutationFn: (qrCode: string) => documentsService.verifyDocument(qrCode),
-    onError: (error: any) => {
-      console.error('Verify document error:', error);
-    },
+export function useProcessingHistory(documentId: string) {
+  return useQuery({
+    queryKey: documentsKeys.history(documentId),
+    queryFn: () => documentsService.getProcessingHistory(documentId),
+    enabled: !!documentId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 

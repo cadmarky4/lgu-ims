@@ -12,16 +12,16 @@ import ViewResident from "./components/residentManagement/ViewResident";
 // import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
 // import EditHousehold from "./components/householdManagement/EditHousehold";
 // import ViewHousehold from "./components/householdManagement/ViewHousehold";
-// import ProcessDocument from "./components/processDocument/ProcessDocument";
-// import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
-// import BusinessPermitForm from "./components/processDocument/BusinessPermitForm";
-// import CertificateOfIndigencyForm from "./components/processDocument/CertificateOfIndigencyForm";
-// import CertificateOfResidencyForm from "./components/processDocument/CertificateOfResidencyForm";
-// import DocumentQueue from "./components/processDocument/DocumentQueue";
-// import BarangayClearancePrint from "./components/processDocument/BarangayClearancePrint";
-// import CertificateOfResidencyPrint from "./components/processDocument/CertificateOfResidencyPrint";
-// import CertificateOfIndigencyPrint from "./components/processDocument/CertificateOfIndigencyPrint";
-// import BusinessPermitPrint from "./components/processDocument/BusinessPermitPrint";
+import ProcessDocument from "./components/processDocument/ProcessDocument";
+import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
+import BusinessPermitForm from "./components/processDocument/BusinessPermitForm";
+import CertificateOfIndigencyForm from "./components/processDocument/CertificateOfIndigencyForm";
+import CertificateOfResidencyForm from "./components/processDocument/CertificateOfResidencyForm";
+import DocumentQueue from "./components/processDocument/DocumentQueue";
+import BarangayClearancePrint from "./components/processDocument/BarangayClearancePrint";
+import CertificateOfResidencyPrint from "./components/processDocument/CertificateOfResidencyPrint";
+import CertificateOfIndigencyPrint from "./components/processDocument/CertificateOfIndigencyPrint";
+import BusinessPermitPrint from "./components/processDocument/BusinessPermitPrint";
 // import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
 // import SettingsPage from "./components/_settings/SettingsPage";
 // import ProjectsAndPrograms from "./components/projectsAndPrograms/ProjectsAndPrograms";
@@ -37,35 +37,35 @@ import { useState } from "react";
 import './i18';
 
 // Wrapper components to handle navigation prop
-// const ProcessDocumentWrapper = () => {
-//   const navigate = useNavigate();
-//   return <ProcessDocument onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const ProcessDocumentWrapper = () => {
+  const navigate = useNavigate();
+  return <ProcessDocument onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
-// const DocumentQueueWrapper = () => {
-//   const navigate = useNavigate();
-//   return <DocumentQueue onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const DocumentQueueWrapper = () => {
+  const navigate = useNavigate();
+  return <DocumentQueue onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
-// const BarangayClearanceFormWrapper = () => {
-//   const navigate = useNavigate();
-//   return <BarangayClearanceForm onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const BarangayClearanceFormWrapper = () => {
+  const navigate = useNavigate();
+  return <BarangayClearanceForm onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
-// const BusinessPermitFormWrapper = () => {
-//   const navigate = useNavigate();
-//   return <BusinessPermitForm onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const BusinessPermitFormWrapper = () => {
+  const navigate = useNavigate();
+  return <BusinessPermitForm onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
-// const CertificateOfIndigencyFormWrapper = () => {
-//   const navigate = useNavigate();
-//   return <CertificateOfIndigencyForm onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const CertificateOfIndigencyFormWrapper = () => {
+  const navigate = useNavigate();
+  return <CertificateOfIndigencyForm onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
-// const CertificateOfResidencyFormWrapper = () => {
-//   const navigate = useNavigate();
-//   return <CertificateOfResidencyForm onNavigate={(item) => navigate(`/${item}`)} />;
-// };
+const CertificateOfResidencyFormWrapper = () => {
+  const navigate = useNavigate();
+  return <CertificateOfResidencyForm onNavigate={(item) => navigate(`/${item}`)} />;
+};
 
 // Define routes using data format
 const router = createBrowserRouter([
@@ -137,33 +137,33 @@ const router = createBrowserRouter([
       },
       {
         path: "process-document",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <ProcessDocumentWrapper />,
-        //   },
-        //   {
-        //     path: "document-queue",
-        //     element: <DocumentQueueWrapper />,
-        //   },
-        //   {
-        //     path: "barangay-clearance",
-        //     element: <BarangayClearanceFormWrapper />,
-        //   },
-        //   {
-        //     path: "business-permit",
-        //     element: <BusinessPermitFormWrapper />,
-        //   },
-        //   {
-        //     path: "certificate-indigency",
-        //     element: <CertificateOfIndigencyFormWrapper />,
-        //   },
-        //   {
-        //     path: "certificate-residency",
-        //     element: <CertificateOfResidencyFormWrapper />,
-        //   },
+        children: [
+          {
+            index: true,
+            element: <ProcessDocumentWrapper />,
+          },
+          {
+            path: "document-queue",
+            element: <DocumentQueueWrapper />,
+          },
+          {
+            path: "barangay-clearance",
+            element: <BarangayClearanceFormWrapper />,
+          },
+          {
+            path: "business-permit",
+            element: <BusinessPermitFormWrapper />,
+          },
+          {
+            path: "certificate-indigency",
+            element: <CertificateOfIndigencyFormWrapper />,
+          },
+          {
+            path: "certificate-residency",
+            element: <CertificateOfResidencyFormWrapper />,
+          },
 
-        // ],
+        ],
       },
       {
         path: "officials",
