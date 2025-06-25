@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('documents');
+
         Schema::create('documents', function (Blueprint $table) {
             // Primary key
-            $table->string('id')->primary();
+            $table->id();
             
             // Basic Document Information
             $table->string('document_type');

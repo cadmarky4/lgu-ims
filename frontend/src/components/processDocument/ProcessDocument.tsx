@@ -130,7 +130,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
 
   const formatDocumentType = (type: string) => {
     const docType = documentTypes.find(dt => dt.value === type);
-    return docType ? docType.label : type.replace(/_/g, ' ');
+    return docType ? docType?.label : type.replace(/_/g, ' ');
   };
 
   const getStatusIcon = (status: DocumentStatus) => {
@@ -407,9 +407,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig[document.status].color}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig?.[document.status]?.color}`}>
                       {getStatusIcon(document.status)}
-                      <span className="ml-1">{statusConfig[document.status].label}</span>
+                      <span className="ml-1">{statusConfig?.[document.status]?.label}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

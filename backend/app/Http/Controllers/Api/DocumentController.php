@@ -299,8 +299,8 @@ class DocumentController extends Controller
                     'paid_fees' => Document::where('payment_status', 'paid')->sum('processing_fee'),
                 ],
                 'monthly_stats' => Document::selectRaw('
-                        YEAR(request_date) as year,
-                        MONTH(request_date) as month,
+                        strftime("%Y", request_date) as year,
+                        strftime("%m", request_date) as month,
                         COUNT(*) as total_requests
                     ')
                     ->whereYear('request_date', now()->year)
