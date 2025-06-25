@@ -177,7 +177,7 @@ const Calendar = () => {
         <div className="grid grid-cols-7 gap-1 mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
             <div 
-                key={day} 
+                key={index} 
                 className="text-center text-xs font-medium text-gray-500 py-2 animate-slide-in"
                 style={{animationDelay: `${index * 30}ms`}}
             >

@@ -1004,7 +1004,7 @@ const HelpDeskPage: React.FC = () => {
                       return (
                         <Link
                           key={option.type}
-                          to={option.href}
+                          to={"/help-desk/" + option.href}
                           className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                           onClick={() => setShowTicketDropdown(false)}
                         >

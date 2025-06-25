@@ -6,6 +6,9 @@ const BarangayOfficials: React.FC = () => {
   const [officials, setOfficials] = useState<BarangayOfficial[]>([]);
   const [loading, setLoading] = useState(true);
   const [dashboardService] = useState(new DashboardService());
+  // Separate captain and councilors
+  const captain = officials.find(official => official.position.toLowerCase().includes('captain'));
+  const councilors = officials.filter(official => !official.position.toLowerCase().includes('captain'));
 
   // Static fallback data
   const staticOfficials: BarangayOfficial[] = [
@@ -111,10 +114,6 @@ const BarangayOfficials: React.FC = () => {
       </div>
     );
   }
-
-  // Separate captain and councilors
-  const captain = officials.find(official => official.position.toLowerCase().includes('captain'));
-  const councilors = officials.filter(official => !official.position.toLowerCase().includes('captain'));
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

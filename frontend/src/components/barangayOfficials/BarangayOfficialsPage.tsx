@@ -1,19 +1,31 @@
+// 1. React core
 import React, { useState, useEffect } from 'react';
-// import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter, FiChevronRight } from 'react-icons/fi';
-import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFileText, FiFilter } from 'react-icons/fi';
-import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrumb component
-import EditBarangayOfficial from './EditBarangayOfficial';
+
+// 2. Third-party libraries
+import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFilter } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+
+// 3. Project services & types
 import { barangayOfficialsService } from '../../services';
-import type { BarangayOfficial } from '../../services/barangayOfficials.types';
-import FileLeave from './FileLeave';
 import { STORAGE_BASE_URL } from '../../services/storage.service';
+// import type { BarangayOfficial } from '../../services/barangayOfficials.types';
+
+// 4. Local components
+import Breadcrumb from '../global/Breadcrumb';
+// import EditBarangayOfficial from './EditBarangayOfficial';
+import FileLeave from './FileLeave';
+
+// 5. Utils
+import { getStatusBadgeColor } from './utils/getStatusBadgeColor';
+import { transformApiToComponent } from './utils/transformApiToComponent';
+
 
 const BarangayOfficialsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All Active Officials');
-  const [showEditForm, setShowEditForm] = useState(false);
+  // const [showEditForm, setShowEditForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showOfficerSelection, setShowOfficerSelection] = useState(false);
+  // const [showOfficerSelection, setShowOfficerSelection] = useState(false);
   const [selectedOfficial, setSelectedOfficial] = useState<any | null>(null);
   // API state - using any for component data format
   const [officials, setOfficials] = useState<any[]>([]);
@@ -21,7 +33,7 @@ const BarangayOfficialsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showFileLeave, setShowFileLeave] = useState(false);
-  // const [selectedOfficial, setSelectedOfficial] = useState(null);
+  const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -32,28 +44,11 @@ const BarangayOfficialsPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Transform API data to component format
-  const transformApiToComponent = (official: BarangayOfficial) => ({
-    id: official.id,
-    name: `${official.last_name}, ${official.first_name}${official.middle_name ? ' ' + official.middle_name : ''}`,
-    position: official?.position === 'BARANGAY_CAPTAIN' ? 'Barangay Captain' :
-      official?.position === 'KAGAWAD' ? 'Kagawad' :
-        official?.position === 'BARANGAY_SECRETARY' ? 'Secretary' :
-          official?.position,
-    contact: official?.contact_number,
-    term: `${new Date(official.term_start).getFullYear()} - ${new Date(official.term_end).getFullYear()}`,
-    status: official?.status === 'ACTIVE' ? 'Active' :
-      official?.status === 'INACTIVE' ? 'Inactive' :
-        official?.status,
-    committee: official.committee_assignment || 'None',
-    nationality: 'Filipino', // Default since not in API
-    photo: official.profile_photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80'
-  });
-
   // Load officials data
   useEffect(() => {
     loadOfficials();
-  }, []); const loadOfficials = async () => {
+  }, []); 
+  const loadOfficials = async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -75,19 +70,6 @@ const BarangayOfficialsPage: React.FC = () => {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'On-Leave':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Inactive':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const filteredOfficials = officials.filter(official => {
     const matchesSearch = official?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       official?.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,52 +86,52 @@ const BarangayOfficialsPage: React.FC = () => {
   const captain = officials.find(official => official?.position === 'Barangay Captain');
   const secretary = officials.find(official => official?.position === 'Secretary');
   const councilors = officials.filter(official => official?.position === 'Kagawad').slice(0, 8);
-  const handleEditOfficial = async (officialData: any) => {
-    try {
-      console.log('Updated official data:', officialData);
-      // Reload officials data to reflect changes
-      await loadOfficials();
-      setShowEditForm(false);
-      setSelectedOfficial(null);
-    } catch (err) {
-      console.error('Error handling official update:', err);
-    }
-  };
+  // const handleEditOfficial = async (officialData: any) => {
+  //   try {
+  //     console.log('Updated official data:', officialData);
+  //     // Reload officials data to reflect changes
+  //     await loadOfficials();
+  //     // setShowEditForm(false);
+  //     setSelectedOfficial(null);
+  //   } catch (err) {
+  //     console.error('Error handling official update:', err);
+  //   }
+  // };
 
   const handleFileLeave = (leaveData: any) => {
     console.log('Leave application filed:', leaveData);
     // Handle the leave data submission here
   };
 
-  const handleSelectOfficerToEdit = (official: any) => {
-    // Transform component format back to API format for editing
-    const apiOfficial = {
-      id: official.id,
-      prefix: 'Mr.', // Default - could be enhanced
-      firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
-      middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
-      lastName: official?.name.split(', ')[0] || '',
-      gender: 'Male', // Default - would need to be stored in API
-      birthDate: '1985-01-01', // Default - would need to be stored in API
-      contactNumber: official?.contact,
-      emailAddress: '', // Default - would need to be stored in API
-      completeAddress: '', // Default - would need to be stored in API
-      civilStatus: 'Single', // Default - would need to be stored in API
-      educationalBackground: '', // Default - would need to be stored in API
-      position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' :
-        official?.position === 'Kagawad' ? 'KAGAWAD' :
-          official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' :
-            official?.position,
-      committeeAssignment: official.committee !== 'None' ? official.committee : '',
-      termStart: official.term.split(' - ')[0] + '-01-01',
-      termEnd: official.term.split(' - ')[1] + '-12-31',
-      isActive: official?.status === 'Active'
-    };
+  // const handleSelectOfficerToEdit = (official: any) => {
+  //   // Transform component format back to API format for editing
+  //   const apiOfficial = {
+  //     id: official.id,
+  //     prefix: 'Mr.', // Default - could be enhanced
+  //     firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
+  //     middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
+  //     lastName: official?.name.split(', ')[0] || '',
+  //     gender: 'Male', // Default - would need to be stored in API
+  //     birthDate: '1985-01-01', // Default - would need to be stored in API
+  //     contactNumber: official?.contact,
+  //     emailAddress: '', // Default - would need to be stored in API
+  //     completeAddress: '', // Default - would need to be stored in API
+  //     civilStatus: 'Single', // Default - would need to be stored in API
+  //     educationalBackground: '', // Default - would need to be stored in API
+  //     position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' :
+  //       official?.position === 'Kagawad' ? 'KAGAWAD' :
+  //         official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' :
+  //           official?.position,
+  //     committeeAssignment: official.committee !== 'None' ? official.committee : '',
+  //     termStart: official.term.split(' - ')[0] + '-01-01',
+  //     termEnd: official.term.split(' - ')[1] + '-12-31',
+  //     isActive: official?.status === 'Active'
+  //   };
 
-    setSelectedOfficial(apiOfficial);
-    setShowOfficerSelection(false);
-    setShowEditForm(true);
-  };
+  //   setSelectedOfficial(apiOfficial);
+  //   // setShowOfficerSelection(false);
+  //   // setShowEditForm(true);
+  // };
 
   const handleEditOfficialDirect = (official: any) => {
     // Transform component format back to API format for editing
@@ -177,7 +159,7 @@ const BarangayOfficialsPage: React.FC = () => {
     };
 
     setSelectedOfficial(apiOfficial);
-    setShowEditForm(true);
+    // setShowEditForm(true);
   };
   const handleViewOfficial = (official: any) => {
     setSelectedOfficial(official);
@@ -212,20 +194,6 @@ const BarangayOfficialsPage: React.FC = () => {
     );
   }
 
-  // Show Edit Form component
-  if (showEditForm) {
-    return (
-      <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <EditBarangayOfficial
-          onClose={() => setShowEditForm(false)}
-          onSave={handleEditOfficial}
-          official={selectedOfficial}
-        />
-      </div>
-    );
-  }
-
-  // Show Officer Selection component
 
   // View Official Modal
   if (showViewModal && selectedOfficial) {
@@ -322,93 +290,6 @@ const BarangayOfficialsPage: React.FC = () => {
     );
   }
 
-  // Show Officer Selection component
-  if (showOfficerSelection) {
-    return (
-      <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        {/* Breadcrumb */}
-        <Breadcrumb isLoaded={isLoaded} />
-
-        {/* Header */}
-        <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
-          <h1 className="text-2xl font-bold text-darktext pl-0">Select Officer to Edit</h1>
-          <p className="text-sm text-gray-600 mt-1">Choose which barangay official you want to update</p>
-        </div>
-
-        {/* Search Bar */}
-        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '200ms' }}>
-          <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search for an official to edit..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Officials Grid */}
-        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '300ms' }}>
-          <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
-            Available Officials ({filteredOfficials.length})
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredOfficials.map((official, index) => (
-              <div
-                key={official.id}
-                onClick={() => handleSelectOfficerToEdit(official)}
-                className={`border border-gray-200 rounded-lg p-4 hover:border-smblue-400 hover:shadow-md transition-all duration-200 cursor-pointer group transform ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-                style={{ animationDelay: `${400 + (index * 50)}ms` }}
-              >
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={official?.photo ? `${STORAGE_BASE_URL}/${official?.photo}` : 'https://via.placeholder.com/150'}
-                    alt={official?.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 group-hover:text-smblue-400 transition-colors">
-                      {official?.name}
-                    </h4>
-                    <p className="text-sm text-gray-600">{official?.position}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(official?.status)}`}>
-                        {official?.status}
-                      </span>
-                      <span className="text-xs text-gray-500">{official.committee}</span>
-                    </div>
-                  </div>
-                  <div className="text-gray-400 group-hover:text-smblue-400 transition-colors">
-                    <FiEdit className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredOfficials.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <FiUsers className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>No officials found matching your search.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Back Button */}
-        <div className={`flex justify-start transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '500ms' }}>
-          <button
-            onClick={() => setShowOfficerSelection(false)}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors hover:shadow-sm"
-          >
-            Back to Officials Page
-          </button>
-        </div>      </main>
-    );
-  }
-
   return (
     <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       {/* Breadcrumb */}
@@ -469,22 +350,23 @@ const BarangayOfficialsPage: React.FC = () => {
         {/* Quick Actions */}
         <div className={`bg-smblue-400 rounded-2xl p-6 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '350ms' }}>
           <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-white border-opacity-30 pl-4">Quick Actions</h3>
-          <div className="space-y-4">            <button 
-              onClick={() => {
-                setSelectedOfficial(null); // Set to null for creating new official
-                setShowEditForm(true);
-              }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
-            >
-              <FiUsers className="w-5 h-5 text-white" />
-              <span className="font-medium text-white cursor-pointer no-underline">Add New Official</span>
-            </button>
-            <button 
+          <div className="space-y-4">            <button
+            onClick={() => {
+              setSelectedOfficial(null); // Set to null for creating new official
+              navigate('/officials/add');
+            }}
+            className="cursor-pointer w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm"
+          >
+            <FiUsers className="w-5 h-5 text-white" />
+            <span className="font-medium text-white">Add New Official</span>
+          </button>
+            <button
               onClick={() => {
                 console.log('Update Officers button clicked');
-                setShowOfficerSelection(true);
+                // setShowOfficerSelection(true);
+                navigate("/officials/edit")
               }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
+              className="cursor-pointer w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md"
             >
               <FiEdit className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
@@ -574,7 +456,8 @@ const BarangayOfficialsPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Committee</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            </thead>            <tbody className="bg-white divide-y divide-gray-200">
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {isLoading ? (
                 // Loading skeleton rows
                 Array(5).fill(0).map((_, index) => (
@@ -663,7 +546,7 @@ const BarangayOfficialsPage: React.FC = () => {
                         <button
                           className="text-smblue-400 hover:text-smblue-300 transition-colors"
                           title="Edit official"
-                          onClick={() => handleSelectOfficerToEdit(official)}
+                          onClick={() => navigate(`/officials/edit/${official.id}`)}
                         // onClick={() => handleEditOfficialDirect(official)}
                         >
                           <FiEdit className="w-4 h-4" />

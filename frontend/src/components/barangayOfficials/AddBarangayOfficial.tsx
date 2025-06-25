@@ -4,40 +4,33 @@ import Breadcrumb from '../global/Breadcrumb'; // Import your existing breadcrum
 import { barangayOfficialsService } from '../../services';
 import type { BarangayOfficialFormData } from '../../services/barangayOfficials.types';
 import { uploadFile } from '../../services/storage.service';
-import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { convertOfficialToFormData } from './utils/convertOfficialToFormData';
 
-// interface EditBarangayOfficialProps {
-//   onClose: () => void;
-//   onSave: (officialData: any) => void;
-//   official?: any;
+// will be implemented properly in the future
+// interface AddBarangayOfficialProps {
+////   onClose: () => void;
+////   onSave: (officialData: any) => void;
+////   official?: any;
 // }
 
-const EditBarangayOfficial = () => {  // Loading and error states for API calls
+const AddBarangayOfficial = () => {  // Loading and error states for API calls
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { id } = useParams<{ id: string }>();
-  const [official, setOfficial] = useState<any | null>(null);
-  // comment out muna, l8tr na lang gamitin hihi
-  // const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleOnClose = () => {
     navigate('/officials');
-  }
+  } 
 
-  const handleOnSave = async (official: any) => {
-    try {
-      console.log('Updated official data:', official);
-    } catch (err) {
-      console.error('Error handling official update:', err);
-    }
-  };
-
-  // console.log(official);
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -53,29 +46,28 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
       setToast({ show: false, message: '', type: 'success' });
     }, 3000);
   };
-
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<BarangayOfficialFormData>({
-    prefix: official?.prefix || '',
-    firstName: official?.firstName || '',
-    middleName: official?.middleName || '',
-    lastName: official?.lastName || '',
-    gender: official?.gender || '',
-    birthDate: official?.birthDate || '',
-    contactNumber: official?.contactNumber || '',
-    emailAddress: official?.emailAddress || '',
-    completeAddress: official?.completeAddress || '',
-    civilStatus: official?.civilStatus || '',
-    educationalBackground: official?.educationalBackground || '',
-    position: official?.position || '',
-    committeeAssignment: official?.committeeAssignment || '',
-    termStart: official?.termStart || '',
-    termEnd: official?.termEnd || '',
-    isActive: official?.isActive !== undefined ? official.isActive : true,
-    profile_photo: official?.profile_photo || null
+    prefix: 'Mr.',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    gender: 'Male',
+    birthDate: '',
+    contactNumber: '',
+    emailAddress: '',
+    completeAddress: '',
+    civilStatus: 'Single',
+    educationalBackground: '',
+    position: 'KAGAWAD',
+    committeeAssignment: undefined,
+    termStart: '',
+    termEnd: '',
+    isActive: true,
+    profile_photo: undefined
   });
 
   // Load draft data (commented out to avoid localStorage issues)
@@ -114,6 +106,34 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
       console.error('Failed to clear draft:', error);
     }
   };
+  
+  // Load draft data on component mount
+  // useEffect(() => {
+  //   loadDraftData();
+    
+  //   // Initialize form data from official prop if provided
+  //   if (official) {
+  //     setFormData({
+  //       prefix: official.prefix || 'Mr.',
+  //       firstName: official.firstName || '',
+  //       middleName: official.middleName || '',
+  //       lastName: official.lastName || '',
+  //       gender: official.gender || 'Male',
+  //       birthDate: official.birthDate || '',
+  //       contactNumber: official.contactNumber || '',
+  //       emailAddress: official.emailAddress || '',
+  //       completeAddress: official.completeAddress || '',
+  //       civilStatus: official.civilStatus || 'Single',
+  //       educationalBackground: official.educationalBackground || '',
+  //       position: official.position || 'KAGAWAD',
+  //       committeeAssignment: official.committeeAssignment || '',
+  //       termStart: official.termStart || '',
+  //       termEnd: official.termEnd || '',
+  //       isActive: official.isActive !== undefined ? official.isActive : true,
+  //       profile_photo: official.profile_photo || null
+  //     });
+  //   }
+  // }, [official]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -156,20 +176,17 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
         submitData.profile_photo = photoUrl;
       }
 
-      let result;
-      if (official?.id) {
-        // Editing: update existing official
-        result = await barangayOfficialsService.updateBarangayOfficial(official.id, submitData);
-      } else {
-        // Creating: create new official
-        result = await barangayOfficialsService.createBarangayOfficial(submitData);
-      }
-      handleOnSave(result);
+
+      await barangayOfficialsService.createBarangayOfficial(submitData);
+      
       clearDraft();
-      showToast(`Official ${official?.id ? 'updated' : 'created'} successfully!`, 'success');
-      setTimeout(() => {
-        handleOnClose();
-      }, 1000);
+      // showToast(`Official ${official?.id ? 'updated' : 'created'} successfully!`, 'success');
+      showToast(`Official created successfully!`, 'success');
+
+      // wala pong onclose muna
+      // setTimeout(() => {
+      //   onClose();
+      // }, 1000);
     } catch (err: unknown) {
       console.error('Error saving official:', err);
       // Try to extract error message
@@ -186,84 +203,6 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
     }
   };
 
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // load officials
-  useEffect(() => {
-      const loadOfficial = async () => {
-        // NO ID
-        if (!id) {
-          console.error('No official ID provided');
-          setError('Official ID not provided');
-          // setIsLoading(false);
-          return;
-        }
-        try {
-          console.log('Loading official with ID:', id);
-          // setIsLoading(true);
-          setError(null);
-  
-          // Validate ID is a valid number
-          const officialId = parseInt(id);
-          if (isNaN(officialId) || officialId <= 0) {
-            console.error('Invalid official ID:', id);
-            setError('Invalid official ID');
-            // setIsLoading(false);
-            return;
-          }
-  
-          // Use the getResident method to fetch resident data
-          console.log('Fetching official data from API...');
-          const officialData = await barangayOfficialsService.getBarangayOfficial(officialId);
-          console.log('Official data received:', officialData);
-  
-          if (!officialData) {
-            console.error('No official data received');
-            setError('Official not found');
-            // setIsLoading(false);
-            return;
-          }
-          setOfficial(officialData);
-  
-          // Populate form with resident data using the conversion function
-          console.log('Converting resident data to form data...');
-          const formDataConverted = convertOfficialToFormData(officialData);
-          console.log('Form data converted:', formDataConverted);
-          setFormData(formDataConverted); 
-          console.log('New form data:', formData);
-  
-          console.log('Resident loaded successfully');
-        } catch (error: any) {
-          console.error('Failed to load resident:', error);
-  
-          // Check if it's a 404 error (resident not found)
-          if (error.message?.includes('404') || error.message?.includes('not found')) {
-            setError('Resident not found');
-          } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-            setError('Unable to connect to server. Please check your connection.');
-          } else {
-            setError('Failed to load resident data. Please try again.');
-          }
-        } finally {
-          // setIsLoading(false);
-        }
-      };
-  
-      loadOfficial();
-      console.log("I LIKE PIZZAS");
-    }, [id]);
-
-  // Load draft data on component mount
-  useEffect(() => {
-    loadDraftData();
-  }, [official]);
-
   return (
     <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       {/* Breadcrumb */}
@@ -271,9 +210,11 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
       {/* Header */}
       <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
         <h1 className="text-2xl font-bold text-darktext pl-0">
-          {official?.id ? 'Edit Barangay Official' : 'Add New Barangay Official'}
+          {/* {official?.id ? 'Edit Barangay Official' : 'Add New Barangay Official'} */}
+          {'Add New Barangay Official'}
         </h1>
-        {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && (
+        {/* {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && ( */}
+        {localStorage.getItem('new') && (
           <p className="text-sm text-gray-600 mt-1">
             📝 Draft data loaded from previous session
           </p>
@@ -636,7 +577,8 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
                 {isSubmitting && (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 )}
-                <span>{isSubmitting ? (official?.id ? 'Updating...' : 'Creating...') : (official?.id ? 'Save Changes' : 'Create Official')}</span>
+                {/* <span>{isSubmitting ? (official?.id ? 'Updating...' : 'Creating...') : (official?.id ? 'Save Changes' : 'Create Official')}</span> */}
+                <span>{isSubmitting ? ('Creating...') : ('Create Official')}</span>
               </button>
             </div>
           </div>
@@ -671,4 +613,4 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
   );
 };
 
-export default EditBarangayOfficial;
+export default AddBarangayOfficial;
