@@ -4,6 +4,7 @@
 
 import { z } from 'zod';
 import { GenderSchema, CivilStatusSchema, EducationalAttainmentSchema } from '../__shared/types';
+import type { Resident } from '@/services/residents/residents.types';
 
 // Enum schemas
 export const OfficialPositionSchema = z.enum([
@@ -101,8 +102,9 @@ export const BarangayOfficialSchema = BarangayOfficialFormDataSchema.extend({
   is_term_ending_soon: z.boolean().optional(),
 })
 
-// Filter interface
-export const BarangayOfficialFiltersSchema = z.object({
+// Query parameters schema
+export const BarangayOfficialParamsSchema = z.object({
+  page: z.number().min(1).optional(),
   position: OfficialPositionSchema.optional(),
   committee: CommitteeAssignmentSchema.optional(),
   status: OfficialStatusSchema.optional(),
@@ -166,11 +168,39 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
   return formData;
 }
 
+export function transformResidentToBarangayOfficialFormData(resident: Resident): BarangayOfficialFormData {
+  return {
+    resident_id: resident.id.toString(),
+    prefix: 'Mr.',
+    first_name: resident.first_name,
+    middle_name: resident.middle_name,
+    last_name: resident.last_name,
+    suffix: resident.suffix,
+    birth_date: resident.birth_date,
+    gender: resident.gender,
+    civil_status: resident.civil_status,
+    educational_attainment: resident.educational_attainment,
+    mobile_number: resident.mobile_number,
+    email_address: resident.email_address,
+    complete_address: resident.complete_address,
+    position: 'BARANGAY_CAPTAIN',
+    committee_assignment: 'Health',
+    term_start: '',
+    term_end: '',
+    term_number: 0,
+    is_current_term: true,
+    status: 'ACTIVE',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    profile_photo_url: resident.profile_photo_url
+  };
+}
+
 export type OfficialPosition = z.infer<typeof OfficialPositionSchema>;
 export type CommitteeAssignment = z.infer<typeof CommitteeAssignmentSchema>;
 export type OfficialStatus = z.infer<typeof OfficialStatusSchema>;
 export type Prefix = z.infer<typeof PrefixSchema>;
 export type BarangayOfficialFormData = z.infer<typeof BarangayOfficialFormDataSchema>;
 export type BarangayOfficial = z.infer<typeof BarangayOfficialSchema>;
-export type BarangayOfficialFilters = z.infer<typeof BarangayOfficialFiltersSchema>;
+export type BarangayOfficialParams = z.infer<typeof BarangayOfficialParamsSchema>;
 export type BarangayOfficialStatistics = z.infer<typeof BarangayOfficialStatisticsSchema>;

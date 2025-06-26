@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
 import { getStatusBadgeColor } from "./utils/getStatusBadgeColor";
 import { FiEdit } from "react-icons/fi";
-import { barangayOfficialsService } from "@/services";
+import { barangayOfficialsService } from '@/services/officials/barangayOfficials.service';
 
 
 export default function ViewBarangayOfficial() {

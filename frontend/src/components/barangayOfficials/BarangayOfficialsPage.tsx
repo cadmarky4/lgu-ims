@@ -6,7 +6,7 @@ import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFilter } from 'react-icon
 import { useNavigate } from 'react-router-dom';
 
 // 3. Project services & types
-import { barangayOfficialsService } from '../../services';
+import { barangayOfficialsService } from '@/services/officials/barangayOfficials.service';
 import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 
 // 4. Local components
@@ -84,80 +84,10 @@ const BarangayOfficialsPage: React.FC = () => {
   const captain = officials.find(official => official?.position === 'Barangay Captain');
   const secretary = officials.find(official => official?.position === 'Secretary');
   const councilors = officials.filter(official => official?.position === 'Kagawad').slice(0, 8);
-  // const handleEditOfficial = async (officialData: any) => {
-  //   try {
-  //     console.log('Updated official data:', officialData);
-  //     // Reload officials data to reflect changes
-  //     await loadOfficials();
-  //     // setShowEditForm(false);
-  //     setSelectedOfficial(null);
-  //   } catch (err) {
-  //     console.error('Error handling official update:', err);
-  //   }
-  // };
 
   const handleFileLeave = (leaveData: any) => {
     console.log('Leave application filed:', leaveData);
     // Handle the leave data submission here
-  };
-
-  // const handleSelectOfficerToEdit = (official: any) => {
-  //   // Transform component format back to API format for editing
-  //   const apiOfficial = {
-  //     id: official.id,
-  //     prefix: 'Mr.', // Default - could be enhanced
-  //     firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
-  //     middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
-  //     lastName: official?.name.split(', ')[0] || '',
-  //     gender: 'Male', // Default - would need to be stored in API
-  //     birthDate: '1985-01-01', // Default - would need to be stored in API
-  //     contactNumber: official?.contact,
-  //     emailAddress: '', // Default - would need to be stored in API
-  //     completeAddress: '', // Default - would need to be stored in API
-  //     civilStatus: 'Single', // Default - would need to be stored in API
-  //     educationalBackground: '', // Default - would need to be stored in API
-  //     position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' :
-  //       official?.position === 'Kagawad' ? 'KAGAWAD' :
-  //         official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' :
-  //           official?.position,
-  //     committeeAssignment: official.committee !== 'None' ? official.committee : '',
-  //     termStart: official.term.split(' - ')[0] + '-01-01',
-  //     termEnd: official.term.split(' - ')[1] + '-12-31',
-  //     isActive: official?.status === 'Active'
-  //   };
-
-  //   setSelectedOfficial(apiOfficial);
-  //   // setShowOfficerSelection(false);
-  //   // setShowEditForm(true);
-  // };
-
-  const handleEditOfficialDirect = (official: any) => {
-    // Transform component format back to API format for editing
-    const apiOfficial = {
-      id: official.id,
-      prefix: 'Mr.', // Default - could be enhanced
-      firstName: official?.name.split(', ')[1]?.split(' ')[0] || '',
-      middleName: official?.name.split(', ')[1]?.split(' ')[1] || '',
-      lastName: official?.name.split(', ')[0] || '',
-      gender: 'Male', // Default - would need to be stored in API
-      birthDate: '1985-01-01', // Default - would need to be stored in API
-      contactNumber: official?.contact,
-      emailAddress: '', // Default - would need to be stored in API
-      completeAddress: '', // Default - would need to be stored in API
-      civilStatus: 'Single', // Default - would need to be stored in API
-      educationalBackground: '', // Default - would need to be stored in API
-      position: official?.position === 'Barangay Captain' ? 'BARANGAY_CAPTAIN' :
-        official?.position === 'Kagawad' ? 'KAGAWAD' :
-          official?.position === 'Secretary' ? 'BARANGAY_SECRETARY' :
-            official?.position,
-      committeeAssignment: official.committee !== 'None' ? official.committee : '',
-      termStart: official.term.split(' - ')[0] + '-01-01',
-      termEnd: official.term.split(' - ')[1] + '-12-31',
-      isActive: official?.status === 'Active'
-    };
-
-    setSelectedOfficial(apiOfficial);
-    // setShowEditForm(true);
   };
   
   const handleViewOfficial = (official: any) => {
@@ -190,102 +120,6 @@ const BarangayOfficialsPage: React.FC = () => {
           onSave={handleFileLeave}
         />
       </div>
-    );
-  }
-
-
-  // View Official Modal
-  if (showViewModal && selectedOfficial) {
-    return (
-      <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        {/* Breadcrumb */}
-        <Breadcrumb isLoaded={isLoaded} />
-
-        {/* Header */}
-        <div className={`mb-2 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '100ms' }}>
-          <h1 className="text-2xl font-bold text-darktext pl-0">Official Details</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Detailed information about {selectedOfficial?.name}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Profile Photo */}
-            <div className="lg:w-1/3">
-              <div className="flex flex-col items-center">
-                <div className="w-48 h-48 bg-gray-300 rounded-full flex items-center justify-center mb-4">
-                  <img
-                    src={selectedOfficial?.profile_photo ? `${STORAGE_BASE_URL}/${selectedOfficial?.photo}` : 'https://via.placeholder.com/150'}
-                    alt={selectedOfficial?.name}
-                    className="w-48 h-48 rounded-full object-cover"
-                  />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 text-center">{selectedOfficial?.name}</h2>
-                <p className="text-lg text-gray-600 text-center">{selectedOfficial?.position}</p>
-                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${getStatusBadgeColor(selectedOfficial?.status)}`}>
-                  {selectedOfficial?.status}
-                </span>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="lg:w-2/3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Contact Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial?.contact}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nationality</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial?.nationality}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Position Details</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Committee Assignment</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial?.committee}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Term</label>
-                      <p className="text-sm text-gray-900">{selectedOfficial?.term}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-between items-center pt-6 border-t border-gray-200 mt-8">
-            <button
-              onClick={() => setShowViewModal(false)}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Close
-            </button>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => {
-                  setShowViewModal(false);
-                  handleEditOfficialDirect(selectedOfficial);
-                }}
-                className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors flex items-center space-x-2"
-              >
-                <FiEdit className="w-4 h-4" />
-                <span>Edit Official</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
     );
   }
 
@@ -370,33 +204,6 @@ const BarangayOfficialsPage: React.FC = () => {
               <FiEdit className="w-5 h-5 text-white" />
               <span className="font-medium text-white">Update Officers</span>
             </button>
-            {/* ADRIAN VERSION */}
-            {/* <button 
-              onClick={loadOfficials}
-              disabled={isLoading}
-              className=" w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer no-underline"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <FiFileText className="w-5 h-5 text-white" />
-              )}
-              <span className="font-medium text-white">
-                {isLoading ? 'Refreshing...' : 'Refresh Data'}
-              </span>
-            </button> */}
-
-            {/* SEAN VERSION */}
-            {/* <button 
-              onClick={() => {
-                console.log('File Leave button clicked');
-                setShowFileLeave(true);
-              }}
-              className="w-full bg-smblue-300 hover:bg-smblue-200 text-white p-4 rounded-lg transition-all duration-200 flex items-center space-x-3 shadow-sm hover:shadow-md cursor-pointer no-underline"
-            >
-              <FiFileText className="w-5 h-5 text-white" />
-              <span className="font-medium text-white">File Leave</span>
-            </button> */}
           </div>
         </div>
       </div>

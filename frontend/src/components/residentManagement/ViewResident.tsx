@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } from 'react-icons/fi';
 import Breadcrumb from '../_global/Breadcrumb';
-import { residentsService } from '../../services';
+// import { residentsService } from '../../services';
+import { residentsService } from '@/services/residents/residents.service';
 import type { Resident } from '../../services/residents/residents.types';
 import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 

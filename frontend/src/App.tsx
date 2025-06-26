@@ -3,11 +3,12 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./components/_global/NotificationSystem";
 import ProtectedRoute from "./components/_auth/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
-import Dashboard from "./components/dashboard/Dashboard";
+// import Dashboard from "./components/dashboard/Dashboard";
 import ResidentManagement from "./components/residentManagement/ResidentManagement";
 import AddNewResident from "./components/residentManagement/AddNewResident";
 import EditResident from "./components/residentManagement/EditResident";
 import ViewResident from "./components/residentManagement/ViewResident";
+
 // import HouseholdManagement from "./components/householdManagement/HouseholdManagement";
 // import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
 // import EditHousehold from "./components/householdManagement/EditHousehold";

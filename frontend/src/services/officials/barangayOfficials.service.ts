@@ -1,14 +1,31 @@
+// ===========================================================================================
+// services/officials/barangayOfficials.service.ts - Barangay officials service implementation
+// ===========================================================================================
+
+// External dependencies
+import { z } from 'zod';
+
+// Base service and shared types
 import { BaseApiService } from '../__shared/api';
-import { type PaginatedResponse } from '../__shared/types';
+import { 
+  ApiResponseSchema, 
+  PaginatedResponseSchema,
+  type PaginatedResponse 
+} from '../__shared/types';
+
+// Domain types and schemas
 import type { 
   BarangayOfficial, 
   BarangayOfficialFormData, 
   BarangayOfficialParams,
   BarangayOfficialStatistics,
 } from './barangayOfficials.types';
-import { ApiResponseSchema, PaginatedResponseSchema } from '../__shared/types';
-import { BarangayOfficialFormDataSchema, BarangayOfficialParamsSchema, BarangayOfficialSchema, BarangayOfficialStatisticsSchema } from './barangayOfficials.types';
-import { z } from 'zod';
+import { 
+  BarangayOfficialFormDataSchema, 
+  BarangayOfficialParamsSchema, 
+  BarangayOfficialSchema, 
+  BarangayOfficialStatisticsSchema 
+} from './barangayOfficials.types';
 
 export class BarangayOfficialsService extends BaseApiService {
   /**
@@ -38,8 +55,8 @@ export class BarangayOfficialsService extends BaseApiService {
   /**
    * Get a specific barangay official by ID
    */
-  async getBarangayOfficial(id: number): Promise<BarangayOfficial> {
-    if (!id || id <= 0) {
+  async getBarangayOfficial(id: string): Promise<BarangayOfficial> {
+    if (!id) {
       throw new Error('Invalid barangay official ID');
     }
 
@@ -86,8 +103,8 @@ export class BarangayOfficialsService extends BaseApiService {
   /**
    * Update an existing barangay official
    */
-  async updateBarangayOfficial(id: number, data: BarangayOfficialFormData): Promise<BarangayOfficial> {
-    if (!id || id <= 0) {
+  async updateBarangayOfficial(id: string, data: BarangayOfficialFormData): Promise<BarangayOfficial> {
+    if (!id) {
       throw new Error('Invalid barangay official ID');
     }
 
@@ -116,8 +133,8 @@ export class BarangayOfficialsService extends BaseApiService {
    * Delete a barangay official
    */
 
-  async deleteBarangayOfficial(id: number): Promise<void> {
-    if (!id || id <= 0) {
+  async deleteBarangayOfficial(id: string): Promise<void> {
+    if (!id) {
       throw new Error('Invalid barangay official ID');
     }
 
@@ -148,4 +165,41 @@ export class BarangayOfficialsService extends BaseApiService {
 
     return response.data;
   }
+
+  async searchBarangayOfficials(searchTerm: string, limit = 10): Promise<BarangayOfficial[]> {
+    if (!searchTerm.trim()) return [];
+
+    const paginatedSchema = PaginatedResponseSchema(BarangayOfficialSchema);
+
+    const response = await this.request(
+      `/barangay-officials?search=${encodeURIComponent(searchTerm)}&per_page=${limit}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  async checkDuplicate(residentId: string): Promise<number> {
+    if (!residentId) {
+      throw new Error('Invalid resident ID');
+    }
+
+    const responseSchema = ApiResponseSchema(z.number());
+
+    const response = await this.request(
+      `/barangay-officials/check-duplicate/${residentId}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to check duplicate');
+    }
+
+    return response.data;
+  }
 }
+
+// Create singleton instance
+export const barangayOfficialsService = new BarangayOfficialsService();

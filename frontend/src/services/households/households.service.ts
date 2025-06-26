@@ -215,3 +215,5 @@ export class HouseholdsService extends BaseApiService {
     ];
   }
 }
+
+export const householdsService = new HouseholdsService();
