@@ -210,6 +210,7 @@
       }
     }
   },
+
   "barangayOfficials" : {
     "title": "Barangay Officials",
     "addNew": "Add New Official",
@@ -229,9 +230,57 @@
         "committee": "Committee",
         "actions": "Actions"
       },
-      "noResults": "No residents found",
-      "noResultsSearch": "No residents found matching \"{{searchTerm}}\"",
+      "noResults": "No official found",
+      "noResultsSearch": "No official found matching \"{{searchTerm}}\"",
       "yearsOld": "years old"
-    } 
+    },
+    "actions": {
+      "view": "View official details",
+      "edit": "Edit official",
+      "delete": "Deactivate official",
+      "deleting": "Deactivating..."
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "suspended": "Suspended",
+      "terminated": "Terminated",
+      "deceased": "Deceased"
+    },
+    "positions": {
+      "barangayCaptain": "Barangay Captain",
+      "barangaySecretary": "Barangay Secretary", 
+      "barangayTreasurer": "Barangay Treasurer",
+      "kagawad": "Kagawad",
+      "skChairperson": "SK Chairperson",
+      "skKagawad": "SK Kagawad",
+      "barangayClerk": "Barangay Clerk",
+      "barangayTanod": "Barangay Tanod"
+    },
+    "committeeAssignments": {
+      "health": "Health",
+      "education": "Education",
+      "publicSafety": "Public Safety", 
+      "environment": "Environment",
+      "peaceAndOrder": "Peace and Order",
+      "sportsAndRecreation": "Sports and Recreation",
+      "womenAndFamily": "Women and Family",
+      "seniorCitizens": "Senior Citizens"
+    },
+    "messages": {
+      "loading": "Loading officials...",
+      "loadError": "Failed to load officials. Please try again.",
+      "statisticsError": "Failed to load statistics.",
+      "createError": "Failed to create official. Please try again.",
+      "updateError": "Failed to update official. Please try again.",
+      "deleteConfirm": "Are you sure you want to deactivate this official? This will change their status to inactive.",
+      "deleteSuccess": "official deactivated successfully",
+      "deleteError": "Failed to deactivate official. Please try again."
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}} results",
+      "previous": "Previous",
+      "next": "Next"
+    }
   }
 }

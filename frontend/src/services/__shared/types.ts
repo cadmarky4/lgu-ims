@@ -21,6 +21,15 @@ export const EducationalAttainmentSchema = z.enum([
   'PREFER_NOT_TO_SAY'
 ]);
 
+export const NationalitySchema = z.enum([
+  'FILIPINO',
+  'AMERICAN',
+  'BRITISH',
+  'CANADIAN',
+  'AUSTRALIAN',
+  'OTHER'
+]);
+
 // Base API response schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
@@ -57,3 +66,4 @@ export type ApiResponse<T = unknown> = z.infer<ReturnType<typeof ApiResponseSche
 export type PaginatedResponse<T> = z.infer<ReturnType<typeof PaginatedResponseSchema<z.ZodType<T>>>>;
 export type CivilStatus = z.infer<typeof CivilStatusSchema>;
 export type EducationalAttainment = z.infer<typeof EducationalAttainmentSchema>;
+export type Nationality = z.infer<typeof NationalitySchema>;

@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { z } from 'zod';
-import { GenderSchema, CivilStatusSchema, EducationalAttainmentSchema } from '../__shared/types';
+import { GenderSchema, CivilStatusSchema, EducationalAttainmentSchema, NationalitySchema } from '../__shared/types';
 import type { Resident } from '@/services/residents/residents.types';
 
 // Enum schemas
@@ -60,6 +60,7 @@ export const BarangayOfficialFormDataSchema = z.object({
 
   birth_date: z.string().min(1, 'barangayOfficial.form.error.birthDateRequired'), 
   gender: GenderSchema,
+  nationality: NationalitySchema,
   civil_status: CivilStatusSchema,
   educational_attainment: EducationalAttainmentSchema,
 
@@ -138,6 +139,7 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
       birth_date: '',
       gender: 'MALE',
       civil_status: 'SINGLE',
+      nationality: 'FILIPINO',
       educational_attainment: 'HIGH_SCHOOL',
       mobile_number: '',
       email_address: '',
@@ -152,6 +154,7 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       profile_photo_url: ''
+
     };
   }
   
@@ -179,6 +182,7 @@ export function transformResidentToBarangayOfficialFormData(resident: Resident):
     birth_date: resident.birth_date,
     gender: resident.gender,
     civil_status: resident.civil_status,
+    nationality: resident.nationality,
     educational_attainment: resident.educational_attainment,
     mobile_number: resident.mobile_number,
     email_address: resident.email_address,

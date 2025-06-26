@@ -208,6 +208,75 @@
     }
   },
   "barangayOfficials" : {
-    
+    "title": "Mga Opisyal ng Barangay",
+    "addNew": "Magdagdag ng Bagong Opisyal",
+    "search": "Maghanap ng mga opisyal...",
+    "statistics": {
+      "title": "Pangkalahatang-ideya ng mga Opisyal",
+      "totalOfficials": "Kabuuang Bilang ng mga Opisyal",
+      "upcomingElections": "Mga Nalalapit na Halalan"
+    },
+    "table": {
+      "headers": {
+        "official": "Opisyal",
+        "position": "Posisyon",
+        "contact": "Pakikipag-ugnayan",
+        "term": "Termino",
+        "status": "Katayuan",
+        "committee": "Komite",
+        "actions": "Mga Aksyon"
+      },
+      "noResults": "Walang nahanap na opisyal",
+      "noResultsSearch": "Walang nahanap na opisyal na tumutugma sa \"{{searchTerm}}\"",
+      "yearsOld": "taong gulang"
+    },
+    "actions": {
+      "view": "Tingnan ang detalye ng opisyal",
+      "edit": "I-edit ang opisyal",
+      "delete": "I-deactivate ang opisyal",
+      "deleting": "Nagde-deactivate..."
+    },
+    "status": {
+      "active": "Aktibo",
+      "inactive": "Hindi Aktibo",
+      "suspended": "Suspendido",
+      "terminated": "Tinanggal",
+      "deceased": "Pumanaw"
+    },
+    "positions": {
+      "barangayCaptain": "Punong Barangay",
+      "barangaySecretary": "Kalihim ng Barangay",
+      "barangayTreasurer": "Ingat-Yaman ng Barangay",
+      "kagawad": "Kagawad",
+      "skChairperson": "Tagapangulo ng SK",
+      "skKagawad": "Kagawad ng SK",
+      "barangayClerk": "Klerk ng Barangay",
+      "barangayTanod": "Tanod ng Barangay"
+    },
+    "committeeAssignments": {
+      "health": "Kalusugan",
+      "education": "Edukasyon",
+      "publicSafety": "Kaligtasan ng Publiko",
+      "environment": "Kapaligiran",
+      "peaceAndOrder": "Kapayapaan at Kaayusan",
+      "sportsAndRecreation": "Palakasan at Libangan",
+      "womenAndFamily": "Kababaihan at Pamilya",
+      "seniorCitizens": "Mga Nakatatanda"
+    },
+    "messages": {
+      "loading": "Naglo-load ng mga opisyal...",
+      "loadError": "Hindi ma-load ang mga opisyal. Subukan ulit.",
+      "statisticsError": "Hindi ma-load ang mga estadistika.",
+      "createError": "Hindi magawa ang opisyal. Subukan ulit.",
+      "updateError": "Hindi ma-update ang opisyal. Subukan ulit.",
+      "deleteConfirm": "Sigurado ka bang gusto mong i-deactivate ang opisyal na ito? Magiging hindi aktibo ang kanyang katayuan.",
+      "deleteSuccess": "Matagumpay na na-deactivate ang opisyal",
+      "deleteError": "Hindi na-deactivate ang opisyal. Subukan ulit."
+    },
+    "pagination": {
+      "showing": "Nagpapakita ng {{from}} hanggang {{to}} sa {{total}} na resulta",
+      "previous": "Nakaraan",
+      "next": "Susunod"
+    }
   }
 }
