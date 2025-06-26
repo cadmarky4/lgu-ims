@@ -209,5 +209,29 @@
         "loadError": "Unable to load resident data."
       }
     }
+  },
+  "barangayOfficials" : {
+    "title": "Barangay Officials",
+    "addNew": "Add New Official",
+    "search": "Search officials...",
+    "statistics": {
+      "title": "Officials Overview",
+      "totalOfficials": "Total Officials",
+      "upcomingElections": "Upcoming Elections"
+    },
+    "table": {
+      "headers": {
+        "official": "Official",
+        "position": "Position",
+        "contact": "Contact",
+        "term": "Term",
+        "status": "Status",
+        "committee": "Committee",
+        "actions": "Actions"
+      },
+      "noResults": "No residents found",
+      "noResultsSearch": "No residents found matching \"{{searchTerm}}\"",
+      "yearsOld": "years old"
+    } 
   }
 }

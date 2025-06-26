@@ -206,5 +206,8 @@
         "loadError": "Hindi makuha ang datos ng residente."
       }
     }
+  },
+  "barangayOfficials" : {
+    
   }
 }
