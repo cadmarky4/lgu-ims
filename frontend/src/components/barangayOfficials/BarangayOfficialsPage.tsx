@@ -1,27 +1,24 @@
-// 1. React core
+// Core imports
 import React, { useState, useEffect } from 'react';
-
-// 2. Third-party libraries
-import { FiSearch, FiEdit, FiTrash2, FiEye, FiUsers, FiFilter } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-
-// 3. Project services & types
-import { barangayOfficialsService } from '@/services/officials/barangayOfficials.service';
-import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
-
-// 4. Local components
-import Breadcrumb from '../_global/Breadcrumb';
-// import EditBarangayOfficial from './EditBarangayOfficial';
-import FileLeave from './FileLeave';
-
-// 5. Utils
-import { getStatusBadgeColor } from './utils/getStatusBadgeColor';
-import { transformApiToComponent } from './utils/transformApiToComponent';
 import { useTranslation } from 'react-i18next';
-import { useNotifications } from '../_global/NotificationSystem';
+
+// Hooks and Services
 import { useDebounce } from '@/hooks/useDebounce';
-import type { BarangayOfficial, BarangayOfficialParams } from '@/services/officials/barangayOfficials.types';
-import { useBarangayOfficials, useDeleteBarangayOfficial } from '@/services/officials/useBarangayOfficials';
+import { useNotifications } from '../_global/NotificationSystem';
+import { 
+  useBarangayOfficials, 
+  useDeleteBarangayOfficial 
+} from '@/services/officials/useBarangayOfficials';
+
+// Types
+import type { 
+  BarangayOfficial, 
+  BarangayOfficialParams 
+} from '@/services/officials/barangayOfficials.types';
+
+// Components
+import Breadcrumb from '../_global/Breadcrumb';
 import { BarangayOfficialsStatistics } from './_components/BarangayOfficialsStatistics';
 import { BarangayOfficialsQuickActions } from './_components/BarangayOfficialsQuickActions';
 import { BarangayOfficialsSearch } from './_components/BarangayOfficialsSearch';
@@ -111,7 +108,12 @@ const BarangayOfficialsPage: React.FC = () => {
   };
 
   // Prepare data
-  const barangayOfficials = barangayOfficialsData?.data || [];
+  const barangayOfficials: BarangayOfficial[] = barangayOfficialsData?.data || [];
+
+  const captain: BarangayOfficial | undefined = barangayOfficials.find(official => official?.position === 'BARANGAY_CAPTAIN');
+  const secretary: BarangayOfficial | undefined  = barangayOfficials.find(official => official?.position === 'BARANGAY_SECRETARY');
+  const councilors: BarangayOfficial[] | undefined  = barangayOfficials.filter(official => official?.position === 'KAGAWAD').slice(0, 8);
+
   const pagination = barangayOfficialsData ? {
     current_page: barangayOfficialsData.current_page,
     last_page: barangayOfficialsData.last_page,
@@ -139,110 +141,6 @@ const BarangayOfficialsPage: React.FC = () => {
     }
   }, [debouncedSearchTerm, searchTerm]);
 
-  // const [searchTerm, setSearchTerm] = useState('');
-  // const [selectedFilter, setSelectedFilter] = useState('All Active Officials');
-  // // const [showEditForm, setShowEditForm] = useState(false);
-  // const [showViewModal, setShowViewModal] = useState(false);
-  // // const [showOfficerSelection, setShowOfficerSelection] = useState(false);
-  // const [selectedOfficial, setSelectedOfficial] = useState<any | null>(null);
-  // // API state - using any for component data format
-  // const [officials, setOfficials] = useState<any[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
-
-  // const [showFileLeave, setShowFileLeave] = useState(false);
-  // const navigate = useNavigate();
-  // const [isLoaded, setIsLoaded] = useState(false);
-
-  // // Animation trigger on component mount
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setIsLoaded(true);
-  //   }, 100);
-  //   return () => clearTimeout(timer);
-  // }, []);
-
-  // // Load officials data
-  // useEffect(() => {
-  //   loadOfficials();
-  // }, []); 
-  // const loadOfficials = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     setError(null);
-  //     const response = await barangayOfficialsService.getBarangayOfficials({
-  //       is_active: true,
-  //       per_page: 100 // Get all active officials
-  //     });
-
-  //     // The response.data should be an array from requestAll method
-  //     const officialsArray = Array.isArray(response.data) ? response.data : [];
-  //     const transformedOfficials = officialsArray.map(transformApiToComponent);
-  //     setOfficials(transformedOfficials);
-  //   } catch (err) {
-  //     console.error('Error loading officials:', err);
-  //     setError('Failed to load barangay officials. Please try again.');
-  //     setOfficials([]); // Set empty array instead of fallback
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const filteredOfficials = officials.filter(official => {
-  //   const matchesSearch = official?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     official?.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     official.committee.toLowerCase().includes(searchTerm.toLowerCase());
-
-  //   const matchesFilter = selectedFilter === 'All Active Officials' ||
-  //     (selectedFilter === 'Active Only' && official?.status === 'Active') ||
-  //     (selectedFilter === 'On Leave' && official?.status === 'On-Leave') ||
-  //     (selectedFilter === 'Inactive' && official?.status === 'Inactive');
-
-  //   return matchesSearch && matchesFilter;
-  // });
-  // // Organizational chart data
-  // const captain = officials.find(official => official?.position === 'Barangay Captain');
-  // const secretary = officials.find(official => official?.position === 'Secretary');
-  // const councilors = officials.filter(official => official?.position === 'Kagawad').slice(0, 8);
-
-  // const handleFileLeave = (leaveData: any) => {
-  //   console.log('Leave application filed:', leaveData);
-  //   // Handle the leave data submission here
-  // };
-  
-  // const handleViewOfficial = (official: any) => {
-  //   setSelectedOfficial(official);
-  //   setShowViewModal(true);
-  // };
-
-  // const handleDeleteOfficial = async (official: any) => {
-  //   if (!confirm(`Are you sure you want to delete ${official?.name}? This action cannot be undone.`)) {
-  //     return;
-  //   }
-
-  //   try {
-  //     await barangayOfficialsService.deleteBarangayOfficial(official.id);
-  //     // Reload officials data to reflect changes
-  //     await loadOfficials();
-  //     console.log('Official deleted successfully');
-  //   } catch (err) {
-  //     console.error('Error deleting official:', err);
-  //     alert('Failed to delete official. Please try again.');
-  //   }
-  // };
-
-  // // Show File Leave component
-  // if (showFileLeave) {
-  //   return (
-  //     <div className={`transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-  //       <FileLeave
-  //         onClose={() => setShowFileLeave(false)}
-  //         onSave={handleFileLeave}
-  //       />
-  //     </div>
-  //   );
-  // }
-
   return (
     <main className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       {/* Breadcrumb */}
@@ -267,7 +165,7 @@ const BarangayOfficialsPage: React.FC = () => {
       )}
 
       {/* Top Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Officials Overview */}
         <BarangayOfficialsStatistics isLoaded={isLoaded} />
 
@@ -297,7 +195,12 @@ const BarangayOfficialsPage: React.FC = () => {
       </section>
 
       {/* Organizational Chart */}
-      <OrganizationalChart />
+      <OrganizationalChart 
+        captain={captain}
+        secretary={secretary}
+        councilors={councilors}
+        isLoaded={isLoaded}
+      />
     </main>
   );
 };

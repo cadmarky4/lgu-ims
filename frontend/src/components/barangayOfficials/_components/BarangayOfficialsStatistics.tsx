@@ -19,7 +19,7 @@ export const BarangayOfficialsStatistics: React.FC<BarangayOfficialsStatisticsPr
                 <div>
                   <p className="text-sm text-gray-600 mb-1">{t('barangayOfficials.statistics.totalOfficials')}</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {isLoading ? '...' : error ? 'Error loading data' : `${officials?.total_officials || 0} officials`}
+                    {isLoading ? '...' : error ? 'Error loading data' : `${officials?.total_officials || 0}`}
                   </p>
                 </div>
                 <div className="text-smblue-400">

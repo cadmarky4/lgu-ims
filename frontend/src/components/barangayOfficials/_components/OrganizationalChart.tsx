@@ -1,8 +1,19 @@
-interface OrganizationalChartProps {
+import type { BarangayOfficial } from "@/services/officials/barangayOfficials.types"
+import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
 
+interface OrganizationalChartProps {
+  captain?: BarangayOfficial;
+  secretary?: BarangayOfficial;
+  councilors?: BarangayOfficial[];
+  isLoaded: boolean;
 }
 
-export const OrganizationalChart: React.FC<OrganizationalChartProps> = () => {
+export const OrganizationalChart: React.FC<OrganizationalChartProps> = ({
+  captain,
+  secretary,
+  councilors,
+  isLoaded,
+}) => {
     return (
       <section className={`bg-white rounded-2xl shadow-sm border border-gray-100 transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '600ms' }}>
         <div className="p-6 border-b border-gray-200">
@@ -15,12 +26,12 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = () => {
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={captain?.photo ? `${STORAGE_BASE_URL}/${captain?.photo}` : 'https://via.placeholder.com/150'}
-                    alt={captain?.name}
+                    src={captain?.profile_photo_url ? `${STORAGE_BASE_URL}/${captain?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    alt={captain?.full_name}
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 </div>
-                <h3 className="font-semibold text-gray-900">{captain?.name}</h3>
+                <h3 className="font-semibold text-gray-900">{captain?.full_name}</h3>
                 <p className="text-sm text-gray-600">{captain?.position}</p>
               </div>
 
@@ -36,12 +47,12 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = () => {
               <div className="flex flex-col items-center">
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={secretary?.photo ? `${STORAGE_BASE_URL}/${secretary?.photo}` : 'https://via.placeholder.com/150'}
-                    alt={secretary?.name}
+                    src={secretary?.profile_photo_url ? `${STORAGE_BASE_URL}/${secretary?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    alt={secretary?.full_name}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                <h3 className="font-medium text-gray-900">{secretary?.name}</h3>
+                <h3 className="font-medium text-gray-900">{secretary?.full_name}</h3>
                 <p className="text-sm text-gray-600">{secretary?.position}</p>
               </div>
 
@@ -53,16 +64,16 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = () => {
 
           {/* Kagawads */}
           <div className="grid grid-cols-4 lg:grid-cols-8 gap-6">
-            {councilors.map((councilor, index) => (
+            {councilors?.map((councilor, index) => (
               <div key={index} className={`flex flex-col items-center transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ animationDelay: `${700 + (index * 100)}ms` }}>
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={councilor?.photo ? `${STORAGE_BASE_URL}/${councilor?.photo}` : 'https://via.placeholder.com/150'}
-                    alt={councilor?.name}
+                    src={councilor?.profile_photo_url ? `${STORAGE_BASE_URL}/${councilor?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    alt={councilor?.full_name}
                     className="w-20 h-20 rounded-full object-cover"
                   />
                 </div>
-                <h4 className="text-sm font-medium text-gray-900 text-center">{councilor?.name}</h4>
+                <h4 className="text-sm font-medium text-gray-900 text-center">{councilor?.full_name}</h4>
                 <p className="text-xs text-gray-600 text-center">{councilor?.position}</p>
               </div>
             ))}
