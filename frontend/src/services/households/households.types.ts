@@ -67,19 +67,19 @@ export const RelationshipTypeSchema = z.enum([
 
 // Head resident schema (simplified)
 export const HeadResidentSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   first_name: z.string(),
   last_name: z.string(),
-  middle_name: z.string().optional(),
-  contact_number: z.string().optional(),
+  middle_name: z.string().nullable().optional(),
+  contact_number: z.string().nullable().optional(),
 });
 
 // Household member schema
 export const HouseholdMemberSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   first_name: z.string(),
   last_name: z.string(),
-  middle_name: z.string().optional(),
+  middle_name: z.string().nullable().optional(),
   relationship: z.string(),
 });
 
@@ -87,7 +87,7 @@ export const HouseholdFormDataSchema = z.object({
   // Basic Information
   household_number: z.string().min(1, 'households.form.error.householdNumberRequired'),
   household_type: HouseholdTypeSchema,
-  head_resident_id: z.number().optional(),
+  head_resident_id: z.string().uuid().nullable().optional(),
   
   // Address Information
   house_number: z.string().min(1, 'households.form.error.houseNumberRequired'),
@@ -96,8 +96,8 @@ export const HouseholdFormDataSchema = z.object({
   complete_address: z.string().min(1, 'households.form.error.completeAddressRequired'),
   
   // Income Information
-  monthly_income: MonthlyIncomeRangeSchema.optional(),
-  primary_income_source: z.string().optional(),
+  monthly_income: MonthlyIncomeRangeSchema.nullable().optional(),
+  primary_income_source: z.string().nullable().optional(),
   
   // Classifications
   four_ps_beneficiary: z.boolean(),
@@ -106,49 +106,52 @@ export const HouseholdFormDataSchema = z.object({
   has_pwd_member: z.boolean(),
   
   // House Details
-  house_type: HouseTypeSchema.optional(),
-  ownership_status: OwnershipStatusSchema.optional(),
+  house_type: HouseTypeSchema.nullable().optional(),
+  ownership_status: OwnershipStatusSchema.nullable().optional(),
   
   // Utilities
   has_electricity: z.boolean(),
   has_water_supply: z.boolean(),
   has_internet_access: z.boolean(),
   
+  // Members - array of resident IDs for simplicity
+  members: z.array(z.string().uuid()).nullable().optional(),
+  
   // Additional Information
-  remarks: z.string().optional(),
+  remarks: z.string().nullable().optional(),
 });
 
 // Main Household schema
 export const HouseholdSchema = HouseholdFormDataSchema.extend({
-  id: z.number(),
-  created_by: z.number().optional(),
-  updated_by: z.number().optional(),
+  id: z.string().uuid(),
+  created_by: z.string().uuid().nullable().optional(),
+  updated_by: z.string().uuid().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   
   // Relationships
-  head_resident: HeadResidentSchema.optional(),
-  members: z.array(HouseholdMemberSchema).optional(),
+  head_resident: HeadResidentSchema.nullable().optional(),
+  members: z.array(HouseholdMemberSchema).nullable().optional(),
 });
 
 // Query parameters schema
 export const HouseholdParamsSchema = z.object({
   page: z.number().min(1).optional(),
   per_page: z.number().min(1).max(100).optional(),
-  search: z.string().optional(),
-  household_type: HouseholdTypeSchema.optional(),
-  barangay: z.string().optional(),
-  monthly_income: MonthlyIncomeRangeSchema.optional(),
-  house_type: HouseTypeSchema.optional(),
-  ownership_status: OwnershipStatusSchema.optional(),
-  four_ps_beneficiary: z.boolean().optional(),
-  indigent_family: z.boolean().optional(),
-  has_senior_citizen: z.boolean().optional(),
-  has_pwd_member: z.boolean().optional(),
-  has_electricity: z.boolean().optional(),
-  has_water_supply: z.boolean().optional(),
-  has_internet_access: z.boolean().optional(),
-  status: HouseholdStatusSchema.optional(),
+  search: z.string().nullable().optional(),
+  household_type: HouseholdTypeSchema.nullable().optional(),
+  barangay: z.string().nullable().optional(),
+  monthly_income: MonthlyIncomeRangeSchema.nullable().optional(),
+  house_type: HouseTypeSchema.nullable().optional(),
+  ownership_status: OwnershipStatusSchema.nullable().optional(),
+  four_ps_beneficiary: z.boolean().nullable().optional(),
+  indigent_family: z.boolean().nullable().optional(),
+  has_senior_citizen: z.boolean().nullable().optional(),
+  has_pwd_member: z.boolean().nullable().optional(),
+  has_electricity: z.boolean().nullable().optional(),
+  has_water_supply: z.boolean().nullable().optional(),
+  has_internet_access: z.boolean().nullable().optional(),
+  status: HouseholdStatusSchema.nullable().optional(),
 });
 
 // Statistics schemas
@@ -187,23 +190,24 @@ export const transformHouseholdToFormData = (household: Household | null): House
     return {
       household_number: '',
       household_type: 'NUCLEAR',
-      head_resident_id: undefined,
+      head_resident_id: null,
       house_number: '',
       street_sitio: '',
       barangay: '',
       complete_address: '',
-      monthly_income: undefined,
-      primary_income_source: '',
+      monthly_income: null,
+      primary_income_source: null,
       four_ps_beneficiary: false,
       indigent_family: false,
       has_senior_citizen: false,
       has_pwd_member: false,
-      house_type: undefined,
-      ownership_status: undefined,
+      house_type: null,
+      ownership_status: null,
       has_electricity: false,
       has_water_supply: false,
       has_internet_access: false,
-      remarks: '',
+      members: null,
+      remarks: null,
     };
   }
 
@@ -216,7 +220,7 @@ export const transformHouseholdToFormData = (household: Household | null): House
     barangay: household.barangay,
     complete_address: household.complete_address,
     monthly_income: household.monthly_income as MonthlyIncomeRange,
-    primary_income_source: household.primary_income_source || '',
+    primary_income_source: household.primary_income_source,
     four_ps_beneficiary: household.four_ps_beneficiary || false,
     indigent_family: household.indigent_family || false,
     has_senior_citizen: household.has_senior_citizen || false,
@@ -226,7 +230,8 @@ export const transformHouseholdToFormData = (household: Household | null): House
     has_electricity: household.has_electricity || false,
     has_water_supply: household.has_water_supply || false,
     has_internet_access: household.has_internet_access || false,
-    remarks: household.remarks || '',
+    members: household.members?.map(member => member.id) || null,
+    remarks: household.remarks,
   };
 };
 

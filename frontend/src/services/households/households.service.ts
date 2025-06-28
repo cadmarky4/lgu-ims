@@ -34,7 +34,7 @@ export class HouseholdsService extends BaseApiService {
     // Build query string
     const searchParams = new URLSearchParams();
     Object.entries(validatedParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
@@ -51,8 +51,8 @@ export class HouseholdsService extends BaseApiService {
   /**
    * Get single household by ID
    */
-  async getHousehold(id: number): Promise<Household> {
-    if (!id || id <= 0) {
+  async getHousehold(id: string): Promise<Household> {
+    if (!id || !id.trim()) {
       throw new Error('Invalid household ID');
     }
 
@@ -99,8 +99,8 @@ export class HouseholdsService extends BaseApiService {
   /**
    * Update existing household
    */
-  async updateHousehold(id: number, householdData: HouseholdFormData): Promise<Household> {
-    if (!id || id <= 0) {
+  async updateHousehold(id: string, householdData: HouseholdFormData): Promise<Household> {
+    if (!id || !id.trim()) {
       throw new Error('Invalid household ID');
     }
 
@@ -128,8 +128,8 @@ export class HouseholdsService extends BaseApiService {
   /**
    * Delete household
    */
-  async deleteHousehold(id: number): Promise<void> {
-    if (!id || id <= 0) {
+  async deleteHousehold(id: string): Promise<void> {
+    if (!id || !id.trim()) {
       throw new Error('Invalid household ID');
     }
 
@@ -183,7 +183,7 @@ export class HouseholdsService extends BaseApiService {
   /**
    * Check for duplicate households by address and head
    */
-  async checkDuplicate(completeAddress: string, headResidentId?: number): Promise<Household[]> {
+  async checkDuplicate(completeAddress: string, headResidentId?: string): Promise<Household[]> {
     if (!completeAddress.trim()) {
       throw new Error('Complete address is required');
     }
@@ -207,27 +207,27 @@ export class HouseholdsService extends BaseApiService {
   /**
    * Get households by barangay
    */
-  // async getHouseholdsByBarangay(barangay: string): Promise<Household[]> {
-  //   if (!barangay.trim()) {
-  //     throw new Error('Barangay is required');
-  //   }
+  async getHouseholdsByBarangay(barangay: string): Promise<Household[]> {
+    if (!barangay.trim()) {
+      throw new Error('Barangay is required');
+    }
 
-  //   const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
+    const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
     
-  //   const response = await this.request(
-  //     `/households?barangay=${encodeURIComponent(barangay)}`,
-  //     paginatedSchema,
-  //     { method: 'GET' }
-  //   );
+    const response = await this.request(
+      `/households?barangay=${encodeURIComponent(barangay)}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
 
-  //   return response.data;
-  // }
+    return response.data;
+  }
 
   /**
    * Get households by head resident
    */
-  async getHouseholdsByHead(headResidentId: number): Promise<Household[]> {
-    if (!headResidentId || headResidentId <= 0) {
+  async getHouseholdsByHead(headResidentId: string): Promise<Household[]> {
+    if (!headResidentId || !headResidentId.trim()) {
       throw new Error('Invalid head resident ID');
     }
 
@@ -238,36 +238,6 @@ export class HouseholdsService extends BaseApiService {
       paginatedSchema,
       { method: 'GET' }
     );
-
-    return response.data;
-  }
-
-  /**
-   * Update household members
-   */
-  async updateHouseholdMembers(householdId: number, memberIds: Array<{resident_id: number, relationship: string}>): Promise<Household> {
-    if (!householdId || householdId <= 0) {
-      throw new Error('Invalid household ID');
-    }
-
-    if (!Array.isArray(memberIds)) {
-      throw new Error('Member IDs must be an array');
-    }
-
-    const responseSchema = ApiResponseSchema(HouseholdSchema);
-    
-    const response = await this.request(
-      `/households/${householdId}/members`,
-      responseSchema,
-      {
-        method: 'PUT',
-        data: { member_ids: memberIds },
-      }
-    );
-
-    if (!response.data) {
-      throw new Error('Failed to update household members');
-    }
 
     return response.data;
   }
