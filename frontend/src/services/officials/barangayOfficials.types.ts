@@ -46,8 +46,8 @@ export const PrefixSchema = z.enum([
   'Hon.',
 ]);
 
-// Basically without the computed fields
-export const BarangayOfficialFormDataSchema = z.object({
+// Basically without the computed fields and search param for forms
+export const BarangayOfficialBaseSchema = z.object({
   // Foreign Key
   resident_id: z.string().uuid(),
 
@@ -92,7 +92,12 @@ export const BarangayOfficialFormDataSchema = z.object({
   profile_photo_url: z.string().optional(), 
 })
 
-export const BarangayOfficialSchema = BarangayOfficialFormDataSchema.extend({
+// Yung pang forms lang
+export const BarangayOfficialFormDataSchema = BarangayOfficialBaseSchema.extend({
+  resident_search: z.string().optional(),
+})
+
+export const BarangayOfficialSchema = BarangayOfficialBaseSchema.extend({
   id: z.string().uuid(),
 
   // Computed attributes
@@ -130,6 +135,7 @@ export const BarangayOfficialStatisticsSchema = z.object({
 export function transformBarangayOfficialToFormData(official: BarangayOfficial | null): BarangayOfficialFormData {
   if (!official) {
     return {
+      resident_search: '',
       resident_id: '',
       prefix: 'Mr.',
       first_name: '',

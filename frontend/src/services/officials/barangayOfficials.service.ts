@@ -180,7 +180,8 @@ export class BarangayOfficialsService extends BaseApiService {
     return response.data;
   }
 
-  async checkDuplicate(residentId: string): Promise<number> {
+  // checks if a resident is already a registered barangay official
+  async isAlreadyOfficial(residentId: string): Promise<number> {
     if (!residentId) {
       throw new Error('Invalid resident ID');
     }
