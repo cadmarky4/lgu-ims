@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import sikatunaBG from "@/assets/sikatunaVillageBG.webp";
 
 const LoginPage: React.FC = () => {
   const { login, isLoading, message } = useAuth();
@@ -83,7 +84,8 @@ const LoginPage: React.FC = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed bg-blue-500"
         style={{
-          backgroundImage: `url('/background.png')`
+          // backgroundImage: `url('/background.png')`
+          backgroundImage: `url('${sikatunaBG}')`
         }}
       >
       </div>
@@ -95,11 +97,11 @@ const LoginPage: React.FC = () => {
           {/* Barangay Logo Placeholder */}
           <div className="mx-auto w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
             <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center">
-              <span className="text-blue-900 font-bold text-lg">BSM</span>
+              <span className="text-blue-900 font-bold text-lg">BSV</span>
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">BARANGAY SAN MIGUEL</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">BARANGAY SIKATUNA VILLAGE</h1>
           <p className="text-gray-600 text-lg">Information Management System</p>
           <div className="w-16 h-px bg-gray-400 mx-auto mt-4"></div>
         </div>        

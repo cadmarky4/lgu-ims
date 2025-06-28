@@ -12,7 +12,7 @@ import {
   FiChevronDown,
   FiChevronRight,
 } from "react-icons/fi";
-import sanMiguelLogo from "@/assets/sanMiguelLogo.jpg";
+import sanMiguelLogo from "@/assets/sikatunaLogo.jpeg";
 
 interface SidebarProps {
   activeItem: string;
@@ -347,8 +347,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             alt="San Miguel Logo"
           />
           <div className={`${!isMobile && !isExpanded ? "max-w-0" : ""}`}>
-            <h1 className="whitespace-nowrap text-md font-bold text-gray-900">
-              Barangay San Miguel
+            <h1 className="whitespace-nowrap text-sm font-bold text-gray-900">
+              Barangay Sikatuna Village
             </h1>
             <p
               className={`${
