@@ -3,7 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./components/_global/NotificationSystem";
 import ProtectedRoute from "./components/_auth/ProtectedRoute"; 
 import AppLayout from "./components/AppLayout";
-import Dashboard from "./components/dashboard/Dashboard";
+// import Dashboard from "./components/dashboard/Dashboard";
 import ResidentManagement from "./components/residentManagement/ResidentManagement";
 import AddNewResident from "./components/residentManagement/AddNewResident";
 import EditResident from "./components/residentManagement/EditResident";
@@ -22,12 +22,17 @@ import HouseholdManagement from "./components/householdManagement/HouseholdManag
 import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
 import EditHousehold from "./components/householdManagement/EditHousehold";
 import ViewHousehold from "./components/householdManagement/ViewHousehold";
+import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
+import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
+import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
+import ListBarangayOfficalsToEdit from "./components/barangayOfficials/ListBarangayOfficalsToEdit";
 
 import LoginPage from "./components/_auth/LoginPage";
 import SignupPage from "./components/_auth/SignupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import './i18';
+import ViewBarangayOfficial from "./components/barangayOfficials/ViewBarangayOfficial";
 
 
 // Wrapper components to handle navigation prop
@@ -161,24 +166,28 @@ const router = createBrowserRouter([
       },
       {
         path: "officials",
-        // children: [
-        //   {
-        //     index: true,
-        //     // element: <BarangayOfficialsPage />,
-        //   },
-        //   {
-        //     path: "add",
-        //     element: <AddBarangayOfficial />,
-        //   },
-        //   {
-        //     path: "edit",
-        //     element: <ListBarangayOfficalsToEdit />,
-        //   },
-        //   {
-        //     path: "edit/:id",
-        //     element: <EditBarangayOfficial />,
-        //   },
-        // ]
+        children: [
+          {
+            index: true,
+            element: <BarangayOfficialsPage />,
+          },
+          {
+            path: "add",
+            element: <AddBarangayOfficial />,
+          },
+          {
+            path: "edit",
+            element: <ListBarangayOfficalsToEdit />,
+          },
+          {
+            path: "edit/:id",
+            element: <EditBarangayOfficial />,
+          },
+          {
+            path: "view/:id",
+            element: <ViewBarangayOfficial />
+          }
+        ]
       },
       {
         path: "projects",

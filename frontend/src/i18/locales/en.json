@@ -320,5 +320,174 @@
       "previous": "Previous",
       "next": "Next"
     }
+  },
+
+  "barangayOfficials" : {
+    "title": "Barangay Officials",
+    "addNew": "Add New Official",
+    "search": "Search officials...",
+    "statistics": {
+      "title": "Officials Overview",
+      "totalOfficials": "Total Officials",
+      "upcomingElections": "Upcoming Elections"
+    },
+    "table": {
+      "headers": {
+        "official": "Official",
+        "position": "Position",
+        "contact": "Contact",
+        "term": "Term",
+        "status": "Status",
+        "committee": "Committee",
+        "actions": "Actions"
+      },
+      "noResults": "No official found",
+      "noResultsSearch": "No official found matching \"{{searchTerm}}\"",
+      "yearsOld": "years old"
+    },
+    "actions": {
+      "view": "View official details",
+      "edit": "Edit official",
+      "delete": "Deactivate official",
+      "deleting": "Deactivating..."
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "suspended": "Suspended",
+      "terminated": "Terminated",
+      "deceased": "Deceased"
+    },
+    "positions": {
+      "barangayCaptain": "Barangay Captain",
+      "barangaySecretary": "Barangay Secretary", 
+      "barangayTreasurer": "Barangay Treasurer",
+      "kagawad": "Kagawad",
+      "skChairperson": "SK Chairperson",
+      "skKagawad": "SK Kagawad",
+      "barangayClerk": "Barangay Clerk",
+      "barangayTanod": "Barangay Tanod"
+    },
+    "committeeAssignments": {
+      "health": "Health",
+      "education": "Education",
+      "publicSafety": "Public Safety", 
+      "environment": "Environment",
+      "peaceAndOrder": "Peace and Order",
+      "sportsAndRecreation": "Sports and Recreation",
+      "womenAndFamily": "Women and Family",
+      "seniorCitizens": "Senior Citizens"
+    },
+    "messages": {
+      "loading": "Loading officials...",
+      "loadError": "Failed to load officials. Please try again.",
+      "statisticsError": "Failed to load statistics.",
+      "createError": "Failed to create official. Please try again.",
+      "updateError": "Failed to update official. Please try again.",
+      "deleteConfirm": "Are you sure you want to deactivate this official? This will change their status to inactive.",
+      "deleteSuccess": "official deactivated successfully",
+      "deleteError": "Failed to deactivate official. Please try again."
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}} results",
+      "previous": "Previous",
+      "next": "Next"
+    },
+
+    "form": {
+      "addTitle": "Add New Resident",
+      "editTitle": "Edit Resident Profile",
+      "sections": {
+        "basicInfo": "Basic Information",
+        "contactInfo": "Contact Information",
+        "familyInfo": "Family Information",
+        "governmentIds": "Government IDs & Documents",
+        "healthMedical": "Health & Medical Information",
+        "profilePhoto": "Profile Photo"
+      },
+      "fields": {
+        "residentSearch": "Search Existing Resident as Official",
+        "residentId": "Resident ID",
+        "prefix": "Prefix",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "middleName": "Middle Name",
+        "suffix": "Suffix",
+        "birthDate": "Birth Date",
+        "gender": "Gender",
+        "civilStatus": "Civil Status",
+        "nationality": "Nationality",
+        "employmentStatus": "Employment Status",
+        "educationalAttainment": "Educational Attainment",
+        "mobileNumber": "Mobile Number",
+        "landlineNumber": "Landline Number",
+        "emailAddress": "Email Address",
+        "completeAddress": "Complete Address",
+        "position": "position",
+        "committeeAssignment": "Committee Assignment",
+        "termStart": "Term Start",
+        "termEnd": "Term End"
+      },
+      "placeholders": {
+        "residentSearch": "Search resident by name, id...",
+        "residentId": "Enter resident ID",
+        "firstName": "Enter first name here...",
+        "lastName": "Enter last name here...",
+        "middleName": "Leave blank if not applicable",
+        "nationality": "Enter nationality...",
+        "educationalAttainment": "e.g. High School Graduate, College Graduate...",
+        "mobileNumber": "+63 XXX XXX XXXX",
+        "landlineNumber": "(02) XXXX-XXXX",
+        "emailAddress": "resident@gmail.com",
+        "completeAddress": "Enter complete address...",
+        "position": "Select Position",
+        "committeeAssignment": "Select Committee Assignment"
+      },
+      "options": {
+        "selectGender": "Select Gender",
+        "selectCivilStatus": "Select Civil Status",
+        "selectEmploymentStatus": "Select Employment Status",
+        "selectIdType": "Select ID Type",
+        "selectSuffix": "Select Suffix"
+      },
+      "actions": {
+        "saveDraft": "Save Draft",
+        "savingDraft": "Saving Draft...",
+        "cancel": "Cancel",
+        "register": "Register Resident",
+        "update": "Update Resident",
+        "registering": "Saving...",
+        "updating": "Updating...",
+        "close": "Close"
+      },
+      "validation": {
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "birthDateRequired": "Birth date is required",
+        "termStartRequired": "Term start date is required",
+        "termEndRequired": "Term end date is required"
+      },
+      "error": {
+      },
+      "messages": {
+        "loadingOfficial": "Loading official data...",
+        "loadingReferenceData": "Loading reference data...",
+        "duplicateWarning": "Found {{count}} potential duplicate(s). Please verify this is not a duplicate entry.",
+        "duplicatesFound": "Similar officials found:",
+        "unsavedChanges": "You have unsaved changes. Are you sure you want to leave? Your progress will not be saved.",
+        "unsavedChangesEdit": "Any unsaved changes will be lost. Are you sure you want to leave?",
+        "draftSaved": "Draft saved successfully!",
+        "draftSaveError": "Failed to save draft. Please try again.",
+        "createSuccess": "Official registered successfully!",
+        "updateSuccess": "Official updated successfully!",
+        "createError": "Failed to save official. Please try again.",
+        "updateError": "Failed to update official. Please try again.",
+        "validationError": "Validation failed: {{errors}}",
+        "networkError": "Unable to connect to server. Please check your connection.",
+        "notFound": "Official not found",
+        "invalidId": "The official ID provided is invalid.",
+        "loadError": "Unable to load official data."
+      }
+    }
   }
 }

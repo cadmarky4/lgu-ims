@@ -317,5 +317,4 @@ export class HouseholdsService extends BaseApiService {
   }
 }
 
-// Create singleton instance
 export const householdsService = new HouseholdsService();

@@ -1,25 +1,25 @@
 import { AuthService } from './__shared/_auth/auth.service';
-import { ResidentsService } from './residents/residents.service';
-import { HouseholdsService } from './households/households.service';
+import { residentsService, ResidentsService } from './residents/residents.service';
+import { householdsService, HouseholdsService } from './households/households.service';
 import { DocumentsService } from './documents/documents.service';
 import { UsersService } from './users/users.service';
 import { ComplaintsService } from './helpDesk/complaints/complaints.service';
 import { SuggestionsService } from './helpDesk/suggestions/suggestions.service';
 import { BlotterService } from './helpDesk/blotters/blotters.service';
 import { AppointmentsService } from './helpDesk/appointments/appointments.service';
-import { BarangayOfficialsService } from './officials/barangayOfficials.service';
+import { barangayOfficialsService, BarangayOfficialsService } from './officials/barangayOfficials.service';
 
 // Create singleton instances
 export const authService = new AuthService();
-export const residentsService = new ResidentsService();
-export const householdsService = new HouseholdsService();
-export const documentsService = new DocumentsService();
-export const usersService = new UsersService();
-export const complaintsService = new ComplaintsService();
-export const suggestionsService = new SuggestionsService();
-export const blotterService = new BlotterService();
-export const appointmentsService = new AppointmentsService();
-export const barangayOfficialsService = new BarangayOfficialsService();
+// export const residentsService = new ResidentsService();
+// export const householdsService = new HouseholdsService();
+// export const documentsService = new DocumentsService();
+// export const usersService = new UsersService();
+// export const complaintsService = new ComplaintsService();
+// export const suggestionsService = new SuggestionsService();
+// export const blotterService = new BlotterService();
+// export const appointmentsService = new AppointmentsService();
+// export const barangayOfficialsService = new BarangayOfficialsService();
 
 // Export service classes for direct instantiation
 export {
