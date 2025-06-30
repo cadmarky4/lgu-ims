@@ -8,10 +8,10 @@ import ResidentManagement from "./components/residentManagement/ResidentManageme
 import AddNewResident from "./components/residentManagement/AddNewResident";
 import EditResident from "./components/residentManagement/EditResident";
 import ViewResident from "./components/residentManagement/ViewResident";
-// import HouseholdManagement from "./components/householdManagement/HouseholdManagement";
-// import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
-// import EditHousehold from "./components/householdManagement/EditHousehold";
-// import ViewHousehold from "./components/householdManagement/ViewHousehold";
+import HouseholdManagement from "./components/householdManagement/HouseholdManagement";
+import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
+import EditHousehold from "./components/householdManagement/EditHousehold";
+import ViewHousehold from "./components/householdManagement/ViewHousehold";
 // import ProcessDocument from "./components/processDocument/ProcessDocument";
 // import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
 // import BusinessPermitForm from "./components/processDocument/BusinessPermitForm";
@@ -116,24 +116,24 @@ const router = createBrowserRouter([
       },
       {
         path: "household",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <HouseholdManagement />,
-        //   },
-        //   {
-        //     path: "add",
-        //     element: <AddNewHousehold />,
-        //   },
-        //   {
-        //     path: "edit/:id",
-        //     element: <EditHousehold />,
-        //   },
-        //   {
-        //     path: "view/:id",
-        //     element: <ViewHousehold />,
-        //   },
-        // ],
+        children: [
+          {
+            index: true,
+            element: <HouseholdManagement />,
+          },
+          {
+            path: "add",
+            element: <AddNewHousehold />,
+          },
+          {
+            path: "edit/:id",
+            element: <EditHousehold />,
+          },
+          {
+            path: "view/:id",
+            element: <ViewHousehold />,
+          },
+        ],
       },
       {
         path: "process-document",

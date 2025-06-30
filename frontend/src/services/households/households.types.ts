@@ -65,29 +65,25 @@ export const RelationshipTypeSchema = z.enum([
   'OTHER'
 ]);
 
-// Head resident schema (simplified)
+// Head resident schema (minimal - just reference to resident)
 export const HeadResidentSchema = z.object({
-  id: z.string().uuid(),
-  first_name: z.string(),
+  id: z.number(),               // resident ID reference (number to match residents)
+  first_name: z.string(),       // Keep basic name for quick display
   last_name: z.string(),
   middle_name: z.string().nullable().optional(),
-  contact_number: z.string().nullable().optional(),
 });
 
-// Household member schema
+// Household member schema (minimal - just reference to resident)
 export const HouseholdMemberSchema = z.object({
-  id: z.string().uuid(),
-  first_name: z.string(),
-  last_name: z.string(),
-  middle_name: z.string().nullable().optional(),
-  relationship: z.string(),
+  id: z.number(),               // resident ID reference (number to match residents)
+  relationship: z.string(),     // relationship to household head
 });
 
 export const HouseholdFormDataSchema = z.object({
   // Basic Information
   household_number: z.string().min(1, 'households.form.error.householdNumberRequired'),
   household_type: HouseholdTypeSchema,
-  head_resident_id: z.string().uuid().nullable().optional(),
+  head_resident_id: z.number().nullable().optional(),
   
   // Address Information
   house_number: z.string().min(1, 'households.form.error.houseNumberRequired'),
@@ -114,8 +110,14 @@ export const HouseholdFormDataSchema = z.object({
   has_water_supply: z.boolean(),
   has_internet_access: z.boolean(),
   
-  // Members - array of resident IDs for simplicity
-  members: z.array(z.string().uuid()).nullable().optional(),
+  // Members - for form management with relationships
+  memberRelationships: z.array(z.object({
+    residentId: z.number(),
+    relationship: z.string(),
+  })).nullable().optional(),
+  
+  // Members - array of resident IDs for API (derived from memberRelationships)
+  members: z.array(z.number()).nullable().optional(),
   
   // Additional Information
   remarks: z.string().nullable().optional(),
@@ -206,6 +208,7 @@ export const transformHouseholdToFormData = (household: Household | null): House
       has_electricity: false,
       has_water_supply: false,
       has_internet_access: false,
+      memberRelationships: null,
       members: null,
       remarks: null,
     };
@@ -230,6 +233,11 @@ export const transformHouseholdToFormData = (household: Household | null): House
     has_electricity: household.has_electricity || false,
     has_water_supply: household.has_water_supply || false,
     has_internet_access: household.has_internet_access || false,
+    // Convert household members to form structure
+    memberRelationships: household.members?.map(member => ({
+      residentId: member.id,
+      relationship: member.relationship || 'OTHER'
+    })) || null,
     members: household.members?.map(member => member.id) || null,
     remarks: household.remarks,
   };

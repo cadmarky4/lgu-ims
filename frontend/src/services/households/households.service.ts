@@ -200,7 +200,7 @@ export class HouseholdsService extends BaseApiService {
         return addressMatch;
       }
       
-      return addressMatch && household.head_resident_id === headResidentId;
+      return addressMatch && String(household.head_resident_id ?? '') === String(headResidentId);
     });
   }
 
