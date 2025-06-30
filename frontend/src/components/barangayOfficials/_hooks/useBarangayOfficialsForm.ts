@@ -29,8 +29,9 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     })
 
     const {  watch, setValue, reset } = form;
-    const residentId  = watch('resident_id');
+    const [residentId, setResidentId]  = useState<string>('');
     const searchResident = watch('resident_search');
+    const [ isResidentValidNewOfficial, setIsResidentValidNewOfficial ] = useState(false);
 
     // Queries and mutations
     const { data: official, isLoading: isLoadingOfficial } = useBarangayOfficial(
@@ -38,7 +39,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         mode === 'edit' && !!barangayOfficialId
     );
 
-    const { data: residents, isLoading: isLoadingResidents, error: residentsError } = useResidents({ search: searchResident });
+    const { data: filteredResidents, isLoading: isLoadingResidents, error: residentsError } = useResidents({ search: searchResident });
 
     const createBarangayOfficial = useCreateBarangayOfficial();
     const updateBarangayOfficial = useUpdateBarangayOfficial();
@@ -69,6 +70,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                         // const res = residents?.data.find(resident => 
                         //     resident.id === (residentId ? Number(residentId) : -1)
                         // );
+                        setIsResidentValidNewOfficial(true);
                         setValue('first_name', res.first_name);
                         setValue('middle_name', res.middle_name);
                         setValue('last_name', res.last_name);
@@ -206,15 +208,18 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
 
     return {
         form,
+        searchResident,
         official,
         isLoadingOfficial,
-        residents,
+        filteredResidents,
         isLoadingResidents,
         residentsError,
         profilePhotoPreview,
         isAlreadyRegisteredAsOfficialWarning,
         isSubmitting: createBarangayOfficial.isPending || updateBarangayOfficial.isPending,
         isCheckingAlreadyRegisteredAsOfficial: isChecking,
+        isResidentValidNewOfficial,
+        setResidentId,
         handleSubmit: form.handleSubmit(handleSubmit),
         saveDraft,
         clearDraft,

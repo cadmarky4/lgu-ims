@@ -295,6 +295,7 @@
         "profilePhoto": "Profile Photo"
       },
       "fields": {
+        "residentSearch": "Search Existing Resident as Official",
         "residentId": "Resident ID",
         "prefix": "Prefix",
         "firstName": "First Name",
@@ -317,6 +318,7 @@
         "termEnd": "Term End"
       },
       "placeholders": {
+        "residentSearch": "Search resident by name, id...",
         "residentId": "Enter resident ID",
         "firstName": "Enter first name here...",
         "lastName": "Enter last name here...",

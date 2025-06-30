@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useBarangayOfficialsForm } from "../_hooks/useBarangayOfficialsForm";
 import { LoadingSpinner } from "@/components/__shared/LoadingSpinner";
 import { FormProvider } from "react-hook-form";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormField } from "@/components/_global/components/FormField";
 import {
   committeeAssignments,
@@ -11,6 +11,7 @@ import {
   prefixes,
 } from "@/services/officials/barangayOfficials.types";
 import { civilStatuses, genders } from "@/services/__shared/types";
+import { SearchResidents } from "./SearchResidents";
 
 interface BarangayOfficialFormProps {
   mode: "create" | "edit";
@@ -28,20 +29,24 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
   const { t } = useTranslation();
   const {
     form,
+    searchResident,
     official,
     isLoadingOfficial,
-    residents,
+    filteredResidents,
     isLoadingResidents,
     residentsError,
     profilePhotoPreview,
     isAlreadyRegisteredAsOfficialWarning,
     isSubmitting,
     isCheckingAlreadyRegisteredAsOfficial,
+    isResidentValidNewOfficial,
+    setResidentId,
     handleSubmit,
     saveDraft,
     clearDraft,
   } = useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess });
   const [isLoaded, setIsLoaded] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const title =
     mode === "create"
@@ -109,9 +114,6 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
             }`}
             style={{ animationDelay: "250ms" }}
           >
-            {/* Search Residents */}
-
-
             {/* Basic Information */}
             <section className="mb-8">
               <h2
@@ -126,7 +128,24 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
               </h2>
               <div className="border-b border-gray-200 mb-6"></div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Search Residents */}
+              <SearchResidents
+                headSearchRef={searchRef}
+                search={searchResident || ''}
+                isSearchingResidents={isLoadingResidents}
+                filteredResidents={filteredResidents?.data || []}
+                residentsErrorMessage={
+                  residentsError?.message || "Failed Loading Residents"
+                }
+                onResidentClick={setResidentId}
+              />
+
+              {/* Baka kasi mawala yung validation pagnirender ko sya conditionally */}
+              <div
+                className={`grid-cols-1 lg:grid-cols-3 gap-6 ${
+                  isResidentValidNewOfficial ? "grid" : "hidden"
+                }`}
+              >
                 {/* Profile Photo */}
                 <div
                   className={`lg:col-span-3 flex justify-center transform transition-all duration-500 ${
@@ -136,53 +155,52 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                   }`}
                   style={{ animationDelay: "350ms" }}
                 >
-                  {
-                    official?.profile_photo_url && 
+                  {official?.profile_photo_url && (
                     <img
                       src={official?.profile_photo_url}
                       alt="barangay official profile picture"
                       className="w-72 h-72 rounded-full"
                     />
-                  }
-                  
+                  )}
+
                   {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
-                    {previewUrl ? (
-                      <div className="relative">
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewUrl(null);
-                            setSelectedFile(null);
-                          }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          <FiX className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
-                        <FiUpload className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      id="profilePhoto"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="profilePhoto"
-                      className="text-smblue-400 hover:text-smblue-300 text-sm font-medium transition-colors cursor-pointer"
-                    >
-                      {previewUrl ? "Change Photo" : "Upload Profile Photo"}
-                    </label>
-                  </div> */}
+                  {previewUrl ? (
+                    <div className="relative">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewUrl(null);
+                          setSelectedFile(null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        <FiX className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                      <FiUpload className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    id="profilePhoto"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="profilePhoto"
+                    className="text-smblue-400 hover:text-smblue-300 text-sm font-medium transition-colors cursor-pointer"
+                  >
+                    {previewUrl ? "Change Photo" : "Upload Profile Photo"}
+                  </label>
+                </div> */}
                 </div>
 
                 {/* Form Fields */}
@@ -456,7 +474,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
               </h2>
               <div className="border-b border-gray-200 mb-6"></div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Position */}
                 <div
                   className={`transform transition-all duration-500 ${
@@ -475,7 +493,9 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                     )}
                     options={positions.map((position) => ({
                       value: position,
-                      label: position,
+                      label: position.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                        ).join(' ')
                     }))}
                     required
                   />
