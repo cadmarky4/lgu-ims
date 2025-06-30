@@ -1,0 +1,84 @@
+
+{
+  "residents": {
+    "form": {
+      "actions": {
+        "next": "Next",
+        "previous": "Previous",
+        "saveDraft": "Save Draft",
+        "clearDraft": "Clear Draft"
+      },
+      "sections": {
+        "governmentIds": "Government IDs & Voter Information",
+        "healthMedical": "Health & Medical Information",
+        "specialClassifications": "Special Classifications"
+      },
+      "fields": {
+        "houseNumber": "House Number",
+        "street": "Street",
+        "primaryIdType": "Primary ID Type",
+        "idNumber": "ID Number",
+        "philhealthNumber": "PhilHealth Number",
+        "sssNumber": "SSS Number",
+        "tinNumber": "TIN Number",
+        "votersIdNumber": "Voter's ID Number",
+        "voterStatus": "Voter Status",
+        "precinctNumber": "Precinct Number",
+        "medicalConditions": "Medical Conditions",
+        "allergies": "Allergies",
+        "seniorCitizen": "Senior Citizen (60 years old and above)",
+        "personWithDisability": "Person With Disability (PWD)",
+        "disabilityType": "Type of Disability",
+        "indigenousPeople": "Indigenous People",
+        "indigenousGroup": "Indigenous Group",
+        "fourPsBeneficiary": "4Ps Beneficiary",
+        "fourPsHouseholdId": "4Ps Household ID"
+      },
+      "placeholders": {
+        "houseNumber": "Enter house number",
+        "street": "Enter street name",
+        "primaryIdType": "Select primary ID type",
+        "idNumber": "Enter ID number",
+        "philhealthNumber": "Enter PhilHealth number",
+        "sssNumber": "Enter SSS number",
+        "tinNumber": "Enter TIN number",
+        "votersIdNumber": "Enter voter's ID number",
+        "voterStatus": "Select voter status",
+        "precinctNumber": "Enter precinct number",
+        "medicalConditions": "List any medical conditions or health issues",
+        "allergies": "List any known allergies",
+        "disabilityType": "Specify type of disability",
+        "indigenousGroup": "Specify indigenous group",
+        "fourPsHouseholdId": "Enter 4Ps household ID"
+      },
+      "idTypeOptions": {
+        "nationalId": "National ID",
+        "passport": "Passport",
+        "driversLicense": "Driver's License",
+        "votersId": "Voter's ID",
+        "philhealthId": "PhilHealth ID",
+        "sssId": "SSS ID",
+        "umid": "UMID"
+      },
+      "voterStatusOptions": {
+        "notRegistered": "Not Registered",
+        "registered": "Registered",
+        "deceased": "Deceased",
+        "transferred": "Transferred"
+      },
+      "messages": {
+        "draftLoadedTitle": "Draft Loaded",
+        "draftLoaded": "Your previous draft has been loaded",
+        "draftSavedTitle": "Draft Saved",
+        "draftSaved": "Your progress has been saved as draft",
+        "draftClearedTitle": "Draft Cleared",
+        "draftCleared": "Draft data has been cleared",
+        "duplicateWarning": "Found {{count}} potential duplicate(s) for {{name}}",
+        "invalidFileType": "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.",
+        "fileTooLarge": "File size must be less than 5MB",
+        "uploadSuccessTitle": "Photo Uploaded",
+        "uploadSuccess": "Profile photo has been uploaded successfully"
+      }
+    }
+  }
+}

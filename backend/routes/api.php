@@ -66,12 +66,67 @@ Route::prefix('households')->group(function () {
 Route::apiResource('households', HouseholdController::class);
 
 // TEMPORARY: Users routes without authentication for testing
-Route::prefix('users')->group(function () {
-    Route::get('/statistics', [UserController::class, 'statistics']);
-    Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus']);
-    Route::post('/{user}/reset-password', [UserController::class, 'resetPassword']);
-    Route::get('/by-role/{role}', [UserController::class, 'byRole']);
-    Route::get('/by-department/{department}', [UserController::class, 'byDepartment']);
+Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(function () {
+    
+    // Core CRUD
+    Route::get('/', [UserController::class, 'index'])->name('index');
+    Route::post('/', [UserController::class, 'store'])->name('store');
+    Route::get('/{id}', [UserController::class, 'show'])->name('show');
+    Route::put('/{id}', [UserController::class, 'update'])->name('update');
+    Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
+    
+    // Current User
+    Route::prefix('me')->name('me.')->group(function () {
+        Route::get('/', [UserController::class, 'me'])->name('show');
+        Route::put('/', [UserController::class, 'updateMe'])->name('update');
+        Route::post('/change-password', [UserController::class, 'changeMyPassword'])->name('change-password');
+    });
+    
+    // Password Management
+    Route::prefix('{id}')->group(function () {
+        Route::post('/change-password', [UserController::class, 'changePassword'])->name('change-password');
+        Route::post('/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+    });
+    
+    // Status Management
+    Route::put('/{id}/status', [UserController::class, 'changeStatus'])->name('change-status');
+    
+    // Verification & Communication
+    Route::prefix('{id}')->group(function () {
+        Route::post('/verify', [UserController::class, 'verify'])->name('verify');
+        Route::post('/resend-verification', [UserController::class, 'resendVerification'])->name('resend-verification');
+        Route::post('/send-credentials', [UserController::class, 'sendCredentials'])->name('send-credentials');
+    });
+    
+    // Validation
+    Route::prefix('check')->name('check.')->group(function () {
+        Route::get('/username', [UserController::class, 'checkUsername'])->name('username');
+        Route::get('/email', [UserController::class, 'checkEmail'])->name('email');
+    });
+    
+    // Queries
+    Route::prefix('by')->name('by.')->group(function () {
+        Route::get('/role/{role}', [UserController::class, 'byRole'])->name('role');
+        Route::get('/department/{department}', [UserController::class, 'byDepartment'])->name('department');
+    });
+    
+    // Security & Monitoring
+    Route::prefix('{id}')->group(function () {
+        Route::get('/activity', [UserController::class, 'activity'])->name('activity');
+        Route::prefix('sessions')->name('sessions.')->group(function () {
+            Route::get('/', [UserController::class, 'sessions'])->name('index');
+            Route::delete('/{sessionId}', [UserController::class, 'terminateSession'])->name('terminate');
+            Route::delete('/', [UserController::class, 'terminateAllSessions'])->name('terminate-all');
+        });
+    });
+    
+    // Bulk & Import/Export
+    Route::post('/bulk-action', [UserController::class, 'bulkAction'])->name('bulk-action');
+    Route::get('/export', [UserController::class, 'export'])->name('export');
+    Route::post('/import', [UserController::class, 'import'])->name('import');
+    
+    // Statistics
+    Route::get('/statistics', [UserController::class, 'statistics'])->name('statistics');
 });
 Route::apiResource('users', UserController::class);
 

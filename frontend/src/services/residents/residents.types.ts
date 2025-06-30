@@ -1,5 +1,5 @@
 // ============================================================================
-// types/residents.ts - Zod schemas and type definitions
+// types/residents.ts - Updated Zod schemas and type definitions
 // ============================================================================
 
 import { z } from 'zod';
@@ -105,11 +105,23 @@ export const ResidentFormDataSchema = z.object({
   last_name: z.string().min(1, 'residents.form.error.lastNameRequired'),
   middle_name: z.string().optional(),
   suffix: z.string().optional(),
-  birth_date: z.string().min(1, 'residents.form.error.birthDateRequired'),
-  age: z.string().optional(),
+  birth_date: z.string()
+    .min(1, 'residents.form.error.birthDateRequired')
+    .refine(
+      (date) => {
+        const d = new Date(date);
+        const today = new Date();
+        // Remove time part for comparison
+        d.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        return d < today;
+      },
+      { message: 'residents.form.error.birthDateFuture' }
+    ),
+  age: z.number().positive('residents.form.error.agePositive').optional(),
   birth_place: z.string().min(1, 'residents.form.error.birthPlaceRequired'),
   gender: GenderSchema,
-  
+
   civil_status: CivilStatusSchema,
   nationality: NationalitySchema,
   religion: ReligionSchema,
@@ -125,12 +137,11 @@ export const ResidentFormDataSchema = z.object({
   landline_number: z.string().optional(),
   email_address: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
 
-  // Address Information
+  // Address Information - Fixed field mapping
   region: z.string().optional(),
   province: z.string().optional(),
   city: z.string().optional(),
   barangay: z.string().optional(),
-
   house_number: z.string().optional(),
   street: z.string().optional(),
   complete_address: z.string().min(1, 'Complete address is required'),
@@ -152,12 +163,11 @@ export const ResidentFormDataSchema = z.object({
   voter_status: VoterStatusSchema,
   precinct_number: z.string().optional(),
 
-  
   // Health & Medical
   medical_conditions: z.string().optional(),
   allergies: z.string().optional(),
   
-  // Special Classifications - Make all optional
+  // Special Classifications - All required as boolean with defaults
   senior_citizen: z.boolean(),
   person_with_disability: z.boolean(),
   disability_type: z.string().nullable().optional(),
@@ -173,12 +183,7 @@ export const ResidentFormDataSchema = z.object({
 // Main Resident schema
 export const ResidentSchema = ResidentFormDataSchema.extend({
   id: z.number(),
-
-  four_ps_beneficiary: z.boolean(),
-  four_ps_household_id: z.string().nullable().optional(),
-
   status: ResidentStatusSchema,
-  
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -187,21 +192,17 @@ export const ResidentSchema = ResidentFormDataSchema.extend({
 export const ResidentParamsSchema = z.object({
   page: z.number().min(1).optional(),
   per_page: z.number().min(1).max(100).optional(),
-
   search: z.string().optional(),
-
   status: ResidentStatusSchema.optional(),
   gender: GenderSchema.optional(),
   civil_status: CivilStatusSchema.optional(),
   employment_status: EmploymentStatusSchema.optional(),
   voter_status: VoterStatusSchema.optional(),
-
   household_id: z.number().optional(),
   senior_citizen: z.boolean().optional(),
   person_with_disability: z.boolean().optional(),
   indigenous_people: z.boolean().optional(),
   four_ps_beneficiary: z.boolean().optional(),
-
   age_from: z.number().min(0).optional(),
   age_to: z.number().min(0).optional(),
 });
@@ -211,15 +212,12 @@ export const ResidentStatisticsSchema = z.object({
   total_residents: z.number(),
   active_residents: z.number(),
   inactive_residents: z.number(),
-
   senior_citizens: z.number(),
   pwd_residents: z.number(),
   four_ps_beneficiaries: z.number(),
   registered_voters: z.number(),
-
   male_residents: z.number(),
   female_residents: z.number(),
-
   by_age_group: z.record(z.number()),
   by_civil_status: z.record(z.number()),
   by_employment_status: z.record(z.number()),
@@ -248,7 +246,7 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       middle_name: '',
       suffix: '',
       birth_date: '',
-      age: '',
+      age: 0,
       birth_place: '',
       gender: 'MALE',
       civil_status: 'SINGLE',
@@ -259,6 +257,10 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
       mobile_number: '',
       landline_number: '',
       email_address: '',
+      region: '',
+      province: '',
+      city: '',
+      barangay: '',
       house_number: '',
       street: '',
       complete_address: '',
@@ -296,17 +298,21 @@ export const transformResidentToFormData = (resident: Resident | null): Resident
     middle_name: resident.middle_name || '',
     suffix: resident.suffix || '',
     birth_date: resident.birth_date ? new Date(resident.birth_date).toISOString().slice(0, 10) : '',
-    age: resident.age?.toString() || '',
+    age: resident.age || 0,
     birth_place: resident.birth_place,
     gender: resident.gender as Gender || 'MALE',
     civil_status: resident.civil_status as CivilStatus || 'SINGLE',
     nationality: resident.nationality as Nationality || 'FILIPINO',
     religion: resident.religion as Religion || 'CATHOLIC',
     employment_status: resident.employment_status as EmploymentStatus || 'UNEMPLOYED',
-    educational_attainment: resident.educational_attainment as EducationalAttainment || 'HIGH_SCHOOL',
+    educational_attainment: resident.educational_attainment as EducationalAttainment || 'NO_FORMAL_EDUCATION',
     mobile_number: resident.mobile_number || '',
     landline_number: resident.landline_number || '',
     email_address: resident.email_address || '',
+    region: resident.region || '',
+    province: resident.province || '',
+    city: resident.city || '',
+    barangay: resident.barangay || '',
     house_number: resident.house_number || '',
     street: resident.street || '',
     complete_address: resident.complete_address,
