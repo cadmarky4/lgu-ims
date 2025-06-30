@@ -53,12 +53,12 @@ export const BarangayOfficialBaseSchema = z.object({
 
   // Basic information
   prefix: PrefixSchema,
-  first_name: z.string().min(1, 'barangayOfficial.form.error.firstNameRequired'),
+  first_name: z.string().min(1, 'barangayOfficials.form.validation.firstNameRequired'),
   middle_name: z.string().optional(),
-  last_name: z.string().min(1, 'barangayOfficial.form.error.lastNameRequired'),
+  last_name: z.string().min(1, 'barangayOfficials.form.validation.lastNameRequired'),
   suffix: z.string().optional(),
 
-  birth_date: z.string().min(1, 'barangayOfficial.form.error.birthDateRequired'), 
+  birth_date: z.string().min(1, 'barangayOfficials.form.validation.birthDateRequired'), 
   gender: GenderSchema,
   nationality: NationalitySchema,
   civil_status: CivilStatusSchema,
@@ -73,11 +73,18 @@ export const BarangayOfficialBaseSchema = z.object({
 
   // Position Information
   position: OfficialPositionSchema,
+  
+  // committee_assignment: z.preprocess(
+  //   (val) => val === '' ? undefined : val,
+  //   CommitteeAssignmentSchema
+  // ).refine(val => val !== undefined, {
+  //   message: 'barangayOfficials.form.validation.committeeAssignmentRequired',
+  // }),
   committee_assignment: CommitteeAssignmentSchema,
 
   // Term Information
-  term_start: z.string().min(1, 'barangayOfficial.form.error.termStartRequired'),
-  term_end: z.string().min(1, 'barangayOfficial.form.error.termEndRequired'),
+  term_start: z.string().min(1, 'barangayOfficials.form.validation.termStartRequired'),
+  term_end: z.string().min(1, 'barangayOfficials.form.validation.termEndRequired'),
   term_number: z.number().optional(),
   is_current_term: z.boolean().optional(),
 
@@ -214,3 +221,7 @@ export type BarangayOfficialFormData = z.infer<typeof BarangayOfficialFormDataSc
 export type BarangayOfficial = z.infer<typeof BarangayOfficialSchema>;
 export type BarangayOfficialParams = z.infer<typeof BarangayOfficialParamsSchema>;
 export type BarangayOfficialStatistics = z.infer<typeof BarangayOfficialStatisticsSchema>;
+
+export const prefixes = PrefixSchema.options;
+export const positions = OfficialPositionSchema.options;
+export const committeeAssignments = CommitteeAssignmentSchema.options;

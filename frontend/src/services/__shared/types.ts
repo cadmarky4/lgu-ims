@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const GenderSchema = z.enum(['MALE', 'FEMALE']);
+export const genders = GenderSchema.options;
 
 export const CivilStatusSchema = z.enum([
   'SINGLE',
@@ -67,3 +68,5 @@ export type PaginatedResponse<T> = z.infer<ReturnType<typeof PaginatedResponseSc
 export type CivilStatus = z.infer<typeof CivilStatusSchema>;
 export type EducationalAttainment = z.infer<typeof EducationalAttainmentSchema>;
 export type Nationality = z.infer<typeof NationalitySchema>;
+
+export const civilStatuses = CivilStatusSchema.options;

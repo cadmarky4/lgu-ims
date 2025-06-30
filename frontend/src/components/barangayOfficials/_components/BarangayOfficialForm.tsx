@@ -1,43 +1,95 @@
 import Breadcrumb from "@/components/_global/Breadcrumb";
+import { useTranslation } from "react-i18next";
+import { useBarangayOfficialsForm } from "../_hooks/useBarangayOfficialsForm";
+import { LoadingSpinner } from "@/components/__shared/LoadingSpinner";
+import { FormProvider } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { FormField } from "@/components/_global/components/FormField";
+import {
+  committeeAssignments,
+  positions,
+  prefixes,
+} from "@/services/officials/barangayOfficials.types";
+import { civilStatuses, genders } from "@/services/__shared/types";
 
 interface BarangayOfficialFormProps {
   mode: "create" | "edit";
-  residentId?: number;
+  barangayOfficialId?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
   mode,
-  residentId,
+  barangayOfficialId,
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
+  const {
+    form,
+    official,
+    isLoadingOfficial,
+    residents,
+    isLoadingResidents,
+    residentsError,
+    profilePhotoPreview,
+    isAlreadyRegisteredAsOfficialWarning,
+    isSubmitting,
+    isCheckingAlreadyRegisteredAsOfficial,
+    handleSubmit,
+    saveDraft,
+    clearDraft,
+  } = useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess });
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const title =
+    mode === "create"
+      ? t("barangayOfficials.form.addTitle")
+      : t("barangayOfficials.form.editTitle");
+
+  if (isLoadingOfficial && mode === "edit") {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <LoadingSpinner />
+        <span className="ml-2 text-gray-600">
+          {t("barangayOfficials.form.messages.loadingResident")}
+        </span>
+      </div>
+    );
+  }
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main
       className={`p-6 bg-gray-50 min-h-screen flex flex-col gap-4 transition-all duration-500 ease-out 'opacity-100 translate-y-0'`}
     >
       {/* Breadcrumb */}
       <Breadcrumb isLoaded={true} />
+
       {/* Header */}
       <div
         className={`mb-2 transform transition-all duration-500 'translate-y-0 opacity-100'`}
         style={{ animationDelay: "100ms" }}
       >
-        <h1 className="text-2xl font-bold text-darktext pl-0">
-          {/* {official?.id ? 'Edit Barangay Official' : 'Add New Barangay Official'} */}
-          {"Add New Barangay Official"}
-        </h1>
+        <h1 className="text-2xl font-bold text-darktext pl-0">{title}</h1>
         {/* {localStorage.getItem(`officialDraft_${official?.id || 'new'}`) && ( */}
-        {localStorage.getItem("new") && (
+        {/* {localStorage.getItem("new") && (
           <p className="text-sm text-gray-600 mt-1">
             📝 Draft data loaded from previous session
           </p>
-        )}
+        )} */}
       </div>
 
       {/* Error Display */}
-      {error && (
+      {/* {error && (
         <div
           className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-4 transform transition-all duration-500 ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
@@ -46,203 +98,365 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
         >
           <p className="text-red-800 text-sm">{error}</p>
         </div>
-      )}
+      )} */}
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit}>
-        <div
-          className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${
-            isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-          style={{ animationDelay: "250ms" }}
-        >
-          {/* Basic Information */}
-          <section className="mb-8">
-            <h2
-              className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${
-                isLoaded
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-4 opacity-0"
-              }`}
-              style={{ animationDelay: "300ms" }}
-            >
-              Basic Information
-            </h2>
-            <div className="border-b border-gray-200 mb-6"></div>
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit}>
+          <div
+            className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${
+              isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
+            style={{ animationDelay: "250ms" }}
+          >
+            {/* Search Residents */}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Profile Photo */}
-              <div
-                className={`lg:col-span-1 transform transition-all duration-500 ${
+
+            {/* Basic Information */}
+            <section className="mb-8">
+              <h2
+                className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${
                   isLoaded
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0"
                 }`}
-                style={{ animationDelay: "350ms" }}
+                style={{ animationDelay: "300ms" }}
               >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Photo
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPreviewUrl(null);
-                          setSelectedFile(null);
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                      >
-                        <FiX className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
-                      <FiUpload className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    id="profilePhoto"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="profilePhoto"
-                    className="text-smblue-400 hover:text-smblue-300 text-sm font-medium transition-colors cursor-pointer"
+                Basic Information
+              </h2>
+              <div className="border-b border-gray-200 mb-6"></div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Profile Photo */}
+                <div
+                  className={`lg:col-span-3 flex justify-center transform transition-all duration-500 ${
+                    isLoaded
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-4 opacity-0"
+                  }`}
+                  style={{ animationDelay: "350ms" }}
+                >
+                  {
+                    official?.profile_photo_url && 
+                    <img
+                      src={official?.profile_photo_url}
+                      alt="barangay official profile picture"
+                      className="w-72 h-72 rounded-full"
+                    />
+                  }
+                  
+                  {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-smblue-400 transition-all duration-200">
+                    {previewUrl ? (
+                      <div className="relative">
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewUrl(null);
+                            setSelectedFile(null);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <FiX className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                        <FiUpload className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      id="profilePhoto"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profilePhoto"
+                      className="text-smblue-400 hover:text-smblue-300 text-sm font-medium transition-colors cursor-pointer"
+                    >
+                      {previewUrl ? "Change Photo" : "Upload Profile Photo"}
+                    </label>
+                  </div> */}
+                </div>
+
+                {/* Form Fields */}
+                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Resident ID */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "400ms" }}
                   >
-                    {previewUrl ? "Change Photo" : "Upload Profile Photo"}
-                  </label>
+                    <FormField
+                      name="resident_id"
+                      label={t("barangayOfficials.form.fields.residentId")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.residentId"
+                      )}
+                      required
+                    />
+                  </div>
+
+                  {/* Prefix */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "400ms" }}
+                  >
+                    <FormField
+                      type="select"
+                      name="prefix"
+                      label={t("barangayOfficials.form.fields.prefix")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.prefix"
+                      )}
+                      options={prefixes.map((prefix) => ({
+                        value: prefix,
+                        label: prefix,
+                      }))}
+                    />
+                  </div>
+
+                  {/* First Name */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "450ms" }}
+                  >
+                    <FormField
+                      name="first_name"
+                      label={t("barangayOfficials.form.fields.firstName")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.firstName"
+                      )}
+                      readOnly
+                      required
+                    />
+                  </div>
+
+                  {/* Middle Name */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "500ms" }}
+                  >
+                    <FormField
+                      name="middle_name"
+                      label={t("barangayOfficials.form.fields.middleName")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.middleName"
+                      )}
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Last Name */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "550ms" }}
+                  >
+                    <FormField
+                      name="last_name"
+                      label={t("barangayOfficials.form.fields.lastName")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.lastName"
+                      )}
+                      readOnly
+                      required
+                    />
+                  </div>
+
+                  {/* Gender */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "600ms" }}
+                  >
+                    <FormField
+                      type="select"
+                      name="gender"
+                      label={t("barangayOfficials.form.fields.gender")}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.gender"
+                      )}
+                      options={genders.map((gender) => ({
+                        value: gender,
+                        label: gender,
+                      }))}
+                      readOnly
+                      required
+                    />
+                  </div>
+
+                  {/* Birthdate */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "650ms" }}
+                  >
+                    <FormField
+                      name="birth_date"
+                      label={t("barangayOfficials.form.fields.birthDate")}
+                      type="date"
+                      readOnly
+                      required
+                    />
+                  </div>
+
+                  {/* Contact Number */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "700ms" }}
+                  >
+                    <FormField
+                      name="mobile_number"
+                      label={t("barangayOfficials.form.fields.mobileNumber")}
+                      type="tel"
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.mobileNumber"
+                      )}
+                      required
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Email Address */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "750ms" }}
+                  >
+                    <FormField
+                      name="email_address"
+                      label={t("barangayOfficials.form.fields.emailAddress")}
+                      type="email"
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.emailAddress"
+                      )}
+                      required
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Complete Address */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "800ms" }}
+                  >
+                    <FormField
+                      name="complete_address"
+                      label={t("barangayOfficials.form.fields.completeAddress")}
+                      // type="textarea"
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.completeAddress"
+                      )}
+                      required
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Civil Status */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "850ms" }}
+                  >
+                    <FormField
+                      name="civil_status"
+                      label={t("barangayOfficials.form.fields.civilStatus")}
+                      type="select"
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.selectCivilStatus"
+                      )}
+                      options={civilStatuses.map((civilStatus) => ({
+                        value: civilStatus,
+                        label: civilStatus,
+                      }))}
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Educational Background */}
+                  <div
+                    className={`transform transition-all duration-500 ${
+                      isLoaded
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-4 opacity-0"
+                    }`}
+                    style={{ animationDelay: "900ms" }}
+                  >
+                    <FormField
+                      name="educational_attainment"
+                      label={t(
+                        "barangayOfficials.form.fields.educationalAttainment"
+                      )}
+                      placeholder={t(
+                        "barangayOfficials.form.placeholders.educationalAttainment"
+                      )}
+                      readOnly
+                    />
+                  </div>
                 </div>
               </div>
+            </section>
 
-              {/* Form Fields */}
-              <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Prefix */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "400ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prefix
-                  </label>
-                  <select
-                    name="prefix"
-                    value={formData.prefix}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    title="Select prefix"
-                  >
-                    <option value="Mr.">Mr.</option>
-                    <option value="Ms.">Ms.</option>
-                    <option value="Mrs.">Mrs.</option>
-                    <option value="Dr.">Dr.</option>
-                    <option value="Hon.">Hon.</option>
-                  </select>
-                </div>
+            {/* Term Information */}
+            <section className="mb-8">
+              <h2
+                className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-4 opacity-0"
+                }`}
+                style={{ animationDelay: "950ms" }}
+              >
+                Term Information
+              </h2>
+              <div className="border-b border-gray-200 mb-6"></div>
 
-                {/* First Name */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "450ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    required
-                  />
-                </div>
-
-                {/* Middle Name */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "500ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Middle Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="middleName"
-                    value={formData.middleName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    required
-                  />
-                </div>
-
-                {/* Last Name */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "550ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    required
-                  />
-                </div>
-
-                {/* Gender */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "600ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gender *
-                  </label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    title="Select gender"
-                    required
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Position */}
                 <div
                   className={`transform transition-all duration-500 ${
@@ -252,306 +466,139 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                   }`}
                   style={{ animationDelay: "625ms" }}
                 >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position *
-                  </label>
-                  <select
+                  <FormField
                     name="position"
-                    value={formData.position}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    title="Select position"
+                    label={t("barangayOfficials.form.fields.position")}
+                    type="select"
+                    placeholder={t(
+                      "barangayOfficials.form.placeholders.position"
+                    )}
+                    options={positions.map((position) => ({
+                      value: position,
+                      label: position,
+                    }))}
                     required
-                  >
-                    <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
-                    <option value="BARANGAY_SECRETARY">
-                      Barangay Secretary
-                    </option>
-                    <option value="BARANGAY_TREASURER">
-                      Barangay Treasurer
-                    </option>
-                    <option value="KAGAWAD">Kagawad</option>
-                    <option value="SK_CHAIRPERSON">SK Chairperson</option>
-                    <option value="SK_KAGAWAD">SK Kagawad</option>
-                    <option value="BARANGAY_CLERK">Barangay Clerk</option>
-                    <option value="BARANGAY_TANOD">Barangay Tanod</option>
-                  </select>
+                  />
                 </div>
 
-                {/* Birthdate */}
+                {/* Committee Assignment */}
                 <div
                   className={`transform transition-all duration-500 ${
                     isLoaded
                       ? "translate-y-0 opacity-100"
                       : "translate-y-4 opacity-0"
                   }`}
-                  style={{ animationDelay: "650ms" }}
+                  style={{ animationDelay: "1000ms" }}
                 >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Birthdate
-                  </label>
-                  <input
+                  <FormField
+                    name="committee_assignment"
+                    label={t(
+                      "barangayOfficials.form.fields.committeeAssignment"
+                    )}
+                    type="select"
+                    placeholder={t(
+                      "barangayOfficials.form.placeholders.committeeAssignment"
+                    )}
+                    options={committeeAssignments.map((assignment) => ({
+                      value: assignment,
+                      label: assignment,
+                    }))}
+                    required
+                  />
+                </div>
+
+                {/* Term Start */}
+                <div
+                  className={`transform transition-all duration-500 ${
+                    isLoaded
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-4 opacity-0"
+                  }`}
+                  style={{ animationDelay: "1050ms" }}
+                >
+                  <FormField
+                    name="term_start"
+                    label={t("barangayOfficials.form.fields.termStart")}
                     type="date"
-                    name="birthDate"
-                    value={formData.birthDate}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                  />
-                </div>
-
-                {/* Contact Number */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "700ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="contactNumber"
-                    value={formData.contactNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                     required
                   />
                 </div>
 
-                {/* Email Address */}
+                {/* Term End */}
                 <div
                   className={`transform transition-all duration-500 ${
                     isLoaded
                       ? "translate-y-0 opacity-100"
                       : "translate-y-4 opacity-0"
                   }`}
-                  style={{ animationDelay: "750ms" }}
+                  style={{ animationDelay: "1100ms" }}
                 >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    name="emailAddress"
-                    value={formData.emailAddress}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
+                  <FormField
+                    name="term_end"
+                    label={t("barangayOfficials.form.fields.termEnd")}
+                    type="date"
                     required
-                  />
-                </div>
-
-                {/* Complete Address */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "800ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Complete Address
-                  </label>
-                  <input
-                    type="text"
-                    name="completeAddress"
-                    value={formData.completeAddress}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                  />
-                </div>
-
-                {/* Civil Status */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "850ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Civil Status
-                  </label>
-                  <select
-                    name="civilStatus"
-                    value={formData.civilStatus}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                    title="Select civil status"
-                  >
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
-
-                {/* Educational Background */}
-                <div
-                  className={`transform transition-all duration-500 ${
-                    isLoaded
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-4 opacity-0"
-                  }`}
-                  style={{ animationDelay: "900ms" }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Educational Background
-                  </label>
-                  <input
-                    type="text"
-                    name="educationalBackground"
-                    value={formData.educationalBackground}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
                   />
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Term Information */}
-          <section className="mb-8">
-            <h2
-              className={`text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4 transform transition-all duration-500 ${
+            {/* Action Buttons */}
+            <div
+              className={`flex justify-between items-center pt-6 border-t border-gray-200 transform transition-all duration-500 ${
                 isLoaded
                   ? "translate-y-0 opacity-100"
                   : "translate-y-4 opacity-0"
               }`}
-              style={{ animationDelay: "950ms" }}
+              style={{ animationDelay: "1150ms" }}
             >
-              Term Information
-            </h2>
-            <div className="border-b border-gray-200 mb-6"></div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Committee Assignment */}
-              <div
-                className={`transform transition-all duration-500 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-4 opacity-0"
-                }`}
-                style={{ animationDelay: "1000ms" }}
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Committee Assignment
-                </label>
-                <select
-                  name="committeeAssignment"
-                  value={formData.committeeAssignment}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                  title="Select committee assignment"
-                >
-                  <option value="Health">Health</option>
-                  <option value="Education">Education</option>
-                  <option value="Public Safety">Public Safety</option>
-                  <option value="Environment">Environment</option>
-                  <option value="Peace and Order">Peace and Order</option>
-                  <option value="Sports and Recreation">
-                    Sports and Recreation
-                  </option>
-                  <option value="Women and Family">Women and Family</option>
-                  <option value="Senior Citizens">Senior Citizens</option>
-                  <option value="Married">Married</option>
-                </select>
-              </div>
-
-              {/* Term Start */}
-              <div
-                className={`transform transition-all duration-500 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-4 opacity-0"
-                }`}
-                style={{ animationDelay: "1050ms" }}
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Term Start
-                </label>
-                <input
-                  type="date"
-                  name="termStart"
-                  value={formData.termStart}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                />
-              </div>
-
-              {/* Term End */}
-              <div
-                className={`transform transition-all duration-500 ${
-                  isLoaded
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-4 opacity-0"
-                }`}
-                style={{ animationDelay: "1100ms" }}
-              >
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Term End
-                </label>
-                <input
-                  type="date"
-                  name="termEnd"
-                  value={formData.termEnd}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 transition-all"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Action Buttons */}
-          <div
-            className={`flex justify-between items-center pt-6 border-t border-gray-200 transform transition-all duration-500 ${
-              isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
-            style={{ animationDelay: "1150ms" }}
-          >
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={isSavingDraft || isSubmitting}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
-            >
-              {isSavingDraft && (
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-              )}
-              <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
-            </button>
-
-            <div className="flex space-x-4">
               <button
                 type="button"
-                onClick={handleOnClose}
+                onClick={saveDraft}
                 disabled={isSubmitting}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
-              >
-                {isSubmitting && (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                {/* {isSavingDraft && (
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
                 )}
-                {/* <span>{isSubmitting ? (official?.id ? 'Updating...' : 'Creating...') : (official?.id ? 'Save Changes' : 'Create Official')}</span> */}
-                <span>{isSubmitting ? "Creating..." : "Create Official"}</span>
+                <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span> */}
+                <span>Save Draft</span>
               </button>
+
+              <div className="flex space-x-4">
+                {/* Cancel button */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
+                >
+                  Cancel
+                </button>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
+                >
+                  {isSubmitting && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {/* <span>{isSubmitting ? (official?.id ? 'Updating...' : 'Creating...') : (official?.id ? 'Save Changes' : 'Create Official')}</span> */}
+                  <span>
+                    {isSubmitting ? "Creating..." : "Create Official"}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </FormProvider>
 
       {/* Toast Notification */}
-      {toast.show && (
+      {/* {toast.show && (
         <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
           <div
             className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
@@ -577,7 +624,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
             </button>
           </div>
         </div>
-      )}
+      )} */}
     </main>
   );
 };

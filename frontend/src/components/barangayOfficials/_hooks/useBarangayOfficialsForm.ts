@@ -15,7 +15,7 @@ interface useBarangayOfficialsFormProps {
     onSuccess?: () => void;
 }
 
-export function useResidentForm({ mode, barangayOfficialId, onSuccess }: useBarangayOfficialsFormProps) {    
+export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }: useBarangayOfficialsFormProps) {    
     const { t } = useTranslation(); 
     const { showNotification } = useNotifications();
     const [ isAlreadyRegisteredAsOfficialWarning, setIsAlreadyRegisteredAsOfficialWarning ] = useState<string | null>(null);
@@ -44,6 +44,11 @@ export function useResidentForm({ mode, barangayOfficialId, onSuccess }: useBara
     const updateBarangayOfficial = useUpdateBarangayOfficial();
     
     const { isAlreadyRegisteredAsOfficial, isChecking } = useIsAlreadyRegisteredAsOfficial();
+
+    // set default values of dropdowns to empty strings
+    // useEffect(() => {
+    //     setValue("committee_assignment", "");
+    // },[])
 
     // Check if barangay official already registered when key fields change
     useEffect(() => {
@@ -74,6 +79,7 @@ export function useResidentForm({ mode, barangayOfficialId, onSuccess }: useBara
                         setValue('complete_address', res.complete_address);
                         setValue('civil_status', res.civil_status);
                         setValue('educational_attainment', res.educational_attainment);
+                        setValue('profile_photo_url', res.profile_photo_url);
                     }
                 })();
             }, 1000);
