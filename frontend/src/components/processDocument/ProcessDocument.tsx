@@ -1,334 +1,176 @@
-import React, { useState, useEffect } from 'react';
+// ============================================================================
+// processDocument/ProcessDocument.tsx - Modern document processing center
+// ============================================================================
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiFilter, FiPrinter, FiEye, FiClipboard, FiCheck, FiX, FiClock, FiUser, FiCalendar, FiFileText, FiAlertCircle } from 'react-icons/fi';
-import { documentsService } from '../../services/documents/documents.service';
-import type { ApproveDocumentData, DocumentRequest, RejectDocumentData } from '../../services/documents/documents.types';
+import { 
+  FiSearch, 
+  FiFilter, 
+  FiPrinter, 
+  FiEye, 
+  FiClipboard, 
+  FiCheck, 
+  FiX, 
+  FiClock, 
+  FiUser, 
+  FiCalendar, 
+  FiFileText, 
+  FiAlertCircle,
+  FiRefreshCw,
+  FiEdit3
+} from 'react-icons/fi';
+
+import { LoadingSpinner } from '../__shared/LoadingSpinner';
+import { useDocumentQueue } from './_hooks/useDocumentQueue';
+import { useNotifications } from '@/components/_global/NotificationSystem';
 import Breadcrumb from '../_global/Breadcrumb';
+import type { Document, DocumentStatus } from '@/services/documents/documents.types';
 
 interface ProcessDocumentProps {
-  onNavigate: (page: string) => void;
+  onNavigate?: (page: string) => void;
 }
 
-// interface DocumentRequest {
-//   id: number;
-//   document_type: string;
-//   resident_id: number;
-//   resident_name: string;
-//   purpose: string;
-//   status: 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'RELEASED' | 'REJECTED';
-//   request_date: string;
-//   processed_date?: string;
-//   processing_fee: number;
-//   certifying_official?: string;
-//   notes?: string;
-//   resident: {
-//     first_name: string;
-//     last_name: string;
-//     middle_name?: string;
-//     complete_address: string;
-//     mobile_number?: string;
-//   };
-// }
-
-interface DocumentStats {
-  pending: number;
-  under_review: number;
-  approved: number;
-  released: number;
-  rejected: number;
-  total: number;
-}
-
-const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
+const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
-  const [documents, setDocuments] = useState<DocumentRequest[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<DocumentRequest[]>([]);
-  const [stats, setStats] = useState<DocumentStats>({
-    pending: 0,
-    under_review: 0,
-    approved: 0,
-    released: 0,
-    rejected: 0,
-    total: 0
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('ALL');
-  const [selectedDocument, setSelectedDocument] = useState<DocumentRequest | null>(null);
-  const [showProcessModal, setShowProcessModal] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { showNotification } = useNotifications();
+  
+  const {
+    documents,
+    statistics,
+    statusCounts,
+    filters,
+    updateFilters,
+    clearFilters,
+    isLoading,
+    isProcessing,
+    error,
+    actions,
+    refetch,
+  } = useDocumentQueue();
 
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showProcessModal, setShowProcessModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
   const documentTypes = [
-    { value: 'BARANGAY_CLEARANCE', label: 'Barangay Clearance', fee: 50 },
-    { value: 'BUSINESS_PERMIT', label: 'Business Permit', fee: 100 },
-    { value: 'CERTIFICATE_INDIGENCY', label: 'Certificate of Indigency', fee: 0 },
-    { value: 'CERTIFICATE_RESIDENCY', label: 'Certificate of Residency', fee: 30 }
+    { value: 'BARANGAY_CLEARANCE', label: 'Barangay Clearance' },
+    { value: 'BUSINESS_PERMIT', label: 'Business Permit' },
+    { value: 'CERTIFICATE_OF_INDIGENCY', label: 'Certificate of Indigency' },
+    { value: 'CERTIFICATE_OF_RESIDENCY', label: 'Certificate of Residency' }
   ];
 
-  const statusColors = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    UNDER_REVIEW: 'bg-blue-100 text-blue-800',
-    APPROVED: 'bg-green-100 text-green-800',
-    RELEASED: 'bg-gray-100 text-gray-800',
-    REJECTED: 'bg-red-100 text-red-800'
-  };
-
-  const statusIcons = {
-    PENDING: FiClock,
-    UNDER_REVIEW: FiEye,
-    APPROVED: FiCheck,
-    RELEASED: FiFileText,
-    REJECTED: FiX
-  };
-
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    // Use placeholder data for demonstration
-    if (process.env.NODE_ENV === 'development') {
-      loadPlaceholderData();
-    } else {
-      fetchDocuments();
-      fetchDocumentStats();
+  const statusConfig = {
+    PENDING: {
+      color: 'bg-yellow-100 text-yellow-800',
+      icon: FiClock,
+      label: 'Pending'
+    },
+    UNDER_REVIEW: {
+      color: 'bg-blue-100 text-blue-800',
+      icon: FiEye,
+      label: 'Under Review'
+    },
+    APPROVED: {
+      color: 'bg-green-100 text-green-800',
+      icon: FiCheck,
+      label: 'Approved'
+    },
+    RELEASED: {
+      color: 'bg-gray-100 text-gray-800',
+      icon: FiFileText,
+      label: 'Released'
+    },
+    REJECTED: {
+      color: 'bg-red-100 text-red-800',
+      icon: FiX,
+      label: 'Rejected'
+    },
+    CANCELLED: {
+      color: 'bg-gray-100 text-gray-800',
+      icon: FiX,
+      label: 'Cancelled'
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    filterDocuments();
-  }, [documents, searchTerm, statusFilter, documentTypeFilter]);
-
-  const fetchDocuments = async () => {
+  const handleProcessDocument = async (
+    documentId: string,
+    action: 'approve' | 'reject' | 'release',
+    data?: { notes?: string; certifying_official?: string }
+  ) => {
     try {
-      setLoading(true);
-      const response = await documentsService.getDocuments();
-      setDocuments(response.data);
-    } catch (err) {
-      console.error('Failed to fetch documents:', err);
-      if (err instanceof Error) {
-        setError((err instanceof Error ? err.message : 'Unknown error'));
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDocumentStats = async () => {
-    try {
-      const response = await documentsService.getDocumentStatistics();
-      setStats(response);
-    } catch (err) {
-      console.error('Failed to fetch document statistics:', err);
-    }
-  };
-
-  const loadPlaceholderData = () => {
-    // Placeholder data for demonstration
-    const placeholderDocuments: DocumentRequest[] = [
-      {
-        id: 1,
-        document_type: 'BARANGAY_CLEARANCE',
-        resident_id: 1,
-        resident_name: 'Juan Dela Cruz',
-        purpose: 'Employment Application',
-        status: 'PENDING',
-        request_date: '2024-01-15T10:30:00Z',
-        processing_fee: 50,
-        certifying_official: 'Hon. Maria Santos - Kagawad',
-        notes: 'For employment at ABC Company',
-        resident: {
-          first_name: 'Juan',
-          last_name: 'Dela Cruz',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village',
-          mobile_number: '+63 912 345 6789'
-        }
-      },
-      {
-        id: 2,
-        document_type: 'CERTIFICATE_INDIGENCY',
-        resident_id: 2,
-        resident_name: 'Maria Santos',
-        purpose: 'Medical Assistance',
-        status: 'UNDER_REVIEW',
-        request_date: '2024-01-14T14:20:00Z',
-        processing_fee: 0,
-        certifying_official: 'Hon. Juan Dela Cruz - Punong Barangay',
-        notes: 'Income: Below poverty line, Household members: 5',
-        resident: {
-          first_name: 'Maria',
-          last_name: 'Santos',
-          complete_address: 'Purok 2, Brgy. Sikatuna Village',
-          mobile_number: '+63 923 456 7890'
-        }
-      },
-      {
-        id: 3,
-        document_type: 'BUSINESS_PERMIT',
-        resident_id: 3,
-        resident_name: 'Roberto Garcia',
-        purpose: 'Business Permit for Sari-sari Store',
-        status: 'APPROVED',
-        request_date: '2024-01-12T09:15:00Z',
-        processing_fee: 100,
-        certifying_official: 'Hon. Roberto Garcia - Kagawad',
-        notes: 'Business: Garcias Sari-sari Store, Type: Retail Store, Capital: ₱50,000',
-        resident: {
-          first_name: 'Roberto',
-          last_name: 'Garcia',
-          complete_address: 'Purok 3, Brgy. Sikatuna Village',
-          mobile_number: '+63 934 567 8901'
-        }
-      },
-      {
-        id: 4,
-        document_type: 'CERTIFICATE_RESIDENCY',
-        resident_id: 4,
-        resident_name: 'Ana Reyes',
-        purpose: 'School Enrollment',
-        status: 'RELEASED',
-        request_date: '2024-01-10T16:45:00Z',
-        processing_fee: 30,
-        certifying_official: 'Carmen Rodriguez - Barangay Secretary',
-        notes: 'Years of Residence: 15, Residency Status: Permanent Resident',
-        resident: {
-          first_name: 'Ana',
-          last_name: 'Reyes',
-          complete_address: 'Purok 4, Brgy. Sikatuna Village',
-          mobile_number: '+63 945 678 9012'
-        }
-      },
-      {
-        id: 5,
-        document_type: 'BARANGAY_CLEARANCE',
-        resident_id: 5,
-        resident_name: 'Carlos Mendoza',
-        purpose: 'Passport Application',
-        status: 'REJECTED',
-        request_date: '2024-01-11T11:30:00Z',
-        processing_fee: 50,
-        certifying_official: 'Hon. Maria Santos - Kagawad',
-        notes: 'Incomplete requirements - missing valid ID',
-        resident: {
-          first_name: 'Carlos',
-          last_name: 'Mendoza',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village',
-          mobile_number: '+63 956 789 0123'
-        }
-      }
-    ];
-
-    const placeholderStats: DocumentStats = {
-      pending: 1,
-      under_review: 1,
-      approved: 1,
-      released: 1,
-      rejected: 1,
-      total: 5
-    };
-
-    setDocuments(placeholderDocuments);
-    setStats(placeholderStats);
-    setLoading(false);
-  };
-
-  const filterDocuments = () => {
-    let filtered = documents;
-
-    if (searchTerm) {
-      filtered = filtered.filter(doc =>
-        doc.resident_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.document_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.purpose.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(doc => doc.status === statusFilter);
-    }
-
-    if (documentTypeFilter !== 'ALL') {
-      filtered = filtered.filter(doc => doc.document_type === documentTypeFilter);
-    }
-
-    setFilteredDocuments(filtered);
-  };
-
-  const handleProcessDocument = async (documentId: number, action: string, data?: {
-    notes?: string;
-    certifying_official?: string;
-  }) => {
-    try {
-      let response;
       switch (action) {
         case 'approve':
-          response = await documentsService.approveDocument(documentId, data as ApproveDocumentData);
+          await actions.processDocument(documentId, {
+            status: 'APPROVED',
+            notes: data?.notes
+          });
           break;
         case 'reject':
-          response = await documentsService.rejectDocument(documentId, data as RejectDocumentData);
+          await actions.rejectDocument(documentId, data?.notes || 'Document rejected');
           break;
         case 'release':
-          response = await documentsService.releaseDocument(documentId, data);
+          await actions.releaseDocument(documentId, data?.notes);
           break;
-        default:
-          throw new Error('Invalid action');
       }
 
-      console.log('Document processed successfully:', response);
-
-      // Refresh data
-      await fetchDocuments();
-      await fetchDocumentStats();
       setShowProcessModal(false);
       setSelectedDocument(null);
-    } catch (err) {
-      console.error('Error processing document:', err);
-      if (err instanceof Error) {
-        setError((err instanceof Error ? err.message : 'Unknown error'));
-      }
+    } catch (error) {
+      console.error('Error processing document:', error);
     }
   };
 
-  const handlePrintDocument = (document: DocumentRequest) => {
-    // Navigate to the appropriate standalone print route based on document type
+  const handlePrintDocument = (document: Document) => {
+    // Navigate to the appropriate print route based on document type
     const documentType = document.document_type.toLowerCase().replace(/_/g, '-');
     navigate(`/print/${documentType}/${document.id}`);
   };
 
-  const getDocumentTypeLabel = (type: string) => {
+  const formatDocumentType = (type: string) => {
     const docType = documentTypes.find(dt => dt.value === type);
-    return docType ? docType.label : type;
+    return docType ? docType?.label : type.replace(/_/g, ' ');
   };
 
-  const getStatusIcon = (status: string) => {
-    const IconComponent = statusIcons[status as keyof typeof statusIcons];
-    return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+  const getStatusIcon = (status: DocumentStatus) => {
+    const config = statusConfig[status];
+    if (!config) return null;
+    const IconComponent = config.icon;
+    return <IconComponent className="w-4 h-4" />;
   };
 
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentDocuments = filteredDocuments.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const currentDocuments = documents.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(documents.length / itemsPerPage);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4"></div>
-          <div className="h-32 bg-gray-200 rounded mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="flex items-center justify-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <FiAlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Documents</h3>
+          <p className="text-red-700 mb-4">
+            {error?.message || 'Failed to load document processing center'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -337,37 +179,35 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
-      <Breadcrumb isLoaded={isLoaded} />
+      <Breadcrumb isLoaded={true} />
 
       {/* Header */}
-      <div className={`mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
         <h1 className="text-2xl font-bold text-darktext">Document Processing Center</h1>
         <p className="text-gray-600 mt-1">Manage and process barangay documents and certificates</p>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className={`bg-red-50 border border-red-200 rounded-lg p-4 mb-6 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`}>
-          <div className="flex items-center">
-            <FiAlertCircle className="text-red-500 mr-2" />
-            <p className="text-red-800 text-sm">{error}</p>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
+              disabled={isLoading}
+            >
+              <FiRefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Statistics Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              <p className="text-2xl font-bold text-yellow-600">{statusCounts.PENDING}</p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-full">
               <FiClock className="w-6 h-6 text-yellow-600" />
@@ -379,7 +219,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Under Review</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.under_review}</p>
+              <p className="text-2xl font-bold text-blue-600">{statusCounts.UNDER_REVIEW}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-full">
               <FiEye className="w-6 h-6 text-blue-600" />
@@ -391,7 +231,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Approved</p>
-              <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+              <p className="text-2xl font-bold text-green-600">{statusCounts.APPROVED}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
               <FiCheck className="w-6 h-6 text-green-600" />
@@ -403,7 +243,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Released</p>
-              <p className="text-2xl font-bold text-gray-600">{stats.released}</p>
+              <p className="text-2xl font-bold text-gray-600">{statusCounts.RELEASED}</p>
             </div>
             <div className="p-3 bg-gray-100 rounded-full">
               <FiFileText className="w-6 h-6 text-gray-600" />
@@ -415,7 +255,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Rejected</p>
-              <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+              <p className="text-2xl font-bold text-red-600">{statusCounts.REJECTED}</p>
             </div>
             <div className="p-3 bg-red-100 rounded-full">
               <FiX className="w-6 h-6 text-red-600" />
@@ -427,7 +267,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-darktext">{stats.total}</p>
+              <p className="text-2xl font-bold text-darktext">
+                {statistics?.total_documents || 0}
+              </p>
             </div>
             <div className="p-3 bg-smblue-100 rounded-full">
               <FiFileText className="w-6 h-6 text-smblue-400" />
@@ -437,9 +279,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
       </div>
 
       {/* Controls */}
-      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '100ms' }}>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-4 flex-1">
             {/* Search */}
@@ -448,8 +288,8 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
             <input
               type="text"
                 placeholder="Search by resident name, document type, or purpose..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.searchTerm}
+                onChange={(e) => updateFilters({ searchTerm: e.target.value })}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
@@ -458,9 +298,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
             <div className="relative">
               <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer no-underline"
+                value={filters.status}
+                onChange={(e) => updateFilters({ status: e.target.value as DocumentStatus | 'ALL' })}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -468,15 +308,19 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                 <option value="APPROVED">Approved</option>
                 <option value="RELEASED">Released</option>
                 <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
 
             {/* Document Type Filter */}
             <div className="relative">
+              <FiClipboard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <select
-                value={documentTypeFilter}
-                onChange={(e) => setDocumentTypeFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer no-underline"
+                value={filters.documentType || 'ALL'}
+                onChange={(e) => updateFilters({ 
+                  documentType: e.target.value === 'ALL' ? undefined : e.target.value as any
+                })}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
               >
                 <option value="ALL">All Document Types</option>
                 {documentTypes.map((type) => (
@@ -488,14 +332,24 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
             </div>
           </div>
 
-
+          <div className="flex items-center space-x-3">
+            <span className="text-sm text-gray-600">
+              {documents.length} documents found
+            </span>
+            {(filters.searchTerm || filters.status !== 'ALL' || filters.documentType) && (
+              <button
+                onClick={clearFilters}
+                className="text-sm text-smblue-400 hover:text-smblue-600"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Documents Table */}
-      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '200ms' }}>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -535,17 +389,17 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {document.resident_name}
+                          {document.applicant_name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {document.resident?.mobile_number}
+                          {document.applicant_contact || 'No contact'}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {getDocumentTypeLabel(document.document_type)}
+                      {formatDocumentType(document.document_type)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -554,15 +408,15 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[document.status]}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig?.[document.status]?.color}`}>
                       {getStatusIcon(document.status)}
-                      <span className="ml-1">{document.status.replace('_', ' ')}</span>
+                      <span className="ml-1">{statusConfig?.[document.status]?.label}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
                       <FiCalendar className="mr-1 h-4 w-4" />
-                      {new Date(document.request_date).toLocaleDateString()}
+                      {new Date(document.date_added).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -577,14 +431,14 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                           setSelectedDocument(document);
                           setShowProcessModal(true);
                         }}
-                        className="cursor-pointer no-underline text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
-                        title="Review & Process (Approve/Reject)"
+                        className="text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
+                        title="Review & Process"
                       >
                         <FiClipboard className="h-4 w-4" />
                       </button>
                                 <button
                         onClick={() => handlePrintDocument(document)}
-                        className="cursor-pointer no-underlinetext-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
+                        className="text-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
                         title="Print Certificate"
                       >
                         <FiPrinter className="h-4 w-4" />
@@ -621,9 +475,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                 <p className="text-sm text-gray-700">
                   Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
                   <span className="font-medium">
-                    {Math.min(indexOfLastItem, filteredDocuments.length)}
+                    {Math.min(indexOfLastItem, documents.length)}
                   </span>{' '}
-                  of <span className="font-medium">{filteredDocuments.length}</span> results
+                  of <span className="font-medium">{documents.length}</span> results
                 </p>
               </div>
               <div>
@@ -635,7 +489,18 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                   >
                     Previous
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNumber;
+                    if (totalPages <= 5) {
+                      pageNumber = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNumber = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNumber = totalPages - 4 + i;
+                    } else {
+                      pageNumber = currentPage - 2 + i;
+                    }
+                    return (
                     <button
                       key={pageNumber}
                       onClick={() => setCurrentPage(pageNumber)}
@@ -647,7 +512,8 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
                     >
                       {pageNumber}
                     </button>
-                  ))}
+                    );
+                  })}
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
@@ -662,6 +528,20 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
         )}
       </div>
 
+      {/* Empty State */}
+      {documents.length === 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
+          <p className="text-gray-600">
+            {filters.searchTerm || filters.status !== 'ALL' || filters.documentType
+              ? 'Try adjusting your search criteria'
+              : 'No documents to process at the moment'
+            }
+          </p>
+        </div>
+      )}
+
       {/* Process Document Modal */}
       {showProcessModal && selectedDocument && (
         <ProcessDocumentModal
@@ -671,40 +551,51 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = () => {
             setSelectedDocument(null);
           }}
           onProcess={handleProcessDocument}
+          isProcessing={isProcessing}
         />
       )}
 
-
-
+      {/* Loading Overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <LoadingSpinner size="md" />
+            <span className="text-gray-700">Processing document...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// Process Document Modal Component
+// Modern Process Document Modal Component
 const ProcessDocumentModal: React.FC<{
-  document: DocumentRequest;
+  document: Document;
   onClose: () => void;
-  onProcess: (id: number, action: string, data?: {
-    notes?: string;
-    certifying_official?: string;
-  }) => void;
-}> = ({ document, onClose, onProcess }) => {
+  onProcess: (
+    id: string,
+    action: 'approve' | 'reject' | 'release',
+    data?: { notes?: string; certifying_official?: string }
+  ) => Promise<void>;
+  isProcessing: boolean;
+}> = ({ document, onClose, onProcess, isProcessing }) => {
   const [action, setAction] = useState<'approve' | 'reject' | 'release'>('approve');
   const [notes, setNotes] = useState('');
   const [certifyingOfficial, setCertifyingOfficial] = useState('');
-  const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProcessing(true);
     
     const data = {
-      notes,
-      certifying_official: certifyingOfficial,
+      notes: notes.trim() || undefined,
+      certifying_official: certifyingOfficial.trim() || undefined,
     };
 
     await onProcess(document.id, action, data);
-    setProcessing(false);
+  };
+
+  const formatDocumentType = (type: string) => {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   return (
@@ -714,15 +605,18 @@ const ProcessDocumentModal: React.FC<{
           Process Document Request
         </h3>
         
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            <strong>Resident:</strong> {document.resident_name}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600 mb-1">
+            <strong>Resident:</strong> {document.applicant_name}
           </p>
-          <p className="text-sm text-gray-600">
-            <strong>Document:</strong> {document.document_type.replace('_', ' ')}
+          <p className="text-sm text-gray-600 mb-1">
+            <strong>Document:</strong> {formatDocumentType(document.document_type)}
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mb-1">
             <strong>Purpose:</strong> {document.purpose}
+          </p>
+          <p className="text-sm text-gray-600">
+            <strong>Fee:</strong> {document.processing_fee === 0 ? 'FREE' : `₱${document.processing_fee}`}
           </p>
               </div>
 
@@ -735,7 +629,7 @@ const ProcessDocumentModal: React.FC<{
               value={action}
               onChange={(e) => setAction(e.target.value as 'approve' | 'reject' | 'release')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              disabled={processing}
+              disabled={isProcessing}
             >
               <option value="approve">Approve</option>
               <option value="reject">Reject</option>
@@ -754,22 +648,23 @@ const ProcessDocumentModal: React.FC<{
                 onChange={(e) => setCertifyingOfficial(e.target.value)}
                 placeholder="Enter certifying official name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                disabled={processing}
+                disabled={isProcessing}
               />
             </div>
           )}
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
+              Notes {action === 'reject' ? '(Required)' : '(Optional)'}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Enter any notes or comments"
+              placeholder={`Enter ${action === 'reject' ? 'rejection reason' : 'any notes or comments'}`}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              disabled={processing}
+              disabled={isProcessing}
+              required={action === 'reject'}
             />
           </div>
 
@@ -777,20 +672,20 @@ const ProcessDocumentModal: React.FC<{
               <button
               type="button"
               onClick={onClose}
-              disabled={processing}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer no-underline"
+              disabled={isProcessing}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={processing}
-              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 flex items-center space-x-2 cursor-pointer no-underline"
+              disabled={isProcessing || (action === 'reject' && !notes.trim())}
+              className="px-4 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
-              {processing && (
+              {isProcessing && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               )}
-              <span>{processing ? 'Processing...' : 'Process Document'}</span>
+              <span>{isProcessing ? 'Processing...' : 'Process Document'}</span>
             </button>
           </div>
         </form>
@@ -798,7 +693,5 @@ const ProcessDocumentModal: React.FC<{
         </div>
   );
 };
-
-
 
 export default ProcessDocument;
