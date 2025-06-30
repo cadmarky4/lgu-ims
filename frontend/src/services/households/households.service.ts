@@ -1,217 +1,321 @@
-import { BaseApiService } from '../__shared/api';
-import { type PaginatedResponse, type Barangay } from '../__shared/types';
-import {
+// ============================================================================
+// services/households/households.service.ts - Households service implementation
+// ============================================================================
+
+import { z } from 'zod';
+
+import { BaseApiService } from '@/services/__shared/api';
+import { 
+  HouseholdSchema,
+  HouseholdParamsSchema,
+  HouseholdStatisticsSchema,
+  SpecialListResponseSchema,
   type Household,
-  type HouseholdFormData,
-  type CreateHouseholdRequest,
+  type HouseholdParams,
   type HouseholdStatistics,
-  type HouseholdType
-} from './households.types';
+  HouseholdFormDataSchema, 
+  type HouseholdFormData 
+} from '@/services/households/households.types';
 
-interface HouseholdParams {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  barangay?: string;
-  household_type?: string;
-  monthly_income?: string;
-  four_ps_beneficiary?: boolean;
-  indigent_family?: boolean;
-  has_pwd_member?: boolean;
-  has_senior_citizen?: boolean;
-  house_type?: string;
-  ownership_status?: string;
-}
-
-// Helper function for type-safe error handling
-function createApiError(message: string, errors?: Record<string, string[]>): Error {
-  const error = new Error(message);
-  (error as any).response = {
-    data: { errors: errors || { general: ['Server error occurred'] } }
-  };
-  return error;
-}
-
-// Helper function to check if an error is an API error
-function isApiError(error: unknown): error is Error & { response: { data: { errors: Record<string, string[]> } } } {
-  return error instanceof Error && 
-         'response' in error && 
-         error.response !== null &&
-         typeof error.response === 'object' &&
-         'data' in error.response!;
-}
+import { 
+  ApiResponseSchema, 
+  PaginatedResponseSchema, 
+  type PaginatedResponse 
+} from '@/services/__shared/types';
 
 export class HouseholdsService extends BaseApiService {
   /**
-   * Convert frontend form data to backend API format
+   * Get paginated list of households
    */
-  private mapFormDataToRequest(formData: HouseholdFormData): CreateHouseholdRequest {
-    // Construct complete address if not provided by user
-    const completeAddress = formData.completeAddress || 
-      `${formData.houseNumber} ${formData.streetSitio}, ${formData.barangay}`.trim();
-
-    const request: CreateHouseholdRequest = {
-      household_type: formData.householdType as HouseholdType,
-      head_resident_id: formData.headResidentId,
-      house_number: formData.houseNumber,
-      street_sitio: formData.streetSitio,
-      barangay: formData.barangay,
-      complete_address: completeAddress,
-      monthly_income: formData.monthlyIncome || undefined,
-      primary_income_source: formData.primaryIncomeSource || undefined,
-      four_ps_beneficiary: formData.householdClassification.fourPsBeneficiary,
-      indigent_family: formData.householdClassification.indigentFamily,
-      has_senior_citizen: formData.householdClassification.hasSeniorCitizen,
-      has_pwd_member: formData.householdClassification.hasPwdMember,
-      house_type: formData.houseType || undefined,
-      ownership_status: formData.ownershipStatus || undefined,      has_electricity: formData.utilitiesAccess.electricity,
-      has_water_supply: formData.utilitiesAccess.waterSupply,
-      has_internet_access: formData.utilitiesAccess.internetAccess,
-      remarks: formData.remarks || undefined
-    };
-
-    return request;
-  }
   async getHouseholds(params: HouseholdParams = {}): Promise<PaginatedResponse<Household>> {
-    const searchParams = new URLSearchParams();
+    // Validate input parameters
+    const validatedParams = HouseholdParamsSchema.parse(params);
     
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+    // Build query string
+    const searchParams = new URLSearchParams();
+    Object.entries(validatedParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const response = await this.requestAll<Household>(
-      `/households?${searchParams.toString()}`
+    const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
+    
+    return this.request(
+      `/households?${searchParams.toString()}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+  }
+
+  /**
+   * Get single household by ID
+   */
+  async getHousehold(id: string): Promise<Household> {
+    if (!id || !id.trim()) {
+      throw new Error('Invalid household ID');
+    }
+
+    const responseSchema = ApiResponseSchema(HouseholdSchema);
+    
+    const response = await this.request(
+      `/households/${id}`,
+      responseSchema,
+      { method: 'GET' }
     );
 
-    if (response.data) {
-      return response;
+    if (!response.data) {
+      throw new Error('Household not found');
     }
 
-    throw new Error('Failed to fetch households');
+    return response.data;
   }
 
-  async createHousehold(formData: HouseholdFormData): Promise<Household> {
-    try {
-      const requestData = this.mapFormDataToRequest(formData);
-      
-      const response = await this.request<Household>('/households', {
+  /**
+   * Create new household
+   */
+  async createHousehold(householdData: HouseholdFormData): Promise<Household> {
+    // Validate input data
+    const validatedData = HouseholdFormDataSchema.parse(householdData);
+    
+    const responseSchema = ApiResponseSchema(HouseholdSchema);
+    
+    const response = await this.request(
+      '/households',
+      responseSchema,
+      {
         method: 'POST',
-        body: JSON.stringify(requestData),
-      });
-
-      if (response.data) {
-        return response.data as Household;
+        data: validatedData,
       }
+    );
 
-      if (response.errors && Object.keys(response.errors).length > 0) {
-        throw createApiError('Validation failed', response.errors);
-      }
-
+    if (!response.data) {
       throw new Error('Failed to create household');
-    } catch (error: unknown) {
-      if (isApiError(error)) {
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create household';
-      throw createApiError(errorMessage);
     }
+
+    return response.data;
   }
 
-  async updateHousehold(id: number, formData: HouseholdFormData): Promise<Household> {
-    try {
-      const requestData = this.mapFormDataToRequest(formData);
-      
-      const response = await this.request<Household>(`/households/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(requestData),
-      });
-
-      if (response.data) {
-        return response.data as Household;
-      }
-
-      if (response.errors && Object.keys(response.errors).length > 0) {
-        throw createApiError('Validation failed', response.errors);
-      }
-
-      throw new Error(`Failed to update household #${id}`);
-    } catch (error: unknown) {
-      if (isApiError(error)) {
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : `Failed to update household #${id}`;
-      throw createApiError(errorMessage);
+  /**
+   * Update existing household
+   */
+  async updateHousehold(id: string, householdData: HouseholdFormData): Promise<Household> {
+    if (!id || !id.trim()) {
+      throw new Error('Invalid household ID');
     }
-  }
 
-  async deleteHousehold(id: number): Promise<void> {
-    const response = await this.request(`/households/${id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response) {
-      throw new Error(`Failed to delete household #${id}`);
-    }
-  }
-
-  async getHousehold(id: number): Promise<Household> {
-    const response = await this.request<Household>(`/households/${id}`);
+    // Validate input data
+    const validatedData = HouseholdFormDataSchema.parse(householdData);
     
-    if (response.data) {
-      return response.data;
-    }
+    const responseSchema = ApiResponseSchema(HouseholdSchema);
     
-    throw new Error(`Failed to get household #${id}`);
-  }
-
-  async updateHouseholdMembers(id: number, memberIds: number[]): Promise<Household> {
-    try {
-      const response = await this.request<Household>(`/households/${id}/members`, {
+    const response = await this.request(
+      `/households/${id}`,
+      responseSchema,
+      {
         method: 'PUT',
-        body: JSON.stringify({ member_ids: memberIds }),
-      });
-
-      if (response.data) {
-        return response.data as Household;
+        data: validatedData,
       }
+    );
 
-      if (response.errors && Object.keys(response.errors).length > 0) {
-        throw createApiError('Validation failed', response.errors);
-      }
-
-      throw new Error('Failed to update household members');
-    } catch (error: unknown) {
-      if (isApiError(error)) {
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update household members';
-      throw createApiError(errorMessage);
+    if (!response.data) {
+      throw new Error('Failed to update household');
     }
+
+    return response.data;
   }
 
+  /**
+   * Delete household
+   */
+  async deleteHousehold(id: string): Promise<void> {
+    if (!id || !id.trim()) {
+      throw new Error('Invalid household ID');
+    }
+
+    const responseSchema = ApiResponseSchema(z.any());
+    
+    await this.request(
+      `/households/${id}`,
+      responseSchema,
+      { method: 'DELETE' }
+    );
+  }
+
+  /**
+   * Get household statistics
+   */
   async getStatistics(): Promise<HouseholdStatistics> {
-    const response = await this.request<HouseholdStatistics>('/households/statistics');
+    const responseSchema = ApiResponseSchema(HouseholdStatisticsSchema);
     
-    if (response.data) {
-      return response.data;
+    const response = await this.request(
+      '/households/statistics',
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to get statistics');
     }
-    
-    throw new Error('Failed to get household statistics');
+
+    return response.data;
   }
 
-  async getBarangays(): Promise<Barangay[]> {
-    // Mock data for now - replace with actual API call when backend is ready
-    return [
-      { id: 1, name: 'San Rafael', value: 'san-rafael' },
-      { id: 2, name: 'Santa Cruz', value: 'santa-cruz' },
-      { id: 3, name: 'Santo Domingo', value: 'santo-domingo' },
-      { id: 4, name: 'San Antonio', value: 'san-antonio' },
-      { id: 5, name: 'San Jose', value: 'san-jose' }
-    ];
+  /**
+   * Search households by household number or head name
+   */
+  async searchHouseholds(searchTerm: string, limit = 10): Promise<Household[]> {
+    if (!searchTerm.trim()) {
+      return [];
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
+    
+    const response = await this.request(
+      `/households?search=${encodeURIComponent(searchTerm)}&per_page=${limit}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Check for duplicate households by address and head
+   */
+  async checkDuplicate(completeAddress: string, headResidentId?: string): Promise<Household[]> {
+    if (!completeAddress.trim()) {
+      throw new Error('Complete address is required');
+    }
+
+    // Search by address first
+    const households = await this.searchHouseholds(completeAddress, 10);
+
+    // Filter by exact match on address and head (if provided)
+    return households.filter((household) => {
+      const addressMatch = household.complete_address.toLowerCase().trim() === 
+                          completeAddress.toLowerCase().trim();
+      
+      if (!headResidentId) {
+        return addressMatch;
+      }
+      
+      return addressMatch && String(household.head_resident_id ?? '') === String(headResidentId);
+    });
+  }
+
+  /**
+   * Get households by barangay
+   */
+  async getHouseholdsByBarangay(barangay: string): Promise<Household[]> {
+    if (!barangay.trim()) {
+      throw new Error('Barangay is required');
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
+    
+    const response = await this.request(
+      `/households?barangay=${encodeURIComponent(barangay)}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get households by head resident
+   */
+  async getHouseholdsByHead(headResidentId: string): Promise<Household[]> {
+    if (!headResidentId || !headResidentId.trim()) {
+      throw new Error('Invalid head resident ID');
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(HouseholdSchema);
+    
+    const response = await this.request(
+      `/households?head_resident_id=${headResidentId}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  // Special lists
+  async getFourPsHouseholds(barangay?: string): Promise<Household[]> {
+    const params = barangay ? `?barangay=${encodeURIComponent(barangay)}` : '';
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/households/four-ps${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
+  }
+
+  async getHouseholdsWithSeniorCitizens(barangay?: string): Promise<Household[]> {
+    const params = barangay ? `?barangay=${encodeURIComponent(barangay)}` : '';
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/households/with-senior-citizens${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
+  }
+
+  async getHouseholdsWithPWD(barangay?: string): Promise<Household[]> {
+    const params = barangay ? `?barangay=${encodeURIComponent(barangay)}` : '';
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/households/with-pwd${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
+  }
+
+  async getHouseholdsByType(householdType: string, barangay?: string): Promise<Household[]> {
+    let params = `?household_type=${encodeURIComponent(householdType)}`;
+    if (barangay) {
+      params += `&barangay=${encodeURIComponent(barangay)}`;
+    }
+    
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/households/by-type${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
+  }
+
+  async getHouseholdsByOwnership(ownershipStatus: string, barangay?: string): Promise<Household[]> {
+    let params = `?ownership_status=${encodeURIComponent(ownershipStatus)}`;
+    if (barangay) {
+      params += `&barangay=${encodeURIComponent(barangay)}`;
+    }
+    
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/households/by-ownership${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
   }
 }
+
+// Create singleton instance
+export const householdsService = new HouseholdsService();

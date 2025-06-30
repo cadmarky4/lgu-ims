@@ -8,10 +8,6 @@ import ResidentManagement from "./components/residentManagement/ResidentManageme
 import AddNewResident from "./components/residentManagement/AddNewResident";
 import EditResident from "./components/residentManagement/EditResident";
 import ViewResident from "./components/residentManagement/ViewResident";
-// import HouseholdManagement from "./components/householdManagement/HouseholdManagement";
-// import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
-// import EditHousehold from "./components/householdManagement/EditHousehold";
-// import ViewHousehold from "./components/householdManagement/ViewHousehold";
 import ProcessDocument from "./components/processDocument/ProcessDocument";
 import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
 import BusinessPermitForm from "./components/processDocument/BusinessPermitForm";
@@ -22,17 +18,11 @@ import BarangayClearancePrint from "./components/processDocument/BarangayClearan
 import CertificateOfResidencyPrint from "./components/processDocument/CertificateOfResidencyPrint";
 import CertificateOfIndigencyPrint from "./components/processDocument/CertificateOfIndigencyPrint";
 import BusinessPermitPrint from "./components/processDocument/BusinessPermitPrint";
-// import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
-// import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
-// import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
-// import ListBarangayOfficalsToEdit from "./components/barangayOfficials/ListBarangayOfficalsToEdit";
-// import SettingsPage from "./components/_settings/SettingsPage";
-// import ProjectsAndPrograms from "./components/projectsAndPrograms/ProjectsAndPrograms";
-// import AddNewProject from "./components/projectsAndPrograms/AddNewProject";
-// import EditProject from "./components/projectsAndPrograms/EditProject";
-// import UserManagement from "./components/userManagement/UserManagement";
-// import EditUserPage from "./components/userManagement/EditUserPage";
-// import ViewUserPage from "./components/userManagement/ViewUserPage";
+import HouseholdManagement from "./components/householdManagement/HouseholdManagement";
+import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
+import EditHousehold from "./components/householdManagement/EditHousehold";
+import ViewHousehold from "./components/householdManagement/ViewHousehold";
+
 import LoginPage from "./components/_auth/LoginPage";
 import SignupPage from "./components/_auth/SignupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -120,24 +110,24 @@ const router = createBrowserRouter([
       },
       {
         path: "household",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <HouseholdManagement />,
-        //   },
-        //   {
-        //     path: "add",
-        //     element: <AddNewHousehold />,
-        //   },
-        //   {
-        //     path: "edit/:id",
-        //     element: <EditHousehold />,
-        //   },
-        //   {
-        //     path: "view/:id",
-        //     element: <ViewHousehold />,
-        //   },
-        // ],
+        children: [
+          {
+            index: true,
+            element: <HouseholdManagement />,
+          },
+          {
+            path: "add",
+            element: <AddNewHousehold />,
+          },
+          {
+            path: "edit/:id",
+            element: <EditHousehold />,
+          },
+          {
+            path: "view/:id",
+            element: <ViewHousehold />,
+          },
+        ],
       },
       {
         path: "process-document",
