@@ -23,7 +23,8 @@ import {
   type ReleaseDocumentData,
   type ProcessingHistoryItem,
   DocumentFormDataSchema, 
-  type DocumentFormData 
+  type DocumentFormData,
+  type DocumentStatus
 } from '@/services/documents/documents.types';
 
 import { 
@@ -35,16 +36,40 @@ import { apiClient } from '@/services/__shared/client';
 
 export class DocumentsService extends BaseApiService {
   /**
+   * Convert frontend status values to backend expected format
+   */
+  private convertStatusToBackend(status?: DocumentStatus | null): string | undefined {
+    if (!status) return undefined;
+    
+    const statusMap: Record<DocumentStatus, string> = {
+      'PENDING': 'pending',
+      'UNDER_REVIEW': 'processing',
+      'APPROVED': 'approved',
+      'RELEASED': 'released',
+      'REJECTED': 'rejected',
+      'CANCELLED': 'cancelled'
+    };
+    
+    return statusMap[status] || status.toLowerCase();
+  }
+
+  /**
    * Get paginated list of documents
    */
   async getDocuments(params: DocumentParams = {}): Promise<PaginatedResponse<Document>> {
     // Validate input parameters
     const validatedParams = DocumentParamsSchema.parse(params);
     
+    // Convert status to backend format
+    const backendParams = {
+      ...validatedParams,
+      status: this.convertStatusToBackend(validatedParams.status)
+    };
+    
     // Build query string
     const searchParams = new URLSearchParams();
-    Object.entries(validatedParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+    Object.entries(backendParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
@@ -271,6 +296,35 @@ export class DocumentsService extends BaseApiService {
 
     if (!response.data) {
       throw new Error('Failed to process document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Approve document
+   */
+  async approveDocument(id: string, approveData: ProcessDocumentData): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    // Validate input data
+    const validatedData = ProcessDocumentDataSchema.parse(approveData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/approve`,
+      responseSchema,
+      {
+        method: 'POST',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to approve document');
     }
 
     return response.data;

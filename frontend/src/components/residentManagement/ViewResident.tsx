@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiX, FiUser, FiPhone, FiMapPin, FiFileText, FiHeart, FiUsers, FiEdit } from 'react-icons/fi';
 import Breadcrumb from '../_global/Breadcrumb';
 import { residentsService } from '../../services';
+import { formatDate } from '@/utils/dateUtils';
 import type { Resident } from '../../services/residents/residents.types';
 import { STORAGE_BASE_URL } from '@/services/__shared/_storage/storage.types';
 
@@ -308,7 +309,7 @@ const ViewResident: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">Birth Date</label>
-              <p className="text-gray-900">{resident.birth_date ? new Date(resident.birth_date).toLocaleDateString() : 'Not specified'}</p>
+              <p className="text-gray-900">{formatDate(resident.birth_date) || 'Not specified'}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">Birth Place</label>

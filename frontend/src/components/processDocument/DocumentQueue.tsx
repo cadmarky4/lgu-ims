@@ -20,6 +20,7 @@ import {
 
 import { LoadingSpinner } from '../__shared/LoadingSpinner';
 import { useDocumentQueue } from './_hooks/useDocumentQueue';
+import { formatDate } from '@/utils/dateUtils';
 import type { DocumentStatus, DocumentPriority, Document } from '@/services/documents/documents.types';
 
 interface DocumentQueueProps {
@@ -93,6 +94,13 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
 
   const formatDocumentType = (type: string) => {
     return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  // Map backend status values to frontend config keys
+  const getStatusConfigKey = (status: string): string => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'processing') return 'UNDER_REVIEW';
+    return lowerStatus.toUpperCase();
   };
 
   const getProcessingProgress = (status: DocumentStatus) => {
@@ -219,13 +227,13 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Search and Controls */}
+      {/* Enhanced Search and Controls */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search by resident name, document type, or purpose..."
+              placeholder="Search by applicant name, document number, or purpose..."
               value={filters.searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
@@ -250,9 +258,10 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
       {/* Queue Items */}
       <div className="space-y-4">
         {documents.map((document) => {
-          const StatusIcon = statusConfig[document.status].icon;
+          const statusKey = getStatusConfigKey(document.status);
+          const StatusIcon = statusConfig[statusKey as keyof typeof statusConfig].icon;
           const isOverdue = document.needed_date && new Date(document.needed_date) < new Date();
-          const progress = getProcessingProgress(document.status);
+          const progress = getProcessingProgress(document.status as DocumentStatus);
           
           return (
             <div key={document.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -274,16 +283,16 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       {/* Priority */}
                       <span className={`text-xs font-medium px-2 py-1 rounded-full bg-gray-100 ${priorityConfig[document.priority].color}`}>
                         {priorityConfig[document.priority].label}
                       </span>
                       
                       {/* Status */}
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[document.status].color}`}>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig[statusKey as keyof typeof statusConfig].color}`}>
                         <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig[document.status].label}
+                        {statusConfig[statusKey as keyof typeof statusConfig].label}
                       </span>
                       
                       {/* Actions */}
@@ -293,6 +302,7 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
                           setSelectedDocument(document);
                           setActionModalOpen(true);
                         }}
+                        aria-label="Open document actions menu"
                       >
                         <FiMoreVertical className="w-4 h-4" />
                       </button>
@@ -326,14 +336,14 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
                     <div className="flex items-center text-sm text-gray-600">
                       <FiCalendar className="w-4 h-4 mr-2" />
                       <span>
-                        Requested: {new Date(document.date_added).toLocaleDateString()}
+                        Requested: {formatDate(document.created_at || document.request_date)}
                       </span>
                     </div>
                     {document.needed_date && (
                       <div className="flex items-center text-sm">
                         <FiClock className="w-4 h-4 mr-2" />
                         <span className={isOverdue ? 'text-red-600' : 'text-gray-600'}>
-                          Needed: {new Date(document.needed_date).toLocaleDateString()}
+                          Needed: {formatDate(document.needed_date)}
                           {isOverdue && ' (Overdue)'}
                         </span>
                       </div>
@@ -349,10 +359,10 @@ const DocumentQueue: React.FC<DocumentQueueProps> = ({ onNavigate }) => {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all duration-300 ${
-                          document.status === 'PENDING' ? 'bg-yellow-400' :
-                          document.status === 'UNDER_REVIEW' ? 'bg-blue-400' :
-                          document.status === 'APPROVED' ? 'bg-green-400' :
-                          document.status === 'RELEASED' ? 'bg-green-400' :
+                          statusKey === 'PENDING' ? 'bg-yellow-400' :
+                          statusKey === 'UNDER_REVIEW' ? 'bg-blue-400' :
+                          statusKey === 'APPROVED' ? 'bg-green-400' :
+                          statusKey === 'RELEASED' ? 'bg-green-400' :
                           'bg-red-400'
                         }`}
                         style={{ width: `${progress}%` }}

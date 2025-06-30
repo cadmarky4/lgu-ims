@@ -164,6 +164,7 @@ Route::prefix('documents')->group(function () {
     Route::get('/{id}/history', [DocumentController::class, 'history']);
     Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
     Route::post('/{id}/process', [DocumentController::class, 'process']);
+    Route::post('/{id}/approve', [DocumentController::class, 'approve']);
     Route::post('/{id}/reject', [DocumentController::class, 'reject']);
     Route::post('/{id}/release', [DocumentController::class, 'release']);
     Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
@@ -194,11 +195,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [DocumentController::class, 'destroy']);
         Route::get('/{id}/tracking', [DocumentController::class, 'tracking']);
         Route::get('/{id}/history', [DocumentController::class, 'history']);
-        Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
-        Route::post('/{id}/process', [DocumentController::class, 'process']);
-        Route::post('/{id}/reject', [DocumentController::class, 'reject']);
-        Route::post('/{id}/release', [DocumentController::class, 'release']);
-        Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
+            Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
+    Route::post('/{id}/process', [DocumentController::class, 'process']);
+    Route::post('/{id}/approve', [DocumentController::class, 'approve']);
+    Route::post('/{id}/reject', [DocumentController::class, 'reject']);
+    Route::post('/{id}/release', [DocumentController::class, 'release']);
+    Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
     });
     Route::apiResource('documents', DocumentController::class);
     

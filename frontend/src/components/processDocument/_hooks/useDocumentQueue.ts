@@ -10,6 +10,7 @@ import {
   useDocuments, 
   useDocumentStatistics,
   useProcessDocument,
+  useApproveDocument,
   useRejectDocument,
   useReleaseDocument,
   useCancelDocument,
@@ -24,14 +25,31 @@ export interface QueueFilters {
   searchTerm: string;
   dateFrom?: string;
   dateTo?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
 }
 
 export interface QueueActions {
   processDocument: (id: string, data: { status: DocumentStatus; notes?: string }) => Promise<void>;
+  approveDocument: (id: string, data: { notes?: string; certifying_official?: string }) => Promise<void>;
   rejectDocument: (id: string, reason: string) => Promise<void>;
   releaseDocument: (id: string, notes?: string) => Promise<void>;
   cancelDocument: (id: string, reason: string) => Promise<void>;
 }
+
+// Available sortable fields
+export const SORTABLE_FIELDS = {
+  applicant_name: 'Applicant Name',
+  document_type: 'Document Type', 
+  status: 'Status',
+  priority: 'Priority',
+  processing_fee: 'Processing Fee',
+  request_date: 'Request Date',
+  created_at: 'Date Added',
+  needed_date: 'Needed Date',
+  purpose: 'Purpose'
+} as const;
 
 export function useDocumentQueue() {
   const queryClient = useQueryClient();
@@ -41,6 +59,9 @@ export function useDocumentQueue() {
   const [filters, setFilters] = useState<QueueFilters>({
     status: 'ALL',
     searchTerm: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+    page: 1,
   });
 
   // Queries
@@ -53,9 +74,13 @@ export function useDocumentQueue() {
     status: filters.status !== 'ALL' ? filters.status : undefined,
     priority: filters.priority,
     document_type: filters.documentType,
+    search: filters.searchTerm || undefined,
+    date_from: filters.dateFrom,
+    date_to: filters.dateTo,
+    sort_by: filters.sortBy,
+    sort_order: filters.sortOrder,
+    page: filters.page || 1,
     per_page: 50,
-    sort_by: 'date_added',
-    sort_order: 'desc',
   });
 
   const { 
@@ -65,26 +90,15 @@ export function useDocumentQueue() {
 
   // Mutations
   const processDocumentMutation = useProcessDocument();
+  const approveDocumentMutation = useApproveDocument();
   const rejectDocumentMutation = useRejectDocument();
   const releaseDocumentMutation = useReleaseDocument();
   const cancelDocumentMutation = useCancelDocument();
 
-  // Filtered documents
-  const filteredDocuments = useMemo(() => {
-    if (!documentsData?.data || !Array.isArray(documentsData.data)) return [];
-    
-    return documentsData.data.filter((doc: Document) => {
-      const searchMatch = filters.searchTerm === '' || 
-        doc.applicant_name?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        doc.document_type.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        doc.purpose?.toLowerCase().includes(filters.searchTerm.toLowerCase());
-
-      const dateMatch = (!filters.dateFrom || new Date(doc.date_added) >= new Date(filters.dateFrom)) &&
-        (!filters.dateTo || new Date(doc.date_added) <= new Date(filters.dateTo));
-
-      return searchMatch && dateMatch;
-    });
-  }, [documentsData?.data, filters]);
+  // Get documents from API response (no client-side filtering since backend handles it)
+  const documents = useMemo(() => {
+    return documentsData?.data || [];
+  }, [documentsData?.data]);
 
   // Status counts from statistics
   const statusCounts = useMemo(() => {
@@ -100,11 +114,11 @@ export function useDocumentQueue() {
     }
     return {
       PENDING: statistics.pending_documents,
-      UNDER_REVIEW: statistics.under_review_documents,
+      UNDER_REVIEW: statistics.processing_documents,
       APPROVED: statistics.approved_documents,
       RELEASED: statistics.released_documents,
       REJECTED: statistics.rejected_documents,
-      CANCELLED: statistics.cancelled_documents,
+      CANCELLED: statistics.cancelled_documents || 0,
     };
   }, [statistics]);
 
@@ -134,6 +148,35 @@ export function useDocumentQueue() {
           type: 'error',
           title: 'Processing Failed',
           message: error.message || 'Failed to process document'
+        });
+        throw error;
+      }
+    },
+
+    approveDocument: async (id: string, data: { notes?: string; certifying_official?: string }) => {
+      try {
+        await approveDocumentMutation.mutateAsync({ 
+          id, 
+          data: {
+            status: 'APPROVED' as DocumentStatus,
+            notes: data.notes,
+            certifying_official: data.certifying_official
+          }
+        });
+        
+        showNotification({
+          type: 'success',
+          title: 'Document Approved',
+          message: 'Document has been approved successfully'
+        });
+        
+        queryClient.invalidateQueries({ queryKey: documentsKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: documentsKeys.statistics() });
+      } catch (error: any) {
+        showNotification({
+          type: 'error',
+          title: 'Approval Failed',
+          message: error.message || 'Failed to approve document'
         });
         throw error;
       }
@@ -224,12 +267,25 @@ export function useDocumentQueue() {
     setFilters({
       status: 'ALL',
       searchTerm: '',
+      sortBy: 'created_at',
+      sortOrder: 'desc',
+      page: 1,
+    });
+  };
+
+  // Sorting helper
+  const handleSort = (field: string) => {
+    const newSortOrder = filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc';
+    updateFilters({
+      sortBy: field,
+      sortOrder: newSortOrder,
+      page: 1, // Reset to first page when sorting changes
     });
   };
 
   return {
     // Data
-    documents: filteredDocuments,
+    documents,
     statistics,
     statusCounts,
     pagination: documentsData ? {
@@ -243,12 +299,14 @@ export function useDocumentQueue() {
     filters,
     updateFilters,
     clearFilters,
+    handleSort,
     
     // Loading states
     isLoading: documentsLoading || statisticsLoading,
     documentsLoading,
     statisticsLoading,
     isProcessing: processDocumentMutation.isPending ||
+                  approveDocumentMutation.isPending ||
                   rejectDocumentMutation.isPending ||
                   releaseDocumentMutation.isPending ||
                   cancelDocumentMutation.isPending,
