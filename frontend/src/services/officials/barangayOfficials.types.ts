@@ -49,7 +49,7 @@ export const PrefixSchema = z.enum([
 // Basically without the computed fields and search param for forms
 export const BarangayOfficialBaseSchema = z.object({
   // Foreign Key
-  resident_id: z.string().uuid(),
+  resident_id: z.string().uuid('barangayOfficials.form.validation.invalidUUID'),
 
   // Basic information
   prefix: PrefixSchema,
@@ -69,7 +69,7 @@ export const BarangayOfficialBaseSchema = z.object({
   email_address: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
 
   // Address Information
-  complete_address: z.string().min(1, 'Complete address is required'),
+  complete_address: z.string().min(1, 'barangayOfficials.form.validation.completeAddressRequired'),
 
   // Position Information
   position: OfficialPositionSchema,

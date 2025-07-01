@@ -130,6 +130,20 @@ Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(func
 });
 Route::apiResource('users', UserController::class);
 
+// TEMPORARY: Barangay Officials routes without authentication for testing
+Route::prefix('barangay-officials')->group(function () {
+    Route::get('/statistics', [BarangayOfficialController::class, 'statistics']);
+    Route::get('/active', [BarangayOfficialController::class, 'getActiveOfficials']);
+    Route::get('/position/{position}', [BarangayOfficialController::class, 'getByPosition']);
+    Route::get('/committee/{committee}', [BarangayOfficialController::class, 'getByCommittee']);
+    Route::get('/export', [BarangayOfficialController::class, 'export']);
+    Route::post('/check-duplicate', [BarangayOfficialController::class, 'checkDuplicate']);
+    Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
+    Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
+    Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
+});
+Route::apiResource('barangay-officials', BarangayOfficialController::class);
+
 // TEMPORARY: Help Desk routes without authentication for public access
 // These will be moved back under auth middleware when staff authentication is implemented
 
@@ -308,7 +322,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/export', [BarangayOfficialController::class, 'export']);
         Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
         Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
-        Route::post('/{barangayOfficial}/reactivate', [BaramgayOfficialController::class, 'reactivate']);
+        Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
     });
     Route::apiResource('barangay-officials', BarangayOfficialController::class);
 

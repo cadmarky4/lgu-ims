@@ -10,7 +10,9 @@ interface SearchResidentProps {
   search: string;
   isSearchingResidents: boolean;
   filteredResidents: Resident[];
-  residentsErrorMessage: string;
+  residentsFetchErrorMessage: string;
+  residentSelectErrorMessage: string;
+  isCheckingAlreadyRegisteredAsOfficial: boolean,
   onResidentClick: (residentId: string) => void;
 }
 
@@ -19,7 +21,9 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
   search,
   isSearchingResidents,
   filteredResidents,
-  residentsErrorMessage,
+  residentsFetchErrorMessage,
+  residentSelectErrorMessage,
+  isCheckingAlreadyRegisteredAsOfficial,
   onResidentClick,
 }) => {
   const [showHeadDropdown, setShowHeadDropdown] = useState(false);
@@ -36,16 +40,29 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
     e.stopPropagation();
     // ganyan muna hanggat di pa sya naseset sa string
     onResidentClick(resident.id.toString());
+    console.log(resident.id.toString());
+    console.log("HELLO")
     setShowHeadDropdown(false);
     // Show notification if person was removed from members
   };
 
   useEffect(() => {
-    console.log("HELLO", showHeadDropdown);
-  }, [showHeadDropdown]);
+    if (debouncedSearchTerm.trim()) {
+      setShowHeadDropdown(true);
+    }
+  },[debouncedSearchTerm])
+
+  useEffect(()=>{
+    console.log("ASDSDA", isCheckingAlreadyRegisteredAsOfficial)
+  },[isCheckingAlreadyRegisteredAsOfficial]);
 
   return (
     <div>
+      {residentSelectErrorMessage && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">{residentSelectErrorMessage}</p>
+        </div>
+      )}
       <label className="block text-sm font-medium text-gray-700 mb-2">
         {t("barangayOfficials.form.fields.residentSearch")}
       </label>
@@ -62,10 +79,14 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
               setShowHeadDropdown(true);
             }
           }}
-          onBlur={() => {
-            setShowHeadDropdown(false);
+          onBlur={(e) => {
+            setTimeout(() => {
+              if (!e.currentTarget?.contains(document.activeElement)) {
+                setShowHeadDropdown(false);
+              }
+            }, 100);
           }}
-          // disabled={isLoading}
+          disabled={isCheckingAlreadyRegisteredAsOfficial}
         />
         {/* Loading indicator for search */}
         {isSearchingResidents && (
@@ -81,6 +102,7 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
                 key={resident.id}
                 className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                 onClick={(e) => handleResidentClick(e, resident)}
+                // onClick={(e) => console.log("hello po")}
               >
                 <p className="font-medium text-gray-900">{`${resident.first_name} ${resident.last_name}`}</p>
                 <p className="text-sm text-gray-600">
@@ -104,9 +126,9 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
           )}
 
         {/* Failed fetching residents */}
-        {showHeadDropdown && residentsErrorMessage && (
+        {showHeadDropdown && residentsFetchErrorMessage && (
           <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-            <p className="text-gray-500 text-sm">{residentsErrorMessage}</p>
+            <p className="text-gray-500 text-sm">{residentsFetchErrorMessage}</p>
           </div>
         )}
       </div>

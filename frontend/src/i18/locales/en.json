@@ -423,7 +423,7 @@
         "landlineNumber": "Landline Number",
         "emailAddress": "Email Address",
         "completeAddress": "Complete Address",
-        "position": "position",
+        "position": "Position",
         "committeeAssignment": "Committee Assignment",
         "termStart": "Term Start",
         "termEnd": "Term End"
@@ -441,7 +441,10 @@
         "emailAddress": "resident@gmail.com",
         "completeAddress": "Enter complete address...",
         "position": "Select Position",
-        "committeeAssignment": "Select Committee Assignment"
+        "committeeAssignment": "Select Committee Assignment",
+        "prefix": "Select prefix (e.g., Hon.)",
+        "gender": "Select gender",
+        "selectCivilStatus": "Select civil status"
       },
       "options": {
         "selectGender": "Select Gender",
@@ -461,11 +464,13 @@
         "close": "Close"
       },
       "validation": {
+        "invalidUUID": "Invalid UUID",
         "firstNameRequired": "First name is required",
         "lastNameRequired": "Last name is required",
         "birthDateRequired": "Birth date is required",
         "termStartRequired": "Term start date is required",
-        "termEndRequired": "Term end date is required"
+        "termEndRequired": "Term end date is required",
+        "completeAddressRequired": "Complete Address is required"
       },
       "error": {
       },

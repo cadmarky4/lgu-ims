@@ -288,6 +288,34 @@ class BarangayOfficialController extends Controller
     }
 
     /**
+     * Check if a resident is already registered as a barangay official
+     */
+    public function checkDuplicate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'residentId' => 'required|string|uuid',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $residentId = $request->residentId;
+        
+        // Count how many times this resident is registered as an official
+        $count = BarangayOfficial::where('resident_id', $residentId)->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => $count
+        ]);
+    }
+
+    /**
      * Get active officials
      */
     public function getActiveOfficials(): JsonResponse
