@@ -4,47 +4,62 @@ namespace App\Models;
 
 use App\Models\Schemas\UserSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens, HasRoles, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * Get fillable fields from schema
      */
     protected $fillable;
-
-    /**
-     * Get hidden fields from schema
-     */
-    protected $hidden;
-
+    
     /**
      * Get casts from schema
      */
     protected $casts;
 
     /**
-     * Additional casts
+     * The attributes that should be hidden for serialization.
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Additional dates for Carbon instances
      */
     protected $dates = ['deleted_at'];
 
+    /**
+     * The attributes that should be appended to the model's array form.
+     */
+    protected $appends = [
+        'full_name',
+        'initials',
+        'display_name',
+        'role_display',
+        'department_display',
+        'is_user_active',
+        'has_logged_in',
+        'is_barangay_official',
+        'can_manage_residents',
+        'can_manage_users',
+        'can_generate_reports'
+    ];
+
     public function __construct(array $attributes = [])
     {
-        // Set fillable, hidden, and casts from schema
+        // Set fillable and casts from schema
         $this->fillable = UserSchema::getFillableFields();
-        $this->hidden = array_merge(
-            UserSchema::getHiddenFields(),
-            ['remember_token', 'deleted_at']
-        );
         $this->casts = array_merge(
             UserSchema::getCasts(),
             [
@@ -52,6 +67,9 @@ class User extends Authenticatable
                 'last_login_at' => 'datetime',
                 'is_active' => 'boolean',
                 'is_verified' => 'boolean',
+                'created_at' => 'datetime',
+                'updated_at' => 'datetime',
+                'password' => 'hashed',
             ]
         );
         
@@ -59,22 +77,32 @@ class User extends Authenticatable
     }
 
     /**
-     * Boot method for model events
+     * Boot the model
      */
     protected static function boot()
     {
         parent::boot();
-
+        
         // Auto-set created_by and updated_by
         static::creating(function ($model) {
             if (auth()->check() && !$model->created_by) {
                 $model->created_by = auth()->id();
+            }
+            
+            // Auto-verify super admin and admin users
+            if (in_array($model->role, ['SUPER_ADMIN', 'ADMIN'])) {
+                $model->is_verified = true;
             }
         });
 
         static::updating(function ($model) {
             if (auth()->check() && !$model->updated_by) {
                 $model->updated_by = auth()->id();
+            }
+            
+            // Update last login when logging in
+            if ($model->isDirty('last_login_at')) {
+                $model->timestamps = false;
             }
         });
     }
@@ -101,17 +129,12 @@ class User extends Authenticatable
         return $firstInitial . $lastInitial;
     }
 
-    public function getIsActiveStatusAttribute(): bool
+    public function getDisplayNameAttribute(): string
     {
-        return $this->is_active && $this->is_verified;
+        return $this->full_name;
     }
 
-    public function getHasLoggedInAttribute(): bool
-    {
-        return !is_null($this->last_login_at);
-    }
-
-    public function getRoleDisplayNameAttribute(): string
+    public function getRoleDisplayAttribute(): string
     {
         $roleMap = [
             'SUPER_ADMIN' => 'Super Administrator',
@@ -131,7 +154,7 @@ class User extends Authenticatable
         return $roleMap[$this->role] ?? $this->role;
     }
 
-    public function getDepartmentDisplayNameAttribute(): string
+    public function getDepartmentDisplayAttribute(): string
     {
         $departmentMap = [
             'ADMINISTRATION' => 'Administration',
@@ -145,17 +168,73 @@ class User extends Authenticatable
             'ENVIRONMENTAL_MANAGEMENT' => 'Environmental Management',
             'YOUTH_SPORTS_DEVELOPMENT' => 'Youth & Sports Development',
             'SENIOR_CITIZEN_AFFAIRS' => 'Senior Citizen Affairs',
-            'WOMENS_AFFAIRS' => 'Women\'s Affairs',
-            'BUSINESS_PERMITS' => 'Business Permits & Licensing',
+            'WOMENS_AFFAIRS' => "Women's Affairs",
+            'BUSINESS_PERMITS' => 'Business Permits',
             'INFRASTRUCTURE_DEVELOPMENT' => 'Infrastructure Development',
         ];
 
         return $departmentMap[$this->department] ?? $this->department;
     }
 
+    public function getIsUserActiveAttribute(): bool
+    {
+        return $this->is_active && $this->is_verified;
+    }
+
+    public function getHasLoggedInAttribute(): bool
+    {
+        return !is_null($this->last_login_at);
+    }
+
+    public function getIsBarangayOfficialAttribute(): bool
+    {
+        return in_array($this->role, [
+            'BARANGAY_CAPTAIN',
+            'BARANGAY_SECRETARY',
+            'BARANGAY_TREASURER',
+            'BARANGAY_COUNCILOR'
+        ]);
+    }
+
+    public function getCanManageResidentsAttribute(): bool
+    {
+        return in_array($this->role, [
+            'SUPER_ADMIN',
+            'ADMIN',
+            'BARANGAY_CAPTAIN',
+            'BARANGAY_SECRETARY',
+            'BARANGAY_CLERK',
+            'DATA_ENCODER'
+        ]);
+    }
+
+    public function getCanManageUsersAttribute(): bool
+    {
+        return in_array($this->role, [
+            'SUPER_ADMIN',
+            'ADMIN'
+        ]);
+    }
+
+    public function getCanGenerateReportsAttribute(): bool
+    {
+        return in_array($this->role, [
+            'SUPER_ADMIN',
+            'ADMIN',
+            'BARANGAY_CAPTAIN',
+            'BARANGAY_SECRETARY',
+            'BARANGAY_TREASURER'
+        ]);
+    }
+
     /**
      * Relationships
      */
+    public function resident(): BelongsTo
+    {
+        return $this->belongsTo(Resident::class);
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -166,79 +245,36 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function activities(): HasMany
-    {
-        return $this->hasMany(UserActivity::class);
-    }
-
-    public function sessions(): HasMany
-    {
-        return $this->hasMany(UserSession::class);
-    }
-
-    public function residents(): HasMany
+    // Records created/updated by this user
+    public function createdResidents(): HasMany
     {
         return $this->hasMany(Resident::class, 'created_by');
     }
 
-    public function households(): HasMany
+    public function updatedResidents(): HasMany
     {
-        return $this->hasMany(Household::class, 'created_by');
+        return $this->hasMany(Resident::class, 'updated_by');
     }
 
+    public function createdUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'created_by');
+    }
+
+    public function updatedUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'updated_by');
+    }
+
+    // Future relationships for other entities
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class, 'processed_by');
     }
 
-    public function approvedDocuments(): HasMany
-    {
-        return $this->hasMany(Document::class, 'approved_by');
-    }
-
-    public function releasedDocuments(): HasMany
-    {
-        return $this->hasMany(Document::class, 'released_by');
-    }
-
-    public function managedProjects(): HasMany
-    {
-        return $this->hasMany(Project::class, 'project_manager_id');
-    }
-
-    public function projectTeamMemberships(): HasMany
-    {
-        return $this->hasMany(ProjectTeamMember::class);
-    }
-
-    public function assignedComplaints(): HasMany
-    {
-        return $this->hasMany(Complaint::class, 'assigned_to');
-    }
-
-    public function investigatedComplaints(): HasMany
-    {
-        return $this->hasMany(Complaint::class, 'investigated_by');
-    }
-
-    public function reviewedSuggestions(): HasMany
-    {
-        return $this->hasMany(Suggestion::class, 'reviewed_by');
-    }
-
-    public function investigatedBlotterCases(): HasMany
-    {
-        return $this->hasMany(BlotterCase::class, 'investigating_officer');
-    }
-
-    public function mediatedBlotterCases(): HasMany
-    {
-        return $this->hasMany(BlotterCase::class, 'mediator_assigned');
-    }
-
     public function appointments(): HasMany
     {
-        return $this->hasMany(Appointment::class, 'assigned_official');
+        return $this->hasMany(Appointment::class, 'assigned_to');
     }
 
     /**
@@ -246,17 +282,12 @@ class User extends Authenticatable
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)->where('is_verified', true);
     }
 
     public function scopeInactive($query)
     {
         return $query->where('is_active', false);
-    }
-
-    public function scopeVerified($query)
-    {
-        return $query->where('is_verified', true);
     }
 
     public function scopeUnverified($query)
@@ -274,24 +305,32 @@ class User extends Authenticatable
         return $query->where('department', $department);
     }
 
-    public function scopeSearch($query, $search)
+    public function scopeBarangayOfficials($query)
     {
-        if (empty($search)) {
-            return $query;
-        }
-
-        return $query->where(function ($q) use ($search) {
-            $q->where('first_name', 'like', "%{$search}%")
-              ->orWhere('last_name', 'like', "%{$search}%")
-              ->orWhere('username', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('employee_id', 'like', "%{$search}%")
-              ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-              ->orWhereRaw("CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name) LIKE ?", ["%{$search}%"]);
-        });
+        return $query->whereIn('role', [
+            'BARANGAY_CAPTAIN',
+            'BARANGAY_SECRETARY',
+            'BARANGAY_TREASURER',
+            'BARANGAY_COUNCILOR'
+        ]);
     }
 
-    public function scopeRecentLogins($query, $days = 30)
+    public function scopeAdministrators($query)
+    {
+        return $query->whereIn('role', ['SUPER_ADMIN', 'ADMIN']);
+    }
+
+    public function scopeWithResident($query)
+    {
+        return $query->whereNotNull('resident_id');
+    }
+
+    public function scopeWithoutResident($query)
+    {
+        return $query->whereNull('resident_id');
+    }
+
+    public function scopeRecentlyLoggedIn($query, $days = 30)
     {
         return $query->where('last_login_at', '>=', now()->subDays($days));
     }
@@ -301,98 +340,93 @@ class User extends Authenticatable
         return $query->whereNull('last_login_at');
     }
 
+    public function scopeSearch($query, $search)
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('first_name', 'like', "%{$search}%")
+              ->orWhere('last_name', 'like', "%{$search}%")
+              ->orWhere('middle_name', 'like', "%{$search}%")
+              ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+              ->orWhereRaw("CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name) LIKE ?", ["%{$search}%"])
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('username', 'like', "%{$search}%")
+              ->orWhere('employee_id', 'like', "%{$search}%");
+        });
+    }
+
     /**
      * Helper methods
      */
+    public function isActive(): bool
+    {
+        return $this->is_user_active;
+    }
+
+    public function isBarangayOfficial(): bool
+    {
+        return $this->is_barangay_official;
+    }
+
+    public function hasResident(): bool
+    {
+        return !is_null($this->resident_id) && $this->resident()->exists();
+    }
+
     public function canEdit(User $targetUser): bool
     {
-        return UserSchema::canUserEdit(
-            $this->role,
-            $targetUser->role,
-            $this->id,
-            $targetUser->id
-        );
+        $roleHierarchy = [
+            'VIEWER' => 1,
+            'DATA_ENCODER' => 2,
+            'SECURITY_OFFICER' => 3,
+            'SOCIAL_WORKER' => 3,
+            'HEALTH_WORKER' => 3,
+            'BARANGAY_CLERK' => 4,
+            'BARANGAY_COUNCILOR' => 5,
+            'BARANGAY_TREASURER' => 6,
+            'BARANGAY_SECRETARY' => 7,
+            'BARANGAY_CAPTAIN' => 8,
+            'ADMIN' => 9,
+            'SUPER_ADMIN' => 10,
+        ];
+
+        $currentUserLevel = $roleHierarchy[$this->role] ?? 0;
+        $targetUserLevel = $roleHierarchy[$targetUser->role] ?? 0;
+        
+        // Super admin can edit anyone
+        if ($this->role === 'SUPER_ADMIN') return true;
+        
+        // Users can edit themselves (basic info only)
+        if ($this->id === $targetUser->id) return true;
+        
+        // Higher level users can edit lower level users
+        return $currentUserLevel > $targetUserLevel;
     }
 
     public function canDelete(User $targetUser): bool
     {
-        return UserSchema::canUserDelete(
-            $this->role,
-            $targetUser->role,
-            $this->id,
-            $targetUser->id
-        );
-    }
-
-    public function getRoleLevel(): int
-    {
-        $hierarchy = UserSchema::getRoleHierarchy();
-        return $hierarchy[$this->role] ?? 0;
-    }
-
-    public function isHigherRoleThan(User $user): bool
-    {
-        return $this->getRoleLevel() > $user->getRoleLevel();
-    }
-
-    public function isSameRoleAs(User $user): bool
-    {
-        return $this->role === $user->role;
-    }
-
-    public function hasPermissionFor(string $action, string $resource): bool
-    {
-        // Basic permission logic - can be extended with Spatie Permission package
-        $permissions = [
-            'SUPER_ADMIN' => ['*'],
-            'ADMIN' => ['users.*', 'residents.*', 'reports.*', 'settings.*'],
-            'BARANGAY_CAPTAIN' => ['users.view', 'residents.*', 'reports.*', 'settings.view'],
-            'BARANGAY_SECRETARY' => ['residents.*', 'reports.view'],
-            'BARANGAY_TREASURER' => ['residents.view', 'reports.view'],
-            'BARANGAY_COUNCILOR' => ['residents.view', 'reports.view'],
-            'BARANGAY_CLERK' => ['residents.*'],
-            'HEALTH_WORKER' => ['residents.view', 'residents.edit'],
-            'SOCIAL_WORKER' => ['residents.view', 'residents.edit'],
-            'SECURITY_OFFICER' => ['residents.view'],
-            'DATA_ENCODER' => ['residents.create', 'residents.edit'],
-            'VIEWER' => ['residents.view'],
-        ];
-
-        $userPermissions = $permissions[$this->role] ?? [];
+        // Only super admin and admin can delete users
+        if (!in_array($this->role, ['SUPER_ADMIN', 'ADMIN'])) return false;
         
-        // Check for wildcard permission
-        if (in_array('*', $userPermissions)) {
-            return true;
+        // Cannot delete yourself
+        if ($this->id === $targetUser->id) return false;
+        
+        // Super admin can delete anyone except other super admins
+        if ($this->role === 'SUPER_ADMIN') {
+            return $targetUser->role !== 'SUPER_ADMIN';
         }
-
-        // Check for specific permission
-        $permission = "{$resource}.{$action}";
-        if (in_array($permission, $userPermissions)) {
-            return true;
-        }
-
-        // Check for resource wildcard
-        $resourceWildcard = "{$resource}.*";
-        if (in_array($resourceWildcard, $userPermissions)) {
-            return true;
-        }
-
-        return false;
+        
+        // Admin can only delete users below admin level
+        $adminLevelRoles = ['SUPER_ADMIN', 'ADMIN'];
+        return !in_array($targetUser->role, $adminLevelRoles);
     }
 
-    public function updateLastLogin(): void
-    {
-        $this->update(['last_login_at' => now()]);
-    }
-
-    public function markAsVerified(): void
-    {
-        $this->update([
-            'is_verified' => true,
-            'email_verified_at' => now()
-        ]);
-    }
-
+    /**
+     * Authentication helpers
+     */
     public function activate(): void
     {
         $this->update(['is_active' => true]);
@@ -403,10 +437,31 @@ class User extends Authenticatable
         $this->update(['is_active' => false]);
     }
 
-    public function suspend(): void
+    public function verify(): void
     {
-        $this->update(['is_active' => false]);
-        // Additional suspension logic can be added here
+        $this->update(['is_verified' => true]);
+    }
+
+    public function unverify(): void
+    {
+        $this->update(['is_verified' => false]);
+    }
+
+    public function updateLastLogin(): void
+    {
+        $this->timestamps = false;
+        $this->update(['last_login_at' => now()]);
+        $this->timestamps = true;
+    }
+
+    public function linkToResident(Resident $resident): void
+    {
+        $this->update(['resident_id' => $resident->id]);
+    }
+
+    public function unlinkFromResident(): void
+    {
+        $this->update(['resident_id' => null]);
     }
 
     /**
@@ -419,10 +474,15 @@ class User extends Authenticatable
         // Add computed attributes
         $array['full_name'] = $this->full_name;
         $array['initials'] = $this->initials;
-        $array['is_active_status'] = $this->is_active_status;
+        $array['display_name'] = $this->display_name;
+        $array['role_display'] = $this->role_display;
+        $array['department_display'] = $this->department_display;
+        $array['is_user_active'] = $this->is_user_active;
         $array['has_logged_in'] = $this->has_logged_in;
-        $array['role_display_name'] = $this->role_display_name;
-        $array['department_display_name'] = $this->department_display_name;
+        $array['is_barangay_official'] = $this->is_barangay_official;
+        $array['can_manage_residents'] = $this->can_manage_residents;
+        $array['can_manage_users'] = $this->can_manage_users;
+        $array['can_generate_reports'] = $this->can_generate_reports;
 
         return $array;
     }

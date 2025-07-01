@@ -264,6 +264,19 @@ export class ResidentsService extends BaseApiService {
     return response.data;
   }
 
+  async getIndigenous(barangay?: string): Promise<Resident[]> {
+    const params = barangay ? `?barangay=${encodeURIComponent(barangay)}` : '';
+    const responseSchema = ApiResponseSchema(SpecialListResponseSchema);
+    
+    const response = await this.request(
+      `/residents/indigenous${params}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data?.data || [];
+  }
+
   /**
    * Upload profile photo
    */
@@ -359,6 +372,8 @@ export class ResidentsService extends BaseApiService {
 
     return response.data?.data || [];
   }
+
+  
 }
 
 // Create singleton instance

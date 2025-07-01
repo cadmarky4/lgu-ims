@@ -3,8 +3,8 @@
 namespace App\Models\Schemas;
 
 /**
- * Enhanced User Schema - Single source of truth for user data structure
- * Following the frontend Zod schema patterns
+ * User Schema - Single source of truth for user data structure
+ * Aligned with frontend Zod schema and authentication requirements
  */
 class UserSchema
 {
@@ -62,6 +62,43 @@ class UserSchema
     public static function getFields(): array
     {
         return [
+            // Authentication fields
+            'username' => [
+                'type' => 'string',
+                'max' => 50,
+                'required' => true,
+                'fillable' => true,
+                'unique' => true,
+                'searchable' => true,
+                'regex' => '/^[a-zA-Z0-9_]+$/'
+            ],
+            'email' => [
+                'type' => 'email',
+                'max' => 255,
+                'required' => true,
+                'fillable' => true,
+                'unique' => true,
+                'searchable' => true
+            ],
+            'email_verified_at' => [
+                'type' => 'datetime',
+                'nullable' => true,
+                'cast' => 'datetime'
+            ],
+            'password' => [
+                'type' => 'string',
+                'required' => true,
+                'fillable' => true,
+                'min' => 8,
+                'regex' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+                'cast' => 'hashed'
+            ],
+            'remember_token' => [
+                'type' => 'string',
+                'max' => 100,
+                'nullable' => true
+            ],
+
             // Personal Information
             'first_name' => [
                 'type' => 'string',
@@ -86,43 +123,15 @@ class UserSchema
             ],
 
             // Contact Information
-            'email' => [
-                'type' => 'email',
-                'max' => 255,
-                'required' => true,
-                'unique' => true,
-                'fillable' => true,
-                'searchable' => true
-            ],
             'phone' => [
                 'type' => 'string',
                 'max' => 20,
                 'required' => true,
                 'fillable' => true,
-                'regex' => '/^(\+639|09)\d{9}$/' // Philippine phone format
+                'regex' => '/^(\+639|09)\d{9}$/'
             ],
 
-            // Account Information
-            'username' => [
-                'type' => 'string',
-                'max' => 50,
-                'min' => 3,
-                'required' => true,
-                'unique' => true,
-                'fillable' => true,
-                'searchable' => true,
-                'regex' => '/^[a-zA-Z0-9_]+$/' // Alphanumeric and underscore only
-            ],
-            'password' => [
-                'type' => 'string',
-                'required' => true,
-                'min' => 8,
-                'fillable' => true,
-                'hidden' => true,
-                'cast' => 'hashed'
-            ],
-
-            // Role & Department Information
+            // Role and Department
             'role' => [
                 'type' => 'enum',
                 'values' => self::ROLES,
@@ -143,13 +152,14 @@ class UserSchema
             ],
             'employee_id' => [
                 'type' => 'string',
-                'max' => 100,
+                'max' => 50,
                 'nullable' => true,
                 'fillable' => true,
+                'unique' => true,
                 'searchable' => true
             ],
 
-            // Status & Verification
+            // Status and Settings
             'is_active' => [
                 'type' => 'boolean',
                 'default' => true,
@@ -165,7 +175,6 @@ class UserSchema
             'last_login_at' => [
                 'type' => 'datetime',
                 'nullable' => true,
-                'fillable' => true,
                 'cast' => 'datetime'
             ],
 
@@ -176,38 +185,43 @@ class UserSchema
                 'fillable' => true
             ],
 
-            // System Fields
-            'email_verified_at' => [
-                'type' => 'datetime',
+            // Relationship to resident (nullable because not all users are residents)
+            'resident_id' => [
+                'type' => 'foreignId',
+                'references' => 'residents.id',
                 'nullable' => true,
-                'cast' => 'datetime'
+                'fillable' => true,
+                'onDelete' => 'set null'
             ],
-            'remember_token' => [
-                'type' => 'string',
-                'max' => 100,
-                'nullable' => true,
-                'hidden' => true
-            ],
+
+            // Audit fields
             'created_by' => [
                 'type' => 'foreignId',
                 'references' => 'users.id',
                 'nullable' => true,
-                'fillable' => true
+                'fillable' => true,
+                'onDelete' => 'set null'
             ],
             'updated_by' => [
                 'type' => 'foreignId',
                 'references' => 'users.id',
                 'nullable' => true,
-                'fillable' => true
+                'fillable' => true,
+                'onDelete' => 'set null'
             ],
 
-            // Timestamps (handled by Laravel)
+            // Timestamps
             'created_at' => [
                 'type' => 'datetime',
                 'cast' => 'datetime'
             ],
             'updated_at' => [
                 'type' => 'datetime',
+                'cast' => 'datetime'
+            ],
+            'deleted_at' => [
+                'type' => 'datetime',
+                'nullable' => true,
                 'cast' => 'datetime'
             ],
         ];
@@ -228,23 +242,6 @@ class UserSchema
         }
 
         return $fillable;
-    }
-
-    /**
-     * Get hidden fields for the model
-     */
-    public static function getHiddenFields(): array
-    {
-        $fields = static::getFields();
-        $hidden = [];
-
-        foreach ($fields as $field => $config) {
-            if (isset($config['hidden']) && $config['hidden']) {
-                $hidden[] = $field;
-            }
-        }
-
-        return $hidden;
     }
 
     /**
@@ -273,8 +270,8 @@ class UserSchema
         $fields = static::getFields();
 
         foreach ($fields as $field => $config) {
-            // Skip system fields
-            if (in_array($field, ['remember_token', 'email_verified_at', 'created_at', 'updated_at'])) {
+            // Skip system fields and password confirmation
+            if (in_array($field, ['created_at', 'updated_at', 'deleted_at', 'remember_token', 'email_verified_at', 'last_login_at'])) {
                 continue;
             }
 
@@ -297,11 +294,11 @@ class UserSchema
                     if (isset($config['min'])) {
                         $fieldRules[] = "min:{$config['min']}";
                     }
-                    if (isset($config['unique']) && $config['unique']) {
-                        $fieldRules[] = 'unique:users,' . $field;
-                    }
                     if (isset($config['regex'])) {
                         $fieldRules[] = 'regex:' . $config['regex'];
+                    }
+                    if (isset($config['unique']) && $config['unique']) {
+                        $fieldRules[] = 'unique:users,' . $field;
                     }
                     break;
 
@@ -344,7 +341,7 @@ class UserSchema
             }
         }
 
-        // Add password confirmation for create
+        // Add password confirmation rule
         $rules['confirm_password'] = 'required|same:password';
 
         return $rules;
@@ -353,12 +350,9 @@ class UserSchema
     /**
      * Get validation rules for update operations
      */
-    public static function getUpdateValidationRules(): array
+    public static function getUpdateValidationRules($userId = null): array
     {
         $rules = static::getCreateValidationRules();
-
-        // Remove confirm_password requirement for updates
-        unset($rules['confirm_password']);
 
         // Make most fields optional for updates
         foreach ($rules as $field => $rule) {
@@ -367,33 +361,24 @@ class UserSchema
             }
         }
 
-        // Update unique rules for updates (placeholder for ID)
-        if (isset($rules['username'])) {
-            $rules['username'] = str_replace('unique:users,username', 'unique:users,username,{id}', $rules['username']);
-        }
-        if (isset($rules['email'])) {
-            $rules['email'] = str_replace('unique:users,email', 'unique:users,email,{id}', $rules['email']);
+        // Update unique rules to ignore current user
+        if ($userId) {
+            if (isset($rules['username'])) {
+                $rules['username'] = str_replace('unique:users,username', "unique:users,username,{$userId}", $rules['username']);
+            }
+            if (isset($rules['email'])) {
+                $rules['email'] = str_replace('unique:users,email', "unique:users,email,{$userId}", $rules['email']);
+            }
+            if (isset($rules['employee_id'])) {
+                $rules['employee_id'] = str_replace('unique:users,employee_id', "unique:users,employee_id,{$userId}", $rules['employee_id']);
+            }
         }
 
-        // Password is optional for updates
-        if (isset($rules['password'])) {
-            $rules['password'] = 'sometimes|' . $rules['password'];
-            $rules['confirm_password'] = 'required_with:password|same:password';
-        }
+        // Make password optional for updates
+        $rules['password'] = 'sometimes|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/';
+        $rules['confirm_password'] = 'required_with:password|same:password';
 
         return $rules;
-    }
-
-    /**
-     * Get validation rules for password change
-     */
-    public static function getPasswordChangeRules(): array
-    {
-        return [
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
-            'new_password_confirmation' => 'required|same:new_password',
-        ];
     }
 
     /**
@@ -411,146 +396,5 @@ class UserSchema
         }
 
         return $casts;
-    }
-
-    /**
-     * Get database migration rules
-     */
-    public static function getMigrationRules(): array
-    {
-        $fields = static::getFields();
-        $migrations = [];
-
-        foreach ($fields as $field => $config) {
-            $migration = [];
-
-            switch ($config['type']) {
-                case 'string':
-                    $migration['type'] = 'string';
-                    if (isset($config['max'])) {
-                        $migration['length'] = $config['max'];
-                    }
-                    break;
-
-                case 'email':
-                    $migration['type'] = 'string';
-                    $migration['length'] = $config['max'] ?? 255;
-                    break;
-
-                case 'enum':
-                    $migration['type'] = 'enum';
-                    $migration['values'] = $config['values'];
-                    break;
-
-                case 'text':
-                    $migration['type'] = 'text';
-                    break;
-
-                case 'boolean':
-                    $migration['type'] = 'boolean';
-                    if (isset($config['default'])) {
-                        $migration['default'] = $config['default'];
-                    }
-                    break;
-
-                case 'datetime':
-                    $migration['type'] = 'timestamp';
-                    break;
-
-                case 'foreignId':
-                    $migration['type'] = 'foreignId';
-                    if (isset($config['references'])) {
-                        $migration['references'] = $config['references'];
-                    }
-                    break;
-            }
-
-            if (isset($config['nullable']) && $config['nullable']) {
-                $migration['nullable'] = true;
-            }
-
-            if (isset($config['unique']) && $config['unique']) {
-                $migration['unique'] = true;
-            }
-
-            if (isset($config['default'])) {
-                $migration['default'] = $config['default'];
-            }
-
-            $migrations[$field] = $migration;
-        }
-
-        return $migrations;
-    }
-
-    /**
-     * Get role hierarchy for permission checking
-     */
-    public static function getRoleHierarchy(): array
-    {
-        return [
-            'SUPER_ADMIN' => 10,
-            'ADMIN' => 9,
-            'BARANGAY_CAPTAIN' => 8,
-            'BARANGAY_SECRETARY' => 7,
-            'BARANGAY_TREASURER' => 6,
-            'BARANGAY_COUNCILOR' => 5,
-            'BARANGAY_CLERK' => 4,
-            'HEALTH_WORKER' => 3,
-            'SOCIAL_WORKER' => 3,
-            'SECURITY_OFFICER' => 3,
-            'DATA_ENCODER' => 2,
-            'VIEWER' => 1,
-        ];
-    }
-
-    /**
-     * Check if user can edit another user
-     */
-    public static function canUserEdit(string $currentUserRole, string $targetUserRole, int $currentUserId, int $targetUserId): bool
-    {
-        $hierarchy = static::getRoleHierarchy();
-        $currentUserLevel = $hierarchy[$currentUserRole] ?? 0;
-        $targetUserLevel = $hierarchy[$targetUserRole] ?? 0;
-
-        // Super admin can edit anyone
-        if ($currentUserRole === 'SUPER_ADMIN') {
-            return true;
-        }
-
-        // Users can edit themselves (basic info only)
-        if ($currentUserId === $targetUserId) {
-            return true;
-        }
-
-        // Higher level users can edit lower level users
-        return $currentUserLevel > $targetUserLevel;
-    }
-
-    /**
-     * Check if user can delete another user
-     */
-    public static function canUserDelete(string $currentUserRole, string $targetUserRole, int $currentUserId, int $targetUserId): bool
-    {
-        // Only super admin and admin can delete users
-        if (!in_array($currentUserRole, ['SUPER_ADMIN', 'ADMIN'])) {
-            return false;
-        }
-
-        // Cannot delete yourself
-        if ($currentUserId === $targetUserId) {
-            return false;
-        }
-
-        $hierarchy = static::getRoleHierarchy();
-
-        // Super admin can delete anyone except other super admins
-        if ($currentUserRole === 'SUPER_ADMIN') {
-            return $targetUserRole !== 'SUPER_ADMIN';
-        }
-
-        // Admin can only delete users below admin level
-        $targetUserLevel = $hierarchy[$targetUserRole] ?? 0;
-        return $targetUserLevel < $hierarchy['ADMIN'];
     }
 }

@@ -22,7 +22,7 @@ import {
   type UserPermissions,
   type UserRole,
   type Department,
-} from '@/services/users/users.types';
+} from './users.types';
 
 import {
   ApiResponseSchema,
@@ -56,15 +56,34 @@ const UserSessionSchema = z.object({
 
 const BulkUserActionSchema = z.object({
   user_ids: z.array(z.number()),
-  action: z.enum(['activate', 'deactivate', 'delete', 'reset_password']),
+  action: z.enum(['activate', 'deactivate', 'delete', 'reset_password', 'verify', 'suspend']),
   reason: z.string().optional(),
+});
+
+const UserImportResultSchema = z.object({
+  success_count: z.number(),
+  error_count: z.number(),
+  total_processed: z.number(),
+  errors: z.array(z.object({
+    row: z.number(),
+    field: z.string().optional(),
+    error: z.string(),
+    data: z.record(z.any()).optional(),
+  })),
+  warnings: z.array(z.object({
+    row: z.number(),
+    message: z.string(),
+  })).optional(),
 });
 
 type UserActivity = z.infer<typeof UserActivitySchema>;
 type UserSession = z.infer<typeof UserSessionSchema>;
 type BulkUserAction = z.infer<typeof BulkUserActionSchema>;
+type UserImportResult = z.infer<typeof UserImportResultSchema>;
 
 export class UsersService extends BaseApiService {
+  private readonly basePath = '/users';
+
   /**
    * Get paginated list of users
    */
@@ -75,13 +94,13 @@ export class UsersService extends BaseApiService {
     // Build query string
     const searchParams = new URLSearchParams();
     Object.entries(validatedParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
     return this.request(
-      `/users?${searchParams.toString()}`,
+      `${this.basePath}?${searchParams.toString()}`,
       UserListResponseSchema,
       { method: 'GET' }
     );
@@ -91,14 +110,12 @@ export class UsersService extends BaseApiService {
    * Get single user by ID
    */
   async getUser(id: number): Promise<User> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      `/users/${id}`,
+      `${this.basePath}/${id}`,
       responseSchema,
       { method: 'GET' }
     );
@@ -117,7 +134,7 @@ export class UsersService extends BaseApiService {
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      '/users/me',
+      `${this.basePath}/me`,
       responseSchema,
       { method: 'GET' }
     );
@@ -139,7 +156,7 @@ export class UsersService extends BaseApiService {
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      '/users',
+      this.basePath,
       responseSchema,
       {
         method: 'POST',
@@ -158,9 +175,7 @@ export class UsersService extends BaseApiService {
    * Update existing user
    */
   async updateUser(id: number, userData: UpdateUserFormData): Promise<User> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     // Validate input data
     const validatedData = UpdateUserFormDataSchema.parse(userData);
@@ -168,7 +183,7 @@ export class UsersService extends BaseApiService {
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      `/users/${id}`,
+      `${this.basePath}/${id}`,
       responseSchema,
       {
         method: 'PUT',
@@ -190,7 +205,7 @@ export class UsersService extends BaseApiService {
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      '/users/me',
+      `${this.basePath}/me`,
       responseSchema,
       {
         method: 'PUT',
@@ -206,17 +221,55 @@ export class UsersService extends BaseApiService {
   }
 
   /**
-   * Delete user
+   * Delete user (soft delete)
    */
   async deleteUser(id: number): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${id}`,
+      `${this.basePath}/${id}`,
+      responseSchema,
+      { method: 'DELETE' }
+    );
+  }
+
+  /**
+   * Restore deleted user
+   */
+  async restoreUser(id: number): Promise<User> {
+    this.validateId(id, 'User ID');
+
+    const responseSchema = ApiResponseSchema(UserSchema);
+    
+    const response = await this.request(
+      `${this.basePath}/${id}/restore`,
+      responseSchema,
+      { method: 'POST' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to restore user');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Permanently delete user
+   */
+  async forceDeleteUser(id: number): Promise<void> {
+    this.validateId(id, 'User ID');
+
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
+    
+    await this.request(
+      `${this.basePath}/${id}/force-delete`,
       responseSchema,
       { method: 'DELETE' }
     );
@@ -226,17 +279,17 @@ export class UsersService extends BaseApiService {
    * Change user password
    */
   async changePassword(id: number, passwordData: ChangePasswordData): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     // Validate input data
     const validatedData = ChangePasswordSchema.parse(passwordData);
     
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${id}/change-password`,
+      `${this.basePath}/${id}/change-password`,
       responseSchema,
       {
         method: 'POST',
@@ -252,10 +305,12 @@ export class UsersService extends BaseApiService {
     // Validate input data
     const validatedData = ChangePasswordSchema.parse(passwordData);
     
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      '/users/me/change-password',
+      `${this.basePath}/me/change-password`,
       responseSchema,
       {
         method: 'POST',
@@ -267,10 +322,8 @@ export class UsersService extends BaseApiService {
   /**
    * Reset user password (admin only)
    */
-  async resetUserPassword(id: number, sendEmail = true): Promise<{ temporary_password?: string }> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+  async resetUserPassword(id: number, sendEmail = true): Promise<{ temporary_password?: string; message: string }> {
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
       temporary_password: z.string().optional(),
@@ -278,7 +331,7 @@ export class UsersService extends BaseApiService {
     }));
     
     const response = await this.request(
-      `/users/${id}/reset-password`,
+      `${this.basePath}/${id}/reset-password`,
       responseSchema,
       {
         method: 'POST',
@@ -286,21 +339,23 @@ export class UsersService extends BaseApiService {
       }
     );
 
-    return response.data || {};
+    return response.data || { message: 'Password reset successfully' };
   }
 
   /**
    * Change user status (activate/deactivate/suspend)
    */
-  async changeUserStatus(id: number, status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED', reason?: string): Promise<User> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+  async changeUserStatus(
+    id: number, 
+    status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED', 
+    reason?: string
+  ): Promise<User> {
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      `/users/${id}/status`,
+      `${this.basePath}/${id}/status`,
       responseSchema,
       {
         method: 'PUT',
@@ -340,14 +395,12 @@ export class UsersService extends BaseApiService {
    * Verify user email
    */
   async verifyUser(id: number): Promise<User> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
     
     const response = await this.request(
-      `/users/${id}/verify`,
+      `${this.basePath}/${id}/verify`,
       responseSchema,
       { method: 'POST' }
     );
@@ -360,17 +413,38 @@ export class UsersService extends BaseApiService {
   }
 
   /**
+   * Unverify user email
+   */
+  async unverifyUser(id: number): Promise<User> {
+    this.validateId(id, 'User ID');
+
+    const responseSchema = ApiResponseSchema(UserSchema);
+    
+    const response = await this.request(
+      `${this.basePath}/${id}/unverify`,
+      responseSchema,
+      { method: 'POST' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to unverify user');
+    }
+
+    return response.data;
+  }
+
+  /**
    * Resend verification email
    */
   async resendVerificationEmail(id: number): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${id}/resend-verification`,
+      `${this.basePath}/${id}/resend-verification`,
       responseSchema,
       { method: 'POST' }
     );
@@ -380,14 +454,14 @@ export class UsersService extends BaseApiService {
    * Send user credentials via email
    */
   async sendUserCredentials(id: number, includePassword = false): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${id}/send-credentials`,
+      `${this.basePath}/${id}/send-credentials`,
       responseSchema,
       {
         method: 'POST',
@@ -397,13 +471,59 @@ export class UsersService extends BaseApiService {
   }
 
   /**
+   * Link user to resident
+   */
+  async linkToResident(userId: number, residentId: number): Promise<User> {
+    this.validateId(userId, 'User ID');
+    this.validateId(residentId, 'Resident ID');
+
+    const responseSchema = ApiResponseSchema(UserSchema);
+    
+    const response = await this.request(
+      `${this.basePath}/${userId}/link-resident`,
+      responseSchema,
+      {
+        method: 'POST',
+        data: { resident_id: residentId },
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to link user to resident');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Unlink user from resident
+   */
+  async unlinkFromResident(userId: number): Promise<User> {
+    this.validateId(userId, 'User ID');
+
+    const responseSchema = ApiResponseSchema(UserSchema);
+    
+    const response = await this.request(
+      `${this.basePath}/${userId}/unlink-resident`,
+      responseSchema,
+      { method: 'POST' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to unlink user from resident');
+    }
+
+    return response.data;
+  }
+
+  /**
    * Get user statistics
    */
   async getUserStatistics(): Promise<UserStatistics> {
     const responseSchema = ApiResponseSchema(UserStatisticsSchema);
     
     const response = await this.request(
-      '/users/statistics',
+      `${this.basePath}/statistics`,
       responseSchema,
       { method: 'GET' }
     );
@@ -416,7 +536,7 @@ export class UsersService extends BaseApiService {
   }
 
   /**
-   * Search users by name or email
+   * Search users by name, email, or username
    */
   async searchUsers(searchTerm: string, limit = 10): Promise<User[]> {
     if (!searchTerm.trim()) {
@@ -424,7 +544,7 @@ export class UsersService extends BaseApiService {
     }
 
     const response = await this.request(
-      `/users?search=${encodeURIComponent(searchTerm)}&per_page=${limit}`,
+      `${this.basePath}?search=${encodeURIComponent(searchTerm)}&per_page=${limit}`,
       UserListResponseSchema,
       { method: 'GET' }
     );
@@ -442,6 +562,7 @@ export class UsersService extends BaseApiService {
 
     const responseSchema = ApiResponseSchema(z.object({
       available: z.boolean(),
+      message: z.string().optional(),
     }));
 
     const params = new URLSearchParams({ username });
@@ -450,7 +571,7 @@ export class UsersService extends BaseApiService {
     }
     
     const response = await this.request(
-      `/users/check-username?${params.toString()}`,
+      `${this.basePath}/check-username?${params.toString()}`,
       responseSchema,
       { method: 'GET' }
     );
@@ -468,6 +589,7 @@ export class UsersService extends BaseApiService {
 
     const responseSchema = ApiResponseSchema(z.object({
       available: z.boolean(),
+      message: z.string().optional(),
     }));
 
     const params = new URLSearchParams({ email });
@@ -476,7 +598,7 @@ export class UsersService extends BaseApiService {
     }
     
     const response = await this.request(
-      `/users/check-email?${params.toString()}`,
+      `${this.basePath}/check-email?${params.toString()}`,
       responseSchema,
       { method: 'GET' }
     );
@@ -487,9 +609,18 @@ export class UsersService extends BaseApiService {
   /**
    * Get users by role
    */
-  async getUsersByRole(role: UserRole): Promise<User[]> {
+  async getUsersByRole(role: UserRole, includeInactive = false): Promise<User[]> {
+    const params = new URLSearchParams({
+      role,
+      per_page: '100',
+    });
+
+    if (includeInactive) {
+      params.append('include_inactive', 'true');
+    }
+
     const response = await this.request(
-      `/users?role=${role}&per_page=100`,
+      `${this.basePath}?${params.toString()}`,
       UserListResponseSchema,
       { method: 'GET' }
     );
@@ -500,9 +631,66 @@ export class UsersService extends BaseApiService {
   /**
    * Get users by department
    */
-  async getUsersByDepartment(department: Department): Promise<User[]> {
+  async getUsersByDepartment(department: Department, includeInactive = false): Promise<User[]> {
+    const params = new URLSearchParams({
+      department,
+      per_page: '100',
+    });
+
+    if (includeInactive) {
+      params.append('include_inactive', 'true');
+    }
+
     const response = await this.request(
-      `/users?department=${department}&per_page=100`,
+      `${this.basePath}?${params.toString()}`,
+      UserListResponseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get barangay officials
+   */
+  async getBarangayOfficials(includeInactive = false): Promise<User[]> {
+    const params = new URLSearchParams({
+      is_barangay_official: 'true',
+      per_page: '100',
+    });
+
+    if (includeInactive) {
+      params.append('include_inactive', 'true');
+    }
+
+    const response = await this.request(
+      `${this.basePath}?${params.toString()}`,
+      UserListResponseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get users with linked residents
+   */
+  async getUsersWithResidents(): Promise<User[]> {
+    const response = await this.request(
+      `${this.basePath}?has_resident=true&per_page=100`,
+      UserListResponseSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get users without linked residents
+   */
+  async getUsersWithoutResidents(): Promise<User[]> {
+    const response = await this.request(
+      `${this.basePath}?has_resident=false&per_page=100`,
       UserListResponseSchema,
       { method: 'GET' }
     );
@@ -514,14 +702,12 @@ export class UsersService extends BaseApiService {
    * Get user activity log
    */
   async getUserActivity(id: number, limit = 50): Promise<UserActivity[]> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.array(UserActivitySchema));
     
     const response = await this.request(
-      `/users/${id}/activity?limit=${limit}`,
+      `${this.basePath}/${id}/activity?limit=${limit}`,
       responseSchema,
       { method: 'GET' }
     );
@@ -533,14 +719,12 @@ export class UsersService extends BaseApiService {
    * Get user active sessions
    */
   async getUserSessions(id: number): Promise<UserSession[]> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.array(UserSessionSchema));
     
     const response = await this.request(
-      `/users/${id}/sessions`,
+      `${this.basePath}/${id}/sessions`,
       responseSchema,
       { method: 'GET' }
     );
@@ -552,18 +736,18 @@ export class UsersService extends BaseApiService {
    * Terminate user session
    */
   async terminateUserSession(userId: number, sessionId: string): Promise<void> {
-    if (!userId || userId <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(userId, 'User ID');
 
     if (!sessionId.trim()) {
       throw new Error('Session ID is required');
     }
 
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${userId}/sessions/${sessionId}`,
+      `${this.basePath}/${userId}/sessions/${sessionId}`,
       responseSchema,
       { method: 'DELETE' }
     );
@@ -573,14 +757,14 @@ export class UsersService extends BaseApiService {
    * Terminate all user sessions except current
    */
   async terminateAllUserSessions(id: number): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      message: z.string(),
+    }));
     
     await this.request(
-      `/users/${id}/sessions`,
+      `${this.basePath}/${id}/sessions`,
       responseSchema,
       { method: 'DELETE' }
     );
@@ -590,14 +774,12 @@ export class UsersService extends BaseApiService {
    * Get user permissions
    */
   async getUserPermissions(id: number): Promise<UserPermissions> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserPermissionsSchema);
     
     const response = await this.request(
-      `/users/${id}/permissions`,
+      `${this.basePath}/${id}/permissions`,
       responseSchema,
       { method: 'GET' }
     );
@@ -613,16 +795,14 @@ export class UsersService extends BaseApiService {
    * Update user permissions
    */
   async updateUserPermissions(id: number, permissions: UserPermissions): Promise<UserPermissions> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid user ID');
-    }
+    this.validateId(id, 'User ID');
 
     const validatedPermissions = UserPermissionsSchema.parse(permissions);
     
     const responseSchema = ApiResponseSchema(UserPermissionsSchema);
     
     const response = await this.request(
-      `/users/${id}/permissions`,
+      `${this.basePath}/${id}/permissions`,
       responseSchema,
       {
         method: 'PUT',
@@ -640,38 +820,74 @@ export class UsersService extends BaseApiService {
   /**
    * Bulk user actions
    */
-  async bulkUserAction(action: BulkUserAction): Promise<void> {
+  async bulkUserAction(action: BulkUserAction): Promise<{
+    success_count: number;
+    error_count: number;
+    errors: Array<{ user_id: number; error: string }>;
+  }> {
     const validatedAction = BulkUserActionSchema.parse(action);
     
-    const responseSchema = ApiResponseSchema(z.any());
+    const responseSchema = ApiResponseSchema(z.object({
+      success_count: z.number(),
+      error_count: z.number(),
+      errors: z.array(z.object({
+        user_id: z.number(),
+        error: z.string(),
+      })),
+    }));
     
-    await this.request(
-      '/users/bulk-action',
+    const response = await this.request(
+      `${this.basePath}/bulk-action`,
       responseSchema,
       {
         method: 'POST',
         data: validatedAction,
       }
     );
+
+    if (!response.data) {
+      throw new Error('Failed to perform bulk action');
+    }
+
+    return response.data;
   }
 
   /**
    * Export users data
    */
-  async exportUsers(params: UserParams = {}, format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
+  async exportUsers(params: UserParams = {}, format: 'csv' | 'excel' | 'pdf' = 'csv'): Promise<Blob> {
     const validatedParams = UserParamsSchema.parse(params);
     
     const searchParams = new URLSearchParams();
     Object.entries(validatedParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
     searchParams.append('format', format);
 
-    const response = await apiClient.get(`/users/export?${searchParams.toString()}`, {
+    const response = await apiClient.get(`${this.basePath}/export?${searchParams.toString()}`, {
       responseType: 'blob',
     });
+
+    if (!response.data) {
+      throw new Error('Failed to export users data');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Get export template
+   */
+  async getImportTemplate(format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
+    const response = await apiClient.get(`${this.basePath}/import-template?format=${format}`, {
+      responseType: 'blob',
+    });
+
+    if (!response.data) {
+      throw new Error('Failed to get import template');
+    }
 
     return response.data;
   }
@@ -683,11 +899,8 @@ export class UsersService extends BaseApiService {
     update_existing?: boolean;
     send_credentials?: boolean;
     default_password?: string;
-  } = {}): Promise<{
-    success_count: number;
-    error_count: number;
-    errors: Array<{ row: number; error: string }>;
-  }> {
+    skip_validation?: boolean;
+  } = {}): Promise<UserImportResult> {
     if (!file) {
       throw new Error('File is required');
     }
@@ -712,22 +925,14 @@ export class UsersService extends BaseApiService {
     formData.append('file', file);
     formData.append('options', JSON.stringify(options));
 
-    const response = await apiClient.post('/users/import', formData, {
+    const response = await apiClient.post(`${this.basePath}/import`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
       timeout: 300000, // 5 minutes
     });
 
-    const responseSchema = ApiResponseSchema(z.object({
-      success_count: z.number(),
-      error_count: z.number(),
-      errors: z.array(z.object({
-        row: z.number(),
-        error: z.string(),
-      })),
-    }));
-
+    const responseSchema = ApiResponseSchema(UserImportResultSchema);
     const validatedResponse = responseSchema.parse(response.data);
 
     if (!validatedResponse.data) {
@@ -735,6 +940,60 @@ export class UsersService extends BaseApiService {
     }
 
     return validatedResponse.data;
+  }
+
+  /**
+   * Validate import file without importing
+   */
+  async validateImportFile(file: File): Promise<{
+    is_valid: boolean;
+    total_rows: number;
+    errors: Array<{ row: number; field: string; error: string }>;
+    warnings: Array<{ row: number; message: string }>;
+  }> {
+    if (!file) {
+      throw new Error('File is required');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post(`${this.basePath}/validate-import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const responseSchema = ApiResponseSchema(z.object({
+      is_valid: z.boolean(),
+      total_rows: z.number(),
+      errors: z.array(z.object({
+        row: z.number(),
+        field: z.string(),
+        error: z.string(),
+      })),
+      warnings: z.array(z.object({
+        row: z.number(),
+        message: z.string(),
+      })),
+    }));
+
+    const validatedResponse = responseSchema.parse(response.data);
+
+    if (!validatedResponse.data) {
+      throw new Error('Failed to validate import file');
+    }
+
+    return validatedResponse.data;
+  }
+
+  /**
+   * Private helper method to validate IDs
+   */
+  private validateId(id: number, fieldName: string): void {
+    if (!id || id <= 0) {
+      throw new Error(`Invalid ${fieldName}: must be a positive number`);
+    }
   }
 }
 
