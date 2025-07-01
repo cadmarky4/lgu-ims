@@ -117,7 +117,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   } = useResidentForm({ mode, residentId, onSuccess });
 
   const currentStepData = FORM_STEPS[currentStep];
-  const isLastStep = currentStep === FORM_STEPS.length - 1;
+  // const isLastStep = currentStep === FORM_STEPS.length - 2;
+  const isLastStep = currentStep === 7;
   const isFirstStep = currentStep === 0;
 
   // Watch for address changes to load dependent options
@@ -159,13 +160,12 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     const errors = form.formState.errors;
 
     // Check for required fields in current step
-    const requiredFields = ['first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 'civil_status', 'nationality', 'religion', 'complete_address', 'voter_status', 'senior_citizen', 'person_with_disability', 'indigenous_people', 'four_ps_beneficiary'];
+    const requiredFields = ['first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 'civil_status', 'nationality', 'religion', 'complete_address', 'voter_status'];
     
     const hasErrors = stepFields.some(field => errors[field as keyof typeof errors]);
     const missingRequired = stepFields.some(field => 
       requiredFields.includes(field) && !formValues[field as keyof typeof formValues]
     );
-
     return !hasErrors && !missingRequired;
   };
 
@@ -178,6 +178,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     } else {
       form.trigger(currentStepData.fields as any);
     }
+    console.log("last?",currentStep, FORM_STEPS.length-1);
+    console.log("is last?",isLastStep)
   };
 
   const handlePrevious = () => {
@@ -823,6 +825,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             </div>
 
             <div className="flex space-x-4">
+              
               {!isFirstStep && (
                 <button
                   type="button"
@@ -837,7 +840,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
               {!isLastStep ? (
                 <button
+                  key="2"
                   type="button"
+                  // onClick={handleNext}
                   onClick={handleNext}
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
@@ -847,6 +852,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 </button>
               ) : (
                 <button
+                  key="3"
                   type="submit"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
