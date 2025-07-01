@@ -5,58 +5,101 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Resident;
+use App\Models\Schemas\DocumentSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DocumentController extends Controller
 {
     /**
-     * Display a listing of documents.
+     * Display a paginated listing of documents with filters.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Document::with(['resident', 'processedBy', 'approvedBy', 'releasedBy']);
+        try {
+            $query = Document::with([
+                'resident:id,first_name,last_name,middle_name,suffix,complete_address,mobile_number,email_address',
+                'processedByUser:id,name,role,position',
+                'approvedByUser:id,name,role,position',
+                'releasedByUser:id,name,role,position'
+            ]);
 
-        // Apply filters
-        if ($request->has('document_type')) {
-            $query->where('document_type', $request->document_type);
+            // Apply filters
+            if ($request->filled('document_type')) {
+                $query->where('document_type', $request->document_type);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('priority')) {
+                $query->where('priority', $request->priority);
+            }
+
+            if ($request->filled('payment_status')) {
+                $query->where('payment_status', $request->payment_status);
+            }
+
+            if ($request->filled('resident_id')) {
+                $query->where('resident_id', $request->resident_id);
+            }
+
+            if ($request->filled('date_from')) {
+                $query->whereDate('request_date', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('request_date', '<=', $request->date_to);
+            }
+
+            // Search functionality
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('document_number', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('serial_number', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('applicant_name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhereHas('resident', function ($subQuery) use ($searchTerm) {
+                          $subQuery->where('first_name', 'LIKE', "%{$searchTerm}%")
+                                   ->orWhere('last_name', 'LIKE', "%{$searchTerm}%");
+                      });
+                });
+            }
+
+            // Apply sorting
+            $sortBy = $request->get('sort_by', 'request_date');
+            $sortOrder = $request->get('sort_order', 'desc');
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Pagination
+            $perPage = $request->get('per_page', 15);
+            $documents = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $documents->items(),
+                'meta' => [
+                    'current_page' => $documents->currentPage(),
+                    'from' => $documents->firstItem(),
+                    'last_page' => $documents->lastPage(),
+                    'per_page' => $documents->perPage(),
+                    'to' => $documents->lastItem(),
+                    'total' => $documents->total(),
+                ],
+                'message' => 'Documents retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve documents: ' . $e->getMessage()
+            ], 500);
         }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        if ($request->has('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        if ($request->has('date_from')) {
-            $query->whereDate('requested_date', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to')) {
-            $query->whereDate('requested_date', '<=', $request->date_to);
-        }
-
-        // Apply sorting
-        $sortBy = $request->get('sort_by', 'requested_date');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        $documents = $query->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $documents,
-            'message' => 'Documents retrieved successfully'
-        ]);
     }
 
     /**
@@ -65,31 +108,18 @@ class DocumentController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'document_type' => 'required|in:BARANGAY_CLEARANCE,CERTIFICATE_OF_RESIDENCY,CERTIFICATE_OF_INDIGENCY,BUSINESS_PERMIT,BUILDING_PERMIT,ELECTRICAL_PERMIT,SANITARY_PERMIT,FENCING_PERMIT,EXCAVATION_PERMIT,CERTIFICATE_OF_GOOD_MORAL,FIRST_TIME_JOB_SEEKER,SOLO_PARENT_CERTIFICATE,SENIOR_CITIZEN_ID,PWD_ID,CERTIFICATE_OF_COHABITATION,DEATH_CERTIFICATE,BIRTH_CERTIFICATE_COPY,MARRIAGE_CONTRACT_COPY,OTHER',
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'resident_id' => 'required|exists:residents,id',
-                'applicant_name' => 'required|string|max:255',
-                'applicant_address' => 'nullable|string',
-                'applicant_contact' => 'nullable|string|max:20',
-                'purpose' => 'required|string',
-                'needed_date' => 'nullable|date|after_or_equal:today',
-                'priority' => 'sometimes|in:LOW,NORMAL,HIGH,URGENT',
-                'processing_fee' => 'sometimes|numeric|min:0',
-                'requirements_submitted' => 'nullable|array',
-                'remarks' => 'nullable|string'
-            ]);
-
-            $validated['created_by'] = auth()->id();
+            $validationRules = DocumentSchema::getCreateValidationRules();
+            $validated = $request->validate($validationRules);
             
             $document = Document::create($validated);
-            $document->load(['resident', 'createdBy']);
+            $document->load([
+                'resident:id,first_name,last_name,middle_name,suffix,complete_address,mobile_number,email_address'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => $document,
-                'message' => 'Document request created successfully'
+                'message' => 'Document created successfully'
             ], 201);
 
         } catch (ValidationException $e) {
@@ -101,7 +131,7 @@ class DocumentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create document request: ' . $e->getMessage()
+                'message' => 'Failed to create document: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -113,12 +143,10 @@ class DocumentController extends Controller
     {
         try {
             $document = Document::with([
-                'resident', 
-                'processedBy', 
-                'approvedBy', 
-                'releasedBy', 
-                'createdBy', 
-                'updatedBy'
+                'resident:id,first_name,last_name,middle_name,suffix,complete_address,mobile_number,email_address',
+                'processedByUser:id,name,role,position',
+                'approvedByUser:id,name,role,position',
+                'releasedByUser:id,name,role,position'
             ])->findOrFail($id);
 
             return response()->json([
@@ -132,6 +160,11 @@ class DocumentController extends Controller
                 'success' => false,
                 'message' => 'Document not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve document: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -143,24 +176,21 @@ class DocumentController extends Controller
         try {
             $document = Document::findOrFail($id);
 
-            $validated = $request->validate([
-                'title' => 'sometimes|string|max:255',
-                'description' => 'nullable|string',
-                'applicant_name' => 'sometimes|string|max:255',
-                'applicant_address' => 'nullable|string',
-                'applicant_contact' => 'nullable|string|max:20',
-                'purpose' => 'sometimes|string',
-                'needed_date' => 'nullable|date',
-                'priority' => 'sometimes|in:LOW,NORMAL,HIGH,URGENT',
-                'processing_fee' => 'sometimes|numeric|min:0',
-                'requirements_submitted' => 'nullable|array',
-                'remarks' => 'nullable|string'
-            ]);
+            $validationRules = DocumentSchema::getUpdateValidationRules();
+            // Replace {id} placeholder with actual document ID for unique validation
+            $validationRules = array_map(function ($rule) use ($id) {
+                return str_replace('{id}', $id, $rule);
+            }, $validationRules);
 
-            $validated['updated_by'] = auth()->id();
+            $validated = $request->validate($validationRules);
             
             $document->update($validated);
-            $document->load(['resident', 'processedBy', 'approvedBy']);
+            $document->load([
+                'resident:id,first_name,last_name,middle_name,suffix,complete_address,mobile_number,email_address',
+                'processedByUser:id,name,role,position',
+                'approvedByUser:id,name,role,position',
+                'releasedByUser:id,name,role,position'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -195,8 +225,8 @@ class DocumentController extends Controller
         try {
             $document = Document::findOrFail($id);
             
-            // Only allow deletion of pending documents
-            if (!in_array($document->status, ['PENDING', 'CANCELLED'])) {
+            // Only allow deletion of pending or cancelled documents
+            if (!in_array($document->status, ['pending', 'cancelled'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete document that is already being processed'
@@ -231,30 +261,52 @@ class DocumentController extends Controller
         try {
             $stats = [
                 'total_documents' => Document::count(),
+                'pending_documents' => Document::where('status', 'pending')->count(),
+                'processing_documents' => Document::where('status', 'processing')->count(),
+                'approved_documents' => Document::where('status', 'approved')->count(),
+                'released_documents' => Document::where('status', 'released')->count(),
+                'rejected_documents' => Document::where('status', 'rejected')->count(),
+                'overdue_documents' => Document::overdue()->count(),
+                'urgent_documents' => Document::whereIn('priority', ['urgent', 'rush'])->count(),
                 'by_status' => Document::selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
-                    ->get(),
-                'by_type' => Document::selectRaw('document_type, COUNT(*) as count')
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [$item->status => $item->count];
+                    }),
+                'by_document_type' => Document::selectRaw('document_type, COUNT(*) as count')
                     ->groupBy('document_type')
-                    ->orderBy('count', 'desc')
-                    ->get(),
+                    ->orderByDesc('count')
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [$item->document_type => $item->count];
+                    }),
                 'by_priority' => Document::selectRaw('priority, COUNT(*) as count')
                     ->groupBy('priority')
-                    ->get(),
-                'pending_count' => Document::whereIn('status', ['PENDING', 'UNDER_REVIEW'])->count(),
-                'overdue_count' => Document::where('needed_date', '<', now())
-                    ->whereNotIn('status', ['RELEASED', 'REJECTED', 'CANCELLED'])
-                    ->count(),
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [$item->priority => $item->count];
+                    }),
+                'by_payment_status' => Document::selectRaw('payment_status, COUNT(*) as count')
+                    ->groupBy('payment_status')
+                    ->get()
+                    ->mapWithKeys(function ($item) {
+                        return [$item->payment_status => $item->count];
+                    }),
                 'revenue' => [
-                    'total_fees' => Document::sum('processing_fee'),
-                    'collected' => Document::where('payment_status', 'PAID')->sum('amount_paid'),
-                    'pending' => Document::where('payment_status', 'UNPAID')->sum('processing_fee')
+                    'total_processing_fees' => Document::sum('processing_fee'),
+                    'unpaid_fees' => Document::where('payment_status', 'unpaid')->sum('processing_fee'),
+                    'paid_fees' => Document::where('payment_status', 'paid')->sum('processing_fee'),
                 ],
-                'processing_times' => [
-                    'average_days' => Document::whereNotNull('released_date')
-                        ->selectRaw('AVG(julianday(released_date) - julianday(requested_date)) as avg_days')
-                        ->value('avg_days') ?? 0
-                ]
+                'monthly_stats' => Document::selectRaw('
+                        strftime("%Y", request_date) as year,
+                        strftime("%m", request_date) as month,
+                        COUNT(*) as total_requests
+                    ')
+                    ->whereYear('request_date', now()->year)
+                    ->groupBy('year', 'month')
+                    ->orderBy('month')
+                    ->get()
             ];
 
             return response()->json([
@@ -272,87 +324,42 @@ class DocumentController extends Controller
     }
 
     /**
-     * Search documents.
+     * Process a document (change status to processing).
      */
-    public function search(Request $request): JsonResponse
-    {
-        $request->validate([
-            'query' => 'required|string|min:2',
-            'per_page' => 'sometimes|integer|min:1|max:100'
-        ]);
-
-        $query = $request->get('query');
-        $perPage = $request->get('per_page', 15);
-
-        $documents = Document::with(['resident', 'processedBy'])
-            ->where(function ($q) use ($query) {
-                $q->where('document_number', 'LIKE', "%{$query}%")
-                  ->orWhere('title', 'LIKE', "%{$query}%")
-                  ->orWhere('applicant_name', 'LIKE', "%{$query}%")
-                  ->orWhereHas('resident', function ($subQuery) use ($query) {
-                      $subQuery->where('first_name', 'LIKE', "%{$query}%")
-                               ->orWhere('last_name', 'LIKE', "%{$query}%");
-                  });
-            })
-            ->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $documents,
-            'message' => 'Document search completed successfully'
-        ]);
-    }
-
-    /**
-     * Get documents by type.
-     */
-    public function byType(string $type): JsonResponse
-    {
-        $documents = Document::with(['resident', 'processedBy'])
-            ->where('document_type', strtoupper($type))
-            ->orderBy('requested_date', 'desc')
-            ->paginate(15);
-
-        return response()->json([
-            'success' => true,
-            'data' => $documents,
-            'message' => "Documents of type {$type} retrieved successfully"
-        ]);
-    }
-
-    /**
-     * Approve a document.
-     */
-    public function approve(Request $request, string $id): JsonResponse
+    public function process(Request $request, string $id): JsonResponse
     {
         try {
             $document = Document::findOrFail($id);
-            
+
             $request->validate([
-                'expiry_date' => 'nullable|date|after:today',
-                'remarks' => 'nullable|string'
+                'notes' => 'nullable|string',
+                'certifying_official' => 'nullable|string|max:255'
             ]);
 
-            if (!$document->canBeApproved()) {
+            if (!$document->canBeProcessed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Document cannot be approved. Check payment status and current status.'
+                    'message' => 'Document cannot be processed. Check current status and requirements.'
                 ], 422);
             }
 
-            $expiryDate = $request->expiry_date ? Carbon::parse($request->expiry_date) : null;
-            $document->approve(auth()->id(), $expiryDate);
+            $document->update([
+                'status' => 'processing',
+                'processed_by' => auth()->id(),
+                'processed_date' => now(),
+                'notes' => $request->notes,
+                'certifying_official' => $request->certifying_official
+            ]);
 
-            if ($request->remarks) {
-                $document->update(['remarks' => $request->remarks]);
-            }
-
-            $document->load(['resident', 'approvedBy']);
+            $document->load([
+                'resident:id,first_name,last_name,middle_name,suffix',
+                'processedByUser:id,name,role,position'
+            ]);
 
             return response()->json([
                 'success' => true,
                 'data' => $document,
-                'message' => 'Document approved successfully'
+                'message' => 'Document is now being processed'
             ]);
 
         } catch (ModelNotFoundException $e) {
@@ -363,7 +370,7 @@ class DocumentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve document: ' . $e->getMessage()
+                'message' => 'Failed to process document: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -375,13 +382,28 @@ class DocumentController extends Controller
     {
         try {
             $document = Document::findOrFail($id);
-            
+
             $request->validate([
-                'reason' => 'required|string'
+                'reason' => 'required|string|min:5',
+                'notes' => 'nullable|string'
             ]);
 
-            $document->reject(auth()->id(), $request->reason);
-            $document->load(['resident']);
+            if (!$document->canBeRejected()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document cannot be rejected'
+                ], 422);
+            }
+
+            $document->update([
+                'status' => 'rejected',
+                'remarks' => $request->reason,
+                'notes' => $request->notes,
+                'processed_by' => auth()->id(),
+                'processed_date' => now()
+            ]);
+
+            $document->load(['resident:id,first_name,last_name,middle_name,suffix']);
 
             return response()->json([
                 'success' => true,
@@ -416,6 +438,11 @@ class DocumentController extends Controller
         try {
             $document = Document::findOrFail($id);
 
+            $request->validate([
+                'notes' => 'nullable|string',
+                'released_to' => 'nullable|string|max:255'
+            ]);
+
             if (!$document->canBeReleased()) {
                 return response()->json([
                     'success' => false,
@@ -423,8 +450,17 @@ class DocumentController extends Controller
                 ], 422);
             }
 
-            $document->release(auth()->id());
-            $document->load(['resident', 'releasedBy']);
+            $document->update([
+                'status' => 'released',
+                'released_by' => auth()->id(),
+                'released_date' => now(),
+                'notes' => $request->notes
+            ]);
+
+            $document->load([
+                'resident:id,first_name,last_name,middle_name,suffix',
+                'releasedByUser:id,name,role,position'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -446,65 +482,168 @@ class DocumentController extends Controller
     }
 
     /**
-     * Track a document.
+     * Cancel a document.
      */
-    public function track(string $id): JsonResponse
+    public function cancel(Request $request, string $id): JsonResponse
+    {
+        try {
+            $document = Document::findOrFail($id);
+
+            $request->validate([
+                'reason' => 'required|string|min:5'
+            ]);
+
+            if (in_array($document->status, ['released', 'cancelled'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document cannot be cancelled'
+                ], 422);
+            }
+
+            $document->update([
+                'status' => 'cancelled',
+                'remarks' => $request->reason,
+                'processed_by' => auth()->id(),
+                'processed_date' => now()
+            ]);
+
+            $document->load(['resident:id,first_name,last_name,middle_name,suffix']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $document,
+                'message' => 'Document cancelled successfully'
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel document: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get document tracking information.
+     */
+    public function tracking(string $id): JsonResponse
     {
         try {
             $document = Document::with([
-                'resident', 
-                'processedBy', 
-                'approvedBy', 
-                'releasedBy'
+                'resident:id,first_name,last_name,middle_name,suffix',
+                'processedByUser:id,name,role,position',
+                'approvedByUser:id,name,role,position',
+                'releasedByUser:id,name,role,position'
             ])->findOrFail($id);
 
+            // Build timeline
             $timeline = [
                 [
-                    'status' => 'PENDING',
-                    'date' => $document->requested_date,
+                    'status' => 'submitted',
+                    'title' => 'Request Submitted',
+                    'description' => 'Document request has been submitted',
+                    'date' => $document->request_date,
                     'completed' => true,
-                    'description' => 'Document request submitted'
-                ],
-                [
-                    'status' => 'UNDER_REVIEW',
-                    'date' => $document->processedBy ? $document->updated_at : null,
-                    'completed' => in_array($document->status, ['UNDER_REVIEW', 'APPROVED', 'READY_FOR_PICKUP', 'RELEASED']),
-                    'description' => 'Document under review',
-                    'staff' => $document->processedBy?->first_name . ' ' . $document->processedBy?->last_name
-                ],
-                [
-                    'status' => 'APPROVED',
-                    'date' => $document->approved_date,
-                    'completed' => in_array($document->status, ['APPROVED', 'READY_FOR_PICKUP', 'RELEASED']),
-                    'description' => 'Document approved',
-                    'staff' => $document->approvedBy?->first_name . ' ' . $document->approvedBy?->last_name
-                ],
-                [
-                    'status' => 'READY_FOR_PICKUP',
-                    'date' => $document->status === 'READY_FOR_PICKUP' ? $document->updated_at : null,
-                    'completed' => in_array($document->status, ['READY_FOR_PICKUP', 'RELEASED']),
-                    'description' => 'Document ready for pickup'
-                ],
-                [
-                    'status' => 'RELEASED',
-                    'date' => $document->released_date,
-                    'completed' => $document->status === 'RELEASED',
-                    'description' => 'Document released',
-                    'staff' => $document->releasedBy?->first_name . ' ' . $document->releasedBy?->last_name
+                    'user' => null
                 ]
+            ];
+
+            if ($document->processed_date) {
+                $timeline[] = [
+                    'status' => 'processing',
+                    'title' => 'Under Processing',
+                    'description' => 'Document is being processed',
+                    'date' => $document->processed_date,
+                    'completed' => true,
+                    'user' => $document->processedByUser ? [
+                        'name' => $document->processedByUser->name,
+                        'role' => $document->processedByUser->role
+                    ] : null
+                ];
+            }
+
+            if ($document->approved_date) {
+                $timeline[] = [
+                    'status' => 'approved',
+                    'title' => 'Approved',
+                    'description' => 'Document has been approved',
+                    'date' => $document->approved_date,
+                    'completed' => true,
+                    'user' => $document->approvedByUser ? [
+                        'name' => $document->approvedByUser->name,
+                        'role' => $document->approvedByUser->role
+                    ] : null
+                ];
+            }
+
+            if ($document->released_date) {
+                $timeline[] = [
+                    'status' => 'released',
+                    'title' => 'Released',
+                    'description' => 'Document has been released',
+                    'date' => $document->released_date,
+                    'completed' => true,
+                    'user' => $document->releasedByUser ? [
+                        'name' => $document->releasedByUser->name,
+                        'role' => $document->releasedByUser->role
+                    ] : null
+                ];
+            }
+
+            $trackingData = [
+                'document' => $document,
+                'timeline' => $timeline,
+                'current_status' => $document->status,
+                'estimated_completion' => $document->needed_date,
+                'is_overdue' => $document->is_overdue,
+                'processing_days' => $document->processing_days
             ];
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'document' => $document,
-                    'timeline' => $timeline,
-                    'estimated_completion' => $document->needed_date,
-                    'qr_code' => $document->qr_code,
-                    'verification_code' => $document->verification_code
-                ],
+                'data' => $trackingData,
                 'message' => 'Document tracking information retrieved successfully'
             ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve tracking information: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate document PDF.
+     */
+    public function pdf(string $id)
+    {
+        try {
+            $document = Document::with('resident')->findOrFail($id);
+
+            if ($document->status !== 'approved' && $document->status !== 'released') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document must be approved before generating PDF'
+                ], 422);
+            }
+
+            // Here you would implement PDF generation logic
+            // For now, return a placeholder response
+            return response()->json([
+                'success' => true,
+                'message' => 'PDF generation feature not yet implemented'
+            ], 501);
 
         } catch (ModelNotFoundException $e) {
             return response()->json([
@@ -515,27 +654,80 @@ class DocumentController extends Controller
     }
 
     /**
-     * Generate QR code for a document.
+     * Get processing history.
      */
-    public function generateQR(string $id): JsonResponse
+    public function history(string $id): JsonResponse
     {
         try {
-            $document = Document::findOrFail($id);
+            $document = Document::with([
+                'processedByUser:id,name,role,position',
+                'approvedByUser:id,name,role,position',
+                'releasedByUser:id,name,role,position'
+            ])->findOrFail($id);
 
-            if (empty($document->qr_code)) {
-                $document->update([
-                    'qr_code' => $document->generateQRCode()
-                ]);
+            $history = [];
+
+            // Add creation entry
+            $history[] = [
+                'action' => 'created',
+                'status' => 'pending',
+                'description' => 'Document request created',
+                'date' => $document->created_at,
+                'user' => null
+            ];
+
+            // Add processing entry
+            if ($document->processed_date) {
+                $history[] = [
+                    'action' => 'processed',
+                    'status' => 'processing',
+                    'description' => 'Document processing started',
+                    'date' => $document->processed_date,
+                    'user' => $document->processedByUser ? [
+                        'id' => $document->processedByUser->id,
+                        'name' => $document->processedByUser->name,
+                        'role' => $document->processedByUser->role,
+                        'position' => $document->processedByUser->position
+                    ] : null
+                ];
+            }
+
+            // Add approval entry
+            if ($document->approved_date) {
+                $history[] = [
+                    'action' => 'approved',
+                    'status' => 'approved',
+                    'description' => 'Document approved for release',
+                    'date' => $document->approved_date,
+                    'user' => $document->approvedByUser ? [
+                        'id' => $document->approvedByUser->id,
+                        'name' => $document->approvedByUser->name,
+                        'role' => $document->approvedByUser->role,
+                        'position' => $document->approvedByUser->position
+                    ] : null
+                ];
+            }
+
+            // Add release entry
+            if ($document->released_date) {
+                $history[] = [
+                    'action' => 'released',
+                    'status' => 'released',
+                    'description' => 'Document released to applicant',
+                    'date' => $document->released_date,
+                    'user' => $document->releasedByUser ? [
+                        'id' => $document->releasedByUser->id,
+                        'name' => $document->releasedByUser->name,
+                        'role' => $document->releasedByUser->role,
+                        'position' => $document->releasedByUser->position
+                    ] : null
+                ];
             }
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'qr_code' => $document->qr_code,
-                    'verification_code' => $document->verification_code,
-                    'document_number' => $document->document_number
-                ],
-                'message' => 'QR code generated successfully'
+                'data' => $history,
+                'message' => 'Processing history retrieved successfully'
             ]);
 
         } catch (ModelNotFoundException $e) {
@@ -543,6 +735,83 @@ class DocumentController extends Controller
                 'success' => false,
                 'message' => 'Document not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve processing history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get overdue documents.
+     */
+    public function overdue(): JsonResponse
+    {
+        try {
+            $documents = Document::overdue()
+                ->with([
+                    'resident:id,first_name,last_name,middle_name,suffix',
+                    'processedByUser:id,name,role'
+                ])
+                ->orderBy('needed_date', 'asc')
+                ->paginate(15);
+
+            return response()->json([
+                'success' => true,
+                'data' => $documents->items(),
+                'meta' => [
+                    'current_page' => $documents->currentPage(),
+                    'from' => $documents->firstItem(),
+                    'last_page' => $documents->lastPage(),
+                    'per_page' => $documents->perPage(),
+                    'to' => $documents->lastItem(),
+                    'total' => $documents->total(),
+                ],
+                'message' => 'Overdue documents retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve overdue documents: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get pending documents.
+     */
+    public function pending(): JsonResponse
+    {
+        try {
+            $documents = Document::pending()
+                ->with([
+                    'resident:id,first_name,last_name,middle_name,suffix',
+                    'processedByUser:id,name,role'
+                ])
+                ->orderBy('request_date', 'asc')
+                ->paginate(15);
+
+            return response()->json([
+                'success' => true,
+                'data' => $documents->items(),
+                'meta' => [
+                    'current_page' => $documents->currentPage(),
+                    'from' => $documents->firstItem(),
+                    'last_page' => $documents->lastPage(),
+                    'per_page' => $documents->perPage(),
+                    'to' => $documents->lastItem(),
+                    'total' => $documents->total(),
+                ],
+                'message' => 'Pending documents retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve pending documents: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

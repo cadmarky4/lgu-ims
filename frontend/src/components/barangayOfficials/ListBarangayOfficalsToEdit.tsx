@@ -6,10 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { FiSearch, FiEdit, FiUsers } from "react-icons/fi";
 
 // 3. Internal/shared services
-import { STORAGE_BASE_URL } from "../../services/storage.service";
+import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
 
 // 4. Internal components
-import Breadcrumb from "../global/Breadcrumb";
+import Breadcrumb from "../_global/Breadcrumb";
 
 // 5. Utils
 import { getStatusBadgeColor } from './utils/getStatusBadgeColor';

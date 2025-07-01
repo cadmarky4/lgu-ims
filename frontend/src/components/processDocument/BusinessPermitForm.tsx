@@ -1,49 +1,99 @@
+// ============================================================================
+// BusinessPermitForm.tsx - Enhanced with React Hook Form + Zod validation + Abstraction
+// ============================================================================
+
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiBriefcase, FiMapPin } from 'react-icons/fi';
-import { apiService } from '../../services';
-import { documentsService }from '../../services/documents/documents.service';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiAlertCircle, FiBriefcase, FiMapPin } from 'react-icons/fi';
+
+import { useResidents } from '../../services/residents/useResidents';
+import { useDocumentForm } from './_hooks/useDocumentForm';
+import { DocumentFormDataSchema, type DocumentFormData } from '../../services/documents/documents.types';
+import { type Resident } from '../../services/residents/residents.types';
+import { useNotifications } from '../_global/NotificationSystem';
+import { LoadingSpinner } from '../__shared/LoadingSpinner';
+import { DocumentFormField } from './_components/DocumentFormField';
 import Breadcrumb from '../_global/Breadcrumb';
 
 interface BusinessPermitFormProps {
   onNavigate: (page: string) => void;
 }
 
-interface Resident {
-  id: number;
-  first_name: string;
-  last_name: string;
-  middle_name?: string;
-  birth_date: string;
-  age?: number;
-  civil_status: string;
-  nationality: string;
-  complete_address: string;
-  mobile_number?: string;
-}
-
 const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) => {
   const [step, setStep] = useState(1);
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    businessName: '',
-    businessType: '',
-    businessAddress: '',
-    businessDescription: '',
-    capitalAmount: '',
-    numberOfEmployees: '',
-    operatingHours: '',
-    certifyingOfficial: '',
-    additionalInfo: '',
-    urgentRequest: false
+  const { showNotification } = useNotifications();
+
+  // React Hook Form setup with Zod validation
+  const form = useForm<DocumentFormData>({
+    resolver: zodResolver(DocumentFormDataSchema),
+    defaultValues: {
+      document_type: 'BUSINESS_PERMIT',
+      resident_id: 0,
+      applicant_name: '',
+      purpose: '',
+      applicant_address: '',
+      applicant_contact: '',
+      applicant_email: '',
+      priority: 'NORMAL',
+      needed_date: '',
+      processing_fee: 100,
+      business_name: '',
+      business_type: '',
+      business_address: '',
+      business_owner: '',
+      requirements_submitted: [],
+      notes: '',
+      remarks: '',
+    },
+    mode: 'onChange',
   });
 
+  const { 
+    register, 
+    setValue, 
+    watch, 
+    handleSubmit, 
+    formState: { errors, isValid },
+    getValues,
+    reset
+  } = form;
+
+  // Document form hook for API integration
+  const documentForm = useDocumentForm({
+    documentType: 'BUSINESS_PERMIT',
+    onSuccess: (document) => {
+      showNotification({
+        type: 'success',
+        title: 'Request Submitted',
+        message: 'Business Permit request has been submitted successfully'
+      });
+      setStep(3);
+    },
+    onError: (error) => {
+      showNotification({
+        type: 'error',
+        title: 'Submission Failed',
+        message: error.message
+      });
+    }
+  });
+
+  // Residents query for search  
+  const { 
+    data: residentsData, 
+    isLoading: searchLoading 
+  } = useResidents({ 
+    search: searchTerm, 
+    per_page: 10 
+  });
+
+  const residents = residentsData?.data || [];
+
+  // Static data for form options
   const businessTypes = [
     'Retail Store',
     'Sari-sari Store',
@@ -61,6 +111,19 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
     'Other (Specify in Additional Info)'
   ];
 
+  const commonPurposes = [
+    'New Business Operation',
+    'Business Renewal',
+    'Business Expansion',
+    'Change of Business Name',
+    'Change of Business Location',
+    'Bank Loan Application',
+    'Government Compliance',
+    'Tax Registration',
+    'License Application',
+    'Legal Requirements'
+  ];
+
   const barangayOfficials = [
     'Hon. Juan Dela Cruz - Punong Barangay',
     'Hon. Maria Santos - Kagawad',
@@ -76,148 +139,83 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
     return () => clearTimeout(timer);
   }, []);
 
+  // Update form when resident is selected
   useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchResidents();
-    } else {
-      setResidents([]);
+    if (selectedResident) {
+      const fullName = `${selectedResident.first_name} ${selectedResident.middle_name || ''} ${selectedResident.last_name}`.trim();
+      
+      setValue('resident_id', selectedResident.id);
+      setValue('applicant_name', fullName);
+      setValue('business_owner', fullName);
+      setValue('applicant_address', selectedResident.complete_address);
+      setValue('applicant_contact', selectedResident.mobile_number || '');
+      setValue('applicant_email', selectedResident.email_address || '');
     }
-  }, [searchTerm]);
-  const searchResidents = async () => {
-    try {
-      setLoading(true);
-      
-      // Use real API to search residents
-      const response = await apiService.getResidents({ 
-        search: searchTerm, 
-        per_page: 10 
-      });
-      
-      setResidents(response.data || []);
-    } catch (err) {
-      console.error('Failed to search residents:', err);
-      
-      // Fallback to placeholder data for development/testing
-      const placeholderResidents = [
-        {
-          id: 1,
-          first_name: 'Juan',
-          last_name: 'Dela Cruz',
-          middle_name: 'Santos',
-          birth_date: '1985-03-15',
-          age: 39,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 912 345 6789'
-        },
-        {
-          id: 2,
-          first_name: 'Maria',
-          last_name: 'Gonzalez',
-          middle_name: 'Reyes',
-          birth_date: '1990-07-22',
-          age: 34,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 2, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 923 456 7890'
-        },
-        {
-          id: 3,
-          first_name: 'Roberto',
-          last_name: 'Garcia',
-          middle_name: 'Cruz',
-          birth_date: '1978-11-08',
-          age: 45,
-          civil_status: 'MARRIED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 3, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 934 567 8901'
-        },
-        {
-          id: 4,
-          first_name: 'Ana',
-          last_name: 'Torres',
-          middle_name: 'Lopez',
-          birth_date: '1995-01-12',
-          age: 29,
-          civil_status: 'SINGLE',
-          nationality: 'Filipino',
-          complete_address: 'Purok 4, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 945 678 9012'        },
-        {
-          id: 5,
-          first_name: 'Carlos',
-          last_name: 'Mendoza',
-          middle_name: 'Silva',
-          birth_date: '1982-09-30',
-          age: 41,
-          civil_status: 'WIDOWED',
-          nationality: 'Filipino',
-          complete_address: 'Purok 1, Brgy. Sikatuna Village, Quezon City',
-          mobile_number: '+63 956 789 0123'
-        }
-      ];
+  }, [selectedResident, setValue]);
 
-      // Filter residents based on search term
-      const filteredResidents = placeholderResidents.filter(resident => {
-        const fullName = `${resident.first_name} ${resident.middle_name} ${resident.last_name}`.toLowerCase();
-        return fullName.includes(searchTerm.toLowerCase()) ||
-               resident.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               resident.last_name.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-
-      setResidents(filteredResidents);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Watch for priority changes to update processing fee
+  const priority = watch('priority');
+  useEffect(() => {
+    setValue('processing_fee', priority === 'HIGH' ? 150 : 100);
+  }, [priority, setValue]);
 
   const handleResidentSelect = (resident: Resident) => {
     setSelectedResident(resident);
     setSearchTerm(`${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.trim());
-    setResidents([]);
     setStep(2);
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  const handleSubmit = async () => {
-    if (!selectedResident) return;
+  // Enhanced submit handler using the existing DocumentFormData
+  const onSubmit = handleSubmit(async (formData) => {
+    if (!selectedResident) {
+      showNotification({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Please select a business owner first'
+      });
+      return;
+    }
 
     try {
-      setSubmitting(true);
-      setError(null);
-
-      const documentData = {
-        document_type: 'BUSINESS_PERMIT' as const,
-        title: `Business Permit for ${formData.businessName}`,
-        resident_id: selectedResident.id,
-        applicant_name: `${selectedResident.first_name} ${selectedResident.middle_name ? selectedResident.middle_name + ' ' : ''}${selectedResident.last_name}`,
-        applicant_address: selectedResident.complete_address,
-        applicant_contact: selectedResident.mobile_number,
-        purpose: `Business Permit for ${formData.businessName}`,
-        processing_fee: formData.urgentRequest ? 150 : 100,
-        priority: formData.urgentRequest ? 'HIGH' as const : 'NORMAL' as const,
-        requirements_submitted: ['Business Information', 'Capital Declaration'],
-        remarks: `Business Name: ${formData.businessName}, Type: ${formData.businessType}, Business Address: ${formData.businessAddress}, Capital: ₱${formData.capitalAmount}, Employees: ${formData.numberOfEmployees}, Operating Hours: ${formData.operatingHours}, Additional Info: ${formData.additionalInfo}, Certifying Official: ${formData.certifyingOfficial}`
-      };
-
-      const document = await documentsService.createDocument(documentData);
+      // Update purpose with business name if provided
+      if (formData.business_name) {
+        formData.purpose = `Business Permit for ${formData.business_name}`;
+      }
       
-      console.log('Document submitted successfully:', document);
-      
-      setStep(3);
-    } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to submit request');
-    } finally {
-      setSubmitting(false);
+      await documentForm.handleSubmit(formData);
+    } catch (error) {
+      console.error('Form submission error:', error);
     }
+  });
+
+  // Handle custom field updates
+  const handleBusinessDescriptionChange = (value: string) => {
+    const currentNotes = getValues('notes') || '';
+    setValue('notes', `Business Description: ${value}`);
+  };
+
+  const handleCapitalAmountChange = (value: string) => {
+    const currentRemarks = getValues('remarks') || '';
+    const newRemarks = currentRemarks.replace(/Capital Amount: ₱[\d,]+/, '') + ` Capital Amount: ₱${value}`;
+    setValue('remarks', newRemarks.trim());
+  };
+
+  const handleEmployeesChange = (value: string) => {
+    const currentRemarks = getValues('remarks') || '';
+    const newRemarks = currentRemarks.replace(/Number of Employees: \d+/, '') + ` Number of Employees: ${value}`;
+    setValue('remarks', newRemarks.trim());
+  };
+
+  const handleOperatingHoursChange = (value: string) => {
+    const currentRemarks = getValues('remarks') || '';
+    const newRemarks = currentRemarks.replace(/Operating Hours: [^,]*/, '') + ` Operating Hours: ${value}`;
+    setValue('remarks', newRemarks.trim());
+  };
+
+  const handleCertifyingOfficialChange = (value: string) => {
+    const currentRemarks = getValues('remarks') || '';
+    const newRemarks = currentRemarks.replace(/Certifying Official: [^,]*/, '') + ` Certifying Official: ${value}`;
+    setValue('remarks', newRemarks.trim());
   };
 
   const renderStep1 = () => (
@@ -243,11 +241,14 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
           />
         </div>
         
-        {loading && (
-          <div className="mt-2 text-sm text-gray-500">Searching...</div>
+        {searchLoading && (
+          <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
+            <LoadingSpinner size="sm" />
+            <span>Searching...</span>
+          </div>
         )}
         
-        {residents.length > 0 && (
+        {residents.length > 0 && searchTerm && (
           <div className="mt-2 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
             {residents.map((resident) => (
               <div
@@ -273,302 +274,341 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
             ))}
           </div>
         )}
-      </div>
 
-      <div className="text-center">
-        <button
-          onClick={() => onNavigate('addNewResident')}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer no-underline"
-        >
-          <FiUser className="w-4 h-4 mr-2" />
-          Add New Resident
-        </button>
+        {/* Always show "Add New Resident" option */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-3">
+              Can't find the business owner you're looking for?
+            </p>
+            <button
+              onClick={() => onNavigate('residents/add')}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <FiUser className="w-4 h-4 mr-2" />
+              Add New Resident
+            </button>
+          </div>
+        </div>
+
+        {/* Show specific message when no results found */}
+        {!residents.length && searchTerm && !searchLoading && (
+          <div className="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800 text-sm text-center">
+              No residents found matching "{searchTerm}". Try a different search term or add a new resident.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 
   const renderStep2 = () => (
-    <div className={`space-y-6 transition-all duration-700 ease-out ${
+    <FormProvider {...form}>
+      <form onSubmit={onSubmit} className={`space-y-6 transition-all duration-700 ease-out ${
       isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-    }`} style={{ transitionDelay: '200ms' }}>
-      {/* Selected Resident Info */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
-          Business Owner Information
-        </h2>
+      }`} style={{ transitionDelay: '300ms' }}>
         
-        {selectedResident && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <div className="text-sm text-gray-900">
-                {selectedResident.first_name} {selectedResident.middle_name} {selectedResident.last_name}
+        {/* Business Owner Information Display */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
+            Business Owner Information
+          </h2>
+          
+          {selectedResident && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <div className="text-sm text-gray-900">
+                  {selectedResident.first_name} {selectedResident.middle_name} {selectedResident.last_name}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                <div className="text-sm text-gray-900">{selectedResident.age}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status</label>
+                <div className="text-sm text-gray-900">{selectedResident.civil_status}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                <div className="text-sm text-gray-900">{selectedResident.nationality}</div>
+              </div>
+              <div className="md:col-span-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Residence Address</label>
+                <div className="text-sm text-gray-900">{selectedResident.complete_address}</div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-              <div className="text-sm text-gray-900">{selectedResident.age}</div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status</label>
-              <div className="text-sm text-gray-900">{selectedResident.civil_status}</div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-              <div className="text-sm text-gray-900">{selectedResident.nationality}</div>
-            </div>
-            <div className="md:col-span-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Residence Address</label>
-              <div className="text-sm text-gray-900">{selectedResident.complete_address}</div>
-            </div>
-          </div>
-        )}
-        
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <button
-            onClick={() => setStep(1)}
-            className="inline-flex items-center text-sm text-smblue-400 hover:text-smblue-300"
-          >
-            <FiArrowLeft className="w-4 h-4 mr-1" />
-            Change Business Owner
-          </button>
-        </div>
-      </div>
-
-      {/* Business Details Form */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
-          Business Information
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Name *
-            </label>
-            <input
-              type="text"
-              value={formData.businessName}
-              onChange={(e) => handleInputChange('businessName', e.target.value)}
-              placeholder="Enter business name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Type *
-            </label>
-            <select
-              value={formData.businessType}
-              onChange={(e) => handleInputChange('businessType', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            >
-              <option value="">Select business type</option>
-              {businessTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Address *
-            </label>
-            <input
-              type="text"
-              value={formData.businessAddress}
-              onChange={(e) => handleInputChange('businessAddress', e.target.value)}
-              placeholder="Complete business address"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Description *
-            </label>
-            <textarea
-              value={formData.businessDescription}
-              onChange={(e) => handleInputChange('businessDescription', e.target.value)}
-              placeholder="Describe the nature of your business, products/services offered..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Capital Amount *
-            </label>
-            <input
-              type="number"
-              value={formData.capitalAmount}
-              onChange={(e) => handleInputChange('capitalAmount', e.target.value)}
-              placeholder="Business capital in pesos"
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Employees
-            </label>
-            <input
-              type="number"
-              value={formData.numberOfEmployees}
-              onChange={(e) => handleInputChange('numberOfEmployees', e.target.value)}
-              placeholder="Total number of employees"
-              min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Operating Hours *
-            </label>
-            <input
-              type="text"
-              value={formData.operatingHours}
-              onChange={(e) => handleInputChange('operatingHours', e.target.value)}
-              placeholder="e.g. 8:00 AM - 6:00 PM, Monday to Saturday"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Certifying Official *
-            </label>
-            <select
-              value={formData.certifyingOfficial}
-              onChange={(e) => handleInputChange('certifyingOfficial', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-              required
-            >
-              <option value="">Select official</option>
-              {barangayOfficials.map((official) => (
-                <option key={official} value={official}>{official}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Information
-            </label>
-            <textarea
-              value={formData.additionalInfo}
-              onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
-              placeholder="Any additional information about the business, special requirements, etc..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-            />
-          </div>
-        </div>
-
-        {/* Urgent Request Option */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={formData.urgentRequest}
-              onChange={(e) => handleInputChange('urgentRequest', e.target.checked)}
-              className="h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
-            />
-            <span className="ml-2 text-sm font-medium text-gray-700">
-              Urgent Processing Request (+₱50 fee)
-            </span>
-          </label>
-          <p className="mt-1 text-xs text-gray-600">
-            Urgent requests are processed within 3-5 business days instead of the standard 7-10 business days.
-          </p>
-        </div>
-
-        {/* Processing Fee */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700">Processing Fee:</span>
-            <span className="text-lg font-bold text-smblue-400">
-              ₱{formData.urgentRequest ? '150' : '100'}
-            </span>
-          </div>
-          {formData.urgentRequest && (
-            <p className="text-xs text-gray-600 mt-1">
-              Includes ₱100 standard fee + ₱50 urgent processing fee
-            </p>
           )}
+          
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="inline-flex items-center text-sm text-smblue-400 hover:text-smblue-300"
+            >
+              <FiArrowLeft className="w-4 h-4 mr-1" />
+              Change Business Owner
+            </button>
+          </div>
         </div>
 
-        {/* Requirements Notice */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex">
-            <FiBriefcase className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Required Documents for Business Permit
-              </h3>
-              <div className="mt-1 text-sm text-blue-700">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Valid ID of business owner</li>
-                  <li>Proof of business address (lease contract or property title)</li>
-                  <li>Business registration documents (if applicable)</li>
-                  <li>Sanitary permit (for food establishments)</li>
-                  <li>Fire safety inspection certificate</li>
-                </ul>
+        {/* Business Details Form - NOW USING ABSTRACTED COMPONENTS! */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
+            Business Information
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Business Name Field - ABSTRACTED! */}
+            <DocumentFormField
+              name="business_name"
+              label="Business Name"
+              type="text"
+              placeholder="Enter business name"
+              required
+            />
+
+            {/* Business Type Field - ABSTRACTED! */}
+            <DocumentFormField
+              name="business_type"
+              label="Business Type"
+              type="select"
+              options={businessTypes.map(type => ({ value: type, label: type }))}
+              placeholder="Select business type"
+              required
+            />
+
+            {/* Business Address Field - ABSTRACTED! */}
+            <div className="md:col-span-2">
+              <DocumentFormField
+                name="business_address"
+                label="Business Address"
+                type="text"
+                placeholder="Complete business address"
+                required
+              />
+            </div>
+
+            {/* Purpose Field - ABSTRACTED! */}
+            <DocumentFormField
+              name="purpose"
+              label="Purpose of Request"
+              type="select"
+              options={commonPurposes.map(p => ({ value: p, label: p }))}
+              placeholder="Select purpose"
+              required
+            />
+
+            {/* Capital Amount - Custom field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Capital Amount <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                placeholder="Business capital in pesos"
+                min="0"
+                step="0.01"
+                onChange={(e) => handleCapitalAmountChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            {/* Number of Employees - Custom field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Employees
+              </label>
+              <input
+                type="number"
+                placeholder="Total number of employees"
+                min="0"
+                onChange={(e) => handleEmployeesChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            {/* Operating Hours - Custom field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Operating Hours <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 8:00 AM - 6:00 PM, Monday to Saturday"
+                onChange={(e) => handleOperatingHoursChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            {/* Certifying Official - Custom field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Certifying Official <span className="text-red-500">*</span>
+              </label>
+              <select
+                onChange={(e) => handleCertifyingOfficialChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              >
+                <option value="">Select official</option>
+                {barangayOfficials.map((official) => (
+                  <option key={official} value={official}>{official}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Business Description Field - Custom handling for notes */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Business Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                placeholder="Describe the nature of your business, products/services offered..."
+                rows={3}
+                onChange={(e) => handleBusinessDescriptionChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+              />
+            </div>
+
+            {/* Additional Information Field - ABSTRACTED! */}
+            <div className="md:col-span-2">
+              <DocumentFormField
+                name="notes"
+                label="Additional Information"
+                type="textarea"
+                placeholder="Any additional information about the business, special requirements, etc..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          {/* Urgent Request Option */}
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={watch('priority') === 'HIGH'}
+                onChange={(e) => {
+                  setValue('priority', e.target.checked ? 'HIGH' : 'NORMAL');
+                }}
+                className="h-4 w-4 text-smblue-400 focus:ring-smblue-200 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">
+                Urgent Processing Request (+₱50 fee)
+              </span>
+            </label>
+            <p className="mt-1 text-xs text-gray-600">
+              Urgent requests are processed within 3-5 business days instead of the standard 7-10 business days.
+            </p>
+          </div>
+
+          {/* Processing Fee Display */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">Processing Fee:</span>
+              <span className="text-lg font-bold text-smblue-400">
+                ₱{watch('processing_fee')}
+              </span>
+            </div>
+            {watch('priority') === 'HIGH' && (
+              <p className="text-xs text-gray-600 mt-1">
+                Includes ₱100 standard fee + ₱50 urgent processing fee
+              </p>
+            )}
+          </div>
+
+          {/* Requirements Notice */}
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex">
+              <FiBriefcase className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Required Documents for Business Permit
+                </h3>
+                <div className="mt-1 text-sm text-blue-700">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Valid ID of business owner</li>
+                    <li>Proof of business address (lease contract or property title)</li>
+                    <li>Business registration documents (if applicable)</li>
+                    <li>Sanitary permit (for food establishments)</li>
+                    <li>Fire safety inspection certificate</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
+          {/* Form-level Error Display */}
+          {errors.root && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <FiAlertCircle className="w-5 h-5 text-red-400 mr-2" />
+                <p className="text-red-800 text-sm">{errors.root.message}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Document Form Error Display */}
+          {documentForm.error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <FiAlertCircle className="w-5 h-5 text-red-400 mr-2" />
+                  <p className="text-red-800 text-sm">{documentForm.error}</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={documentForm.clearError}
+                  className="text-red-600 underline text-sm hover:text-red-700"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              onClick={() => setStep(1)} 
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              disabled={documentForm.isSubmitting}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={documentForm.isSubmitting || !isValid}
+              className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {documentForm.isSubmitting && (
+                <LoadingSpinner size="sm" />
+              )}
+              <span>{documentForm.isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
+            </button>
           </div>
-        )}
-
-        <div className="flex justify-end space-x-4 mt-6">
-          <button
-            onClick={() => setStep(1)}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
-          >
-            Back
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || !formData.businessName || !formData.businessType || !formData.businessAddress || !formData.businessDescription || !formData.capitalAmount || !formData.operatingHours || !formData.certifyingOfficial}
-            className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer no-underline"
-          >
-            {submitting && (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            )}
-            <span>{submitting ? 'Submitting...' : 'Submit Request'}</span>
-          </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </FormProvider>
   );
 
   const renderStep3 = () => (
     <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center transition-all duration-700 ease-out ${
       isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
     }`} style={{ transitionDelay: '200ms' }}>
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <FiCheck className="w-8 h-8 text-green-600" />
+      <div className="flex justify-center mb-4">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <FiCheck className="w-8 h-8 text-green-600" />
+        </div>
       </div>
       
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Business Permit Request Submitted!</h2>
+      <h2 className="text-xl font-semibold text-darktext mb-2">Request Submitted Successfully!</h2>
       <p className="text-gray-600 mb-6">
-        Your business permit application has been submitted and is now in the processing queue.
+        Your Business Permit request has been submitted and is now being processed. 
+        You will be notified once it's ready for pickup.
       </p>
       
       {selectedResident && (
@@ -576,14 +616,14 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
           <h3 className="font-medium text-gray-900 mb-2">Application Details</h3>
           <div className="text-sm text-gray-600 space-y-1">
             <p><strong>Business Owner:</strong> {selectedResident.first_name} {selectedResident.last_name}</p>
-            <p><strong>Business Name:</strong> {formData.businessName}</p>
-            <p><strong>Business Type:</strong> {formData.businessType}</p>
-            <p><strong>Processing Fee:</strong> ₱{formData.urgentRequest ? '150' : '100'}</p>
-            <p><strong>Expected Processing Time:</strong> {formData.urgentRequest ? '3-5 business days' : '7-10 business days'}</p>
+            <p><strong>Business Name:</strong> {watch('business_name')}</p>
+            <p><strong>Business Type:</strong> {watch('business_type')}</p>
+            <p><strong>Processing Fee:</strong> ₱{watch('processing_fee')}</p>
+            <p><strong>Expected Processing Time:</strong> {watch('priority') === 'HIGH' ? '3-5 business days' : '7-10 business days'}</p>
           </div>
         </div>
       )}
-      
+
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex">
           <FiMapPin className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
@@ -605,32 +645,39 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
       
       <div className="flex justify-center space-x-4">
         <button
-          onClick={() => onNavigate('process-document')}
-          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors cursor-pointer no-underline"
+          onClick={() => onNavigate('processDocument')}
+          className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
         >
-          View All Requests
+          Back to Documents
         </button>
         <button
           onClick={() => {
             setStep(1);
             setSelectedResident(null);
             setSearchTerm('');
-            setFormData({
-              businessName: '',
-              businessType: '',
-              businessAddress: '',
-              businessDescription: '',
-              capitalAmount: '',
-              numberOfEmployees: '',
-              operatingHours: '',
-              certifyingOfficial: '',
-              additionalInfo: '',
-              urgentRequest: false
+            reset({
+              document_type: 'BUSINESS_PERMIT',
+              resident_id: 0,
+              applicant_name: '',
+              purpose: '',
+              applicant_address: '',
+              applicant_contact: '',
+              applicant_email: '',
+              priority: 'NORMAL',
+              needed_date: '',
+              processing_fee: 100,
+              business_name: '',
+              business_type: '',
+              business_address: '',
+              business_owner: '',
+              requirements_submitted: [],
+              notes: '',
+              remarks: '',
             });
           }}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer no-underline"
+          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          New Application
+          Submit Another Request
         </button>
       </div>
     </div>
@@ -638,26 +685,17 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
       <div className={`mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
-        <div className="flex items-center space-x-2 mb-2">
-          <button
-            onClick={() => onNavigate('process-document')}
-            className="text-smblue-400 hover:text-smblue-300"
-          >
-            <FiArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-darktext">Business Permit Application</h1>
-        </div>
-        <p className="text-gray-600">Barangay Business Clearance and Operating Permit</p>
+        <h1 className="text-2xl font-bold text-darktext">Business Permit Application</h1>
+        <p className="text-gray-600 mt-1">Barangay Business Clearance and Operating Permit</p>
       </div>
 
-      {/* Progress Indicator */}
+      {/* Step Indicator */}
       <div className={`mb-8 transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`} style={{ transitionDelay: '100ms' }}>
@@ -665,28 +703,32 @@ const BusinessPermitForm: React.FC<BusinessPermitFormProps> = ({ onNavigate }) =
           {[1, 2, 3].map((stepNumber) => (
             <div key={stepNumber} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= stepNumber 
+                step === stepNumber
                   ? 'bg-smblue-400 text-white' 
-                  : 'bg-gray-200 text-gray-500'
+                  : step > stepNumber
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-600'
               }`}>
-                {stepNumber}
+                {step > stepNumber ? <FiCheck /> : stepNumber}
               </div>
               {stepNumber < 3 && (
-                <div className={`w-16 h-1 ml-2 ${
-                  step > stepNumber ? 'bg-smblue-400' : 'bg-gray-200'
+                <div className={`w-16 h-0.5 ${
+                  step > stepNumber ? 'bg-green-500' : 'bg-gray-200'
                 }`} />
               )}
             </div>
           ))}
         </div>
-        <div className="flex justify-center mt-2">
-          <div className="text-sm text-gray-600">
-            Step {step} of 3: {
-              step === 1 ? 'Select Business Owner' :
-              step === 2 ? 'Business Information' :
-              'Confirmation'
-            }
-          </div>
+        <div className="flex justify-center space-x-16 mt-2">
+          <span className={`text-xs ${step === 1 ? 'text-smblue-400 font-medium' : 'text-gray-500'}`}>
+            Select Owner
+          </span>
+          <span className={`text-xs ${step === 2 ? 'text-smblue-400 font-medium' : 'text-gray-500'}`}>
+            Business Details
+          </span>
+          <span className={`text-xs ${step === 3 ? 'text-smblue-400 font-medium' : 'text-gray-500'}`}>
+            Confirmation
+          </span>
         </div>
       </div>
 

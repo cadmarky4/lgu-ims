@@ -1,7 +1,14 @@
-import React, { useEffect, useState } from 'react';
+// ============================================================================
+// processDocument/BusinessPermitPrint.tsx - Modern Business Permit Print
+// ============================================================================
+
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { documentsService } from '../../services/documents/documents.service';
-import type { DocumentRequest } from '../../services/documents/documents.types';
+import { FiPrinter, FiX, FiAlertCircle } from 'react-icons/fi';
+
+import { LoadingSpinner } from '../__shared/LoadingSpinner';
+import { useDocument } from '@/services/documents/useDocuments';
+import type { Document } from '@/services/documents/documents.types';
 
 const CertificateHeader: React.FC = () => (
   <div className="text-center mb-8">
@@ -41,8 +48,11 @@ const CertificateFooter: React.FC<CertificateFooterProps> = ({
         {orNumber && (
           <p className="text-sm mb-2">O.R. Number: {orNumber}</p>
         )}
-        {amountPaid && (
-          <p className="text-sm">Amount Paid: ₱{amountPaid.toFixed(2)}</p>
+        {amountPaid !== undefined && Number(amountPaid) > 0 && (
+          <p className="text-sm">Amount Paid: ₱{Number(amountPaid).toFixed(2)}</p>
+        )}
+        {amountPaid !== undefined && Number(amountPaid) === 0 && (
+          <p className="text-sm">Amount Paid: FREE</p>
         )}
       </div>
       <div className="w-1/2 text-center">
@@ -59,48 +69,13 @@ const CertificateFooter: React.FC<CertificateFooterProps> = ({
 const BusinessPermitPrint: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
-  const [document, setDocument] = useState<DocumentRequest | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (documentId) {
-      fetchDocument();
-    }
-  }, [documentId]);
-
-  const fetchDocument = async () => {
-    try {
-      setLoading(true);
-      
-      // For development, use placeholder data
-      const placeholderDocument: DocumentRequest = {
-        id: parseInt(documentId || '1'),
-        document_type: 'BUSINESS_PERMIT',
-        resident_id: 3,
-        resident_name: 'Roberto Garcia',
-        purpose: 'Business Permit for Sari-sari Store',
-        status: 'APPROVED',
-        request_date: '2024-01-12T09:15:00Z',
-        processing_fee: 100,
-        certifying_official: 'Hon. Roberto Garcia - Kagawad',
-        notes: 'Business: Garcias Sari-sari Store, Type: Retail Store, Capital: ₱50,000',
-        resident: {
-          first_name: 'Roberto',
-          last_name: 'Garcia',
-          complete_address: 'Purok 3, Brgy. Sikatuna Village, Samal, Bataan',
-          mobile_number: '+63 934 567 8901'
-        }
-      };
-      
-      setDocument(placeholderDocument);
-    } catch (err) {
-      console.error('Failed to fetch document:', err);
-      setError('Failed to load document');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // Modern TanStack Query data fetching
+  const { 
+    data: document, 
+    isLoading, 
+    error 
+  } = useDocument(documentId || '', !!documentId);
 
   const handlePrint = () => {
     window.print();
@@ -110,39 +85,31 @@ const BusinessPermitPrint: React.FC = () => {
     navigate('/process-document');
   };
 
-  // Extract business information from notes
-  const getBusinessInfo = () => {
-    const notes = document?.notes || '';
-    const businessMatch = notes.match(/Business: ([^,]+)/);
-    const typeMatch = notes.match(/Type: ([^,]+)/);
-    const capitalMatch = notes.match(/Capital: ([^,]+)/);
-    
-    return {
-      businessName: businessMatch ? businessMatch[1] : 'Business Name',
-      businessType: typeMatch ? typeMatch[1] : 'Business Type',
-      capital: capitalMatch ? capitalMatch[1] : 'Capital Amount'
-    };
-  };
-
-  if (loading) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+          <LoadingSpinner size="lg" />
           <p className="mt-4 text-gray-600">Loading document...</p>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !document) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Document not found'}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-md">
+          <FiAlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Document Not Found</h3>
+          <p className="text-red-600 mb-6">
+            {error?.message || 'The requested document could not be found or loaded.'}
+          </p>
           <button
             onClick={handleClose}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-smblue-400 text-white px-6 py-2 rounded-lg hover:bg-smblue-500 transition-colors"
           >
             Back to Documents
           </button>
@@ -151,14 +118,65 @@ const BusinessPermitPrint: React.FC = () => {
     );
   }
 
-  const businessInfo = getBusinessInfo();
+  // Validate document type
+  if (document.document_type !== 'BUSINESS_PERMIT') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg max-w-md">
+          <FiAlertCircle className="w-16 h-16 text-orange-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Invalid Document Type</h3>
+          <p className="text-orange-600 mb-6">
+            This document is not a Business Permit. Expected: Business Permit, Got: {document.document_type.replace(/_/g, ' ')}
+          </p>
+          <button
+            onClick={handleClose}
+            className="bg-smblue-400 text-white px-6 py-2 rounded-lg hover:bg-smblue-500 transition-colors"
+          >
+            Back to Documents
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Format applicant name
+  const applicantName = document.applicant_name || 
+    `${document.resident?.first_name || ''} ${document.resident?.middle_name || ''} ${document.resident?.last_name || ''}`.trim() ||
+    'N/A';
+
+  // Format address
+  const applicantAddress = document.applicant_address || 
+    document.resident?.complete_address || 
+    'Brgy. Sikatuna Village, Samal, Bataan';
+
+  // Generate OR number
+  const orNumber = document.document_number || `OR-${(document.id || 0).toString().padStart(6, '0')}`;
+
+  // Format date issued
+  const dateIssued = document.approved_date ? 
+    new Date(document.approved_date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }) : 
+    new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+  // Business-specific information from document fields
+  const businessName = document.business_name || document.applicant_name || 'Business Name Not Specified';
+  const businessType = document.business_type || 'Business Type Not Specified';
+  const businessAddress = document.business_address || applicantAddress;
+  const businessOwner = document.business_owner || applicantName;
 
   return (
     <>
       <style>{`
         @media print {
           @page {
-            margin: 0;
+            margin: 0.5in;
             size: A4;
           }
           * {
@@ -166,7 +184,6 @@ const BusinessPermitPrint: React.FC = () => {
             color: black !important;
             background: white !important;
             box-shadow: none !important;
-            border: none !important;
             text-shadow: none !important;
           }
           body {
@@ -179,88 +196,108 @@ const BusinessPermitPrint: React.FC = () => {
           }
           .certificate-content {
             page-break-inside: avoid;
-            height: 100vh;
+            height: auto;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 1in !important;
+            padding: 0 !important;
             margin: 0 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .business-details-box {
+            border: 1px solid black !important;
+          }
+        }
+        
+        @media screen {
+          .certificate-content {
+            min-height: calc(100vh - 6rem);
           }
         }
       `}</style>
-      <div className="min-h-screen bg-white">
+      
+      <div className="min-h-screen bg-gray-50 print:bg-white">
         {/* Print Controls - Hidden when printing */}
-                <div className="print:hidden fixed top-4 right-4 z-10 space-x-2">
+        <div className="no-print print:hidden fixed top-4 right-4 z-10 space-x-2">
           <button
             onClick={handlePrint}
-            className="bg-smblue-400 text-white px-6 py-3 rounded-lg hover:bg-smblue-500 shadow-lg font-medium cursor-pointer no-underline"
+            className="bg-smblue-400 text-white px-6 py-3 rounded-lg hover:bg-smblue-500 shadow-lg font-medium transition-colors flex items-center space-x-2"
           >
-            🖨️ Print Certificate
+            <FiPrinter className="w-4 h-4" />
+            <span>Print Certificate</span>
           </button>
           <button
             onClick={handleClose}
-            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 shadow-lg cursor-pointer no-underline"
+            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 shadow-lg transition-colors flex items-center space-x-2"
           >
-            Close
+            <FiX className="w-4 h-4" />
+            <span>Close</span>
           </button>
         </div>
 
         {/* Certificate Content */}
-        <div className="max-w-4xl mx-auto p-8 certificate-content">
-          <div className="bg-white p-8">
-          <CertificateHeader />
-          
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800 underline mb-6">BARANGAY BUSINESS PERMIT</h1>
-          </div>
-
-          <div className="mb-8">
-            <p className="text-base leading-relaxed text-justify mb-4">
-              <span className="font-semibold">TO WHOM IT MAY CONCERN:</span>
-            </p>
+        <div className="max-w-4xl mx-auto p-8 certificate-content print:p-0">
+          <div className="bg-white p-8 shadow-lg print:shadow-none print:p-6">
+            <CertificateHeader />
             
-            <p className="text-base leading-relaxed text-justify mb-6">
-              This is to certify that <span className="font-semibold underline">{document.resident_name.toUpperCase()}</span>, 
-              of legal age, Filipino citizen, and a resident of 
-              <span className="font-semibold"> {document.resident.complete_address || 'Brgy. Sikatuna Village, Samal, Bataan'}</span>, 
-              has been granted permission to operate a business within the jurisdiction of this barangay.
-            </p>
-
-            <div className="mb-6 p-4 border border-gray-300 rounded">
-              <h3 className="text-lg font-semibold mb-3">BUSINESS DETAILS:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p><span className="font-semibold">Business Name:</span> {businessInfo.businessName}</p>
-                  <p><span className="font-semibold">Business Type:</span> {businessInfo.businessType}</p>
-                </div>
-                <div>
-                  <p><span className="font-semibold">Capital Investment:</span> {businessInfo.capital}</p>
-                  <p><span className="font-semibold">Business Address:</span> {document.resident.complete_address}</p>
-                </div>
-              </div>
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-gray-800 underline mb-6">BARANGAY BUSINESS PERMIT</h1>
             </div>
 
-            <p className="text-base leading-relaxed text-justify mb-6">
-              This permit is issued subject to compliance with all applicable barangay ordinances, 
-              municipal regulations, and national laws. The permittee is required to renew this permit annually 
-              and to notify the barangay of any changes in business operations.
-            </p>
+            <div className="mb-8">
+              <p className="text-base leading-relaxed text-justify mb-4">
+                <span className="font-semibold">TO WHOM IT MAY CONCERN:</span>
+              </p>
+              
+              <p className="text-base leading-relaxed text-justify mb-6">
+                This is to certify that <span className="font-semibold underline">{applicantName.toUpperCase()}</span>, 
+                of legal age, Filipino citizen, and a resident of 
+                <span className="font-semibold"> {applicantAddress}</span>, 
+                has been granted permission to operate a business within the jurisdiction of this barangay.
+              </p>
 
-            <p className="text-base leading-relaxed text-justify">
-              Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
-              <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
-              <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
-            </p>
+              <div className="mb-6 p-4 border-2 border-gray-800 rounded business-details-box print:border-black">
+                <h3 className="text-lg font-semibold mb-3 text-center">BUSINESS DETAILS</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p><span className="font-semibold">Business Name:</span> {businessName}</p>
+                    <p><span className="font-semibold">Business Type:</span> {businessType}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p><span className="font-semibold">Business Owner:</span> {businessOwner}</p>
+                    <p><span className="font-semibold">Business Address:</span> {businessAddress}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-base leading-relaxed text-justify mb-6">
+                This permit is issued subject to compliance with all applicable barangay ordinances, 
+                municipal regulations, and national laws. The permittee is required to renew this permit annually 
+                and to notify the barangay of any changes in business operations.
+              </p>
+
+              <p className="text-base leading-relaxed text-justify mb-6">
+                This certification is issued for <span className="font-semibold">{document.purpose?.toLowerCase() || 'business permit purposes'}</span> and for whatever legal purpose it may serve the applicant.
+              </p>
+
+              <p className="text-base leading-relaxed text-justify">
+                Given this <span className="font-semibold">{new Date().getDate()}</span> day of{' '}
+                <span className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long' })}</span>,{' '}
+                <span className="font-semibold">{new Date().getFullYear()}</span> at Brgy. Sikatuna Village, Samal, Bataan, Philippines.
+              </p>
+            </div>
+
+            <CertificateFooter 
+              certifyingOfficial={document.certifying_official}
+              dateIssued={dateIssued}
+              orNumber={orNumber}
+              amountPaid={document.processing_fee}
+            />
           </div>
-
-          <CertificateFooter 
-            certifyingOfficial={document.certifying_official}
-            dateIssued={document.processed_date}
-            orNumber={'OR-' + document.id.toString().padStart(6, '0')}
-            amountPaid={document.processing_fee}
-          />
         </div>
-      </div>
       </div>
     </>
   );

@@ -1,145 +1,461 @@
-// Documents Service - Connected to Backend API
-import { BaseApiService } from '../__shared/api';
-import { type PaginatedResponse } from '../__shared/types';
+// ============================================================================
+// services/documents/documents.service.ts - Documents service implementation
+// ============================================================================
+
+import { z } from 'zod';
+
+import { BaseApiService } from '@/services/__shared/api';
 import {
-  type DocumentRequest,
-  type DocumentStats,
-  type DocumentFilters,
-  type CreateDocumentData,
-  type UpdateDocumentData,
-  type ApproveDocumentData,
+  DocumentSchema,
+  DocumentParamsSchema,
+  DocumentStatisticsSchema,
+  DocumentTrackingSchema,
+  ProcessDocumentDataSchema,
+  RejectDocumentDataSchema,
+  ReleaseDocumentDataSchema,
+  ProcessingHistoryItemSchema,
+  type Document,
+  type DocumentParams,
+  type DocumentStatistics,
+  type DocumentTracking,
+  type ProcessDocumentData,
   type RejectDocumentData,
-  type DocumentTracking
-} from './documents.types';
+  type ReleaseDocumentData,
+  type ProcessingHistoryItem,
+  DocumentFormDataSchema, 
+  type DocumentFormData 
+} from '@/services/documents/documents.types';
+
+import { 
+  ApiResponseSchema, 
+  PaginatedResponseSchema, 
+  type PaginatedResponse 
+} from '@/services/__shared/types';
+import { apiClient } from '@/services/__shared/client';
 
 export class DocumentsService extends BaseApiService {
-  private baseUrl = '/documents';
-
-  // Get paginated list of documents
-  async getDocuments(params?: DocumentFilters & { search?: string }): Promise<PaginatedResponse<DocumentRequest>> {
-    const queryParams = new URLSearchParams();
+  /**
+   * Get paginated list of documents
+   */
+  async getDocuments(params: DocumentParams = {}): Promise<PaginatedResponse<Document>> {
+    // Validate input parameters
+    const validatedParams = DocumentParamsSchema.parse(params);
     
-    if (params?.document_type) queryParams.append('document_type', params.document_type);
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.priority) queryParams.append('priority', params.priority);
-    if (params?.payment_status) queryParams.append('payment_status', params.payment_status);
-    if (params?.date_from) queryParams.append('date_from', params.date_from);
-    if (params?.date_to) queryParams.append('date_to', params.date_to);
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
-    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
-
-    const url = queryParams.toString() ? `${this.baseUrl}?${queryParams}` : this.baseUrl;
-    return await this.requestAll<DocumentRequest>(url);
-  }
-  // Create new document request
-  async createDocument(data: CreateDocumentData): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(this.baseUrl, {
-      method: 'POST',
-      body: JSON.stringify(data),
+    // Build query string
+    const searchParams = new URLSearchParams();
+    Object.entries(validatedParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        searchParams.append(key, value.toString());
+      }
     });
-    return response.data!;
+
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    return this.request(
+      `/documents?${searchParams.toString()}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
   }
 
-  // Get single document by ID
-  async getDocument(id: number): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(`${this.baseUrl}/${id}`);
-    return response.data!;
-  }
-
-  // Update document
-  async updateDocument(id: number, data: UpdateDocumentData): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(`${this.baseUrl}/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    return response.data!;
-  }
-
-  // Delete document
-  async deleteDocument(id: number): Promise<void> {
-    await this.request(`${this.baseUrl}/${id}`, {
-      method: 'DELETE',
-    });
-  }
-  // Approve document
-  async approveDocument(id: number, data: ApproveDocumentData): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(`${this.baseUrl}/${id}/approve`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return response.data!;
-  }
-
-  // Reject document
-  async rejectDocument(id: number, data: RejectDocumentData): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(`${this.baseUrl}/${id}/reject`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return response.data!;
-  }
-
-  // Mark document as released
-  async releaseDocument(id: number): Promise<DocumentRequest> {
-    const response = await this.request<DocumentRequest>(`${this.baseUrl}/${id}/release`, {
-      method: 'POST',
-    });
-    return response.data!;
-  }
-
-  // Get document statistics
-  async getDocumentStats(): Promise<DocumentStats> {
-    const response = await this.request<DocumentStats>(`${this.baseUrl}/stats`);
-    return response.data!;
-  }
-
-  // Track document status
-  async trackDocument(documentNumber: string): Promise<DocumentTracking> {
-    const response = await this.request<DocumentTracking>(`${this.baseUrl}/track/${documentNumber}`);
-    return response.data!;
-  }
-
-  // Get filter options for dropdowns
-  async getFilterOptions(): Promise<{
-    document_types: { value: string; label: string }[];
-    statuses: { value: string; label: string }[];
-    priorities: { value: string; label: string }[];
-  }> {
-    try {
-      const response = await this.request<{
-        document_types: { value: string; label: string }[];
-        statuses: { value: string; label: string }[];
-        priorities: { value: string; label: string }[];
-      }>(`${this.baseUrl}/filter-options`);
-      return response.data!;
-    } catch (error) {
-      // Fallback to hardcoded options if endpoint doesn't exist
-      return {
-        document_types: [
-          { value: 'BARANGAY_CLEARANCE', label: 'Barangay Clearance' },
-          { value: 'CERTIFICATE_OF_RESIDENCY', label: 'Certificate of Residency' },
-          { value: 'CERTIFICATE_OF_INDIGENCY', label: 'Certificate of Indigency' },
-          { value: 'BUSINESS_PERMIT', label: 'Business Permit' },
-          { value: 'BUILDING_PERMIT', label: 'Building Permit' }
-        ],
-        statuses: [
-          { value: 'PENDING', label: 'Pending' },
-          { value: 'UNDER_REVIEW', label: 'Under Review' },
-          { value: 'APPROVED', label: 'Approved' },
-          { value: 'RELEASED', label: 'Released' },
-          { value: 'REJECTED', label: 'Rejected' }
-        ],
-        priorities: [
-          { value: 'LOW', label: 'Low' },
-          { value: 'NORMAL', label: 'Normal' },
-          { value: 'HIGH', label: 'High' },
-          { value: 'URGENT', label: 'Urgent' }
-        ]
-      };
+  /**
+   * Get single document by ID
+   */
+  async getDocument(id: string): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
     }
+
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Document not found');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Create new document
+   */
+  async createDocument(documentData: DocumentFormData): Promise<Document> {
+    // Validate input data
+    const validatedData = DocumentFormDataSchema.parse(documentData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      '/documents',
+      responseSchema,
+      {
+      method: 'POST',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to create document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Update existing document
+   */
+  async updateDocument(id: string, documentData: DocumentFormData): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    // Validate input data
+    const validatedData = DocumentFormDataSchema.parse(documentData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}`,
+      responseSchema,
+      {
+        method: 'PUT',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to update document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Delete document
+   */
+  async deleteDocument(id: string): Promise<void> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    const responseSchema = ApiResponseSchema(z.any());
+    
+    await this.request(
+      `/documents/${id}`,
+      responseSchema,
+      { method: 'DELETE' }
+    );
+  }
+
+  /**
+   * Get document statistics
+   */
+  async getStatistics(): Promise<DocumentStatistics> {
+    const responseSchema = ApiResponseSchema(DocumentStatisticsSchema);
+    
+    const response = await this.request(
+      '/documents/statistics',
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to get statistics');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Search documents by reference number or applicant name
+   */
+  async searchDocuments(searchTerm: string, limit = 10): Promise<Document[]> {
+    if (!searchTerm.trim()) {
+      return [];
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents?search=${encodeURIComponent(searchTerm)}&per_page=${limit}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get documents by resident
+   */
+  async getDocumentsByResident(residentId: number): Promise<Document[]> {
+    if (!residentId || residentId <= 0) {
+      throw new Error('Invalid resident ID');
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents?resident_id=${residentId}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get documents by type
+   */
+  async getDocumentsByType(documentType: string): Promise<Document[]> {
+    if (!documentType.trim()) {
+      throw new Error('Document type is required');
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents?document_type=${encodeURIComponent(documentType)}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get documents by status
+   */
+  async getDocumentsByStatus(status: string): Promise<Document[]> {
+    if (!status.trim()) {
+      throw new Error('Status is required');
+    }
+
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents?status=${encodeURIComponent(status)}`,
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Process document (approve/review)
+   */
+  async processDocument(id: string, processData: ProcessDocumentData): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    // Validate input data
+    const validatedData = ProcessDocumentDataSchema.parse(processData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/process`,
+      responseSchema,
+      {
+        method: 'POST',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to process document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Reject document
+   */
+  async rejectDocument(id: string, rejectData: RejectDocumentData): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    // Validate input data
+    const validatedData = RejectDocumentDataSchema.parse(rejectData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/reject`,
+      responseSchema,
+      {
+      method: 'POST',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to reject document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Release document
+   */
+  async releaseDocument(id: string, releaseData: ReleaseDocumentData): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    // Validate input data
+    const validatedData = ReleaseDocumentDataSchema.parse(releaseData);
+    
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/release`,
+      responseSchema,
+      {
+      method: 'POST',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to release document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Cancel document
+   */
+  async cancelDocument(id: string, reason: string): Promise<Document> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    if (!reason.trim()) {
+      throw new Error('Cancellation reason is required');
+    }
+
+    const responseSchema = ApiResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/cancel`,
+      responseSchema,
+      {
+      method: 'POST',
+        data: { reason },
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to cancel document');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Get document tracking information
+   */
+  async getDocumentTracking(id: string): Promise<DocumentTracking> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    const responseSchema = ApiResponseSchema(DocumentTrackingSchema);
+    
+    const response = await this.request(
+      `/documents/${id}/tracking`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to get document tracking');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Generate document PDF
+   */
+  async generateDocumentPDF(id: string): Promise<Blob> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    const response = await apiClient.get(`/documents/${id}/pdf`, {
+      responseType: 'blob',
+      headers: {
+        'Accept': 'application/pdf',
+      },
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Get processing history with user roles
+   */
+  async getProcessingHistory(id: string): Promise<ProcessingHistoryItem[]> {
+    if (!id || id.trim() === '') {
+      throw new Error('Invalid document ID');
+    }
+
+    const responseSchema = ApiResponseSchema(z.array(ProcessingHistoryItemSchema));
+    
+    const response = await this.request(
+      `/documents/${id}/history`,
+      responseSchema,
+      { method: 'GET' }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to get processing history');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Get overdue documents
+   */
+  async getOverdueDocuments(): Promise<Document[]> {
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      '/documents/overdue',
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
+  }
+
+  /**
+   * Get pending documents
+   */
+  async getPendingDocuments(): Promise<Document[]> {
+    const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
+    
+    const response = await this.request(
+      '/documents/pending',
+      paginatedSchema,
+      { method: 'GET' }
+    );
+
+    return response.data;
   }
 }
 
