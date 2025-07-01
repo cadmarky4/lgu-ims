@@ -39,9 +39,7 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
     e.preventDefault();
     e.stopPropagation();
     // ganyan muna hanggat di pa sya naseset sa string
-    onResidentClick(resident.id.toString());
-    console.log(resident.id.toString());
-    console.log("HELLO")
+    onResidentClick(resident.id);
     setShowHeadDropdown(false);
     // Show notification if person was removed from members
   };
@@ -51,10 +49,6 @@ export const SearchResidents: React.FC<SearchResidentProps> = ({
       setShowHeadDropdown(true);
     }
   },[debouncedSearchTerm])
-
-  useEffect(()=>{
-    console.log("ASDSDA", isCheckingAlreadyRegisteredAsOfficial)
-  },[isCheckingAlreadyRegisteredAsOfficial]);
 
   return (
     <div>

@@ -21,7 +21,7 @@ const ViewResident: React.FC = () => {
   const { t } = useTranslation();
   
   const [isLoaded, setIsLoaded] = useState(false);
-  const residentId = id ? parseInt(id, 10) : 0;
+  const residentId = id as string;
 
   // Query hook for resident data
   const { 
@@ -29,7 +29,7 @@ const ViewResident: React.FC = () => {
     isLoading, 
     error,
     isError
-  } = useResident(residentId, !!residentId && !isNaN(residentId));
+  } = useResident(residentId, !!residentId);
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -48,7 +48,7 @@ const ViewResident: React.FC = () => {
   };
 
   // Validate ID
-  if (!residentId || isNaN(residentId)) {
+  if (!residentId) {
     return (
       <ErrorDisplay
         title="Invalid Resident ID"

@@ -180,28 +180,67 @@ export class BarangayOfficialsService extends BaseApiService {
     return response.data;
   }
 
+//   // checks if a resident is already a registered barangay official
+//   async isAlreadyOfficial(residentId: string): Promise<number> {
+//     if (!residentId || typeof residentId !== 'string') {
+//       throw new Error('Invalid resident ID: ID must be a non-empty string');
+//     }
+
+//     try {
+//       const responseSchema = ApiResponseSchema(z.number());
+
+//       const response = await this.request(
+//         `/barangay-officials/check-duplicate`,
+//         responseSchema,
+//         { 
+//           method: 'POST',
+//           data: { residentId }
+//         }
+//       );
+
+//       if (!response.data && response.data !== 0) {
+//         throw new Error('Server returned invalid response format');
+//       }
+
+//       return response.data;
+//     } catch (error) {
+//       if (error instanceof Error) {
+//         throw new Error(`Failed to check official status: ${error.message}`);
+//       }
+//       throw new Error('An unexpected error occurred while checking official status');
+//     }
+//   }
+// }
+
   // checks if a resident is already a registered barangay official
   async isAlreadyOfficial(residentId: string): Promise<number> {
-    if (!residentId) {
-      throw new Error('Invalid resident ID');
+    if (!residentId || typeof residentId !== 'string') {
+      throw new Error('Invalid resident ID: ID must be a non-empty string');
     }
 
-    const responseSchema = ApiResponseSchema(z.number());
+    try {
+      const responseSchema = ApiResponseSchema(z.number());
 
-    const response = await this.request(
-      `/barangay-officials/check-duplicate`,
-      responseSchema,
-      { 
-      method: 'POST',
-      data: { residentId }
+      const response = await this.request(
+        `/barangay-officials/check-duplicate`,
+        responseSchema,
+        { 
+          method: 'POST',
+          data: { residentId }
+        }
+      );
+
+      if (!response.data && response.data !== 0) {
+        throw new Error('Server returned invalid response format');
       }
-    );
 
-    if (!response.data) {
-      throw new Error('Failed to check duplicate');
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to check official status: ${error.message}`);
+      }
+      throw new Error('An unexpected error occurred while checking official status');
     }
-
-    return response.data;
   }
 }
 

@@ -68,18 +68,19 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                     } else {
                         // backend search
                         const res = await residentsService.getResident(
-                            selectedResidentId ? Number(selectedResidentId) : -1
+                            selectedResidentId
                           );
                         // frontend search
                         // const res = residents?.data.find(resident => 
                         //     resident.id === (residentId ? Number(residentId) : -1)
                         // );
                         setIsResidentValidNewOfficial(true);
+                        setValue('resident_id', selectedResidentId)
                         setValue('first_name', res.first_name);
                         setValue('middle_name', res.middle_name);
                         setValue('last_name', res.last_name);
                         setValue('gender', res.gender);
-                        setValue('birth_date', res.birth_date);
+                        setValue('birth_date', new Date(res.birth_date).toISOString().split('T')[0]);
                         setValue('mobile_number', res.mobile_number);
                         setValue('email_address', res.email_address);
                         setValue('complete_address', res.complete_address);
@@ -140,7 +141,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     }, [mode, reset]);
 
     // Form submission
-    const handleSubmit = async (data: BarangayOfficialFormData) => {
+    const handleSubmit = form.handleSubmit(async (data: BarangayOfficialFormData) => {
         try {
             if (mode === 'create') {
                 await createBarangayOfficial.mutateAsync(data);
@@ -161,6 +162,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                 });
             }
             onSuccess?.();
+            
         } catch (error) {
             const errorMessage = (error as Error)?.message || 
               (mode === 'create' 
@@ -176,7 +178,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
             });
             console.error('Form submission error:', error);
         }
-    };
+    });
 
     // Draft management
     const saveDraft = () => {
@@ -225,7 +227,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         isResidentValidNewOfficial,
         residentIdField,
         setSelectedResidentId,
-        handleSubmit: form.handleSubmit(handleSubmit),
+        handleSubmit,
         saveDraft,
         clearDraft,
     };

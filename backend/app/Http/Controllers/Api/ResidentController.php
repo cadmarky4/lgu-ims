@@ -154,10 +154,10 @@ class ResidentController extends Controller
             $resident->load([
                 'households',
                 'householdsAsHead',
-                'documents',
-                'complaints',
-                'suggestions',
-                'appointments',
+                // 'documents',
+                // 'complaints',
+                // 'suggestions',
+                // 'appointments',
                 'createdBy:id,first_name,last_name',
                 'updatedBy:id,first_name,last_name'
             ]);

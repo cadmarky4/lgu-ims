@@ -10,7 +10,7 @@ import {
   positions,
   prefixes,
 } from "@/services/officials/barangayOfficials.types";
-import { civilStatuses, genders } from "@/services/__shared/types";
+import { civilStatuses, educationalAttainments, genders } from "@/services/__shared/types";
 import { SearchResidents } from "./SearchResidents";
 import { FiCheck, FiX } from "react-icons/fi";
 
@@ -53,7 +53,8 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
 
   const handleSubmitButton = () => {
     if (!residentIdField) setShowResidentIdEmptyError(true);
-    if (!showResidentIdEmptyError) handleSubmit;
+    if (!showResidentIdEmptyError) handleSubmit();
+    console.log(form.formState.errors);
   }
 
   const title =
@@ -245,6 +246,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                         "barangayOfficials.form.placeholders.residentId"
                       )}
                       required
+                      readOnly
                     />
                   </div>
 
@@ -348,7 +350,9 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                       )}
                       options={genders.map((gender) => ({
                         value: gender,
-                        label: gender,
+                        label: gender.split('_').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          ).join(' '),
                       }))}
                       readOnly
                       required
@@ -454,7 +458,9 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                       )}
                       options={civilStatuses.map((civilStatus) => ({
                         value: civilStatus,
-                        label: civilStatus,
+                        label: civilStatus.split('_').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          ).join(' '),
                       }))}
                       readOnly
                     />
@@ -471,6 +477,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                   >
                     <FormField
                       name="educational_attainment"
+                      type="select"
                       label={t(
                         "barangayOfficials.form.fields.educationalAttainment"
                       )}
@@ -478,6 +485,12 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                         "barangayOfficials.form.placeholders.educationalAttainment"
                       )}
                       readOnly
+                      options={educationalAttainments.map((educ) => ({
+                        value: educ,
+                        label: educ.split('_').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          ).join(' ')
+                      }))}
                     />
                   </div>
                 </div>

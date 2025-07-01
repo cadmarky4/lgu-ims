@@ -21,7 +21,7 @@ export const residentsKeys = {
   lists: () => [...residentsKeys.all, 'list'] as const,
   list: (params: ResidentParams) => [...residentsKeys.lists(), params] as const,
   details: () => [...residentsKeys.all, 'detail'] as const,
-  detail: (id: number) => [...residentsKeys.details(), id] as const,
+  detail: (id: string) => [...residentsKeys.details(), id] as const,
   statistics: () => [...residentsKeys.all, 'statistics'] as const,
   ageGroups: () => [...residentsKeys.all, 'ageGroups'] as const,
   search: (term: string) => [...residentsKeys.all, 'search', term] as const,
@@ -41,11 +41,11 @@ export function useResidents(params: ResidentParams = {}) {
   });
 }
 
-export function useResident(id: number, enabled = true) {
+export function useResident(id: string, enabled = true) {
   return useQuery({
     queryKey: residentsKeys.detail(id),
     queryFn: () => residentsService.getResident(id),
-    enabled: enabled && !!id && id > 0,
+    enabled: enabled && !!id,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -146,7 +146,7 @@ export function useUpdateResident() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ResidentFormData }) =>
+    mutationFn: ({ id, data }: { id: string; data: ResidentFormData }) =>
       residentsService.updateResident(id, data),
     onSuccess: (updatedResident: Resident) => {
       queryClient.invalidateQueries({ queryKey: residentsKeys.lists() });
@@ -177,7 +177,7 @@ export function useDeleteResident() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: (id: number) => residentsService.deleteResident(id),
+    mutationFn: (id: string) => residentsService.deleteResident(id),
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: residentsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: residentsKeys.statistics() });
@@ -203,7 +203,7 @@ export function useUploadProfilePhoto() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, photo }: { id: number; photo: File }) =>
+    mutationFn: ({ id, photo }: { id: string; photo: File }) =>
       residentsService.uploadProfilePhoto(id, photo),
     onSuccess: (updatedResident: Resident) => {
       queryClient.setQueryData(

@@ -1,25 +1,30 @@
 import { z } from 'zod';
 
-export const GenderSchema = z.enum(['MALE', 'FEMALE']);
+export const GenderSchema = z.enum(['MALE', 'FEMALE', "NON_BINARY", "PREFER_NOT_TO_SAY"]);
 export const genders = GenderSchema.options;
 
 export const CivilStatusSchema = z.enum([
-  'SINGLE',
-  'MARRIED',
-  'WIDOWED',
-  'DIVORCED',
-  'SEPARATED'
+  "PREFER_NOT_TO_SAY",
+  "SINGLE",
+  "MARRIED",
+  "WIDOWED",
+  "DIVORCED",
+  "SEPARATED",
+  "LIVE_IN",
+  "ANNULLED",
 ]);
 
 export const EducationalAttainmentSchema = z.enum([
-  'ELEMENTARY',
-  'HIGH_SCHOOL',
-  'COLLEGE',
-  'VOCATIONAL',
-  'POST_GRADUATE',
-  'DOCTORATE',
-  'NOT_APPLICABLE',
-  'PREFER_NOT_TO_SAY'
+  "VOCATIONAL",
+  "POST_GRADUATE", 
+  "OTHER", 
+  "NO_FORMAL_EDUCATION", 
+  "ELEMENTARY_UNDERGRADUATE", 
+  "ELEMENTARY_GRADUATE", 
+  "HIGH_SCHOOL_UNDERGRADUATE", 
+  "HIGH_SCHOOL_GRADUATE", 
+  "COLLEGE_UNDERGRADUATE", 
+  "COLLEGE_GRADUATE",
 ]);
 
 export const NationalitySchema = z.enum([
@@ -70,3 +75,4 @@ export type EducationalAttainment = z.infer<typeof EducationalAttainmentSchema>;
 export type Nationality = z.infer<typeof NationalitySchema>;
 
 export const civilStatuses = CivilStatusSchema.options;
+export const educationalAttainments = EducationalAttainmentSchema.options;

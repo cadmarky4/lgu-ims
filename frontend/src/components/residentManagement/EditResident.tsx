@@ -5,7 +5,7 @@ import { ResidentForm } from './_components/ResidentForm';
 const EditResident: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const residentId = id ? parseInt(id, 10) : undefined;
+  const residentId = id as string;
 
   const handleClose = () => {
     // You might want to show a confirmation dialog if form has unsaved changes
@@ -24,7 +24,7 @@ const EditResident: React.FC = () => {
     }, 1500);
   };
 
-  if (!residentId || isNaN(residentId)) {
+  if (!residentId) {
     return (
       <div className="p-6 text-center">
         <h1 className="text-2xl font-bold text-red-600">Invalid Resident ID</h1>

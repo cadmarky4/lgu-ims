@@ -54,9 +54,9 @@ export class ResidentsService extends BaseApiService {
   /**
    * Get single resident by ID
    */
-  async getResident(id: number): Promise<Resident> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid resident ID');
+  async getResident(id: string): Promise<Resident> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid resident ID: ID must be a non-empty string');
     }
 
     const responseSchema = ApiResponseSchema(ResidentSchema);
@@ -102,9 +102,9 @@ export class ResidentsService extends BaseApiService {
   /**
    * Update existing resident
    */
-  async updateResident(id: number, residentData: ResidentFormData): Promise<Resident> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid resident ID');
+  async updateResident(id: string, residentData: ResidentFormData): Promise<Resident> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid resident ID: ID must be a non-empty string');
     }
 
     // Validate input data
@@ -131,9 +131,9 @@ export class ResidentsService extends BaseApiService {
   /**
    * Delete resident
    */
-  async deleteResident(id: number): Promise<void> {
-    if (!id || id <= 0) {
-      throw new Error('Invalid resident ID');
+  async deleteResident(id: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid resident ID: ID must be a non-empty string');
     }
 
     const responseSchema = ApiResponseSchema(z.any());
@@ -280,9 +280,9 @@ export class ResidentsService extends BaseApiService {
   /**
    * Upload profile photo
    */
-  async uploadProfilePhoto(residentId: number, photo: File): Promise<Resident> {
-    if (!residentId || residentId <= 0) {
-      throw new Error('Invalid resident ID');
+  async uploadProfilePhoto(residentId: string, photo: File): Promise<Resident> {
+    if (!residentId || typeof residentId !== 'string') {
+      throw new Error('Invalid resident ID: ID must be a non-empty string');
     }
 
     if (!photo) {

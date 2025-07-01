@@ -155,7 +155,7 @@ class User extends Authenticatable
             'VIEWER' => 'Viewer',
         ];
 
-        return $roleMap[$this->role] ?? $this->role;
+        return $roleMap[$this->role] ?? 'Viewer';
     }
 
     public function getDepartmentDisplayAttribute(): string
@@ -177,7 +177,7 @@ class User extends Authenticatable
             'INFRASTRUCTURE_DEVELOPMENT' => 'Infrastructure Development',
         ];
 
-        return $departmentMap[$this->department] ?? $this->department;
+        return $departmentMap[$this->department] ?? 'Administration';
     }
 
     public function getIsUserActiveAttribute(): bool

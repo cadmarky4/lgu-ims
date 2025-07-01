@@ -224,7 +224,7 @@ class ResidentSchema
                 'max' => 20,
                 'nullable' => true,
                 'fillable' => true,
-                'regex' => '/^(\+639|09)\d{9}$/'
+                // 'regex' => '/^(\+639|09)\d{9}$\//'
             ],
             'landline_number' => [
                 'type' => 'string',

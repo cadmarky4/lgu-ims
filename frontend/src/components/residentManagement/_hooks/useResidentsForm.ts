@@ -22,7 +22,7 @@ import {
 
 interface UseResidentFormProps {
   mode: 'create' | 'edit';
-  residentId?: number;
+  residentId?: string;
   onSuccess?: () => void;
 }
 
@@ -39,7 +39,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
 
   // Query hooks
   const { data: resident, isLoading: isLoadingResident } = useResident(
-    residentId || 0, 
+    residentId as string, 
     mode === 'edit' && !!residentId
   );
 

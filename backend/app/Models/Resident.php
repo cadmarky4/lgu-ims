@@ -262,35 +262,35 @@ class Resident extends Model
     /**
      * Other relationships (unchanged)
      */
-    public function documents(): HasMany
-    {
-        return $this->hasMany(Document::class);
-    }
+    // public function documents(): HasMany
+    // {
+    //     return $this->hasMany(Document::class);
+    // }
 
-    public function complaints(): HasMany
-    {
-        return $this->hasMany(Complaint::class);
-    }
+    // public function complaints(): HasMany
+    // {
+    //     return $this->hasMany(Complaint::class);
+    // }
 
-    public function suggestions(): HasMany
-    {
-        return $this->hasMany(Suggestion::class);
-    }
+    // public function suggestions(): HasMany
+    // {
+    //     return $this->hasMany(Suggestion::class);
+    // }
 
-    public function appointments(): HasMany
-    {
-        return $this->hasMany(Appointment::class);
-    }
+    // public function appointments(): HasMany
+    // {
+    //     return $this->hasMany(Appointment::class);
+    // }
 
-    public function complainantBlotterCases(): HasMany
-    {
-        return $this->hasMany(BlotterCase::class, 'complainant_resident_id');
-    }
+    // public function complainantBlotterCases(): HasMany
+    // {
+    //     return $this->hasMany(BlotterCase::class, 'complainant_resident_id');
+    // }
 
-    public function respondentBlotterCases(): HasMany
-    {
-        return $this->hasMany(BlotterCase::class, 'respondent_resident_id');
-    }
+    // public function respondentBlotterCases(): HasMany
+    // {
+    //     return $this->hasMany(BlotterCase::class, 'respondent_resident_id');
+    // }
 
     public function createdBy(): BelongsTo
     {
@@ -437,8 +437,8 @@ class Resident extends Model
             $q->where('first_name', 'like', "%{$search}%")
               ->orWhere('last_name', 'like', "%{$search}%")
               ->orWhere('middle_name', 'like', "%{$search}%")
-              ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-              ->orWhereRaw("CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name) LIKE ?", ["%{$search}%"])
+              ->orWhereRaw("(first_name || ' ' || last_name) LIKE ?", ["%{$search}%"])
+              ->orWhereRaw("(first_name || ' ' || COALESCE(middle_name, '') || ' ' || last_name) LIKE ?", ["%{$search}%"])
               ->orWhere('email_address', 'like', "%{$search}%")
               ->orWhere('mobile_number', 'like', "%{$search}%");
         });
@@ -510,7 +510,7 @@ class Resident extends Model
             || $this->four_ps_beneficiary;
     }
 
-    public function getSpecialClassifications(): array
+    public function getSpecialClassificationsAttribute(): array
     {
         $classifications = [];
         
@@ -572,7 +572,7 @@ class Resident extends Model
         $array['is_senior'] = $this->is_senior;
         $array['gender_display'] = $this->gender_display;
         $array['civil_status_display'] = $this->civil_status_display;
-        $array['special_classifications'] = $this->getSpecialClassifications();
+        $array['special_classifications'] = $this->getSpecialClassificationsAttribute();
         $array['household_relationship'] = $this->household_relationship;
         $array['is_household_head'] = $this->is_household_head;
 

@@ -36,7 +36,7 @@ class BarangayOfficialSchema
             // Term Information
             'term_start' => ['type' => 'date', 'required' => true],
             'term_end' => ['type' => 'date', 'required' => true],
-            'term_number' => ['type' => 'integer', 'min' => 1, 'default' => 1],
+            'term_number' => ['type' => 'integer', 'min' => 0, 'default' => 1, 'nullable' => true],
             'is_current_term' => ['type' => 'boolean', 'default' => true],
             
             // Election Information

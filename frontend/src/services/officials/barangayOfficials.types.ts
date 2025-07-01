@@ -54,7 +54,7 @@ export const BarangayOfficialBaseSchema = z.object({
   // Basic information
   prefix: PrefixSchema,
   first_name: z.string().min(1, 'barangayOfficials.form.validation.firstNameRequired'),
-  middle_name: z.string().optional(),
+  middle_name: z.string().nullable().optional(),
   last_name: z.string().min(1, 'barangayOfficials.form.validation.lastNameRequired'),
   suffix: z.string().optional(),
 
@@ -96,7 +96,7 @@ export const BarangayOfficialBaseSchema = z.object({
   updated_at: z.string(),
 
   // Profile photo
-  profile_photo_url: z.string().optional(), 
+  profile_photo_url: z.string().nullable().optional(), 
 })
 
 // Yung pang forms lang
@@ -153,7 +153,7 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
       gender: 'MALE',
       civil_status: 'SINGLE',
       nationality: 'FILIPINO',
-      educational_attainment: 'HIGH_SCHOOL',
+      educational_attainment: 'NO_FORMAL_EDUCATION',
       mobile_number: '',
       email_address: '',
       complete_address: '',

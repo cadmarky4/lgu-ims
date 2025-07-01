@@ -16,7 +16,7 @@ import { usePhilippineAddress } from '../_hooks/usePhilippineAddress';
 
 interface ResidentFormProps {
   mode: 'create' | 'edit';
-  residentId?: number;
+  residentId?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
