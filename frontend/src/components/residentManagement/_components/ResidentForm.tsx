@@ -175,6 +175,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (!isLastStep) {
         setCurrentStep(prev => prev + 1);
       }
+      console.log("Going next!");
     } else {
       form.trigger(currentStepData.fields as any);
     }
@@ -852,8 +853,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 </button>
               ) : (
                 <button
-                  key="3"
-                  type="submit"
+                  type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"

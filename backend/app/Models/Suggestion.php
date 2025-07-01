@@ -5,20 +5,56 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Carbon\Carbon;
 
 class Suggestion extends Model
 {
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
-        'suggestion_number', 'title', 'description', 'category', 'priority', 'target_department',
-        'suggested_solution', 'expected_outcome', 'implementation_timeline', 'estimated_budget',
-        'suggested_by_name', 'suggested_by_contact', 'suggested_by_resident_id', 'anonymous',
-        'status', 'assigned_evaluator', 'evaluation_date', 'evaluation_notes', 'feasibility_score',
-        'impact_assessment', 'cost_benefit_analysis', 'implementation_plan', 'decision',
-        'decision_date', 'decision_reason', 'approved_budget', 'implementation_start_date',
-        'implementation_end_date', 'progress_notes', 'completion_date', 'outcome_summary',
-        'lessons_learned', 'upvotes', 'downvotes', 'public_feedback', 'remarks',
-        'created_by', 'updated_by'
+        'suggestion_number',
+        'title',
+        'description',
+        'category',
+        'priority',
+        'target_department',
+        'suggested_solution',
+        'expected_outcome',
+        'implementation_timeline',
+        'estimated_budget',
+        'suggested_by_name',
+        'suggested_by_contact',
+        'suggested_by_resident_id',
+        'anonymous',
+        'status',
+        'assigned_evaluator',
+        'evaluation_date',
+        'evaluation_notes',
+        'feasibility_score',
+        'impact_assessment',
+        'cost_benefit_analysis',
+        'implementation_plan',
+        'decision',
+        'decision_date',
+        'decision_reason',
+        'approved_budget',
+        'implementation_start_date',
+        'implementation_end_date',
+        'progress_notes',
+        'completion_date',
+        'outcome_summary',
+        'lessons_learned',
+        'upvotes',
+        'downvotes',
+        'public_feedback',
+        'remarks',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
@@ -80,10 +116,10 @@ class Suggestion extends Model
         if ($this->status === 'IMPLEMENTED') {
             return 0;
         }
-        
+
         $dateSubmitted = $this->date_submitted ?? $this->created_at;
         if (!$dateSubmitted) return 0;
-        
+
         return Carbon::parse($dateSubmitted)->diffInDays(now());
     }
 
@@ -111,7 +147,7 @@ class Suggestion extends Model
     public function scopeHighPriority(Builder $query): Builder
     {
         return $query->where('feasibility_rating', 'HIGH')
-                    ->where('impact_rating', 'HIGH');
+            ->where('impact_rating', 'HIGH');
     }
 
     public function scopePopular(Builder $query): Builder

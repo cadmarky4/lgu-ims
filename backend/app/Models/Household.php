@@ -12,7 +12,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Household extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * Get fillable fields from schema

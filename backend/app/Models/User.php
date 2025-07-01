@@ -8,13 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuids;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * Get fillable fields from schema
@@ -85,8 +89,8 @@ class User extends Authenticatable
         
         // Auto-set created_by and updated_by
         static::creating(function ($model) {
-            if (auth()->check() && !$model->created_by) {
-                $model->created_by = auth()->id();
+            if (Auth::check() && !$model->created_by) {
+                $model->created_by = Auth::id();
             }
             
             // Auto-verify super admin and admin users
@@ -96,8 +100,8 @@ class User extends Authenticatable
         });
 
         static::updating(function ($model) {
-            if (auth()->check() && !$model->updated_by) {
-                $model->updated_by = auth()->id();
+            if (Auth::check() && !$model->updated_by) {
+                $model->updated_by = Auth::id();
             }
             
             // Update last login when logging in
