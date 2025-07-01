@@ -5,10 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Carbon\Carbon;
 
 class BlotterCase extends Model
 {
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'case_number', 'incident_type', 'incident_description', 'incident_date', 'incident_time',
         'incident_location', 'complainant_name', 'complainant_contact', 'complainant_address',

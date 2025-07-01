@@ -5,11 +5,15 @@ namespace App\Models;
 use App\Models\Schemas\DocumentSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Str;
 
 class Document extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * Get fillable fields from schema

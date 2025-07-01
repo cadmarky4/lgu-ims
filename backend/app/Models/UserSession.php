@@ -6,11 +6,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+
 class UserSession extends Model
 {
+    use HasFactory, HasUuids;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'id',
         'user_id',
@@ -29,16 +37,6 @@ class UserSession extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     */
-    public $incrementing = false;
-
-    /**
-     * The data type of the auto-incrementing ID.
-     */
-    protected $keyType = 'string';
 
     /**
      * Relationships

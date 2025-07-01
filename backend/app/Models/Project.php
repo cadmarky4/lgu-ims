@@ -6,10 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Carbon\Carbon;
 
 class Project extends Model
 {
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'project_code',
         'title',
