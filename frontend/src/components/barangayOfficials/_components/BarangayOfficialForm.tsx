@@ -12,6 +12,7 @@ import {
 } from "@/services/officials/barangayOfficials.types";
 import { civilStatuses, genders } from "@/services/__shared/types";
 import { SearchResidents } from "./SearchResidents";
+import { FiCheck, FiX } from "react-icons/fi";
 
 interface BarangayOfficialFormProps {
   mode: "create" | "edit";
@@ -35,23 +36,37 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
     filteredResidents,
     isLoadingResidents,
     residentsError,
-    profilePhotoPreview,
+    // profilePhotoPreview,
     isAlreadyRegisteredAsOfficialWarning,
     isSubmitting,
     isCheckingAlreadyRegisteredAsOfficial,
     isResidentValidNewOfficial,
-    setResidentId,
+    residentIdField,
+    setSelectedResidentId,
     handleSubmit,
     saveDraft,
-    clearDraft,
+    // clearDraft,
   } = useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess });
   const [isLoaded, setIsLoaded] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [showResidentIdEmptyError, setShowResidentIdEmptyError] = useState(false);
+
+  const handleSubmitButton = () => {
+    if (!residentIdField) setShowResidentIdEmptyError(true);
+    if (!showResidentIdEmptyError) handleSubmit;
+  }
 
   const title =
     mode === "create"
       ? t("barangayOfficials.form.addTitle")
       : t("barangayOfficials.form.editTitle");
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ show: false, message: '', type: 'success' });
 
   if (isLoadingOfficial && mode === "edit") {
     return (
@@ -105,6 +120,12 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
         </div>
       )} */}
 
+      {showResidentIdEmptyError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">Please select a resident first before submitting the form.</p>
+        </div>
+      )}
+
       {/* Main Form */}
       <FormProvider {...form}>
         <form onSubmit={handleSubmit}>
@@ -114,6 +135,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
             }`}
             style={{ animationDelay: "250ms" }}
           >
+
             {/* Basic Information */}
             <section className="mb-8">
               <h2
@@ -134,10 +156,12 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                 search={searchResident || ''}
                 isSearchingResidents={isLoadingResidents}
                 filteredResidents={filteredResidents?.data || []}
-                residentsErrorMessage={
-                  residentsError?.message || "Failed Loading Residents"
+                residentsFetchErrorMessage={
+                  residentsError?.message || ""
                 }
-                onResidentClick={setResidentId}
+                residentSelectErrorMessage={isAlreadyRegisteredAsOfficialWarning || ''}
+                onResidentClick={setSelectedResidentId}
+                isCheckingAlreadyRegisteredAsOfficial={isCheckingAlreadyRegisteredAsOfficial}
               />
 
               {/* Baka kasi mawala yung validation pagnirender ko sya conditionally */}
@@ -599,7 +623,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                 {/* Submit button */}
                 <button
                   type="submit"
-                  onClick={handleSubmit}
+                  onClick={handleSubmitButton}
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
                 >
@@ -618,7 +642,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
       </FormProvider>
 
       {/* Toast Notification */}
-      {/* {toast.show && (
+      {toast.show && (
         <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
           <div
             className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border ${
@@ -644,7 +668,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
             </button>
           </div>
         </div>
-      )} */}
+      )}
     </main>
   );
 };

@@ -29,7 +29,8 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     })
 
     const {  watch, setValue, reset } = form;
-    const [residentId, setResidentId]  = useState<string>('');
+    const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
+    const residentIdField = watch('resident_id');
     const searchResident = watch('resident_search');
     const [ isResidentValidNewOfficial, setIsResidentValidNewOfficial ] = useState(false);
 
@@ -44,7 +45,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     const createBarangayOfficial = useCreateBarangayOfficial();
     const updateBarangayOfficial = useUpdateBarangayOfficial();
     
-    const { isAlreadyRegisteredAsOfficial, isChecking } = useIsAlreadyRegisteredAsOfficial();
+    const { getOfficialRegistrationStatus, isChecking } = useIsAlreadyRegisteredAsOfficial();
 
     // set default values of dropdowns to empty strings
     // useEffect(() => {
@@ -52,19 +53,22 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     // },[])
 
     // Check if barangay official already registered when key fields change
+    // Potential bug: When the user chooses the same residentId but a new error occurs,
+    // the error message won't update because the dependency array only includes residentId.
+    // The effect won't re-execute unless residentId changes.
     useEffect(() => {
-        if (residentId) {
+        if (selectedResidentId) {
             const timeoutId = setTimeout(() => {
                 (async () => {
-                    const result = await isAlreadyRegisteredAsOfficial(residentId);
-                    if (result > 0) {
+                    const result = await getOfficialRegistrationStatus(selectedResidentId);
+                    if (result.result > 0) {
                         setIsAlreadyRegisteredAsOfficialWarning('Official already registered');
-                    } else if (result === -1) {
-                        setIsAlreadyRegisteredAsOfficialWarning('Error checking');
+                    } else if (result.result === -1) {
+                        setIsAlreadyRegisteredAsOfficialWarning(result.errorMessage);
                     } else {
                         // backend search
                         const res = await residentsService.getResident(
-                            residentId ? Number(residentId) : -1
+                            selectedResidentId ? Number(selectedResidentId) : -1
                           );
                         // frontend search
                         // const res = residents?.data.find(resident => 
@@ -90,7 +94,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         } else {
             setIsAlreadyRegisteredAsOfficialWarning(null);
         }
-    }, [residentId, isAlreadyRegisteredAsOfficial]);
+    }, [selectedResidentId]);
     
 
     // Load official data for edit mode
@@ -219,7 +223,8 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         isSubmitting: createBarangayOfficial.isPending || updateBarangayOfficial.isPending,
         isCheckingAlreadyRegisteredAsOfficial: isChecking,
         isResidentValidNewOfficial,
-        setResidentId,
+        residentIdField,
+        setSelectedResidentId,
         handleSubmit: form.handleSubmit(handleSubmit),
         saveDraft,
         clearDraft,

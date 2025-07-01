@@ -207,9 +207,10 @@
       }
     }
   },
-  "barangayOfficials" : {
+
+  "barangayOfficials": {
     "title": "Mga Opisyal ng Barangay",
-    "addNew": "Magdagdag ng Bagong Opisyal",
+    "addNew": "Magdagdag ng Bagong Opisyal", 
     "search": "Maghanap ng mga opisyal...",
     "statistics": {
       "title": "Pangkalahatang-ideya ng mga Opisyal",
@@ -222,7 +223,7 @@
         "position": "Posisyon",
         "contact": "Pakikipag-ugnayan",
         "term": "Termino",
-        "status": "Katayuan",
+        "status": "Katayuan", 
         "committee": "Komite",
         "actions": "Mga Aksyon"
       },
@@ -238,7 +239,7 @@
     },
     "status": {
       "active": "Aktibo",
-      "inactive": "Hindi Aktibo",
+      "inactive": "Hindi Aktibo", 
       "suspended": "Suspendido",
       "terminated": "Tinanggal",
       "deceased": "Pumanaw"
@@ -246,7 +247,7 @@
     "positions": {
       "barangayCaptain": "Punong Barangay",
       "barangaySecretary": "Kalihim ng Barangay",
-      "barangayTreasurer": "Ingat-Yaman ng Barangay",
+      "barangayTreasurer": "Ingat-Yaman ng Barangay", 
       "kagawad": "Kagawad",
       "skChairperson": "Tagapangulo ng SK",
       "skKagawad": "Kagawad ng SK",
@@ -257,7 +258,7 @@
       "health": "Kalusugan",
       "education": "Edukasyon",
       "publicSafety": "Kaligtasan ng Publiko",
-      "environment": "Kapaligiran",
+      "environment": "Kapaligiran", 
       "peaceAndOrder": "Kapayapaan at Kaayusan",
       "sportsAndRecreation": "Palakasan at Libangan",
       "womenAndFamily": "Kababaihan at Pamilya",
@@ -275,8 +276,107 @@
     },
     "pagination": {
       "showing": "Nagpapakita ng {{from}} hanggang {{to}} sa {{total}} na resulta",
-      "previous": "Nakaraan",
+      "previous": "Nakaraan", 
       "next": "Susunod"
+    },
+    "form": {
+      "addTitle": "Magdagdag ng Bagong Opisyal",
+      "editTitle": "I-edit ang Profile ng Opisyal",
+      "sections": {
+        "basicInfo": "Pangunahing Impormasyon",
+        "contactInfo": "Impormasyon sa Pakikipag-ugnayan",
+        "familyInfo": "Impormasyon sa Pamilya",
+        "governmentIds": "Government IDs at Dokumento",
+        "healthMedical": "Kalusugan at Medikal na Impormasyon",
+        "profilePhoto": "Larawan ng Profile"
+      },
+      "fields": {
+        "residentSearch": "Maghanap ng Kasalukuyang Residente bilang Opisyal",
+        "residentId": "ID ng Residente",
+        "prefix": "Prefix",
+        "firstName": "Unang Pangalan",
+        "lastName": "Apelyido",
+        "middleName": "Gitnang Pangalan",
+        "suffix": "Suffix",
+        "birthDate": "Petsa ng Kapanganakan",
+        "gender": "Kasarian",
+        "civilStatus": "Civil Status",
+        "nationality": "Nasyonalidad",
+        "employmentStatus": "Status ng Trabaho",
+        "educationalAttainment": "Naabot na Edukasyon",
+        "mobileNumber": "Mobile Number",
+        "landlineNumber": "Landline Number",
+        "emailAddress": "Email Address",
+        "completeAddress": "Kumpletong Address",
+        "position": "Posisyon",
+        "committeeAssignment": "Nakatalaga sa Komite",
+        "termStart": "Simula ng Termino",
+        "termEnd": "Katapusan ng Termino"
+      },
+      "placeholders": {
+        "residentSearch": "Maghanap ng residente sa pamamagitan ng pangalan, id...",
+        "residentId": "Ilagay ang ID ng residente",
+        "firstName": "Ilagay ang unang pangalan...",
+        "lastName": "Ilagay ang apelyido...",
+        "middleName": "Iwanang walang laman kung hindi naaangkop",
+        "nationality": "Ilagay ang nasyonalidad...",
+        "educationalAttainment": "hal. Nagtapos ng High School, Kolehiyo...",
+        "mobileNumber": "+63 XXX XXX XXXX",
+        "landlineNumber": "(02) XXXX-XXXX",
+        "emailAddress": "resident@gmail.com",
+        "completeAddress": "Ilagay ang kumpletong address...",
+        "position": "Pumili ng Posisyon",
+        "committeeAssignment": "Pumili ng Komite",
+        "prefix": "Pumili ng prefix...",
+        "gender": "Pumili ng kasarian...",
+        "selectCivilStatus": "Piliin ang katayuan sibil..."
+      },
+      "options": {
+        "selectGender": "Pumili ng Kasarian",
+        "selectCivilStatus": "Pumili ng Sibil na Katayuan",
+        "selectEmploymentStatus": "Pumili ng Katayuang Pangtrabaho",
+        "selectIdType": "Pumili ng Uri ng ID",
+        "selectSuffix": "Pumili ng Suffix"
+      },
+      "actions": {
+        "saveDraft": "I-save ang Draft",
+        "savingDraft": "Sini-save ang Draft...",
+        "cancel": "Kanselahin",
+        "register": "Irehistro ang Opisyal",
+        "update": "I-update ang Opisyal",
+        "registering": "Ini-save...",
+        "updating": "Ina-update...",
+        "close": "Isara"
+      },
+      "validation": {
+        "invalidUUID": "Hindi wastong UUID",
+        "firstNameRequired": "Kinakailangan ang unang pangalan",
+        "lastNameRequired": "Kinakailangan ang apelyido", 
+        "birthDateRequired": "Kinakailangan ang petsa ng kapanganakan",
+        "termStartRequired": "Kinakailangan ang petsa ng pagsisimula ng termino",
+        "termEndRequired": "Kinakailangan ang petsa ng pagtatapos ng termino", 
+        "completeAddressRequired": "Kinakailangan ang kumpletong address"
+      },
+      "error": {},
+      "messages": {
+        "loadingOfficial": "Kinukuha ang datos ng opisyal...",
+        "loadingReferenceData": "Kinukuha ang reference data...",
+        "duplicateWarning": "May nakitang {{count}} posibleng duplicate. Pakisigurado na ito ay hindi doble.",
+        "duplicatesFound": "Mga kaparehong opisyal na natagpuan:",
+        "unsavedChanges": "May hindi naisave na pagbabago. Sigurado ka bang nais mong umalis? Mawawala ang iyong progreso.",
+        "unsavedChangesEdit": "Mawawala ang anumang hindi naisave na pagbabago. Sigurado ka bang nais mong umalis?",
+        "draftSaved": "Matagumpay na naisave ang draft!",
+        "draftSaveError": "Nabigong i-save ang draft. Pakisubukang muli.",
+        "createSuccess": "Matagumpay na nairehistro ang opisyal!",
+        "updateSuccess": "Matagumpay na na-update ang opisyal!",
+        "createError": "Nabigong i-save ang opisyal. Pakisubukang muli.",
+        "updateError": "Nabigong i-update ang opisyal. Pakisubukang muli.",
+        "validationError": "Hindi pumasa sa beripikasyon: {{errors}}",
+        "networkError": "Hindi makakonekta sa server. Pakisuri ang iyong koneksyon.",
+        "notFound": "Hindi natagpuan ang opisyal",
+        "invalidId": "Hindi wasto ang ibinigay na official ID.",
+        "loadError": "Hindi makuha ang datos ng opisyal."
+      }
     }
   }
 }

@@ -189,9 +189,12 @@ export class BarangayOfficialsService extends BaseApiService {
     const responseSchema = ApiResponseSchema(z.number());
 
     const response = await this.request(
-      `/barangay-officials/check-duplicate/${residentId}`,
+      `/barangay-officials/check-duplicate`,
       responseSchema,
-      { method: 'GET' }
+      { 
+      method: 'POST',
+      data: { residentId }
+      }
     );
 
     if (!response.data) {
