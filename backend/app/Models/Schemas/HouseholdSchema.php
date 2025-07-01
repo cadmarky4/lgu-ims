@@ -5,18 +5,19 @@ namespace App\Models\Schemas;
 /**
  * Centralized schema definition for Household model
  * This serves as the single source of truth for all household-related data structure
- * Based on frontend requirements from AddNewHousehold.tsx
+ * Aligned with Zod schema from frontend
  */
 class HouseholdSchema
 {
     /**
-     * Complete field definitions based on frontend requirements
+     * Complete field definitions based on frontend Zod schema
      */
     public static function getFields(): array
-    {        return [
+    {
+        return [
             // Household Identification
-            'household_number' => ['type' => 'string', 'max' => 50, 'required' => false, 'unique' => true],
-            'household_type' => ['type' => 'enum', 'values' => ['nuclear', 'extended', 'single', 'single-parent', 'other'], 'required' => true],
+            'household_number' => ['type' => 'string', 'max' => 50, 'required' => false, 'unique' => true, 'nullable' => true],
+            'household_type' => ['type' => 'enum', 'values' => ['NUCLEAR', 'EXTENDED', 'SINGLE', 'SINGLE_PARENT', 'OTHER'], 'required' => true, 'default' => 'NUCLEAR'],
             'head_resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
             
             // Address Information
@@ -26,7 +27,7 @@ class HouseholdSchema
             'complete_address' => ['type' => 'text', 'required' => true],
             
             // Socioeconomic Information
-            'monthly_income' => ['type' => 'enum', 'values' => ['below-10000', '10000-25000', '25000-50000', '50000-100000', 'above-100000'], 'nullable' => true],
+            'monthly_income' => ['type' => 'enum', 'values' => ['BELOW_10000', 'RANGE_10000_25000', 'RANGE_25000_50000', 'RANGE_50000_100000', 'ABOVE_100000'], 'nullable' => true],
             'primary_income_source' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             
             // Household Classification
@@ -36,16 +37,21 @@ class HouseholdSchema
             'has_pwd_member' => ['type' => 'boolean', 'default' => false],
             
             // Housing Information
-            'house_type' => ['type' => 'enum', 'values' => ['concrete', 'semi-concrete', 'wood', 'bamboo', 'mixed'], 'nullable' => true],
-            'ownership_status' => ['type' => 'enum', 'values' => ['owned', 'rented', 'shared', 'informal-settler'], 'nullable' => true],
+            'house_type' => ['type' => 'enum', 'values' => ['CONCRETE', 'SEMI_CONCRETE', 'WOOD', 'BAMBOO', 'MIXED'], 'nullable' => true],
+            'ownership_status' => ['type' => 'enum', 'values' => ['OWNED', 'RENTED', 'SHARED', 'INFORMAL_SETTLER'], 'nullable' => true],
             
             // Utilities Access
             'has_electricity' => ['type' => 'boolean', 'default' => false],
             'has_water_supply' => ['type' => 'boolean', 'default' => false],
             'has_internet_access' => ['type' => 'boolean', 'default' => false],
             
-            // System Fields
+            // Status
+            'status' => ['type' => 'enum', 'values' => ['ACTIVE', 'INACTIVE', 'TRANSFERRED'], 'default' => 'ACTIVE'],
+            
+            // Additional Information
             'remarks' => ['type' => 'text', 'nullable' => true],
+            
+            // System Fields
             'created_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
             'updated_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
         ];
@@ -56,9 +62,13 @@ class HouseholdSchema
      */
     public static function getFillableFields(): array
     {
-        return array_keys(static::getFields());
+        $fields = static::getFields();
+        // Exclude system timestamps and primary key
+        unset($fields['created_at'], $fields['updated_at'], $fields['id']);
+        return array_keys($fields);
     }
-      /**
+    
+    /**
      * Get validation rules for create operations
      */
     public static function getCreateValidationRules(): array
@@ -67,19 +77,17 @@ class HouseholdSchema
         foreach (static::getFields() as $field => $config) {
             $fieldRules = [];
             
-            // Special handling for household_number - make it optional for create since it can be auto-generated
-            if ($field === 'household_number') {
+            // Handle nullable fields
+            if (isset($config['nullable']) && $config['nullable']) {
                 $fieldRules[] = 'nullable';
-                $fieldRules[] = 'string';
-                $fieldRules[] = "max:{$config['max']}";
-                $fieldRules[] = 'unique:households,household_number';
             } elseif (isset($config['required']) && $config['required']) {
                 $fieldRules[] = 'required';
             } else {
                 $fieldRules[] = 'nullable';
             }
             
-            if ($config['type'] === 'string' && $field !== 'household_number') {
+            // Type-specific rules
+            if ($config['type'] === 'string') {
                 $fieldRules[] = 'string';
                 if (isset($config['max'])) {
                     $fieldRules[] = "max:{$config['max']}";
@@ -100,7 +108,7 @@ class HouseholdSchema
                 }
             }
             
-            $rules[$field] = implode('|', $fieldRules);
+            $rules[$field] = implode('|', array_filter($fieldRules));
         }
         
         return $rules;
@@ -109,22 +117,22 @@ class HouseholdSchema
     /**
      * Get validation rules for update operations
      */
-    public static function getUpdateValidationRules(): array
+    public static function getUpdateValidationRules($id = null): array
     {
         $rules = static::getCreateValidationRules();
         
         // Make required fields optional for updates
         foreach ($rules as $field => $rule) {
-            if (str_starts_with($rule, 'required')) {
+            if (str_contains($rule, 'required')) {
                 $rules[$field] = 'sometimes|' . $rule;
             }
         }
         
         // Handle unique validation for updates
-        if (isset($rules['household_number'])) {
+        if (isset($rules['household_number']) && $id) {
             $rules['household_number'] = str_replace(
                 'unique:households,household_number',
-                'unique:households,household_number,{id}',
+                "unique:households,household_number,{$id}",
                 $rules['household_number']
             );
         }
@@ -133,16 +141,61 @@ class HouseholdSchema
     }
     
     /**
+     * Get validation rules for member relationships
+     */
+    public static function getMemberValidationRules(): array
+    {
+        return [
+            'members' => 'nullable|array',
+            'members.*.resident_id' => 'required|exists:residents,id',
+            'members.*.relationship' => 'required|in:HEAD,SPOUSE,SON,DAUGHTER,FATHER,MOTHER,BROTHER,SISTER,GRANDFATHER,GRANDMOTHER,GRANDSON,GRANDDAUGHTER,UNCLE,AUNT,NEPHEW,NIECE,COUSIN,IN_LAW,BOARDER,OTHER',
+        ];
+    }
+    
+    /**
      * Get casts for the model
      */
     public static function getCasts(): array
     {
-        $casts = [];
+        $casts = [
+            'id' => 'string', // UUID cast
+        ];
+        
         foreach (static::getFields() as $field => $config) {
             if ($config['type'] === 'boolean') {
                 $casts[$field] = 'boolean';
             }
         }
-          return $casts;
+        
+        return $casts;
+    }
+    
+    /**
+     * Get relationship type enum values
+     */
+    public static function getRelationshipTypes(): array
+    {
+        return [
+            'HEAD',
+            'SPOUSE', 
+            'SON',
+            'DAUGHTER',
+            'FATHER',
+            'MOTHER',
+            'BROTHER',
+            'SISTER',
+            'GRANDFATHER',
+            'GRANDMOTHER',
+            'GRANDSON',
+            'GRANDDAUGHTER',
+            'UNCLE',
+            'AUNT',
+            'NEPHEW',
+            'NIECE',
+            'COUSIN',
+            'IN_LAW',
+            'BOARDER',
+            'OTHER'
+        ];
     }
 }

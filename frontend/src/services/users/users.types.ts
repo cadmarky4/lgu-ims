@@ -51,7 +51,7 @@ export const UserFormDataSchema = z.object({
   // Personal Information
   first_name: z.string().min(1, 'users.form.error.firstNameRequired'),
   last_name: z.string().min(1, 'users.form.error.lastNameRequired'),
-  middle_name: z.string().optional(),
+  middle_name: z.string().nullable().optional(),
   
   // Contact Information
   email: z.string()
@@ -70,14 +70,17 @@ export const UserFormDataSchema = z.object({
   // Role and Department
   role: UserRoleSchema,
   department: DepartmentSchema,
-  position: z.string().optional(),
-  employee_id: z.string().optional(),
+  position: z.string().nullable().optional(),
+  employee_id: z.string().nullable().optional(),
+  
+  // Relationship to resident (using number to match Laravel foreign key)
+  resident_id: z.string().nullable().optional(),
   
   // Status and Settings
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
   
   // Additional Information
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 // Create user schema (includes password fields)
@@ -86,7 +89,7 @@ export const CreateUserFormDataSchema = UserFormDataSchema.extend({
     .min(8, 'users.form.error.passwordMinLength')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'users.form.error.passwordComplexity'),
   confirm_password: z.string(),
-  send_credentials: z.boolean().default(false),
+  send_credentials: z.boolean(),
 }).refine(
   (data) => data.password === data.confirm_password,
   {
@@ -100,8 +103,8 @@ export const UpdateUserFormDataSchema = UserFormDataSchema.extend({
   password: z.string()
     .min(8, 'users.form.error.passwordMinLength')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'users.form.error.passwordComplexity')
-    .optional(),
-  confirm_password: z.string().optional(),
+    .nullable().optional(),
+  confirm_password: z.string().nullable().optional(),
 }).refine(
   (data) => {
     if (data.password || data.confirm_password) {
@@ -115,23 +118,11 @@ export const UpdateUserFormDataSchema = UserFormDataSchema.extend({
   }
 );
 
-// Main User schema (database entity)
-export const UserSchema = z.object({
-  id: z.number(),
-  username: z.string(),
-  email: z.string().email(),
-  first_name: z.string(),
-  last_name: z.string(),
-  middle_name: z.string().nullable().optional(),
-  phone: z.string(),
-  role: UserRoleSchema,
-  department: DepartmentSchema,
-  position: z.string().nullable().optional(),
-  employee_id: z.string().nullable().optional(),
-  is_active: z.boolean(),
+// Main User schema (database entity) - matches Resident pattern
+export const UserSchema = UserFormDataSchema.extend({
+  id: z.string().uuid(),
   is_verified: z.boolean(),
   last_login_at: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
   created_by: z.number().nullable().optional(),
@@ -140,13 +131,14 @@ export const UserSchema = z.object({
 
 // Query parameters schema
 export const UserParamsSchema = z.object({
-  page: z.number().min(1).optional(),
-  per_page: z.number().min(1).max(100).optional(),
-  search: z.string().optional(),
-  role: UserRoleSchema.optional(),
-  department: DepartmentSchema.optional(),
-  is_active: z.boolean().optional(),
-  is_verified: z.boolean().optional(),
+  page: z.number().min(1).nullable().optional(),
+  per_page: z.number().min(1).max(100).nullable().optional(),
+  search: z.string().nullable().optional(),
+  role: UserRoleSchema.nullable().optional(),
+  department: DepartmentSchema.nullable().optional(),
+  is_active: z.boolean().nullable().optional(),
+  is_verified: z.boolean().nullable().optional(),
+  has_resident: z.boolean().nullable().optional(),
   sort_by: z.enum([
     'first_name',
     'last_name',
@@ -156,8 +148,8 @@ export const UserParamsSchema = z.object({
     'department',
     'created_at',
     'last_login_at'
-  ]).optional(),
-  sort_order: SortOrderSchema.optional(),
+  ]).nullable().optional(),
+  sort_order: SortOrderSchema.nullable().optional(),
 });
 
 // User statistics schema
@@ -170,6 +162,8 @@ export const UserStatisticsSchema = z.object({
   by_department: z.record(z.number()),
   recent_logins: z.number(),
   never_logged_in: z.number(),
+  with_resident: z.number(),
+  without_resident: z.number(),
 });
 
 // Change password schema
@@ -196,12 +190,39 @@ export const UserPermissionsSchema = z.object({
     delete: z.boolean(),
     export: z.boolean(),
   }),
+  households: z.object({
+    view: z.boolean(),
+    create: z.boolean(),
+    edit: z.boolean(),
+    delete: z.boolean(),
+  }),
   users: z.object({
     view: z.boolean(),
     create: z.boolean(),
     edit: z.boolean(),
     delete: z.boolean(),
     manage_roles: z.boolean(),
+  }),
+  documents: z.object({
+    view: z.boolean(),
+    create: z.boolean(),
+    edit: z.boolean(),
+    delete: z.boolean(),
+    approve: z.boolean(),
+  }),
+  appointments: z.object({
+    view: z.boolean(),
+    create: z.boolean(),
+    edit: z.boolean(),
+    delete: z.boolean(),
+    schedule: z.boolean(),
+  }),
+  blotters: z.object({
+    view: z.boolean(),
+    create: z.boolean(),
+    edit: z.boolean(),
+    delete: z.boolean(),
+    investigate: z.boolean(),
   }),
   reports: z.object({
     view: z.boolean(),
@@ -243,6 +264,7 @@ export const transformUserToFormData = (user: User | null): UserFormData => {
       department: 'ADMINISTRATION',
       position: '',
       employee_id: '',
+      resident_id: null,
       is_active: true,
       notes: '',
     };
@@ -259,6 +281,7 @@ export const transformUserToFormData = (user: User | null): UserFormData => {
     department: user.department,
     position: user.position || '',
     employee_id: user.employee_id || '',
+    resident_id: user.resident_id || null,
     is_active: user.is_active,
     notes: user.notes || '',
   };
@@ -268,16 +291,17 @@ export const transformUserToUpdateData = (formData: UserFormData): Partial<User>
   return {
     first_name: formData.first_name,
     last_name: formData.last_name,
-    middle_name: formData.middle_name || null,
+    middle_name: formData.middle_name || undefined,
     email: formData.email,
     phone: formData.phone,
     username: formData.username,
     role: formData.role,
     department: formData.department,
-    position: formData.position || null,
-    employee_id: formData.employee_id || null,
+    position: formData.position || undefined,
+    employee_id: formData.employee_id || undefined,
+    resident_id: formData.resident_id || null,
     is_active: formData.is_active,
-    notes: formData.notes || null,
+    notes: formData.notes || undefined,
   };
 };
 
@@ -299,6 +323,14 @@ export const isUserActive = (user: User): boolean => {
 
 export const hasUserLoggedIn = (user: User): boolean => {
   return !!user.last_login_at;
+};
+
+export const isBarangayOfficial = (user: User): boolean => {
+  return ['BARANGAY_CAPTAIN', 'BARANGAY_SECRETARY', 'BARANGAY_TREASURER', 'BARANGAY_COUNCILOR'].includes(user.role);
+};
+
+export const hasResidentLinked = (user: User): boolean => {
+  return !!user.resident_id;
 };
 
 // Role hierarchy for permission checking

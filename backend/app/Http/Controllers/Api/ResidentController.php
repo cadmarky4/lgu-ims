@@ -8,6 +8,7 @@ use App\Models\Schemas\ResidentSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class ResidentController extends Controller
 {
@@ -24,43 +25,60 @@ class ResidentController extends Controller
                 $query->where('status', $request->status);
             }
 
-            if ($request->has('purok')) {
-                $query->where('purok', $request->purok);
-            }
-
             if ($request->has('barangay')) {
                 $query->where('barangay', $request->barangay);
             }
 
             if ($request->has('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('middle_name', 'like', "%{$search}%");
-                });
+                $query->search($search);
             }
 
             // Special classifications filters
             if ($request->boolean('senior_citizen')) {
-                $query->where('senior_citizen', true);
+                $query->seniorCitizens();
             }
 
             if ($request->boolean('person_with_disability')) {
-                $query->where('person_with_disability', true);
+                $query->pwd();
             }
 
             if ($request->boolean('four_ps_beneficiary')) {
-                $query->where('four_ps_beneficiary', true);
+                $query->fourPs();
             }
 
             if ($request->boolean('is_household_head')) {
-                $query->where('is_household_head', true);
+                $query->householdHeads();
             }
 
-            // Include relationships
+            // Age range filter
+            if ($request->has('age_from') && $request->has('age_to')) {
+                $query->byAgeRange($request->age_from, $request->age_to);
+            }
+
+            // Gender filter
+            if ($request->has('gender')) {
+                $query->byGender($request->gender);
+            }
+
+            // Civil status filter
+            if ($request->has('civil_status')) {
+                $query->byCivilStatus($request->civil_status);
+            }
+
+            // Employment status filter
+            if ($request->has('employment_status')) {
+                $query->byEmploymentStatus($request->employment_status);
+            }
+
+            // Voter status filter
+            if ($request->has('voter_status')) {
+                $query->byVoterStatus($request->voter_status);
+            }
+
+            // Include relationships - updated for pivot table approach
             $query->with([
-                'household',
+                'households', // pivot relationship
                 'createdBy:id,first_name,last_name',
                 'updatedBy:id,first_name,last_name'
             ]);
@@ -74,6 +92,7 @@ class ResidentController extends Controller
             return response()->json($residents);
 
         } catch (\Exception $e) {
+            Log::error('Failed to retrieve residents', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Failed to retrieve residents',
                 'error' => $e->getMessage()
@@ -87,8 +106,8 @@ class ResidentController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            // Validate using schema rules - excluding household relationship fields
-            $validatedData = $request->validate(ResidentSchema::getResidentCreateValidationRules());
+            // Validate using schema rules
+            $validatedData = $request->validate(ResidentSchema::getCreateValidationRules());
 
             // Set created_by if user is authenticated
             if (auth('sanctum')->check()) {
@@ -100,9 +119,11 @@ class ResidentController extends Controller
 
             // Load relationships for response
             $resident->load([
-                'household',
+                'households',
                 'createdBy:id,first_name,last_name'
             ]);
+
+            Log::info('Resident created successfully', ['resident_id' => $resident->id]);
 
             return response()->json([
                 'message' => 'Resident created successfully',
@@ -110,11 +131,13 @@ class ResidentController extends Controller
             ], 201);
 
         } catch (ValidationException $e) {
+            Log::warning('Resident creation validation failed', ['errors' => $e->errors()]);
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Failed to create resident', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Failed to create resident',
                 'error' => $e->getMessage()
@@ -129,7 +152,8 @@ class ResidentController extends Controller
     {
         try {
             $resident->load([
-                'household',
+                'households',
+                'householdsAsHead',
                 'documents',
                 'complaints',
                 'suggestions',
@@ -143,6 +167,10 @@ class ResidentController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to retrieve resident', [
+                'resident_id' => $resident->id,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'message' => 'Failed to retrieve resident',
                 'error' => $e->getMessage()
@@ -156,8 +184,8 @@ class ResidentController extends Controller
     public function update(Request $request, Resident $resident): JsonResponse
     {
         try {
-            // Validate using schema rules - excluding household relationship fields
-            $validatedData = $request->validate(ResidentSchema::getResidentUpdateValidationRules());
+            // Validate using schema rules
+            $validatedData = $request->validate(ResidentSchema::getUpdateValidationRules());
 
             // Set updated_by if user is authenticated
             if (auth('sanctum')->check()) {
@@ -169,9 +197,11 @@ class ResidentController extends Controller
 
             // Load relationships for response
             $resident->load([
-                'household',
+                'households',
                 'updatedBy:id,first_name,last_name'
             ]);
+
+            Log::info('Resident updated successfully', ['resident_id' => $resident->id]);
 
             return response()->json([
                 'message' => 'Resident updated successfully',
@@ -179,11 +209,19 @@ class ResidentController extends Controller
             ]);
 
         } catch (ValidationException $e) {
+            Log::warning('Resident update validation failed', [
+                'resident_id' => $resident->id,
+                'errors' => $e->errors()
+            ]);
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Failed to update resident', [
+                'resident_id' => $resident->id,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'message' => 'Failed to update resident',
                 'error' => $e->getMessage()
@@ -192,19 +230,28 @@ class ResidentController extends Controller
     }
 
     /**
-     * Remove the specified resident
+     * Remove the specified resident (soft delete)
      */
     public function destroy(Resident $resident): JsonResponse
     {
         try {
-            // Soft delete by changing status instead of actual deletion
+            // Remove from any household relationships first
+            $resident->leaveHousehold();
+            
+            // Soft delete by changing status
             $resident->update(['status' => 'INACTIVE']);
+
+            Log::info('Resident deactivated successfully', ['resident_id' => $resident->id]);
 
             return response()->json([
                 'message' => 'Resident deactivated successfully'
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to deactivate resident', [
+                'resident_id' => $resident->id,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'message' => 'Failed to deactivate resident',
                 'error' => $e->getMessage()
@@ -230,7 +277,9 @@ class ResidentController extends Controller
                                 ->where('status', '!=', 'INACTIVE')
                                 ->get(['id', 'first_name', 'last_name', 'middle_name', 'birth_date', 'complete_address']);
 
-            return response()->json($duplicates);
+            return response()->json([
+                'data' => $duplicates
+            ]);
 
         } catch (ValidationException $e) {
             return response()->json([
@@ -252,26 +301,25 @@ class ResidentController extends Controller
     {
         try {
             // Base query for active residents
-            $activeResidents = Resident::where('status', 'ACTIVE');
+            $activeResidents = Resident::active();
             
-            // Age group calculations - SQLite compatible
+            // Age group calculations
             $currentDate = now()->format('Y-m-d');
             $ageGroups = [
-                'children' => (clone $activeResidents)->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 < 18")->count(),
-                'youth' => (clone $activeResidents)->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 BETWEEN 18 AND 35")->count(),
-                'adults' => (clone $activeResidents)->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 BETWEEN 36 AND 59")->count(),
-                'seniors' => (clone $activeResidents)->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 >= 60")->count(),
+                'children' => (clone $activeResidents)->where('age', '<', 18)->count(),
+                'adults' => (clone $activeResidents)->whereBetween('age', [18, 59])->count(),
+                'seniors' => (clone $activeResidents)->where('age', '>=', 60)->count(),
             ];
 
             // Get employed residents count
-            $employedResidents = (clone $activeResidents)->whereIn('employment_status', ['EMPLOYED', 'SELF_EMPLOYED', 'GOVERNMENT_EMPLOYEE', 'PRIVATE_EMPLOYEE'])->count();
+            $employedResidents = (clone $activeResidents)->whereIn('employment_status', ['EMPLOYED', 'SELF_EMPLOYED'])->count();
 
-            // Get purok distribution
-            $residentsByPurok = (clone $activeResidents)
-                ->selectRaw('purok, COUNT(*) as count')
-                ->whereNotNull('purok')
-                ->groupBy('purok')
-                ->pluck('count', 'purok')
+            // Get barangay distribution
+            $residentsByBarangay = (clone $activeResidents)
+                ->selectRaw('barangay, COUNT(*) as count')
+                ->whereNotNull('barangay')
+                ->groupBy('barangay')
+                ->pluck('count', 'barangay')
                 ->toArray();
 
             // Get civil status distribution  
@@ -282,76 +330,93 @@ class ResidentController extends Controller
                 ->pluck('count', 'civil_status')
                 ->toArray();
 
-            // Calculate average household size
-            $totalHouseholds = \App\Models\Household::where('status', 'ACTIVE')->count();
-            $totalActiveResidents = (clone $activeResidents)->count();
-            $averageHouseholdSize = $totalHouseholds > 0 ? round($totalActiveResidents / $totalHouseholds, 2) : 0;
+            // Get employment status distribution
+            $residentsByEmploymentStatus = (clone $activeResidents)
+                ->selectRaw('employment_status, COUNT(*) as count')
+                ->whereNotNull('employment_status')
+                ->groupBy('employment_status')
+                ->pluck('count', 'employment_status')
+                ->toArray();
 
             // Get counts for the main statistics
-            $totalResidents = $totalActiveResidents;
+            $totalResidents = (clone $activeResidents)->count();
             $maleResidents = (clone $activeResidents)->where('gender', 'MALE')->count();
             $femaleResidents = (clone $activeResidents)->where('gender', 'FEMALE')->count();
             $seniorCitizens = (clone $activeResidents)->where('senior_citizen', true)->count();
             $personsWithDisability = (clone $activeResidents)->where('person_with_disability', true)->count();
             $fourPsBeneficiaries = (clone $activeResidents)->where('four_ps_beneficiary', true)->count();
             $indigenousPeople = (clone $activeResidents)->where('indigenous_people', true)->count();
-            $householdHeads = (clone $activeResidents)->where('is_household_head', true)->count();
+            $householdHeads = (clone $activeResidents)->householdHeads()->count();
             $registeredVoters = (clone $activeResidents)->where('voter_status', 'REGISTERED')->count();
 
             $stats = [
-                // Basic counts - matching frontend expectations exactly
                 'total_residents' => $totalResidents,
                 'active_residents' => $totalResidents,
+                'inactive_residents' => Resident::inactive()->count(),
                 'male_residents' => $maleResidents,
                 'female_residents' => $femaleResidents,
-                
-                // Special categories - matching frontend field names
                 'senior_citizens' => $seniorCitizens,
-                'persons_with_disability' => $personsWithDisability,
-                'pwd_count' => $personsWithDisability, // Alias for frontend compatibility
+                'pwd_residents' => $personsWithDisability,
                 'four_ps_beneficiaries' => $fourPsBeneficiaries,
                 'indigenous_people' => $indigenousPeople,
                 'household_heads' => $householdHeads,
-                
-                // Employment and voter status
                 'registered_voters' => $registeredVoters,
                 'employed_residents' => $employedResidents,
                 
-                // Age groups - matching frontend structure
-                'residents_by_age_group' => $ageGroups,
-                'children_count' => $ageGroups['children'], // Direct field for frontend
-                
-                // Geographic distribution
-                'residents_by_purok' => $residentsByPurok,
-                
-                // Demographic breakdowns
-                'residents_by_civil_status' => $residentsByCivilStatus,
-                'by_gender' => [
-                    'male' => $maleResidents,
-                    'female' => $femaleResidents,
-                ],
-                'by_civil_status' => $residentsByCivilStatus, // Alias for backward compatibility
-                'by_employment_status' => (clone $activeResidents)
-                    ->whereNotNull('employment_status')
-                    ->selectRaw('employment_status, COUNT(*) as count')
-                    ->groupBy('employment_status')
-                    ->pluck('count', 'employment_status')
-                    ->toArray(),
-                
-                // Household statistics
-                'average_household_size' => $averageHouseholdSize,
-                'total_households' => $totalHouseholds,
+                'by_age_group' => $ageGroups,
+                'by_civil_status' => $residentsByCivilStatus,
+                'by_employment_status' => $residentsByEmploymentStatus,
+                'by_barangay' => $residentsByBarangay,
             ];
 
             return response()->json([
-                'success' => true,
                 'data' => $stats
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to get residents statistics', ['error' => $e->getMessage()]);
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to get statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get age group statistics with details
+     */
+    public function ageGroups(): JsonResponse
+    {
+        try {
+            $ageGroups = [
+                'children' => Resident::active()->minors()->count(),
+                'adults' => Resident::active()->adults()->count(),
+                'seniors' => Resident::active()->seniors()->count(),
+                'by_age_range' => [
+                    '0-4' => Resident::active()->byAgeRange(0, 4)->count(),
+                    '5-9' => Resident::active()->byAgeRange(5, 9)->count(),
+                    '10-14' => Resident::active()->byAgeRange(10, 14)->count(),
+                    '15-19' => Resident::active()->byAgeRange(15, 19)->count(),
+                    '20-24' => Resident::active()->byAgeRange(20, 24)->count(),
+                    '25-29' => Resident::active()->byAgeRange(25, 29)->count(),
+                    '30-34' => Resident::active()->byAgeRange(30, 34)->count(),
+                    '35-39' => Resident::active()->byAgeRange(35, 39)->count(),
+                    '40-44' => Resident::active()->byAgeRange(40, 44)->count(),
+                    '45-49' => Resident::active()->byAgeRange(45, 49)->count(),
+                    '50-54' => Resident::active()->byAgeRange(50, 54)->count(),
+                    '55-59' => Resident::active()->byAgeRange(55, 59)->count(),
+                    '60+' => Resident::active()->where('age', '>=', 60)->count(),
+                ]
+            ];
+
+            return response()->json([
+                'data' => $ageGroups
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get age group statistics', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Failed to get age group statistics',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -363,7 +428,9 @@ class ResidentController extends Controller
     public function restore(Resident $resident): JsonResponse
     {
         try {
-            $resident->update(['status' => 'ACTIVE']);
+            $resident->activate();
+
+            Log::info('Resident restored successfully', ['resident_id' => $resident->id]);
 
             return response()->json([
                 'message' => 'Resident restored successfully',
@@ -371,6 +438,10 @@ class ResidentController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to restore resident', [
+                'resident_id' => $resident->id,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'message' => 'Failed to restore resident',
                 'error' => $e->getMessage()
@@ -379,216 +450,140 @@ class ResidentController extends Controller
     }
 
     /**
-     * Get residents by purok
+     * Special list endpoints
      */
-    public function getByPurok(Request $request): JsonResponse
-    {
-        try {
-            $request->validate([
-                'purok' => 'required|string'
-            ]);
-
-            $residents = Resident::where('status', 'ACTIVE')
-                ->where('purok', $request->purok)
-                ->with(['household'])
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $residents
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get residents by purok',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
      * Get senior citizens
      */
-    public function getSeniorCitizens(Request $request): JsonResponse
+    public function seniorCitizens(Request $request): JsonResponse
     {
-        try {
-            $query = Resident::where('status', 'ACTIVE')
-                ->where('senior_citizen', true);
-
-            if ($request->has('purok')) {
-                $query->where('purok', $request->purok);
-            }
-
-            $residents = $query->with(['household'])
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $residents,
-                'count' => $residents->count()
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get senior citizens',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return $this->getSpecialList(
+            Resident::active()->seniorCitizens(),
+            $request->get('barangay'),
+            'senior citizens'
+        );
     }
 
     /**
      * Get persons with disability (PWD)
      */
-    public function getPWD(Request $request): JsonResponse
+    public function pwd(Request $request): JsonResponse
     {
-        try {
-            $query = Resident::where('status', 'ACTIVE')
-                ->where('person_with_disability', true);
-
-            if ($request->has('purok')) {
-                $query->where('purok', $request->purok);
-            }
-
-            $residents = $query->with(['household'])
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $residents,
-                'count' => $residents->count()
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get PWD residents',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return $this->getSpecialList(
+            Resident::active()->pwd(),
+            $request->get('barangay'),
+            'PWD residents'
+        );
     }
 
     /**
      * Get 4Ps beneficiaries
      */
-    public function getFourPs(Request $request): JsonResponse
+    public function fourPs(Request $request): JsonResponse
     {
-        try {
-            $query = Resident::where('status', 'ACTIVE')
-                ->where('four_ps_beneficiary', true);
-
-            if ($request->has('purok')) {
-                $query->where('purok', $request->purok);
-            }
-
-            $residents = $query->with(['household'])
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $residents,
-                'count' => $residents->count()
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get 4Ps beneficiaries',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return $this->getSpecialList(
+            Resident::active()->fourPs(),
+            $request->get('barangay'),
+            '4Ps beneficiaries'
+        );
     }
 
     /**
      * Get household heads
      */
-    public function getHouseholdHeads(Request $request): JsonResponse
+    public function householdHeads(Request $request): JsonResponse
+    {
+        return $this->getSpecialList(
+            Resident::active()->householdHeads(),
+            $request->get('barangay'),
+            'household heads'
+        );
+    }
+
+    /**
+     * Get indigenous people
+     */
+    public function indigenous(Request $request): JsonResponse
+    {
+        return $this->getSpecialList(
+            Resident::active()->indigenous(),
+            $request->get('barangay'),
+            'indigenous people'
+        );
+    }
+
+    /**
+     * Upload profile photo
+     */
+    public function uploadPhoto(Request $request, Resident $resident): JsonResponse
     {
         try {
-            $query = Resident::where('status', 'ACTIVE')
-                ->where('is_household_head', true);
-
-            if ($request->has('purok')) {
-                $query->where('purok', $request->purok);
-            }
-
-            $residents = $query->with(['household'])
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $residents,
-                'count' => $residents->count()
+            $request->validate([
+                'photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' // 5MB max
             ]);
 
-        } catch (\Exception $e) {
+            $photo = $request->file('photo');
+            $path = $photo->store('residents/photos', 'public');
+            
+            $resident->update([
+                'profile_photo_url' => asset('storage/' . $path),
+                'updated_by' => auth('sanctum')->id()
+            ]);
+
+            Log::info('Profile photo uploaded successfully', [
+                'resident_id' => $resident->id,
+                'photo_path' => $path
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to get household heads',
+                'message' => 'Profile photo uploaded successfully',
+                'data' => $resident
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to upload profile photo', [
+                'resident_id' => $resident->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'message' => 'Failed to upload profile photo',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get age group statistics with details
+     * Helper method for special lists
      */
-    public function getAgeGroupStatistics(): JsonResponse
+    private function getSpecialList($query, ?string $barangay, string $description): JsonResponse
     {
         try {
-            $currentDate = now()->format('Y-m-d');
-            
-            $ageGroups = [
-                'children' => [
-                    'count' => Resident::where('status', 'ACTIVE')
-                        ->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 < 18")
-                        ->count(),
-                    'age_range' => '0-17 years',
-                    'description' => 'Children and Minors'
-                ],
-                'youth' => [
-                    'count' => Resident::where('status', 'ACTIVE')
-                        ->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 BETWEEN 18 AND 35")
-                        ->count(),
-                    'age_range' => '18-35 years',
-                    'description' => 'Youth and Young Adults'
-                ],
-                'adults' => [
-                    'count' => Resident::where('status', 'ACTIVE')
-                        ->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 BETWEEN 36 AND 59")
-                        ->count(),
-                    'age_range' => '36-59 years',
-                    'description' => 'Working Age Adults'
-                ],
-                'seniors' => [
-                    'count' => Resident::where('status', 'ACTIVE')
-                        ->whereRaw("(julianday('{$currentDate}') - julianday(birth_date)) / 365.25 >= 60")
-                        ->count(),
-                    'age_range' => '60+ years',
-                    'description' => 'Senior Citizens'
-                ]
-            ];
+            if ($barangay) {
+                $query->where('barangay', $barangay);
+            }
+
+            $residents = $query->with('households')
+                              ->orderBy('last_name')
+                              ->orderBy('first_name')
+                              ->get();
 
             return response()->json([
-                'success' => true,
-                'data' => $ageGroups
+                'data' => [
+                    'data' => $residents,
+                    'count' => $residents->count()
+                ]
             ]);
 
         } catch (\Exception $e) {
+            Log::error("Failed to get {$description}", ['error' => $e->getMessage()]);
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to get age group statistics',
+                'message' => "Failed to get {$description}",
                 'error' => $e->getMessage()
             ], 500);
         }

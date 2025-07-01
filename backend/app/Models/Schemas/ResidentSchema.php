@@ -3,226 +3,623 @@
 namespace App\Models\Schemas;
 
 /**
- * Centralized schema definition for Resident model
- * This serves as the single source of truth for all resident-related data structure
+ * Resident Schema - Single source of truth for resident data structure
+ * Updated to align with pivot table approach and frontend Zod schema
  */
 class ResidentSchema
 {
     /**
-     * Complete field definitions based on frontend requirements
+     * Gender constants
+     */
+    public const GENDERS = [
+        'MALE',
+        'FEMALE',
+        'NON_BINARY',
+        'PREFER_NOT_TO_SAY'
+    ];
+
+    /**
+     * Civil status constants
+     */
+    public const CIVIL_STATUSES = [
+        'SINGLE',
+        'LIVE_IN',
+        'MARRIED',
+        'WIDOWED',
+        'DIVORCED',
+        'SEPARATED',
+        'ANNULLED',
+        'PREFER_NOT_TO_SAY'
+    ];
+
+    /**
+     * Nationality constants
+     */
+    public const NATIONALITIES = [
+        'FILIPINO',
+        'AMERICAN',
+        'BRITISH',
+        'CANADIAN',
+        'AUSTRALIAN',
+        'OTHER'
+    ];
+
+    /**
+     * Religion constants
+     */
+    public const RELIGIONS = [
+        'CATHOLIC',
+        'IGLESIA_NI_CRISTO',
+        'EVANGELICAL',
+        'PROTESTANT',
+        'ISLAM',
+        'BUDDHIST',
+        'HINDU',
+        'SEVENTH_DAY_ADVENTIST',
+        'JEHOVAHS_WITNESS',
+        'BORN_AGAIN_CHRISTIAN',
+        'ORTHODOX',
+        'JUDAISM',
+        'ATHEIST',
+        'AGLIPAYAN',
+        'OTHER',
+        'PREFER_NOT_TO_SAY'
+    ];
+
+    /**
+     * Educational attainment constants
+     */
+    public const EDUCATIONAL_ATTAINMENTS = [
+        'NO_FORMAL_EDUCATION',
+        'ELEMENTARY_UNDERGRADUATE',
+        'ELEMENTARY_GRADUATE',
+        'HIGH_SCHOOL_UNDERGRADUATE',
+        'HIGH_SCHOOL_GRADUATE',
+        'COLLEGE_UNDERGRADUATE',
+        'COLLEGE_GRADUATE',
+        'POST_GRADUATE',
+        'VOCATIONAL',
+        'OTHER'
+    ];
+
+    /**
+     * Employment status constants
+     */
+    public const EMPLOYMENT_STATUSES = [
+        'EMPLOYED',
+        'UNEMPLOYED',
+        'SELF_EMPLOYED',
+        'RETIRED',
+        'STUDENT',
+        'OFW'
+    ];
+
+    /**
+     * Voter status constants
+     */
+    public const VOTER_STATUSES = [
+        'NOT_REGISTERED',
+        'REGISTERED',
+        'DECEASED',
+        'TRANSFERRED'
+    ];
+
+    /**
+     * Resident status constants
+     */
+    public const RESIDENT_STATUSES = [
+        'ACTIVE',
+        'INACTIVE',
+        'DECEASED',
+        'TRANSFERRED'
+    ];
+
+    /**
+     * Complete field definitions for residents
      */
     public static function getFields(): array
     {
         return [
             // Basic Information
-            'first_name' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'last_name' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'middle_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'suffix' => ['type' => 'string', 'max' => 10, 'nullable' => true],
-            'birth_date' => ['type' => 'date', 'required' => true, 'before' => 'today'],
-            'age' => ['type' => 'integer', 'min' => 0, 'max' => 150, 'nullable' => true], // Computed from birth_date
-            'birth_place' => ['type' => 'string', 'max' => 255, 'required' => true],
-            'gender' => ['type' => 'enum', 'values' => ['MALE', 'FEMALE'], 'required' => true],
-            'civil_status' => ['type' => 'enum', 'values' => ['SINGLE', 'MARRIED', 'WIDOWED', 'DIVORCED', 'SEPARATED'], 'required' => true],
-            'nationality' => ['type' => 'string', 'max' => 100, 'required' => true],
-            'religion' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            // Profile Photo
-            'profile_photo_url' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            
+            'first_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'required' => true,
+                'fillable' => true,
+                'searchable' => true
+            ],
+            'last_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'required' => true,
+                'fillable' => true,
+                'searchable' => true
+            ],
+            'middle_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true,
+                'searchable' => true
+            ],
+            'suffix' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'birth_date' => [
+                'type' => 'date',
+                'required' => true,
+                'fillable' => true,
+                'cast' => 'date'
+            ],
+            'age' => [
+                'type' => 'integer',
+                'nullable' => true,
+                'fillable' => true,
+                'min' => 0,
+                'max' => 150
+            ],
+            'birth_place' => [
+                'type' => 'string',
+                'max' => 255,
+                'required' => true,
+                'fillable' => true
+            ],
+            'gender' => [
+                'type' => 'enum',
+                'values' => self::GENDERS,
+                'required' => true,
+                'fillable' => true
+            ],
+            'civil_status' => [
+                'type' => 'enum',
+                'values' => self::CIVIL_STATUSES,
+                'required' => true,
+                'fillable' => true
+            ],
+            'nationality' => [
+                'type' => 'enum',
+                'values' => self::NATIONALITIES,
+                'required' => true,
+                'fillable' => true
+            ],
+            'religion' => [
+                'type' => 'enum',
+                'values' => self::RELIGIONS,
+                'required' => true,
+                'fillable' => true
+            ],
+
+            // Employment and Education
+            'educational_attainment' => [
+                'type' => 'enum',
+                'values' => self::EDUCATIONAL_ATTAINMENTS,
+                'required' => true,
+                'fillable' => true
+            ],
+            'employment_status' => [
+                'type' => 'enum',
+                'values' => self::EMPLOYMENT_STATUSES,
+                'required' => true,
+                'fillable' => true
+            ],
+            'occupation' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'employer' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
             // Contact Information
-            'mobile_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'telephone_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'email_address' => ['type' => 'email', 'max' => 255, 'nullable' => true],
-            
+            'mobile_number' => [
+                'type' => 'string',
+                'max' => 20,
+                'nullable' => true,
+                'fillable' => true,
+                'regex' => '/^(\+639|09)\d{9}$/'
+            ],
+            'landline_number' => [
+                'type' => 'string',
+                'max' => 20,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'email_address' => [
+                'type' => 'email',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
             // Address Information
-            'house_number' => ['type' => 'string', 'max' => 50, 'nullable' => true],
-            'street' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'purok' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'barangay' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'municipality' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'province' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'zip_code' => ['type' => 'string', 'max' => 10, 'nullable' => true],
-            'complete_address' => ['type' => 'text', 'required' => true],
-            
-            // Government IDs & Documents
-            'primary_id_type' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'id_number' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'philhealth_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'sss_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'tin_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'voters_id_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'voter_status' => ['type' => 'enum', 'values' => ['REGISTERED', 'NOT_REGISTERED', 'DECEASED', 'TRANSFERRED'], 'required' => true],
-            'precinct_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            
+            'region' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'province' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'city' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'barangay' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'house_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'street' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'complete_address' => [
+                'type' => 'text',
+                'required' => true,
+                'fillable' => true
+            ],
+
             // Family Information
-            'household_id' => ['type' => 'foreignId', 'references' => 'households.id', 'nullable' => true],
-            'is_household_head' => ['type' => 'boolean', 'default' => false],
-            'relationship_to_head' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            'mother_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'father_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            
-            // Emergency Contact
-            'emergency_contact_name' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'emergency_contact_number' => ['type' => 'string', 'max' => 20, 'nullable' => true],
-            'emergency_contact_relationship' => ['type' => 'string', 'max' => 100, 'nullable' => true],
-            
-            // Employment Information
-            'occupation' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'employer' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'monthly_income' => ['type' => 'decimal', 'precision' => 10, 'scale' => 2, 'nullable' => true],
-            'employment_status' => ['type' => 'enum', 'values' => ['EMPLOYED', 'UNEMPLOYED', 'SELF_EMPLOYED', 'RETIRED', 'STUDENT', 'OFW'], 'nullable' => true],
-            'educational_attainment' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            
-            // Health & Medical Information
-            'medical_conditions' => ['type' => 'text', 'nullable' => true],
-            'allergies' => ['type' => 'text', 'nullable' => true],
-            
+            'mother_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'father_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'emergency_contact_name' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'emergency_contact_number' => [
+                'type' => 'string',
+                'max' => 20,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'emergency_contact_relationship' => [
+                'type' => 'string',
+                'max' => 100,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
+            // Government IDs
+            'primary_id_type' => [
+                'type' => 'string',
+                'max' => 100,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'id_number' => [
+                'type' => 'string',
+                'max' => 100,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'philhealth_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'sss_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'tin_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'voters_id_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'voter_status' => [
+                'type' => 'enum',
+                'values' => self::VOTER_STATUSES,
+                'required' => true,
+                'fillable' => true
+            ],
+            'precinct_number' => [
+                'type' => 'string',
+                'max' => 50,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
+            // Health & Medical
+            'medical_conditions' => [
+                'type' => 'text',
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'allergies' => [
+                'type' => 'text',
+                'nullable' => true,
+                'fillable' => true
+            ],
+
             // Special Classifications
-            'senior_citizen' => ['type' => 'boolean', 'default' => false],
-            'person_with_disability' => ['type' => 'boolean', 'default' => false],
-            'disability_type' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'indigenous_people' => ['type' => 'boolean', 'default' => false],
-            'indigenous_group' => ['type' => 'string', 'max' => 255, 'nullable' => true],
-            'four_ps_beneficiary' => ['type' => 'boolean', 'default' => false],
-            'four_ps_household_id' => ['type' => 'string', 'max' => 50, 'nullable' => true],
-            
-            // System Fields
-            'status' => ['type' => 'enum', 'values' => ['ACTIVE', 'INACTIVE', 'DECEASED'], 'default' => 'ACTIVE'],
-            'remarks' => ['type' => 'text', 'nullable' => true],
-            'created_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
-            'updated_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
+            'senior_citizen' => [
+                'type' => 'boolean',
+                'default' => false,
+                'fillable' => true,
+                'cast' => 'boolean'
+            ],
+            'person_with_disability' => [
+                'type' => 'boolean',
+                'default' => false,
+                'fillable' => true,
+                'cast' => 'boolean'
+            ],
+            'disability_type' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'indigenous_people' => [
+                'type' => 'boolean',
+                'default' => false,
+                'fillable' => true,
+                'cast' => 'boolean'
+            ],
+            'indigenous_group' => [
+                'type' => 'string',
+                'max' => 255,
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'four_ps_beneficiary' => [
+                'type' => 'boolean',
+                'default' => false,
+                'fillable' => true,
+                'cast' => 'boolean'
+            ],
+            'four_ps_household_id' => [
+                'type' => 'string',
+                'max' => 100,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
+            // Profile photo
+            'profile_photo_url' => [
+                'type' => 'string',
+                'max' => 500,
+                'nullable' => true,
+                'fillable' => true
+            ],
+
+            // Status (REMOVED household_id and is_household_head since we use pivot table)
+            'status' => [
+                'type' => 'enum',
+                'values' => self::RESIDENT_STATUSES,
+                'default' => 'ACTIVE',
+                'fillable' => true
+            ],
+
+            // Audit fields
+            'created_by' => [
+                'type' => 'foreignId',
+                'references' => 'users.id',
+                'nullable' => true,
+                'fillable' => true
+            ],
+            'updated_by' => [
+                'type' => 'foreignId',
+                'references' => 'users.id',
+                'nullable' => true,
+                'fillable' => true
+            ],
+
+            // Timestamps
+            'created_at' => [
+                'type' => 'datetime',
+                'cast' => 'datetime'
+            ],
+            'updated_at' => [
+                'type' => 'datetime',
+                'cast' => 'datetime'
+            ],
+            'deleted_at' => [
+                'type' => 'datetime',
+                'nullable' => true,
+                'cast' => 'datetime'
+            ],
         ];
     }
-    
+
     /**
      * Get fillable fields for the model
      */
     public static function getFillableFields(): array
     {
-        return array_keys(static::getFields());
+        $fields = static::getFields();
+        $fillable = [];
+
+        foreach ($fields as $field => $config) {
+            if (isset($config['fillable']) && $config['fillable']) {
+                $fillable[] = $field;
+            }
+        }
+
+        return $fillable;
     }
-    
+
+    /**
+     * Get searchable fields for the model
+     */
+    public static function getSearchableFields(): array
+    {
+        $fields = static::getFields();
+        $searchable = [];
+
+        foreach ($fields as $field => $config) {
+            if (isset($config['searchable']) && $config['searchable']) {
+                $searchable[] = $field;
+            }
+        }
+
+        return $searchable;
+    }
+
     /**
      * Get validation rules for create operations
      */
     public static function getCreateValidationRules(): array
     {
         $rules = [];
-        foreach (static::getFields() as $field => $config) {
+        $fields = static::getFields();
+
+        foreach ($fields as $field => $config) {
+            // Skip system fields
+            if (in_array($field, ['created_at', 'updated_at', 'deleted_at'])) {
+                continue;
+            }
+
             $fieldRules = [];
-            
+
+            // Required/nullable
             if (isset($config['required']) && $config['required']) {
                 $fieldRules[] = 'required';
             } else {
                 $fieldRules[] = 'nullable';
             }
-            
-            if ($config['type'] === 'string') {
-                $fieldRules[] = 'string';
-                if (isset($config['max'])) {
-                    $fieldRules[] = "max:{$config['max']}";
-                }
-            } elseif ($config['type'] === 'email') {
-                $fieldRules[] = 'email';
-                if (isset($config['max'])) {
-                    $fieldRules[] = "max:{$config['max']}";
-                }
-            } elseif ($config['type'] === 'date') {
-                $fieldRules[] = 'date';
-                if (isset($config['before'])) {
-                    $fieldRules[] = "before:{$config['before']}";
-                }            } elseif ($config['type'] === 'enum') {
-                $fieldRules[] = 'in:' . implode(',', $config['values']);
-            } elseif ($config['type'] === 'boolean') {
-                $fieldRules[] = 'boolean';
-            } elseif ($config['type'] === 'integer') {
-                $fieldRules[] = 'integer';
-                if (isset($config['min'])) {
-                    $fieldRules[] = "min:{$config['min']}";
-                }
-                if (isset($config['max'])) {
-                    $fieldRules[] = "max:{$config['max']}";
-                }
-            } elseif ($config['type'] === 'decimal') {
-                $fieldRules[] = 'numeric';
-                $fieldRules[] = 'min:0';
-            } elseif ($config['type'] === 'foreignId') {
-                if (isset($config['references'])) {
-                    $table = explode('.', $config['references'])[0];
-                    $fieldRules[] = "exists:{$table},id";
-                }
+
+            // Type-specific rules
+            switch ($config['type']) {
+                case 'string':
+                    $fieldRules[] = 'string';
+                    if (isset($config['max'])) {
+                        $fieldRules[] = "max:{$config['max']}";
+                    }
+                    if (isset($config['min'])) {
+                        $fieldRules[] = "min:{$config['min']}";
+                    }
+                    if (isset($config['regex'])) {
+                        $fieldRules[] = 'regex:' . $config['regex'];
+                    }
+                    break;
+
+                case 'email':
+                    $fieldRules[] = 'email';
+                    if (isset($config['max'])) {
+                        $fieldRules[] = "max:{$config['max']}";
+                    }
+                    break;
+
+                case 'enum':
+                    $fieldRules[] = 'in:' . implode(',', $config['values']);
+                    break;
+
+                case 'text':
+                    $fieldRules[] = 'string';
+                    break;
+
+                case 'boolean':
+                    $fieldRules[] = 'boolean';
+                    break;
+
+                case 'date':
+                    $fieldRules[] = 'date';
+                    $fieldRules[] = 'before:today'; // Birth date must be in the past
+                    break;
+
+                case 'integer':
+                    $fieldRules[] = 'integer';
+                    if (isset($config['min'])) {
+                        $fieldRules[] = "min:{$config['min']}";
+                    }
+                    if (isset($config['max'])) {
+                        $fieldRules[] = "max:{$config['max']}";
+                    }
+                    break;
+
+                case 'foreignId':
+                    $fieldRules[] = 'integer';
+                    if (isset($config['references'])) {
+                        $fieldRules[] = 'exists:' . $config['references'];
+                    }
+                    break;
             }
-            
-            $rules[$field] = implode('|', $fieldRules);
+
+            if (!empty($fieldRules)) {
+                $rules[$field] = implode('|', $fieldRules);
+            }
         }
-        
+
         return $rules;
     }
-    
+
     /**
      * Get validation rules for update operations
      */
     public static function getUpdateValidationRules(): array
     {
         $rules = static::getCreateValidationRules();
-        
-        // Make required fields optional for updates
+
+        // Make most fields optional for updates
         foreach ($rules as $field => $rule) {
             if (str_starts_with($rule, 'required')) {
                 $rules[$field] = 'sometimes|' . $rule;
             }
         }
-        
+
         return $rules;
     }
-    
-    /**
-     * Get validation rules for resident create operations (excluding household relationship fields)
-     */
-    public static function getResidentCreateValidationRules(): array
-    {
-        $rules = static::getCreateValidationRules();
-        
-        // Remove household relationship fields that should only be managed by Household operations
-        unset($rules['household_id']);
-        unset($rules['is_household_head']);
-        unset($rules['relationship_to_head']);
-        
-        return $rules;
-    }
-    
-    /**
-     * Get validation rules for resident update operations (excluding household relationship fields)
-     */
-    public static function getResidentUpdateValidationRules(): array
-    {
-        $rules = static::getUpdateValidationRules();
-        
-        // Remove household relationship fields that should only be managed by Household operations
-        unset($rules['household_id']);
-        unset($rules['is_household_head']);
-        unset($rules['relationship_to_head']);
-        
-        return $rules;
-    }
-    
+
     /**
      * Get casts for the model
-     */    public static function getCasts(): array
+     */
+    public static function getCasts(): array
     {
         $casts = [];
-        foreach (static::getFields() as $field => $config) {
-            if ($config['type'] === 'date') {
-                $casts[$field] = 'date';
-            } elseif ($config['type'] === 'boolean') {
-                $casts[$field] = 'boolean';
-            } elseif ($config['type'] === 'integer') {
-                $casts[$field] = 'integer';
-            } elseif ($config['type'] === 'decimal') {
-                $casts[$field] = "decimal:{$config['scale']}";
+        $fields = static::getFields();
+
+        foreach ($fields as $field => $config) {
+            if (isset($config['cast'])) {
+                $casts[$field] = $config['cast'];
             }
         }
-        
+
         return $casts;
     }
 }

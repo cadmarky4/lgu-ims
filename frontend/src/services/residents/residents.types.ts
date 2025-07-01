@@ -94,7 +94,7 @@ export const EducationalAttainmentSchema = z.enum([
 
 // Household schema
 export const HouseholdSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   household_number: z.string(),
   household_head_name: z.string(),
 });
@@ -135,7 +135,7 @@ export const ResidentFormDataSchema = z.object({
   // Contact Information
   mobile_number: z.string().optional(),
   landline_number: z.string().optional(),
-  email_address: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
+  email_address: z.union([z.string().email('residents.form.validation.email'), z.literal('')]).optional(),
 
   // Address Information - Fixed field mapping
   region: z.string().optional(),
@@ -144,7 +144,7 @@ export const ResidentFormDataSchema = z.object({
   barangay: z.string().optional(),
   house_number: z.string().optional(),
   street: z.string().optional(),
-  complete_address: z.string().min(1, 'Complete address is required'),
+  complete_address: z.string().min(1, 'residents.form.validation.required'),
   
   // Family Information
   mother_name: z.string().optional(),
@@ -182,13 +182,13 @@ export const ResidentFormDataSchema = z.object({
 
 // Main Resident schema
 export const ResidentSchema = ResidentFormDataSchema.extend({
-  id: z.number(),
+  id: z.string().uuid(),
   status: ResidentStatusSchema,
   created_at: z.string(),
   updated_at: z.string(),
 });
 
-// Query parameters schema
+// Updated ResidentParamsSchema without household_id
 export const ResidentParamsSchema = z.object({
   page: z.number().min(1).optional(),
   per_page: z.number().min(1).max(100).optional(),
@@ -198,13 +198,47 @@ export const ResidentParamsSchema = z.object({
   civil_status: CivilStatusSchema.optional(),
   employment_status: EmploymentStatusSchema.optional(),
   voter_status: VoterStatusSchema.optional(),
-  household_id: z.number().optional(),
+  
+  // Special classifications
   senior_citizen: z.boolean().optional(),
   person_with_disability: z.boolean().optional(),
   indigenous_people: z.boolean().optional(),
   four_ps_beneficiary: z.boolean().optional(),
+  
+  // Age filters
   age_from: z.number().min(0).optional(),
   age_to: z.number().min(0).optional(),
+  
+  // NEW: Household-related filters using pivot table approach
+  is_household_head: z.boolean().optional(),
+  household_relationship: z.enum([
+    'HEAD',
+    'SPOUSE',
+    'SON', 
+    'DAUGHTER',
+    'FATHER',
+    'MOTHER',
+    'BROTHER',
+    'SISTER',
+    'GRANDFATHER',
+    'GRANDMOTHER',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'UNCLE',
+    'AUNT',
+    'NEPHEW',
+    'NIECE',
+    'COUSIN',
+    'IN_LAW',
+    'BOARDER',
+    'OTHER'
+  ]).optional(),
+  
+  // Address filters (these remain the same)
+  barangay: z.string().optional(),
+  region: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
 });
 
 // Statistics schemas

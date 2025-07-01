@@ -38,32 +38,74 @@ Route::prefix('auth')->group(function () {
 });
 
 // TEMPORARY: Residents routes without authentication for testing
-Route::prefix('residents')->group(function () {
-    Route::get('/statistics', [ResidentController::class, 'statistics']);
-    Route::get('/age-groups', [ResidentController::class, 'getAgeGroupStatistics']);
-    Route::get('/by-purok', [ResidentController::class, 'getByPurok']);
-    Route::get('/senior-citizens', [ResidentController::class, 'getSeniorCitizens']);
-    Route::get('/pwd', [ResidentController::class, 'getPWD']);
-    Route::get('/four-ps', [ResidentController::class, 'getFourPs']);
-    Route::get('/household-heads', [ResidentController::class, 'getHouseholdHeads']);
-    Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates']);
-    Route::post('/{resident}/restore', [ResidentController::class, 'restore']);
-});
-Route::apiResource('residents', ResidentController::class);
+Route::prefix('residents')->name('residents.')->group(function () {
+    // Statistics endpoints
+    Route::get('/statistics', [ResidentController::class, 'statistics'])->name('statistics');
+    Route::get('/age-groups', [ResidentController::class, 'ageGroups'])->name('age-groups');
 
-// TEMPORARY: Households routes without authentication for testing
-Route::prefix('households')->group(function () {
-    Route::get('/statistics', [HouseholdController::class, 'statistics']);
-    Route::get('/search', [HouseholdController::class, 'search']);
-    Route::get('/by-barangay/{barangay}', [HouseholdController::class, 'byBarangay']);
-    Route::get('/four-ps-beneficiaries', [HouseholdController::class, 'getFourPsBeneficiaries']);
-    Route::get('/with-pwd-members', [HouseholdController::class, 'getWithPWDMembers']);
-    Route::get('/with-senior-citizens', [HouseholdController::class, 'getWithSeniorCitizens']);
-    Route::get('/indigent-families', [HouseholdController::class, 'getIndigentFamilies']);
-    Route::post('/check-duplicates', [HouseholdController::class, 'checkDuplicates']);
-    Route::patch('/{household}/members', [HouseholdController::class, 'updateMembers']);
+    // Special list endpoints (matching frontend service)
+    Route::get('/senior-citizens', [ResidentController::class, 'seniorCitizens'])->name('senior-citizens');
+    Route::get('/pwd', [ResidentController::class, 'pwd'])->name('pwd');
+    Route::get('/four-ps', [ResidentController::class, 'fourPs'])->name('four-ps');
+    Route::get('/household-heads', [ResidentController::class, 'householdHeads'])->name('household-heads');
+    Route::get('/indigenous', [ResidentController::class, 'indigenous'])->name('indigenous');
+
+    // Utility endpoints
+    Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates'])->name('check-duplicates');
+    Route::put('/{resident}/restore', [ResidentController::class, 'restore'])->name('restore');
+
+    // Photo upload
+    Route::post('/{resident}/photo', [ResidentController::class, 'uploadPhoto'])->name('upload-photo');
+
+    
+    // Main CRUD operations
+    Route::get('/', [ResidentController::class, 'index'])->name('index');
+    Route::post('/', [ResidentController::class, 'store'])->name('store');
+    Route::get('/{resident}', [ResidentController::class, 'show'])->name('show');
+    Route::put('/{resident}', [ResidentController::class, 'update'])->name('update');
+    Route::delete('/{resident}', [ResidentController::class, 'destroy'])->name('destroy');
+
+    
 });
-Route::apiResource('households', HouseholdController::class);
+
+/*
+|--------------------------------------------------------------------------
+| Household API Routes
+|--------------------------------------------------------------------------
+|
+| Routes for household management that align with frontend service expectations
+|
+*/
+
+Route::prefix('households')->name('households.')->group(function () {
+    Route::get('/statistics', [HouseholdController::class, 'statistics'])->name('statistics');
+
+    // Special list endpoints (matching frontend service)
+    Route::get('/four-ps', [HouseholdController::class, 'fourPs'])->name('four-ps');
+    Route::get('/with-senior-citizens', [HouseholdController::class, 'withSeniorCitizens'])->name('with-senior-citizens');
+    Route::get('/with-pwd', [HouseholdController::class, 'withPwd'])->name('with-pwd');
+    Route::get('/by-type', [HouseholdController::class, 'byType'])->name('by-type');
+    Route::get('/by-ownership', [HouseholdController::class, 'byOwnership'])->name('by-ownership');
+
+    // Utility endpoints
+    Route::post('/check-duplicates', [HouseholdController::class, 'checkDuplicates'])->name('check-duplicates');
+
+    // Member management endpoints
+    Route::put('/{household}/members', [HouseholdController::class, 'updateMembers'])->name('update-members');
+    Route::post('/{household}/members', [HouseholdController::class, 'addMember'])->name('add-member');
+    Route::delete('/{household}/members', [HouseholdController::class, 'removeMember'])->name('remove-member');
+
+    
+    // Main CRUD operations
+    Route::get('/', [HouseholdController::class, 'index'])->name('index');
+    Route::post('/', [HouseholdController::class, 'store'])->name('store');
+    Route::get('/{household}', [HouseholdController::class, 'show'])->name('show');
+    Route::put('/{household}', [HouseholdController::class, 'update'])->name('update');
+    Route::delete('/{household}', [HouseholdController::class, 'destroy'])->name('destroy');
+
+    // Statistics endpoint
+    
+});
 
 // TEMPORARY: Users routes without authentication for testing
 Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(function () {
