@@ -60,7 +60,7 @@ export const BarangayOfficialBaseSchema = z.object({
 
   birth_date: z.string().min(1, 'barangayOfficials.form.validation.birthDateRequired'), 
   gender: GenderSchema,
-  nationality: NationalitySchema,
+  nationality: NationalitySchema.nullable().optional(),
   civil_status: CivilStatusSchema,
   educational_attainment: EducationalAttainmentSchema,
 
@@ -108,11 +108,11 @@ export const BarangayOfficialSchema = BarangayOfficialBaseSchema.extend({
   id: z.string().uuid(),
 
   // Computed attributes
-  full_name: z.string().optional(),
-  age: z.number().optional(),
-  term_duration: z.number().optional(),
-  days_in_office: z.number().optional(),
-  is_term_ending_soon: z.boolean().optional(),
+  // full_name: z.string().optional(),
+  // age: z.number().optional(),
+  // term_duration: z.number().optional(),
+  // days_in_office: z.number().optional(),
+  // is_term_ending_soon: z.boolean().optional(),
 })
 
 // Query parameters schema
@@ -139,6 +139,70 @@ export const BarangayOfficialStatisticsSchema = z.object({
   upcoming_term_endings: z.number()
 });
 
+// export function transformBarangayOfficialToFormData(official: BarangayOfficial | null): BarangayOfficialFormData {
+//   if (!official) {
+//     return {
+//       resident_search: '',
+//       resident_id: '',
+//       prefix: 'Mr.',
+//       first_name: '',
+//       middle_name: '',
+//       last_name: '',
+//       suffix: '',
+//       birth_date: '',
+//       gender: 'MALE',
+//       civil_status: 'SINGLE',
+//       nationality: 'FILIPINO',
+//       educational_attainment: 'NO_FORMAL_EDUCATION',
+//       mobile_number: '',
+//       email_address: '',
+//       complete_address: '',
+//       position: 'BARANGAY_CAPTAIN',
+//       committee_assignment: 'Health',
+//       term_start: '',
+//       term_end: '',
+//       term_number: 0,
+//       is_current_term: false,
+//       status: 'ACTIVE',
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//       profile_photo_url: ''
+//     };
+//   }
+
+//   const formData = {
+//     resident_search: '',
+//     resident_id: official.resident_id,
+//     prefix: official.prefix,
+//     first_name: official.first_name,
+//     middle_name: official.middle_name,
+//     last_name: official.last_name,
+//     suffix: official.suffix,
+//     birth_date: official.birth_date,
+//     gender: official.gender,
+//     nationality: official.nationality,
+//     civil_status: official.civil_status,
+//     educational_attainment: official.educational_attainment,
+//     mobile_number: official.mobile_number,
+//     email_address: official.email_address,
+//     complete_address: official.complete_address,
+//     position: official.position,
+//     committee_assignment: official.committee_assignment,
+//     term_start: new Date(official.term_start).toLocaleDateString('en-US'), // MM/DD/YYYY format
+//     term_end: new Date(official.term_end).toLocaleDateString('en-US'), // MM/DD/YYYY format
+//     term_number: official.term_number,
+//     is_current_term: official.is_current_term,
+//     status: official.status,
+//     created_at: official.created_at,
+//     updated_at: official.updated_at,
+//     profile_photo_url: official.profile_photo_url
+//   };
+  
+//   console.log(formData);
+//   return formData;
+// }
+
+//BAND AID SOLUTION
 export function transformBarangayOfficialToFormData(official: BarangayOfficial | null): BarangayOfficialFormData {
   if (!official) {
     return {
@@ -167,20 +231,38 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       profile_photo_url: ''
-
     };
   }
+
+  const formData = {
+    resident_search: '',
+    resident_id: official.resident_id,
+    prefix: official.prefix,
+    first_name: official.first_name,
+    middle_name: official.middle_name,
+    last_name: official.last_name,
+    suffix: official.suffix,
+    birth_date: official.birth_date,
+    gender: official.gender,
+    nationality: official.nationality,
+    civil_status: official.civil_status,
+    educational_attainment: official.educational_attainment,
+    mobile_number: official.mobile_number,
+    email_address: official.email_address,
+    complete_address: official.complete_address,
+    position: official.position,
+    committee_assignment: official.committee_assignment,
+    term_start: new Date(official.term_start).toLocaleDateString('en-US'), // MM/DD/YYYY format
+    term_end: new Date(official.term_end).toLocaleDateString('en-US'), // MM/DD/YYYY format
+    term_number: official.term_number,
+    is_current_term: official.is_current_term,
+    status: official.status,
+    created_at: official.created_at,
+    updated_at: official.updated_at,
+    profile_photo_url: official.profile_photo_url
+  };
   
-  const {
-    id,
-    full_name,
-    age,
-    term_duration,
-    days_in_office,
-    is_term_ending_soon,
-    ...formData
-  } = official;
-  
+  console.log(formData);
   return formData;
 }
 

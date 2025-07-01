@@ -69,6 +69,14 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
     type: 'success' | 'error';
   }>({ show: false, message: '', type: 'success' });
 
+  // Animation trigger on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (isLoadingOfficial && mode === "edit") {
     return (
       <div className="flex justify-center items-center py-12">
@@ -79,14 +87,6 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
       </div>
     );
   }
-
-  // Animation trigger on component mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <main
