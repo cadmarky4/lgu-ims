@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Household } from '@/services/households/households.types';
 
 interface HouseholdClassificationGridProps {
@@ -6,17 +7,31 @@ interface HouseholdClassificationGridProps {
 }
 
 const HouseholdClassificationGrid: React.FC<HouseholdClassificationGridProps> = ({ household }) => {
+  const { t } = useTranslation();
+
   const classifications = [
-    { label: '4Ps Beneficiary', value: household.four_ps_beneficiary },
-    { label: 'Indigent Family', value: household.indigent_family },
-    { label: 'Has Senior Citizen', value: household.has_senior_citizen },
-    { label: 'Has PWD Member', value: household.has_pwd_member }
+    { 
+      label: t('households.classifications.fourPsBeneficiary'), 
+      value: household.four_ps_beneficiary 
+    },
+    { 
+      label: t('households.classifications.indigentFamily'), 
+      value: household.indigent_family 
+    },
+    { 
+      label: t('households.classifications.hasSeniorCitizen'), 
+      value: household.has_senior_citizen 
+    },
+    { 
+      label: t('households.classifications.hasPwdMember'), 
+      value: household.has_pwd_member 
+    }
   ];
 
   return (
     <section className="mb-8">
       <h3 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
-        Household Classification
+        {t('households.view.householdClassification')}
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {classifications.map((classification, index) => (

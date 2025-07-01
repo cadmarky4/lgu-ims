@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Breadcrumb from '../_global/Breadcrumb';
 import HouseholdStats from './_components/HouseholdStats';
 import HouseholdFilters from './_components/HouseholdFilters';
@@ -8,6 +9,7 @@ import { useHouseholds, useHouseholdStatistics, useDeleteHousehold } from '@/ser
 
 const HouseholdManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   // Animation state
   const [isLoaded, setIsLoaded] = useState(false);
@@ -64,7 +66,7 @@ const HouseholdManagement: React.FC = () => {
   const handleDeleteHousehold = async (householdId: string, householdNumber: string) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this household? This action cannot be undone."
+        t('households.messages.deleteConfirm')
       )
     ) {
       deleteHouseholdMutation.mutate(householdId);
@@ -85,7 +87,7 @@ const HouseholdManagement: React.FC = () => {
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}>
         <h1 className="text-2xl font-bold text-darktext pl-0">
-          Household Management
+          {t('households.title')}
         </h1>
       </div>
 
@@ -95,7 +97,7 @@ const HouseholdManagement: React.FC = () => {
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`} style={{ transitionDelay: '200ms' }}>
           <p className="text-red-800 text-sm">
-            {householdsError instanceof Error ? householdsError.message : 'Failed to load households. Please try again.'}
+            {householdsError instanceof Error ? householdsError.message : t('households.messages.loadError')}
           </p>
         </div>
       )}
