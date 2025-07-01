@@ -5,10 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
 class Appointment extends Model
 {
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     // Use static initialization instead of constructor
     protected $fillable = [
         'appointment_number', 'full_name', 'email', 'phone', 'department', 'purpose',

@@ -159,12 +159,16 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     const errors = form.formState.errors;
 
     // Check for required fields in current step
-    const requiredFields = ['first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 'civil_status', 'nationality', 'religion', 'complete_address', 'voter_status', 'senior_citizen', 'person_with_disability', 'indigenous_people', 'four_ps_beneficiary'];
+    const requiredFields = ['first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 'civil_status', 'nationality', 'religion', 'complete_address', 'voter_status'];
     
     const hasErrors = stepFields.some(field => errors[field as keyof typeof errors]);
     const missingRequired = stepFields.some(field => 
       requiredFields.includes(field) && !formValues[field as keyof typeof formValues]
     );
+
+    console.log('Validating step:', currentStepData.id);
+    console.log('Has errors:', hasErrors);
+    console.log('Missing required fields:', missingRequired);
 
     return !hasErrors && !missingRequired;
   };
@@ -175,6 +179,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (!isLastStep) {
         setCurrentStep(prev => prev + 1);
       }
+      console.log("Going next!");
     } else {
       form.trigger(currentStepData.fields as any);
     }
@@ -847,7 +852,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"

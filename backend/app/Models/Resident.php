@@ -4,16 +4,21 @@ namespace App\Models;
 
 use App\Models\Schemas\ResidentSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class Resident extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasUuids, SoftDeletes;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * Get fillable fields from schema
@@ -84,8 +89,8 @@ class Resident extends Model
         
         // Auto-set created_by and updated_by
         static::creating(function ($model) {
-            if (auth()->check() && !$model->created_by) {
-                $model->created_by = auth()->id();
+            if (Auth::check() && !$model->created_by) {
+                $model->created_by = Auth::id();
             }
             
             // Auto-calculate age when creating
@@ -100,8 +105,8 @@ class Resident extends Model
         });
 
         static::updating(function ($model) {
-            if (auth()->check() && !$model->updated_by) {
-                $model->updated_by = auth()->id();
+            if (Auth::check() && !$model->updated_by) {
+                $model->updated_by = Auth::id();
             }
             
             // Recalculate age if birth_date changed

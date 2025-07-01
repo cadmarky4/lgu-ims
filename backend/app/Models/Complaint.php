@@ -5,10 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
 class Complaint extends Model
 {
+    use HasFactory, HasUuids; // Add HasUuids trait
+
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'complaint_number', 'complaint_type', 'subject', 'description', 'urgency_level',
         'complainant_name', 'complainant_contact', 'complainant_address', 'complainant_resident_id',
