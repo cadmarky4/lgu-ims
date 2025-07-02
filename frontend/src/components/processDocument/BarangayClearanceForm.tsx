@@ -519,7 +519,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
       
       <div className="flex justify-center space-x-4">
         <button
-          onClick={() => onNavigate('processDocument')}
+          onClick={() => onNavigate('process-document')}
           className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-colors"
         >
           Back to Documents

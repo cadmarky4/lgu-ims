@@ -431,6 +431,58 @@ class DocumentController extends Controller
     }
 
     /**
+     * Approve a document.
+     */
+    public function approve(Request $request, string $id): JsonResponse
+    {
+        try {
+            $document = Document::findOrFail($id);
+
+            $request->validate([
+                'notes' => 'nullable|string',
+                'certifying_official' => 'nullable|string|max:255'
+            ]);
+
+            if (!in_array($document->status, ['pending', 'processing'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document cannot be approved from current status'
+                ], 422);
+            }
+
+            $document->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_date' => now(),
+                'notes' => $request->notes,
+                'certifying_official' => $request->certifying_official
+            ]);
+
+            $document->load([
+                'resident:id,first_name,last_name,middle_name,suffix',
+                'approvedByUser:id,name,role,position'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $document,
+                'message' => 'Document approved successfully'
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Document not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve document: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Release a document.
      */
     public function release(Request $request, string $id): JsonResponse

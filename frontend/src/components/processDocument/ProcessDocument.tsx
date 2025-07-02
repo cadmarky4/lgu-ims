@@ -18,18 +18,66 @@ import {
   FiFileText, 
   FiAlertCircle,
   FiRefreshCw,
-  FiEdit3
+  FiEdit3,
+  FiChevronUp,
+  FiChevronDown
 } from 'react-icons/fi';
 
 import { LoadingSpinner } from '../__shared/LoadingSpinner';
-import { useDocumentQueue } from './_hooks/useDocumentQueue';
+import { useDocumentQueue, SORTABLE_FIELDS } from './_hooks/useDocumentQueue';
 import { useNotifications } from '@/components/_global/NotificationSystem';
 import Breadcrumb from '../_global/Breadcrumb';
+import { formatDate } from '@/utils/dateUtils';
 import type { Document, DocumentStatus } from '@/services/documents/documents.types';
 
 interface ProcessDocumentProps {
   onNavigate?: (page: string) => void;
 }
+
+interface SortableHeaderProps {
+  field: string;
+  label: string;
+  currentSort: string | undefined;
+  currentOrder: 'asc' | 'desc' | undefined;
+  onSort: (field: string) => void;
+}
+
+const SortableHeader: React.FC<SortableHeaderProps> = ({ 
+  field, 
+  label, 
+  currentSort, 
+  currentOrder, 
+  onSort 
+}) => {
+  const isActive = currentSort === field;
+  
+  return (
+    <th 
+      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center space-x-1">
+        <span>{label}</span>
+        <div className="flex flex-col">
+          <FiChevronUp 
+            className={`w-3 h-3 ${
+              isActive && currentOrder === 'asc' 
+                ? 'text-smblue-400' 
+                : 'text-gray-300'
+            }`}
+          />
+          <FiChevronDown 
+            className={`w-3 h-3 -mt-1 ${
+              isActive && currentOrder === 'desc' 
+                ? 'text-smblue-400' 
+                : 'text-gray-300'
+            }`}
+          />
+        </div>
+      </div>
+    </th>
+  );
+};
 
 const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
@@ -42,17 +90,17 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     filters,
     updateFilters,
     clearFilters,
+    handleSort,
     isLoading,
     isProcessing,
     error,
     actions,
     refetch,
+    pagination,
   } = useDocumentQueue();
 
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
 
   const documentTypes = [
     { value: 'BARANGAY_CLEARANCE', label: 'Barangay Clearance' },
@@ -70,7 +118,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     UNDER_REVIEW: {
       color: 'bg-blue-100 text-blue-800',
       icon: FiEye,
-      label: 'Under Review'
+      label: 'Processing'
     },
     APPROVED: {
       color: 'bg-green-100 text-green-800',
@@ -94,6 +142,13 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     }
   };
 
+  const priorityConfig = {
+    LOW: { color: 'text-gray-500', label: 'Low' },
+    NORMAL: { color: 'text-blue-500', label: 'Normal' },
+    HIGH: { color: 'text-orange-500', label: 'High' },
+    URGENT: { color: 'text-red-500', label: 'Urgent' }
+  };
+
   const handleProcessDocument = async (
     documentId: string,
     action: 'approve' | 'reject' | 'release',
@@ -102,9 +157,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     try {
       switch (action) {
         case 'approve':
-          await actions.processDocument(documentId, {
-            status: 'APPROVED',
-            notes: data?.notes
+          await actions.approveDocument(documentId, {
+            notes: data?.notes,
+            certifying_official: data?.certifying_official
           });
           break;
         case 'reject':
@@ -123,9 +178,20 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
   };
 
   const handlePrintDocument = (document: Document) => {
-    // Navigate to the appropriate print route based on document type
-    const documentType = document.document_type.toLowerCase().replace(/_/g, '-');
-    navigate(`/print/${documentType}/${document.id}`);
+    // Map document types to correct print routes
+    const printRouteMap: Record<string, string> = {
+      'BARANGAY_CLEARANCE': 'barangay-clearance',
+      'CERTIFICATE_OF_RESIDENCY': 'certificate-residency', 
+      'CERTIFICATE_OF_INDIGENCY': 'certificate-indigency',
+      'BUSINESS_PERMIT': 'business-permit'
+    };
+
+    const printRoute = printRouteMap[document.document_type];
+    if (printRoute) {
+      navigate(`/print/${printRoute}/${String(document.id)}`);
+    } else {
+      console.error('No print route found for document type:', document.document_type);
+    }
   };
 
   const formatDocumentType = (type: string) => {
@@ -133,18 +199,47 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
     return docType ? docType?.label : type.replace(/_/g, ' ');
   };
 
-  const getStatusIcon = (status: DocumentStatus) => {
-    const config = statusConfig[status];
+  // Map backend status values to frontend config keys
+  const getStatusConfigKey = (status: string): string => {
+    const lowerStatus = status.toLowerCase();
+    switch (lowerStatus) {
+      case 'pending':
+        return 'PENDING';
+      case 'processing':
+      case 'under_review':
+        return 'UNDER_REVIEW';
+      case 'approved':
+        return 'APPROVED';
+      case 'released':
+        return 'RELEASED';
+      case 'rejected':
+        return 'REJECTED';
+      case 'cancelled':
+        return 'CANCELLED';
+      default:
+        // If it's already uppercase, return as is
+        return status.toUpperCase();
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    const configKey = getStatusConfigKey(status);
+    const config = statusConfig[configKey as keyof typeof statusConfig];
     if (!config) return null;
     const IconComponent = config.icon;
     return <IconComponent className="w-4 h-4" />;
   };
 
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentDocuments = documents.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(documents.length / itemsPerPage);
+  const getPriorityColor = (priority: string) => {
+    return priorityConfig[priority as keyof typeof priorityConfig]?.color || 'text-gray-500';
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    return priorityConfig[priority as keyof typeof priorityConfig]?.label || priority;
+  };
+
+  // Use backend pagination instead of client-side pagination
+  const currentDocuments = documents; // No client-side slicing since backend handles pagination
 
   if (isLoading) {
     return (
@@ -202,12 +297,12 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{statusCounts.PENDING}</p>
+              <p className="text-2xl font-bold text-yellow-600">{statusCounts.PENDING || 0}</p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-full">
               <FiClock className="w-6 h-6 text-yellow-600" />
@@ -218,8 +313,8 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Under Review</p>
-              <p className="text-2xl font-bold text-blue-600">{statusCounts.UNDER_REVIEW}</p>
+              <p className="text-sm font-medium text-gray-600">Processing</p>
+              <p className="text-2xl font-bold text-blue-600">{statusCounts.UNDER_REVIEW || 0}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-full">
               <FiEye className="w-6 h-6 text-blue-600" />
@@ -231,7 +326,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Approved</p>
-              <p className="text-2xl font-bold text-green-600">{statusCounts.APPROVED}</p>
+              <p className="text-2xl font-bold text-green-600">{statusCounts.APPROVED || 0}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
               <FiCheck className="w-6 h-6 text-green-600" />
@@ -243,19 +338,19 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Released</p>
-              <p className="text-2xl font-bold text-gray-600">{statusCounts.RELEASED}</p>
+              <p className="text-2xl font-bold text-gray-600">{statusCounts.RELEASED || 0}</p>
             </div>
             <div className="p-3 bg-gray-100 rounded-full">
               <FiFileText className="w-6 h-6 text-gray-600" />
             </div>
+          </div>
         </div>
-      </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Rejected</p>
-              <p className="text-2xl font-bold text-red-600">{statusCounts.REJECTED}</p>
+              <p className="text-2xl font-bold text-red-600">{statusCounts.REJECTED || 0}</p>
             </div>
             <div className="p-3 bg-red-100 rounded-full">
               <FiX className="w-6 h-6 text-red-600" />
@@ -266,19 +361,17 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-darktext">
-                {statistics?.total_documents || 0}
-              </p>
+              <p className="text-sm font-medium text-gray-600">Cancelled</p>
+              <p className="text-2xl font-bold text-gray-600">{statusCounts.CANCELLED || 0}</p>
             </div>
-            <div className="p-3 bg-smblue-100 rounded-full">
-              <FiFileText className="w-6 h-6 text-smblue-400" />
+            <div className="p-3 bg-gray-100 rounded-full">
+              <FiX className="w-6 h-6 text-gray-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Enhanced Search and Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-4 flex-1">
@@ -287,9 +380,9 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-                placeholder="Search by resident name, document type, or purpose..."
+                placeholder="Search by applicant name, document number, or purpose..."
                 value={filters.searchTerm}
-                onChange={(e) => updateFilters({ searchTerm: e.target.value })}
+                onChange={(e) => updateFilters({ searchTerm: e.target.value, page: 1 })}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               />
             </div>
@@ -299,12 +392,13 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
               <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <select
                 value={filters.status}
-                onChange={(e) => updateFilters({ status: e.target.value as DocumentStatus | 'ALL' })}
+                onChange={(e) => updateFilters({ status: e.target.value as DocumentStatus | 'ALL', page: 1 })}
                 className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
+                aria-label="Filter by status"
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
-                <option value="UNDER_REVIEW">Under Review</option>
+                <option value="UNDER_REVIEW">Processing</option>
                 <option value="APPROVED">Approved</option>
                 <option value="RELEASED">Released</option>
                 <option value="REJECTED">Rejected</option>
@@ -318,9 +412,11 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
               <select
                 value={filters.documentType || 'ALL'}
                 onChange={(e) => updateFilters({ 
-                  documentType: e.target.value === 'ALL' ? undefined : e.target.value as any
+                  documentType: e.target.value === 'ALL' ? undefined : e.target.value as any,
+                  page: 1
                 })}
                 className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 appearance-none bg-white cursor-pointer"
+                aria-label="Filter by document type"
               >
                 <option value="ALL">All Document Types</option>
                 {documentTypes.map((type) => (
@@ -334,7 +430,7 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
 
           <div className="flex items-center space-x-3">
             <span className="text-sm text-gray-600">
-              {documents.length} documents found
+              {pagination?.total || documents.length} documents found
             </span>
             {(filters.searchTerm || filters.status !== 'ALL' || filters.documentType) && (
               <button
@@ -348,30 +444,61 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Documents Table */}
+      {/* Documents Table with Sortable Headers */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Resident
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Document Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Purpose
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Request Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fee
-                </th>
+                <SortableHeader
+                  field="applicant_name"
+                  label="Resident"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="document_type"
+                  label="Document Type"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="purpose"
+                  label="Purpose"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="status"
+                  label="Status"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="priority"
+                  label="Priority"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="created_at"
+                  label="Request Date"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  field="processing_fee"
+                  label="Fee"
+                  currentSort={filters.sortBy}
+                  currentOrder={filters.sortOrder}
+                  onSort={handleSort}
+                />
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -408,21 +535,24 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig?.[document.status]?.color}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig[getStatusConfigKey(document.status) as keyof typeof statusConfig]?.color}`}>
                       {getStatusIcon(document.status)}
-                      <span className="ml-1">{statusConfig?.[document.status]?.label}</span>
+                      <span className="ml-1">{statusConfig[getStatusConfigKey(document.status) as keyof typeof statusConfig]?.label}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <FiCalendar className="mr-1 h-4 w-4" />
-                      {new Date(document.date_added).toLocaleDateString()}
+                    <span className={`text-sm font-medium ${getPriorityColor(document.priority)}`}>
+                      {getPriorityLabel(document.priority)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <FiCalendar className="w-4 h-4 mr-1" />
+                      {formatDate(document.created_at || document.request_date)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {document.processing_fee === 0 ? 'FREE' : `₱${document.processing_fee}`}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {document.processing_fee === 0 ? 'FREE' : `₱${document.processing_fee}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
@@ -431,17 +561,26 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
                           setSelectedDocument(document);
                           setShowProcessModal(true);
                         }}
-                        className="text-green-600 hover:text-green-700 p-1 rounded-md hover:bg-green-50 transition-colors"
-                        title="Review & Process"
+                        className="text-smblue-400 hover:text-smblue-600 transition-colors p-1 rounded"
+                        title="Process Document"
                       >
-                        <FiClipboard className="h-4 w-4" />
+                        <FiEdit3 className="w-4 h-4" />
                       </button>
-                                <button
-                        onClick={() => handlePrintDocument(document)}
-                        className="text-smblue-600 hover:text-smblue-700 p-1 rounded-md hover:bg-smblue-50 transition-colors"
-                        title="Print Certificate"
+                      {document.status.toLowerCase() === 'approved' && (
+                        <button
+                          onClick={() => handlePrintDocument(document)}
+                          className="text-green-600 hover:text-green-800 transition-colors p-1 rounded"
+                          title="Print Document"
+                        >
+                          <FiPrinter className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => navigate(`/process-document/view/${String(document.id)}`)}
+                        className="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded"
+                        title="View Details"
                       >
-                        <FiPrinter className="h-4 w-4" />
+                        <FiEye className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -450,83 +589,63 @@ const ProcessDocument: React.FC<ProcessDocumentProps> = ({ onNavigate }) => {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
+      {/* Backend Pagination */}
+      {pagination && pagination.last_page > 1 && (
+        <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <p className="text-sm text-gray-700">
+                Showing{' '}
+                <span className="font-medium">{((pagination.current_page - 1) * pagination.per_page) + 1}</span>
+                {' '}to{' '}
+                <span className="font-medium">
+                  {Math.min(pagination.current_page * pagination.per_page, pagination.total)}
+                </span>
+                {' '}of{' '}
+                <span className="font-medium">{pagination.total}</span>
+                {' '}results
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => updateFilters({ page: Math.max((pagination.current_page || 1) - 1, 1) })}
+                disabled={pagination.current_page === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
+              {Array.from({ length: Math.min(pagination.last_page, 5) }, (_, i) => {
+                const page = Math.max(1, pagination.current_page - 2) + i;
+                if (page <= pagination.last_page) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => updateFilters({ page })}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        pagination.current_page === page
+                          ? 'bg-smblue-400 text-white'
+                          : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                return null;
+              })}
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => updateFilters({ page: Math.min((pagination.current_page || 1) + 1, pagination.last_page) })}
+                disabled={pagination.current_page === pagination.last_page}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
-                </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(indexOfLastItem, documents.length)}
-                  </span>{' '}
-                  of <span className="font-medium">{documents.length}</span> results
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + i;
-                    } else {
-                      pageNumber = currentPage - 2 + i;
-                    }
-                    return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => setCurrentPage(pageNumber)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === pageNumber
-                          ? 'z-10 bg-smblue-50 border-smblue-400 text-smblue-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                    );
-                  })}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </nav>
-          </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Empty State */}
       {documents.length === 0 && (
@@ -591,7 +710,7 @@ const ProcessDocumentModal: React.FC<{
       certifying_official: certifyingOfficial.trim() || undefined,
     };
 
-    await onProcess(document.id, action, data);
+    await onProcess(String(document.id), action, data);
   };
 
   const formatDocumentType = (type: string) => {
@@ -630,6 +749,7 @@ const ProcessDocumentModal: React.FC<{
               onChange={(e) => setAction(e.target.value as 'approve' | 'reject' | 'release')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               disabled={isProcessing}
+              aria-label="Select action to perform on document"
             >
               <option value="approve">Approve</option>
               <option value="reject">Reject</option>

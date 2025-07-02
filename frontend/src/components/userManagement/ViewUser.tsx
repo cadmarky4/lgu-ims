@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiX, FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiShield } from 'react-icons/fi';
 import { UsersService } from '../../services/users/users.service';
+import { formatDate } from '@/utils/dateUtils';
 import type { User } from '../../services/users/users.types';
 
 interface ViewUserProps {
@@ -108,6 +109,8 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
+              title="Close user details"
+              aria-label="Close user details"
             >
               <FiX className="w-6 h-6" />
             </button>
@@ -217,7 +220,7 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
                 <div className="flex items-center space-x-2 mt-1">
                   <FiCalendar className="w-4 h-4 text-gray-400" />
                   <p className="text-gray-900">
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                    {formatDate(user.created_at)}
                   </p>
                 </div>
               </div>
@@ -227,7 +230,7 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
                 <div className="flex items-center space-x-2 mt-1">
                   <FiCalendar className="w-4 h-4 text-gray-400" />
                   <p className="text-gray-900">
-                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'N/A'}
+                    {formatDate(user.updated_at)}
                   </p>
                 </div>
               </div>

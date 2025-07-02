@@ -282,6 +282,11 @@ class Document extends Model
             if (!$document->request_date) {
                 $document->request_date = now();
             }
+            
+            // Set payment_status to 'paid' by default (assume all requests are paid upon submission)
+            if (!$document->payment_status) {
+                $document->payment_status = 'paid';
+            }
         });
 
         // Update processed_date when status changes to processing

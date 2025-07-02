@@ -80,7 +80,7 @@ export const DocumentFormDataSchema = z.object({
 
 // Main Document schema with system fields
 export const DocumentSchema = DocumentFormDataSchema.extend({
-  id: z.string(),
+  id: z.union([z.string(), z.number()]).transform(String),
   status: DocumentStatusSchema,
   payment_status: PaymentStatusSchema,
   
@@ -101,9 +101,9 @@ export const DocumentSchema = DocumentFormDataSchema.extend({
   // Additional tracking
   expiry_date: z.string().nullable().optional(),
   
-  // Timestamps
-  date_added: z.string(),
-  date_updated: z.string(),
+  // Timestamps (Laravel standard)
+  created_at: z.string(),
+  updated_at: z.string(),
   
   // Relations (loaded when needed)
   resident: z.object({
@@ -159,11 +159,11 @@ export const DocumentParamsSchema = z.object({
 export const DocumentStatisticsSchema = z.object({
   total_documents: z.number(),
   pending_documents: z.number(),
-  under_review_documents: z.number(),
+  processing_documents: z.number(),
   approved_documents: z.number(),
   released_documents: z.number(),
   rejected_documents: z.number(),
-  cancelled_documents: z.number(),
+  cancelled_documents: z.number().optional(),
   
   by_status: z.record(z.number()),
   by_type: z.record(z.number()),

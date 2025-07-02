@@ -213,6 +213,31 @@ export function useProcessDocument() {
   });
 }
 
+export function useApproveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ProcessDocumentData }) =>
+      documentsService.approveDocument(id, data),
+    onSuccess: (approvedDocument: Document) => {
+      queryClient.invalidateQueries({ queryKey: documentsKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.statistics() });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.pending() });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PENDING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PROCESSING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('APPROVED') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.tracking(approvedDocument.id) });
+      queryClient.setQueryData(
+        documentsKeys.detail(approvedDocument.id),
+        approvedDocument
+      );
+    },
+    onError: (error: any) => {
+      console.error('Approve document error:', error);
+    },
+  });
+}
+
 export function useRejectDocument() {
   const queryClient = useQueryClient();
 
@@ -224,7 +249,10 @@ export function useRejectDocument() {
       queryClient.invalidateQueries({ queryKey: documentsKeys.statistics() });
       queryClient.invalidateQueries({ queryKey: documentsKeys.pending() });
       queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PENDING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PROCESSING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('UNDER_REVIEW') });
       queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('REJECTED') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byResident(rejectedDocument.resident_id) });
       queryClient.invalidateQueries({ queryKey: documentsKeys.tracking(rejectedDocument.id) });
       queryClient.setQueryData(
         documentsKeys.detail(rejectedDocument.id),
@@ -247,8 +275,12 @@ export function useReleaseDocument() {
       queryClient.invalidateQueries({ queryKey: documentsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: documentsKeys.statistics() });
       queryClient.invalidateQueries({ queryKey: documentsKeys.pending() });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PENDING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('PROCESSING') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('UNDER_REVIEW') });
       queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('APPROVED') });
       queryClient.invalidateQueries({ queryKey: documentsKeys.byStatus('RELEASED') });
+      queryClient.invalidateQueries({ queryKey: documentsKeys.byResident(releasedDocument.resident_id) });
       queryClient.invalidateQueries({ queryKey: documentsKeys.tracking(releasedDocument.id) });
       queryClient.setQueryData(
         documentsKeys.detail(releasedDocument.id),
