@@ -12,6 +12,7 @@ import HouseholdManagement from "./components/householdManagement/HouseholdManag
 import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
 import EditHousehold from "./components/householdManagement/EditHousehold";
 import ViewHousehold from "./components/householdManagement/ViewHousehold";
+import DataImport from "./components/import/DataImport";
 // import ProcessDocument from "./components/processDocument/ProcessDocument";
 // import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
 // import BusinessPermitForm from "./components/processDocument/BusinessPermitForm";
@@ -134,6 +135,10 @@ const router = createBrowserRouter([
             element: <ViewHousehold />,
           },
         ],
+      },
+      {
+        path: "import",
+        element: <DataImport />,
       },
       {
         path: "process-document",

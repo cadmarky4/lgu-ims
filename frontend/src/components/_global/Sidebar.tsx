@@ -11,6 +11,7 @@ import {
   FiSettings,
   FiChevronDown,
   FiChevronRight,
+  FiUpload,
 } from "react-icons/fi";
 import sanMiguelLogo from "@/assets/sanMiguelLogo.jpg";
 
@@ -45,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: "dashboard", label: "Dashboard", icon: FiHome },
     { id: "residents", label: "Resident Management", icon: FiUsers },
     { id: "household", label: "Household Management", icon: FiUsers },
+    { id: "import", label: "Data Import", icon: FiUpload }, 
     {
       id: "process-document",
       label: "Process Document",
