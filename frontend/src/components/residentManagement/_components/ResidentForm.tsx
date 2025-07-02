@@ -351,11 +351,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       case 'contact':
         return (
           <ResidentFormSection title={t('residents.form.sections.contactInfo')}>
-            <pre>
-            {
-              JSON.stringify(form.watch(), null, 2)
-            }
-            </pre>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <ResidentFormField
                 name="mobile_number"
