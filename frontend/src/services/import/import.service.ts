@@ -1,5 +1,4 @@
-
-    // ============================================================================
+// ============================================================================
 // services/import/import.service.ts - Data Import Service
 // ============================================================================
 
@@ -33,12 +32,20 @@ export class ImportService extends BaseApiService {
       const buffer = await file.arrayBuffer();
       
       // Parse Excel file
-      const workbook = XLSX.read(buffer, { type: 'array' });
+      const workbook = XLSX.read(buffer, { 
+        type: 'array',
+        cellDates: true, // Parse dates properly
+        dateNF: 'yyyy-mm-dd' // Date format
+      });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
       // Convert to JSON with header row
-      const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+      const rawData = XLSX.utils.sheet_to_json(worksheet, { 
+        header: 1,
+        raw: false, // Get formatted strings
+        dateNF: 'yyyy-mm-dd'
+      }) as any[][];
       
       if (rawData.length === 0) {
         throw new Error('File is empty');
@@ -50,13 +57,15 @@ export class ImportService extends BaseApiService {
       // Extract data rows (skip header)
       const dataRows = rawData.slice(1);
       
-      // Convert to objects
+      // Convert to objects and transform data
       const data = dataRows.map(row => {
         const obj: Record<string, any> = {};
         headers.forEach((header, index) => {
           obj[header] = row[index] || '';
         });
-        return obj;
+        
+        // Transform the data before validation
+        return this.transformExcelData(obj, type);
       });
       
       // Validate data based on type
@@ -75,6 +84,80 @@ export class ImportService extends BaseApiService {
       console.error('Preview failed:', error);
       throw new Error(`Failed to preview file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Transform Excel data to match expected format
+   */
+  private transformExcelData(row: Record<string, any>, type: ImportType): Record<string, any> {
+    const transformed: Record<string, any> = {};
+    
+    // Map headers to expected field names
+    const headerMapping = this.getHeaderMapping(type);
+    
+    Object.entries(row).forEach(([header, value]) => {
+      const fieldName = headerMapping[header] || header.toLowerCase().replace(/\s+/g, '_');
+      transformed[fieldName] = value;
+    });
+    
+    if (type === 'RESIDENTS') {
+      // Transform boolean fields
+      const booleanFields = ['senior_citizen', 'person_with_disability', 'four_ps_beneficiary', 'indigenous_people'];
+      booleanFields.forEach(field => {
+        if (field in transformed) {
+          transformed[field] = this.parseExcelBoolean(transformed[field]);
+        }
+      });
+      
+      // Transform enum fields to uppercase
+      const enumFields = ['gender', 'civil_status', 'employment_status', 'voter_status', 'nationality', 'religion', 'educational_attainment'];
+      enumFields.forEach(field => {
+        if (transformed[field] && typeof transformed[field] === 'string') {
+          transformed[field] = transformed[field].toUpperCase().trim();
+        }
+      });
+      
+      // Parse dates
+      if (transformed.birth_date) {
+        transformed.birth_date = this.parseExcelDate(transformed.birth_date);
+      }
+      
+      // Calculate age if not provided
+      if (!transformed.age && transformed.birth_date) {
+        const birthDate = new Date(transformed.birth_date);
+        const today = new Date();
+        transformed.age = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)).toString();
+      }
+      
+    } else if (type === 'HOUSEHOLDS') {
+      // Transform boolean fields
+      const booleanFields = [
+        'four_ps_beneficiary', 'indigent_family', 'has_senior_citizen', 
+        'has_pwd_member', 'has_electricity', 'has_water_supply', 'has_internet_access'
+      ];
+      booleanFields.forEach(field => {
+        if (field in transformed) {
+          transformed[field] = this.parseExcelBoolean(transformed[field]);
+        }
+      });
+      
+      // Transform enum fields to uppercase
+      const enumFields = ['household_type', 'monthly_income', 'house_type', 'ownership_status'];
+      enumFields.forEach(field => {
+        if (transformed[field] && typeof transformed[field] === 'string') {
+          transformed[field] = transformed[field].toUpperCase().trim();
+        }
+      });
+    }
+    
+    // Convert empty strings to null for all optional fields
+    Object.keys(transformed).forEach(key => {
+      if (transformed[key] === '' || transformed[key] === undefined) {
+        transformed[key] = null;
+      }
+    });
+    
+    return transformed;
   }
 
   /**
@@ -139,7 +222,7 @@ export class ImportService extends BaseApiService {
     
     requiredFields.forEach(({ field, name }) => {
       const value = row[field];
-      if (!value || String(value).trim() === '') {
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push({
           row: rowNumber,
           field,
@@ -149,9 +232,9 @@ export class ImportService extends BaseApiService {
       }
     });
     
-    // Validate gender enum
+    // Validate gender enum (already transformed to uppercase)
     const validGenders = ['MALE', 'FEMALE'];
-    if (row.gender && !validGenders.includes(String(row.gender).toUpperCase())) {
+    if (row.gender && !validGenders.includes(row.gender)) {
       errors.push({
         row: rowNumber,
         field: 'gender',
@@ -160,9 +243,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate civil status enum
+    // Validate civil status enum (already transformed to uppercase)
     const validCivilStatus = ['SINGLE', 'MARRIED', 'WIDOWED', 'DIVORCED', 'SEPARATED'];
-    if (row.civil_status && !validCivilStatus.includes(String(row.civil_status).toUpperCase())) {
+    if (row.civil_status && !validCivilStatus.includes(row.civil_status)) {
       errors.push({
         row: rowNumber,
         field: 'civil_status',
@@ -171,9 +254,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate employment status enum
+    // Validate employment status enum (already transformed to uppercase)
     const validEmploymentStatus = ['EMPLOYED', 'UNEMPLOYED', 'SELF_EMPLOYED', 'RETIRED', 'STUDENT', 'OFW'];
-    if (row.employment_status && !validEmploymentStatus.includes(String(row.employment_status).toUpperCase())) {
+    if (row.employment_status && !validEmploymentStatus.includes(row.employment_status)) {
       errors.push({
         row: rowNumber,
         field: 'employment_status',
@@ -182,9 +265,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate voter status enum
+    // Validate voter status enum (already transformed to uppercase)
     const validVoterStatus = ['NOT_REGISTERED', 'REGISTERED', 'DECEASED', 'TRANSFERRED'];
-    if (row.voter_status && !validVoterStatus.includes(String(row.voter_status).toUpperCase())) {
+    if (row.voter_status && !validVoterStatus.includes(row.voter_status)) {
       errors.push({
         row: rowNumber,
         field: 'voter_status',
@@ -193,10 +276,10 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate birth date format
+    // Validate birth date format (already parsed)
     if (row.birth_date) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(String(row.birth_date))) {
+      if (!dateRegex.test(row.birth_date)) {
         errors.push({
           row: rowNumber,
           field: 'birth_date',
@@ -207,9 +290,9 @@ export class ImportService extends BaseApiService {
     }
     
     // Validate email format (if provided)
-    if (row.email_address && String(row.email_address).trim() !== '') {
+    if (row.email_address && row.email_address !== null) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(String(row.email_address))) {
+      if (!emailRegex.test(row.email_address)) {
         errors.push({
           row: rowNumber,
           field: 'email_address',
@@ -220,9 +303,9 @@ export class ImportService extends BaseApiService {
     }
     
     // Validate mobile number format (if provided)
-    if (row.mobile_number && String(row.mobile_number).trim() !== '') {
+    if (row.mobile_number && row.mobile_number !== null) {
       const phoneRegex = /^09\d{9}$/;
-      if (!phoneRegex.test(String(row.mobile_number).replace(/\s/g, ''))) {
+      if (!phoneRegex.test(row.mobile_number.replace(/\s/g, ''))) {
         errors.push({
           row: rowNumber,
           field: 'mobile_number',
@@ -233,7 +316,7 @@ export class ImportService extends BaseApiService {
     }
     
     // Validate age (if provided)
-    if (row.age !== undefined && row.age !== null && String(row.age).trim() !== '') {
+    if (row.age !== null && row.age !== undefined) {
       const age = Number(row.age);
       if (isNaN(age) || age < 0 || age > 150) {
         errors.push({
@@ -244,6 +327,19 @@ export class ImportService extends BaseApiService {
         });
       }
     }
+    
+    // Validate boolean fields (already transformed to boolean)
+    const booleanFields = ['senior_citizen', 'person_with_disability', 'four_ps_beneficiary', 'indigenous_people'];
+    booleanFields.forEach(field => {
+      if (row[field] !== null && row[field] !== undefined && typeof row[field] !== 'boolean') {
+        errors.push({
+          row: rowNumber,
+          field,
+          message: `${field} must be true or false`,
+          value: row[field]
+        });
+      }
+    });
   }
 
   /**
@@ -266,7 +362,7 @@ export class ImportService extends BaseApiService {
     
     requiredFields.forEach(({ field, name }) => {
       const value = row[field];
-      if (!value || String(value).trim() === '') {
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push({
           row: rowNumber,
           field,
@@ -276,9 +372,9 @@ export class ImportService extends BaseApiService {
       }
     });
     
-    // Validate household type enum
+    // Validate household type enum (already transformed to uppercase)
     const validHouseholdTypes = ['NUCLEAR', 'EXTENDED', 'SINGLE', 'SINGLE_PARENT', 'OTHER'];
-    if (row.household_type && !validHouseholdTypes.includes(String(row.household_type).toUpperCase())) {
+    if (row.household_type && !validHouseholdTypes.includes(row.household_type)) {
       errors.push({
         row: rowNumber,
         field: 'household_type',
@@ -287,9 +383,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate monthly income enum (if provided)
+    // Validate monthly income enum (if provided, already transformed to uppercase)
     const validIncomeRanges = ['BELOW_10000', 'RANGE_10000_25000', 'RANGE_25000_50000', 'RANGE_50000_100000', 'ABOVE_100000'];
-    if (row.monthly_income && String(row.monthly_income).trim() !== '' && !validIncomeRanges.includes(String(row.monthly_income).toUpperCase())) {
+    if (row.monthly_income && row.monthly_income !== null && !validIncomeRanges.includes(row.monthly_income)) {
       errors.push({
         row: rowNumber,
         field: 'monthly_income',
@@ -298,9 +394,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate house type enum (if provided)
+    // Validate house type enum (if provided, already transformed to uppercase)
     const validHouseTypes = ['CONCRETE', 'SEMI_CONCRETE', 'WOOD', 'BAMBOO', 'MIXED'];
-    if (row.house_type && String(row.house_type).trim() !== '' && !validHouseTypes.includes(String(row.house_type).toUpperCase())) {
+    if (row.house_type && row.house_type !== null && !validHouseTypes.includes(row.house_type)) {
       errors.push({
         row: rowNumber,
         field: 'house_type',
@@ -309,9 +405,9 @@ export class ImportService extends BaseApiService {
       });
     }
     
-    // Validate ownership status enum (if provided)
+    // Validate ownership status enum (if provided, already transformed to uppercase)
     const validOwnershipStatus = ['OWNED', 'RENTED', 'SHARED', 'INFORMAL_SETTLER'];
-    if (row.ownership_status && String(row.ownership_status).trim() !== '' && !validOwnershipStatus.includes(String(row.ownership_status).toUpperCase())) {
+    if (row.ownership_status && row.ownership_status !== null && !validOwnershipStatus.includes(row.ownership_status)) {
       errors.push({
         row: rowNumber,
         field: 'ownership_status',
@@ -319,9 +415,156 @@ export class ImportService extends BaseApiService {
         value: row.ownership_status
       });
     }
+    
+    // Validate boolean fields (already transformed to boolean)
+    const booleanFields = [
+      'four_ps_beneficiary', 'indigent_family', 'has_senior_citizen', 
+      'has_pwd_member', 'has_electricity', 'has_water_supply', 'has_internet_access'
+    ];
+    booleanFields.forEach(field => {
+      if (row[field] !== null && row[field] !== undefined && typeof row[field] !== 'boolean') {
+        errors.push({
+          row: rowNumber,
+          field,
+          message: `${field} must be true or false`,
+          value: row[field]
+        });
+      }
+    });
   }
 
+  /**
+   * Parse Excel boolean values
+   */
+  private parseExcelBoolean(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (value === null || value === undefined || value === '') return false;
+    
+    const strValue = String(value).toUpperCase().trim();
+    return ['TRUE', '1', 'YES', 'Y', 'CHECKED'].includes(strValue);
+  }
 
+  /**
+   * Parse Excel date values
+   */
+  private parseExcelDate(value: any): string {
+    if (!value) return '';
+    
+    // Handle Excel serial date numbers
+    if (typeof value === 'number') {
+      const date = new Date((value - 25569) * 86400 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Handle date objects
+    if (value instanceof Date) {
+      return value.toISOString().split('T')[0];
+    }
+    
+    // Try to parse string dates
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    } catch (e) {
+      // Fall through
+    }
+    
+    // Return as-is if can't parse
+    return String(value);
+  }
+
+  /**
+   * Get header mapping for different import types
+   */
+  private getHeaderMapping(type: ImportType): Record<string, string> {
+    if (type === 'RESIDENTS') {
+      return {
+        // Common variations
+        'First Name': 'first_name',
+        'Last Name': 'last_name',
+        'Middle Name': 'middle_name',
+        'Suffix': 'suffix',
+        'Birth Date': 'birth_date',
+        'Birthdate': 'birth_date',
+        'Date of Birth': 'birth_date',
+        'Birth Place': 'birth_place',
+        'Place of Birth': 'birth_place',
+        'Age': 'age',
+        'Gender': 'gender',
+        'Sex': 'gender',
+        'Civil Status': 'civil_status',
+        'Marital Status': 'civil_status',
+        'Nationality': 'nationality',
+        'Religion': 'religion',
+        'Employment Status': 'employment_status',
+        'Work Status': 'employment_status',
+        'Educational Attainment': 'educational_attainment',
+        'Education': 'educational_attainment',
+        'Mobile Number': 'mobile_number',
+        'Cell Number': 'mobile_number',
+        'Contact Number': 'mobile_number',
+        'Email Address': 'email_address',
+        'Email': 'email_address',
+        'Complete Address': 'complete_address',
+        'Address': 'complete_address',
+        'Occupation': 'occupation',
+        'Job': 'occupation',
+        'Employer': 'employer',
+        'Company': 'employer',
+        'Senior Citizen': 'senior_citizen',
+        'Is Senior': 'senior_citizen',
+        'Person with Disability': 'person_with_disability',
+        'PWD': 'person_with_disability',
+        'Has Disability': 'person_with_disability',
+        '4Ps Beneficiary': 'four_ps_beneficiary',
+        '4PS': 'four_ps_beneficiary',
+        'Voter Status': 'voter_status',
+        'Voting Status': 'voter_status',
+      };
+    } else {
+      return {
+        'Household Number': 'household_number',
+        'Household No': 'household_number',
+        'HH Number': 'household_number',
+        'Household Type': 'household_type',
+        'Family Type': 'household_type',
+        'House Number': 'house_number',
+        'House No': 'house_number',
+        'Street/Sitio': 'street_sitio',
+        'Street': 'street_sitio',
+        'Sitio': 'street_sitio',
+        'Barangay': 'barangay',
+        'Complete Address': 'complete_address',
+        'Address': 'complete_address',
+        'Monthly Income': 'monthly_income',
+        'Income Range': 'monthly_income',
+        'Primary Income Source': 'primary_income_source',
+        'Income Source': 'primary_income_source',
+        '4Ps Beneficiary': 'four_ps_beneficiary',
+        '4PS': 'four_ps_beneficiary',
+        'Indigent Family': 'indigent_family',
+        'Is Indigent': 'indigent_family',
+        'Has Senior Citizen': 'has_senior_citizen',
+        'With Senior': 'has_senior_citizen',
+        'Has PWD Member': 'has_pwd_member',
+        'With PWD': 'has_pwd_member',
+        'House Type': 'house_type',
+        'Housing Type': 'house_type',
+        'Ownership Status': 'ownership_status',
+        'House Ownership': 'ownership_status',
+        'Has Electricity': 'has_electricity',
+        'With Electricity': 'has_electricity',
+        'Has Water Supply': 'has_water_supply',
+        'With Water': 'has_water_supply',
+        'Has Internet Access': 'has_internet_access',
+        'With Internet': 'has_internet_access',
+        'Remarks': 'remarks',
+        'Notes': 'remarks',
+      };
+    }
+  }
 
   /**
    * Import residents data (send to backend)
@@ -461,51 +704,51 @@ export class ImportService extends BaseApiService {
     if (type === 'RESIDENTS') {
       return [
         {
-          first_name: 'John',
-          last_name: 'Doe',
-          middle_name: 'Smith',
-          suffix: 'Jr.',
-          birth_date: '1990-01-01',
-          birth_place: 'Quezon City',
-          age: '34',
-          gender: 'MALE',
-          civil_status: 'SINGLE',
-          nationality: 'FILIPINO',
-          religion: 'CATHOLIC',
-          employment_status: 'EMPLOYED',
-          educational_attainment: 'COLLEGE',
-          mobile_number: '09123456789',
-          email_address: 'john.doe@email.com',
-          complete_address: '123 Main Street, Barangay Sample',
-          occupation: 'Engineer',
-          employer: 'ABC Company',
-          senior_citizen: false,
-          person_with_disability: false,
-          four_ps_beneficiary: false,
-          voter_status: 'REGISTERED'
+          'First Name': 'John',
+          'Last Name': 'Doe',
+          'Middle Name': 'Smith',
+          'Suffix': 'Jr.',
+          'Birth Date': '1990-01-01',
+          'Birth Place': 'Quezon City',
+          'Age': '34',
+          'Gender': 'MALE',
+          'Civil Status': 'SINGLE',
+          'Nationality': 'FILIPINO',
+          'Religion': 'CATHOLIC',
+          'Employment Status': 'EMPLOYED',
+          'Educational Attainment': 'COLLEGE',
+          'Mobile Number': '09123456789',
+          'Email Address': 'john.doe@email.com',
+          'Complete Address': '123 Main Street, Barangay Sample',
+          'Occupation': 'Engineer',
+          'Employer': 'ABC Company',
+          'Senior Citizen': 'FALSE',
+          'Person with Disability': 'FALSE',
+          '4Ps Beneficiary': 'FALSE',
+          'Voter Status': 'REGISTERED'
         }
       ];
     } else {
       return [
         {
-          household_number: 'HH001',
-          household_type: 'NUCLEAR',
-          house_number: '123',
-          street_sitio: 'Main Street',
-          barangay: 'Sikatuna Village',
-          complete_address: '123 Main Street, Sikatuna Village',
-          monthly_income: 'RANGE_25000_50000',
-          primary_income_source: 'Employment',
-          four_ps_beneficiary: false,
-          indigent_family: false,
-          has_senior_citizen: false,
-          has_pwd_member: false,
-          house_type: 'CONCRETE',
-          ownership_status: 'OWNED',
-          has_electricity: true,
-          has_water_supply: true,
-          has_internet_access: true,
-          remarks: 'Sample household data'
+          'Household Number': 'HH001',
+          'Household Type': 'NUCLEAR',
+          'House Number': '123',
+          'Street/Sitio': 'Main Street',
+          'Barangay': 'Sikatuna Village',
+          'Complete Address': '123 Main Street, Sikatuna Village',
+          'Monthly Income': 'RANGE_25000_50000',
+          'Primary Income Source': 'Employment',
+          '4Ps Beneficiary': 'FALSE',
+          'Indigent Family': 'FALSE',
+          'Has Senior Citizen': 'FALSE',
+          'Has PWD Member': 'FALSE',
+          'House Type': 'CONCRETE',
+          'Ownership Status': 'OWNED',
+          'Has Electricity': 'TRUE',
+          'Has Water Supply': 'TRUE',
+          'Has Internet Access': 'TRUE',
+          'Remarks': 'Sample household data'
         }
       ];
     }
@@ -534,4 +777,5 @@ export class ImportService extends BaseApiService {
     return { valid: true };
   }
 }
+
 export const importService = new ImportService();
