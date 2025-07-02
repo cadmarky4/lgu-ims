@@ -3,7 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./components/_global/NotificationSystem";
 import ProtectedRoute from "./components/_auth/ProtectedRoute"; 
 import AppLayout from "./components/AppLayout";
-// import Dashboard from "./components/dashboard/Dashboard";
+import Dashboard from "./components/dashboard/Dashboard";
 import ResidentManagement from "./components/residentManagement/ResidentManagement";
 import AddNewResident from "./components/residentManagement/AddNewResident";
 import EditResident from "./components/residentManagement/EditResident";
@@ -33,6 +33,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import './i18';
 import ViewBarangayOfficial from "./components/barangayOfficials/ViewBarangayOfficial";
+import HelpDeskPage from "./components/helpDesk/HelpDeskPage";
+import Appointments from "./components/helpDesk/Appointments";
+import Blotter from "./components/helpDesk/Blotter";
+import Complaints from "./components/helpDesk/Complaints";
+import Suggestions from "./components/helpDesk/Suggestions";
 
 
 // Wrapper components to handle navigation prop
@@ -86,11 +91,11 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        // element: <Navigate to="/dashboard" replace />,
+        element: <Navigate to="/dashboard" replace />,
       },
       {
         path: "dashboard",
-        // element: <Dashboard />,
+        element: <Dashboard />,
       },
       {
         path: "residents",
@@ -232,28 +237,28 @@ const router = createBrowserRouter([
       },
       {
         path: "help-desk",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <HelpDeskPage />,
-        //   },
-        //   {
-        //     path: "schedule-appointment",
-        //     element: <Appointments />,
-        //   },
-        //   {
-        //     path: "file-blotter",
-        //     element: <Blotter />,
-        //   },
-        //   {
-        //     path: "file-complaint",
-        //     element: <Complaints />,
-        //   },
-        //   {
-        //     path: "share-suggestions",
-        //     element: <Suggestions />,
-        //   },
-        // ],
+        children: [
+          {
+            index: true,
+            element: <HelpDeskPage />,
+          },
+          {
+            path: "schedule-appointment",
+            element: <Appointments />,
+          },
+          {
+            path: "file-blotter",
+            element: <Blotter />,
+          },
+          {
+            path: "file-complaint",
+            element: <Complaints />,
+          },
+          {
+            path: "share-suggestions",
+            element: <Suggestions />,
+          },
+        ],
       },
       {
         path: "*",
