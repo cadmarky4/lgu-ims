@@ -494,5 +494,51 @@
         "loadError": "Unable to load official data."
       }
     }
+  },
+  "helpDesk": {
+
+    "appointmentsForm":{
+      "fields": {
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "contactNumber": "Contact Number",
+        "completeAddress": "Complete Address",
+        "subject": "Subject",
+        "department": "Department",
+        "purpose": "Purpose",
+        "date": "Date",
+        "time": "Time", 
+        "additionalNotes": "Additional Notes"
+      },
+      "placeholders": {
+        "fullName": "Enter your full name...",
+        "emailAddress": "Enter your email address...",
+        "contactNumber": "Enter contact number...",
+        "completeAddress": "Enter complete address...", 
+        "subject": "Subject",
+        "department": "Select Department",
+        "purpose": "Enter purpose of appointment...",
+        "date": "Select appointment date...",
+        "time": "Select appointment time...",
+        "additionalNotes": "Enter any additional notes..."
+      },
+      "validation": {
+        "dateRequired": "Date is required",
+        "timeRequired": "Time is required",
+        "fullNameRequired": "Full name is required",
+        "contactMaxChar": "Contact number must not exceed 11 characters",
+        "completeAddressRequired": "Complete address is required",
+        "invalidDepartment": "Please select a valid department"
+      }
+    },
+    "validation": {
+      "invalidEmailFormat": "Invalid email format",
+      "descriptionRequired": "Ticket description is required",
+      "subjectRequired": "Ticket subject is required",
+      "fullNameRequired": "Full name is required",
+      "contactLengthValidation": "Contact number must be 11 characters",
+      "completeAddressRequired": "Complete address is required",
+      "invalidTimeSlots": "Please select a valid time slot"
+    }
   }
 }

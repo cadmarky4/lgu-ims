@@ -25,13 +25,13 @@ import {
 import Breadcrumb from "../_global/Breadcrumb";
 
 // Import API services
-import { AppointmentsService } from "../../services/appointments.service";
+import { AppointmentsService } from "../../services/helpDesk/appointments/appointments.service";
 import { ComplaintsService } from "../../services/helpDesk/complaints/complaints.service";
-import { SuggestionsService } from "../../services/suggestions.service";
+import { SuggestionsService } from "../../services/helpDesk/suggestions/suggestions.service";
 import { BlotterService } from "../../services/helpDesk/blotters/blotters.service";
-import type { Appointment, AppointmentStatus } from "../../services/appointment.types";
+import type { Appointment, AppointmentStatus } from "../../services/helpDesk/appointments/appointments.types";
 import type { Complaint, ComplaintStatus } from "../../services/helpDesk/complaints/complaints.types";
-import type { Suggestion, SuggestionStatus } from "../../services/suggestion.types";
+import type { Suggestion, SuggestionStatus } from "../../services/helpDesk/suggestions/suggestions.types";
 import type { BlotterCase, BlotterStatus } from "../../services/helpDesk/blotters/blotters.types";
 
 // Type definitions

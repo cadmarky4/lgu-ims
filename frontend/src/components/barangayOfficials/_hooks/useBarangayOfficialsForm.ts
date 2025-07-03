@@ -24,11 +24,11 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
 
     const form = useForm<BarangayOfficialFormData>({
         resolver: zodResolver(BarangayOfficialFormDataSchema),
-        defaultValues: transformBarangayOfficialToFormData(null),
+        // defaultValues: transformBarangayOfficialToFormData(null),
         mode: 'onBlur',
     })
 
-    const {  watch, setValue, reset } = form;
+    const { watch, setValue, reset } = form;
     const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
     const residentIdField = watch('resident_id');
     const searchResident = watch('resident_search');

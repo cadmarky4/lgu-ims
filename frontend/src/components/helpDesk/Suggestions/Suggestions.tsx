@@ -12,9 +12,9 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
-import { SuggestionsService } from "../../services/suggestions.service";
-import type { CreateSuggestionData } from "../../services/suggestion.types";
-import Breadcrumb from "../_global/Breadcrumb";
+// import { SuggestionsService } from "../../services/helpDesk/suggestions/suggestions.service";
+// import type { CreateSuggestionData } from "../../services/helpDesk/suggestions/suggestions.types";
+import Breadcrumb from "../../_global/Breadcrumb";
 
 interface SuggestionFormData {
   // Personal Information

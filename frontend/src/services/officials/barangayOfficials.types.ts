@@ -66,7 +66,7 @@ export const BarangayOfficialBaseSchema = z.object({
 
   // Contact Information
   mobile_number: z.string().optional(),
-  email_address: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
+  email_address: z.union([z.string().email('barangayOfficials.form.validation.invalidEmailAddress'), z.literal('')]).optional(),
 
   // Address Information
   complete_address: z.string().min(1, 'barangayOfficials.form.validation.completeAddressRequired'),

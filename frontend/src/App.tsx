@@ -33,6 +33,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import './i18';
 import ViewBarangayOfficial from "./components/barangayOfficials/ViewBarangayOfficial";
+import HelpDeskPage from "./components/helpDesk/HelpDeskPage";
+import AppointmentsPage from "./components/helpDesk/Appointments/Appointments";
+import BlotterPage from "./components/helpDesk/Blotter/Blotter";
+import ComplaintsPage from "./components/helpDesk/Complaints/Complaints";
+import SuggestionsPage from "./components/helpDesk/Suggestions/Suggestions";
 
 
 // Wrapper components to handle navigation prop
@@ -232,28 +237,28 @@ const router = createBrowserRouter([
       },
       {
         path: "help-desk",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <HelpDeskPage />,
-        //   },
-        //   {
-        //     path: "schedule-appointment",
-        //     element: <Appointments />,
-        //   },
-        //   {
-        //     path: "file-blotter",
-        //     element: <Blotter />,
-        //   },
-        //   {
-        //     path: "file-complaint",
-        //     element: <Complaints />,
-        //   },
-        //   {
-        //     path: "share-suggestions",
-        //     element: <Suggestions />,
-        //   },
-        // ],
+        children: [
+          {
+            index: true,
+            element: <HelpDeskPage />,
+          },
+          {
+            path: "schedule-appointment",
+            element: <AppointmentsPage />,
+          },
+          {
+            path: "file-blotter",
+            element: <BlotterPage />,
+          },
+          {
+            path: "file-complaint",
+            element: <ComplaintsPage />,
+          },
+          {
+            path: "share-suggestions",
+            element: <SuggestionsPage />,
+          },
+        ],
       },
       {
         path: "*",
