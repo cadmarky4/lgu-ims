@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\FileUploadController;
+use App\Http\Controllers\Api\ImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,13 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+});
+
+// TEMPORARY: Import routes without authentication for testing
+Route::prefix('import')->group(function () {
+    Route::post('/residents', [ImportController::class, 'importResidents']);
+    Route::post('/households', [ImportController::class, 'importHouseholds']);
+    Route::get('/history', [ImportController::class, 'getImportHistory']);
 });
 
 // TEMPORARY: Residents routes without authentication for testing
@@ -160,6 +168,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/change-password', [AuthController::class, 'changePassword']);
         Route::post('/refresh', [AuthController::class, 'refresh']);
     });
+
+    // NOTE: Import routes will be moved here when authentication is properly implemented
+    // Route::prefix('import')->group(function () {
+    //     Route::post('/residents', [ImportController::class, 'importResidents']);
+    //     Route::post('/households', [ImportController::class, 'importHouseholds']);
+    //     Route::get('/history', [ImportController::class, 'getImportHistory']);
+    // });
 
     // NOTE: Households routes are temporarily moved outside auth middleware for testing
     // They will be moved back here when authentication is properly implemented in frontend

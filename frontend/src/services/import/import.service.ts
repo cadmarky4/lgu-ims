@@ -57,24 +57,30 @@ export class ImportService extends BaseApiService {
       // Extract data rows (skip header)
       const dataRows = rawData.slice(1);
       
-      // Convert to objects and transform data
-      const data = dataRows.map(row => {
-        const obj: Record<string, any> = {};
+      // Process data - keep original for display AND create transformed for validation
+      const processedData: any[] = [];
+      const transformedDataForValidation: any[] = [];
+      
+      dataRows.forEach(row => {
+        // Create object with original headers for display
+        const displayObj: Record<string, any> = {};
         headers.forEach((header, index) => {
-          obj[header] = row[index] || '';
+          displayObj[header] = row[index] || '';
         });
+        processedData.push(displayObj);
         
-        // Transform the data before validation
-        return this.transformExcelData(obj, type);
+        // Create transformed object for validation
+        const transformedObj = this.transformExcelData(displayObj, type);
+        transformedDataForValidation.push(transformedObj);
       });
       
-      // Validate data based on type
-      const validation = this.validatePreviewData(data, type);
+      // Validate using transformed data
+      const validation = this.validatePreviewData(transformedDataForValidation, type);
       
       return {
         headers,
-        data,
-        totalRows: data.length,
+        data: processedData, // Return original data for display
+        totalRows: processedData.length,
         validRows: validation.validCount,
         invalidRows: validation.invalidCount,
         errors: validation.errors
@@ -94,6 +100,12 @@ export class ImportService extends BaseApiService {
     
     // Map headers to expected field names
     const headerMapping = this.getHeaderMapping(type);
+    
+    // Debug log for households
+    if (type === 'HOUSEHOLDS') {
+      console.log('Original row data:', row);
+      console.log('Header mapping:', headerMapping);
+    }
     
     Object.entries(row).forEach(([header, value]) => {
       const fieldName = headerMapping[header] || header.toLowerCase().replace(/\s+/g, '_');
@@ -141,13 +153,62 @@ export class ImportService extends BaseApiService {
         }
       });
       
-      // Transform enum fields to uppercase
+      // Transform enum fields to uppercase - IMPORTANT: Include household_type!
       const enumFields = ['household_type', 'monthly_income', 'house_type', 'ownership_status'];
       enumFields.forEach(field => {
         if (transformed[field] && typeof transformed[field] === 'string') {
-          transformed[field] = transformed[field].toUpperCase().trim();
+          // Special handling for common variations
+          let value = transformed[field].toUpperCase().trim();
+          
+          // Handle common household type variations
+          if (field === 'household_type') {
+            const typeMapping: Record<string, string> = {
+              'NUCLEAR FAMILY': 'NUCLEAR',
+              'EXTENDED FAMILY': 'EXTENDED',
+              'SINGLE PERSON': 'SINGLE',
+              'SINGLE-PARENT': 'SINGLE_PARENT',
+              'SINGLE PARENT': 'SINGLE_PARENT',
+              'OTHERS': 'OTHER'
+            };
+            value = typeMapping[value] || value;
+          }
+          
+          // Handle income range variations
+          if (field === 'monthly_income') {
+            value = value.replace(/[₱,\s]/g, ''); // Remove peso sign, commas, spaces
+            if (value.includes('<10000') || value.includes('BELOW10000')) {
+              value = 'BELOW_10000';
+            } else if (value.includes('10000-25000')) {
+              value = 'RANGE_10000_25000';
+            } else if (value.includes('25000-50000')) {
+              value = 'RANGE_25000_50000';
+            } else if (value.includes('50000-100000')) {
+              value = 'RANGE_50000_100000';
+            } else if (value.includes('>100000') || value.includes('ABOVE100000')) {
+              value = 'ABOVE_100000';
+            }
+          }
+          
+          // Handle house type variations
+          if (field === 'house_type') {
+            if (value.includes('SEMI') && value.includes('CONCRETE')) {
+              value = 'SEMI_CONCRETE';
+            }
+          }
+          
+          // Handle ownership variations
+          if (field === 'ownership_status') {
+            if (value.includes('INFORMAL') || value.includes('SETTLER')) {
+              value = 'INFORMAL_SETTLER';
+            }
+          }
+          
+          transformed[field] = value;
         }
       });
+      
+      // Debug log transformed data
+      console.log('Transformed household data:', transformed);
     }
     
     // Convert empty strings to null for all optional fields
@@ -351,9 +412,13 @@ export class ImportService extends BaseApiService {
     message: string;
     value: any;
   }>) {
+    // Debug log to see what data we're getting
+    console.log('Validating household row:', rowNumber, row);
+    
     // Required string fields
     const requiredFields = [
       { field: 'household_number', name: 'Household Number' },
+      { field: 'household_type', name: 'Household Type' }, // This is REQUIRED!
       { field: 'house_number', name: 'House Number' },
       { field: 'street_sitio', name: 'Street/Sitio' },
       { field: 'barangay', name: 'Barangay' },
@@ -367,18 +432,25 @@ export class ImportService extends BaseApiService {
           row: rowNumber,
           field,
           message: `${name} is required`,
-          value
+          value: value || 'EMPTY'
         });
       }
     });
     
-    // Validate household type enum (already transformed to uppercase)
+    // Validate household type enum (REQUIRED field)
     const validHouseholdTypes = ['NUCLEAR', 'EXTENDED', 'SINGLE', 'SINGLE_PARENT', 'OTHER'];
-    if (row.household_type && !validHouseholdTypes.includes(row.household_type)) {
+    if (!row.household_type) {
       errors.push({
         row: rowNumber,
         field: 'household_type',
-        message: 'Household type must be one of: NUCLEAR, EXTENDED, SINGLE, SINGLE_PARENT, OTHER',
+        message: 'Household type is required',
+        value: 'MISSING'
+      });
+    } else if (!validHouseholdTypes.includes(row.household_type)) {
+      errors.push({
+        row: rowNumber,
+        field: 'household_type',
+        message: `Household type must be one of: ${validHouseholdTypes.join(', ')}. Got: "${row.household_type}"`,
         value: row.household_type
       });
     }
@@ -389,7 +461,7 @@ export class ImportService extends BaseApiService {
       errors.push({
         row: rowNumber,
         field: 'monthly_income',
-        message: 'Monthly income must be one of: BELOW_10000, RANGE_10000_25000, RANGE_25000_50000, RANGE_50000_100000, ABOVE_100000',
+        message: `Monthly income must be one of: ${validIncomeRanges.join(', ')}. Got: "${row.monthly_income}"`,
         value: row.monthly_income
       });
     }
@@ -400,7 +472,7 @@ export class ImportService extends BaseApiService {
       errors.push({
         row: rowNumber,
         field: 'house_type',
-        message: 'House type must be one of: CONCRETE, SEMI_CONCRETE, WOOD, BAMBOO, MIXED',
+        message: `House type must be one of: ${validHouseTypes.join(', ')}. Got: "${row.house_type}"`,
         value: row.house_type
       });
     }
@@ -411,7 +483,7 @@ export class ImportService extends BaseApiService {
       errors.push({
         row: rowNumber,
         field: 'ownership_status',
-        message: 'Ownership status must be one of: OWNED, RENTED, SHARED, INFORMAL_SETTLER',
+        message: `Ownership status must be one of: ${validOwnershipStatus.join(', ')}. Got: "${row.ownership_status}"`,
         value: row.ownership_status
       });
     }
