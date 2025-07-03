@@ -8,7 +8,7 @@ import { FormField } from "@/components/_global/components/FormField";
 import { useTranslation } from "react-i18next";
 import { departments } from "@/services/helpDesk/appointments/appointments.types";
 import { SearchResidents } from "./components/SearchResidents";
-import { timeSlotOptions } from "@/services/helpDesk/helpDesk.type";
+import { priorities, timeSlotOptions } from "@/services/helpDesk/helpDesk.type";
 
 const AppointmentsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -36,6 +36,10 @@ const AppointmentsPage: React.FC = () => {
     handleSubmit,
   } = useCreateAppointmentForm({ onSuccess });
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const handleSubmitButton = () => {
+    console.log(form.formState.errors)
+  }
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -229,7 +233,7 @@ const AppointmentsPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <FormField
                   name="appointment.date"
@@ -239,16 +243,45 @@ const AppointmentsPage: React.FC = () => {
                 />
               </div>
 
-              <div>
+                <div>
                 <FormField
                   type="select"
                   name="appointment.time"
                   label={t("helpDesk.appointmentsForm.fields.time")}
-                  options={timeSlotOptions.map((slot)=>({
-                    value: slot,
+                  options={timeSlotOptions.map((slot) => {
+                  // Convert 12-hour format (XX:XX AM/PM) to 24-hour format (HH:mm)
+                  const [time, period] = slot.split(' ');
+                  const [hours, minutes] = time.split(':');
+                  let hour = parseInt(hours);
+                  
+                  if (period === 'PM' && hour !== 12) {
+                    hour += 12;
+                  } else if (period === 'AM' && hour === 12) {
+                    hour = 0;
+                  }
+
+                  const formattedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
+                  
+                  return {
+                    value: formattedTime,
                     label: slot
+                  };
+                  })}
+                  placeholder={t("helpDesk.appointmentsForm.placeholders.time")}
+                  required
+                />
+                </div>
+
+              <div>
+                <FormField
+                  type="select"
+                  name="ticket.priority"
+                  label={t("helpDesk.fields.priority")}
+                  options={priorities.map((priority)=>({
+                    value: priority,
+                    label: priority
                   }))}
-                  placeholder="Select Time"
+                  placeholder={t("helpDesk.placeholders.priority")}
                   required
                 />
               </div>
@@ -270,7 +303,7 @@ const AppointmentsPage: React.FC = () => {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="@lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center disabled:opacity-50"
+                className="cursor-pointer @lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center disabled:opacity-50"
               >
                 {loading ? (
                   <Loader className="h-5 w-5 mr-2 animate-spin" />

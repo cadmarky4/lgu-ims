@@ -29,6 +29,10 @@ export function useCreateAppointmentForm ({ onSuccess }: useCreateAppointmentFor
     const searchResident = watch('ticket.resident_search');
     const date = watch('appointment.date');
     const time = watch('appointment.time');
+    const department = watch('appointment.department')
+
+    // PALAGING  APPOINTMENT TO
+    setValue("ticket.category", "APPOINTMENT");
 
     const { data: filteredResidents, isLoading: isLoadingResidents, error: residentsError } = useResidents({ search: searchResident || "" });
 
@@ -44,20 +48,20 @@ export function useCreateAppointmentForm ({ onSuccess }: useCreateAppointmentFor
         setValue('ticket.complete_address', "");
     }, [isResident])
 
-    useEffect(() => {
-        if (date && time) {
-            const timeoutId = setTimeout(() => {
-                (async () => {
-                    const res = await appointmentsService.isScheduleVacant({date: date, time: time} as CheckScheduleAvailability);
-                    if (res !== true) {
-                        setIsScheduleUnavailableWarning(t('helpDesk.appointmentsForm.validation.scheduleAlreadyBooked'));
-                    }
-                })();
-            }, 1000);
+    // useEffect(() => {
+    //     if (date && time) {
+    //         const timeoutId = setTimeout(() => {
+    //             (async () => {
+    //                 const res = await appointmentsService.isScheduleVacant({date: date, time: time, department: department} as CheckScheduleAvailability);
+    //                 if (res !== true) {
+    //                     setIsScheduleUnavailableWarning(t('helpDesk.appointmentsForm.validation.scheduleAlreadyBooked'));
+    //                 }
+    //             })();
+    //         }, 1000);
     
-            return () => clearTimeout(timeoutId);      
-        }
-    }, [date, time])
+    //         return () => clearTimeout(timeoutId);      
+    //     }
+    // }, [date, time])
 
     // selects the resident
     // The effect won't re-execute unless residentId changes.

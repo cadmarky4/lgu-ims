@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\FileUploadController;
+use App\Http\Controllers\Api\TicketController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +58,7 @@ Route::prefix('residents')->name('residents.')->group(function () {
     // Photo upload
     Route::post('/{resident}/photo', [ResidentController::class, 'uploadPhoto'])->name('upload-photo');
 
-    
+
     // Main CRUD operations
     Route::get('/', [ResidentController::class, 'index'])->name('index');
     Route::post('/', [ResidentController::class, 'store'])->name('store');
@@ -65,7 +66,7 @@ Route::prefix('residents')->name('residents.')->group(function () {
     Route::put('/{resident}', [ResidentController::class, 'update'])->name('update');
     Route::delete('/{resident}', [ResidentController::class, 'destroy'])->name('destroy');
 
-    
+
 });
 
 /*
@@ -95,7 +96,7 @@ Route::prefix('households')->name('households.')->group(function () {
     Route::post('/{household}/members', [HouseholdController::class, 'addMember'])->name('add-member');
     Route::delete('/{household}/members', [HouseholdController::class, 'removeMember'])->name('remove-member');
 
-    
+
     // Main CRUD operations
     Route::get('/', [HouseholdController::class, 'index'])->name('index');
     Route::post('/', [HouseholdController::class, 'store'])->name('store');
@@ -104,54 +105,54 @@ Route::prefix('households')->name('households.')->group(function () {
     Route::delete('/{household}', [HouseholdController::class, 'destroy'])->name('destroy');
 
     // Statistics endpoint
-    
+
 });
 
 // TEMPORARY: Users routes without authentication for testing
 Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(function () {
-    
+
     // Core CRUD
     Route::get('/', [UserController::class, 'index'])->name('index');
     Route::post('/', [UserController::class, 'store'])->name('store');
     Route::get('/{id}', [UserController::class, 'show'])->name('show');
     Route::put('/{id}', [UserController::class, 'update'])->name('update');
     Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
-    
+
     // Current User
     Route::prefix('me')->name('me.')->group(function () {
         Route::get('/', [UserController::class, 'me'])->name('show');
         Route::put('/', [UserController::class, 'updateMe'])->name('update');
         Route::post('/change-password', [UserController::class, 'changeMyPassword'])->name('change-password');
     });
-    
+
     // Password Management
     Route::prefix('{id}')->group(function () {
         Route::post('/change-password', [UserController::class, 'changePassword'])->name('change-password');
         Route::post('/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
     });
-    
+
     // Status Management
     Route::put('/{id}/status', [UserController::class, 'changeStatus'])->name('change-status');
-    
+
     // Verification & Communication
     Route::prefix('{id}')->group(function () {
         Route::post('/verify', [UserController::class, 'verify'])->name('verify');
         Route::post('/resend-verification', [UserController::class, 'resendVerification'])->name('resend-verification');
         Route::post('/send-credentials', [UserController::class, 'sendCredentials'])->name('send-credentials');
     });
-    
+
     // Validation
     Route::prefix('check')->name('check.')->group(function () {
         Route::get('/username', [UserController::class, 'checkUsername'])->name('username');
         Route::get('/email', [UserController::class, 'checkEmail'])->name('email');
     });
-    
+
     // Queries
     Route::prefix('by')->name('by.')->group(function () {
         Route::get('/role/{role}', [UserController::class, 'byRole'])->name('role');
         Route::get('/department/{department}', [UserController::class, 'byDepartment'])->name('department');
     });
-    
+
     // Security & Monitoring
     Route::prefix('{id}')->group(function () {
         Route::get('/activity', [UserController::class, 'activity'])->name('activity');
@@ -161,12 +162,12 @@ Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(func
             Route::delete('/', [UserController::class, 'terminateAllSessions'])->name('terminate-all');
         });
     });
-    
+
     // Bulk & Import/Export
     Route::post('/bulk-action', [UserController::class, 'bulkAction'])->name('bulk-action');
     Route::get('/export', [UserController::class, 'export'])->name('export');
     Route::post('/import', [UserController::class, 'import'])->name('import');
-    
+
     // Statistics
     Route::get('/statistics', [UserController::class, 'statistics'])->name('statistics');
 });
@@ -189,16 +190,28 @@ Route::apiResource('barangay-officials', BarangayOfficialController::class);
 // TEMPORARY: Help Desk routes without authentication for public access
 // These will be moved back under auth middleware when staff authentication is implemented
 
+// Help Desk Routes
+Route::prefix('help-desk')->group(function () {
+    Route::get('/', [TicketController::class, 'index']);
+    Route::get('/statistics', [TicketController::class, 'statistics']);
+    Route::delete('/{id}', [TicketController::class, 'destroy']);
+});
+
 // Public Help Desk - Appointments
 Route::prefix('appointments')->group(function () {
-    Route::get('/statistics', [AppointmentController::class, 'statistics']);
-    Route::get('/available-slots', [AppointmentController::class, 'getAvailableSlots']);
-    Route::post('/{appointment}/confirm', [AppointmentController::class, 'confirm']);
-    Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
-    Route::post('/{appointment}/complete', [AppointmentController::class, 'complete']);
-    Route::post('/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
+    // View specific appointment
+    Route::get('/view/{id}', [AppointmentController::class, 'view']);
+
+    // Create new appointment
+    Route::post('/', [AppointmentController::class, 'store']);
+
+    // Update appointment
+    Route::put('/{id}', [AppointmentController::class, 'update']);
+
+    // Check schedule availability
+    Route::get('/check-vacancy/{schedule}', [AppointmentController::class, 'checkScheduleVacancy']);
 });
-Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
+// Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
 
 // Public Help Desk - Complaints
 Route::prefix('complaints')->group(function () {
@@ -312,7 +325,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
     });
     Route::apiResource('documents', DocumentController::class);
-    
+
     // Help Desk - Complaints - Specific routes BEFORE apiResource
     Route::prefix('complaints')->group(function () {
         Route::get('/statistics', [ComplaintController::class, 'statistics']);

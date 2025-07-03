@@ -6,6 +6,7 @@ export const BookedScheduleSchema = z.object({
   appointment_id: z.string().uuid(),
   date: z.string().min(1, 'helpDesk.appointmentsForm.validation.dateRequired'),
   time: TimeSlotsSchema,
+  department: DepartmentSchema,
 })
 
 export const CheckScheduleAvailabilitySchema = BookedScheduleSchema.omit({
@@ -33,6 +34,7 @@ export const ViewAppointmentSchema = z.object({
 export const CreateAppointmentSchema = z.object({
   ticket: BaseTicketSchema.omit({
     id: true, // AUTO GENERATED
+    ticket_number: true, // AUTO GENERATED
     created_at: true, // AUTO GENERATED
     updated_at: true, // AUTO GENERATED
     status: true, // DEFAULTS TO 'OPEN'

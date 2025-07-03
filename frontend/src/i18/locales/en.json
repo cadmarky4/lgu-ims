@@ -496,7 +496,6 @@
     }
   },
   "helpDesk": {
-
     "appointmentsForm":{
       "fields": {
         "fullName": "Full Name",
@@ -518,8 +517,7 @@
         "subject": "Subject",
         "department": "Select Department",
         "purpose": "Enter purpose of appointment...",
-        "date": "Select appointment date...",
-        "time": "Select appointment time...",
+        "time": "Select appointment time",
         "additionalNotes": "Enter any additional notes..."
       },
       "validation": {
@@ -529,7 +527,17 @@
         "contactMaxChar": "Contact number must not exceed 11 characters",
         "completeAddressRequired": "Complete address is required",
         "invalidDepartment": "Please select a valid department"
+      },
+      "messages": {
+        "createSuccess":"Appointment schedule successfully!",
+        "createError":"Appointment scheduled failed!"
       }
+    },
+    "fields": {
+      "priority": "Priority"
+    },
+    "placeholders": {
+      "priority": "Select priority"
     },
     "validation": {
       "invalidEmailFormat": "Invalid email format",
@@ -538,7 +546,8 @@
       "fullNameRequired": "Full name is required",
       "contactLengthValidation": "Contact number must be 11 characters",
       "completeAddressRequired": "Complete address is required",
-      "invalidTimeSlots": "Please select a valid time slot"
+      "invalidTimeSlots": "Please select a valid time slot",
+      "invalidPriority": "Please select a valid priority"
     }
   }
 }

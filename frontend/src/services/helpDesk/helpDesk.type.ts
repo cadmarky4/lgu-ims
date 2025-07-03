@@ -17,15 +17,15 @@ export const FeedbackCategorySchema = z.enum([
     'OTHERS'
 ])
 export const TimeSlotsSchema = z.enum([
-    '08:00 AM',
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '01:00 PM',
-    '02:00 PM',
-    '03:00 PM',
-    '04:00 PM',
-    '05:00 PM'
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00'
 ])
 
 export const BaseTicketSchema = z.object({
@@ -35,10 +35,12 @@ export const BaseTicketSchema = z.object({
     ticket_number: z.string().max(50),
     subject: z.string().min(1,'helpDesk.validation.subjectRequired').max(255),
     description: z.string().min(1,'helpDesk.validation.descriptionRequired'),
-    priority: PrioritySchema,
+    priority: z.enum(PrioritySchema.options, {
+        errorMap: (issue, ctx) => ({ message: 'helpDesk.validation.invalidPriority' })
+    }),
     requester_name: z.string().min(1, 'helpDesk.validation.fullNameRequired').max(255,'helpDesk.appointmentsForm.validation.fullNameExceeded'),
     resident_id: z.string().uuid().nullable(),
-    contact_number: z.string().length(11, 'helpDesk.validation.contactLengthValidation'),
+    contact_number: z.string().length(16, 'helpDesk.validation.contactLengthValidation'),
     // email_address: z.string().email('helpDesk.validation.invalidEmailFormat').max(255).optional(),
     email_address: z.string()
         .max(255)
@@ -53,11 +55,32 @@ export const BaseTicketSchema = z.object({
     updated_at: z.date(),
 })
 
+export const HelpDeskStatisticsSchema = z.object({
+    total_tickets: z.number(),
+    pending_review: z.number(),
+    in_progress: z.number(),
+    resolved: z.number(),
+})
+
+export const HelpDeskTicketParamsSchema = z.object({
+  page: z.number().min(1).optional(),
+  category: TicketCategorySchema.optional(),
+  priority: PrioritySchema.optional(),
+  status: StatusSchema.optional(),
+  search: z.string().optional(),
+  sort_by: z.string().optional(),
+  sort_order: z.enum(['asc', 'desc']).optional(),
+  per_page: z.number().optional()
+})
+
 export type TicketCategory = z.infer<typeof TicketCategorySchema>
 export type Priority = z.infer<typeof PrioritySchema>
 export type Status = z.infer<typeof StatusSchema>
 export type BaseTicket = z.infer<typeof BaseTicketSchema>
 export type FeedbackCategory = z.infer<typeof FeedbackCategorySchema>
 export type TimeSlots = z.infer<typeof TimeSlotsSchema>
+export type HelpDeskTicketParams = z.infer<typeof HelpDeskTicketParamsSchema>
+export type HelpDeskStatistics = z.infer<typeof HelpDeskStatisticsSchema>
 
 export const timeSlotOptions = TimeSlotsSchema.options;
+export const priorities = PrioritySchema.options;
