@@ -13,7 +13,7 @@ interface HeaderProps {
   isMobile: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
+const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   isSidebarExpanded,
   isMobile,

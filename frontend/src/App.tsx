@@ -26,7 +26,7 @@ import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOffici
 import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
 import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
 import ListBarangayOfficalsToEdit from "./components/barangayOfficials/ListBarangayOfficalsToEdit";
-
+import ReportsPage from "./components/reports/ReportsPage";
 import LoginPage from "./components/_auth/LoginPage";
 import SignupPage from "./components/_auth/SignupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -228,7 +228,7 @@ const router = createBrowserRouter([
       },
       {
         path: "reports",
-        // element: <ReportsPage />,
+        element: <ReportsPage />,
       },
       {
         path: "help-desk",
