@@ -75,19 +75,95 @@ class TicketController extends Controller
         $tickets = $query->paginate($perPage);
 
         return response()->json([
-            'success' => true,
             'data' => $tickets->items(),
-            'pagination' => [
-                'current_page' => $tickets->currentPage(),
-                'per_page' => $tickets->perPage(),
-                'total' => $tickets->total(),
-                'last_page' => $tickets->lastPage(),
-                'from' => $tickets->firstItem(),
-                'to' => $tickets->lastItem(),
-                'has_more_pages' => $tickets->hasMorePages(),
-            ]
+            'current_page' => $tickets->currentPage(),
+            'last_page' => $tickets->lastPage(),
+            'per_page' => $tickets->perPage(),
+            'total' => $tickets->total(),
+            'first_page_url' => $tickets->url(1),
+            'from' => $tickets->firstItem(),
+            'last_page_url' => $tickets->url($tickets->lastPage()),
+            'links' => $tickets->linkCollection()->toArray(),
+            'next_page_url' => $tickets->nextPageUrl(),
+            'path' => $tickets->path(),
+            'prev_page_url' => $tickets->previousPageUrl(),
+            'to' => $tickets->lastItem(),
         ]);
     }
+
+    // public function index(Request $request): JsonResponse
+    // {
+    //     // Validate query parameters
+    //     $validator = Validator::make($request->all(), [
+    //         'page' => 'integer|min:1',
+    //         'per_page' => 'integer|min:1|max:100',
+    //         'category' => Rule::in(Ticket::CATEGORIES),
+    //         'priority' => Rule::in(Ticket::PRIORITIES),
+    //         'status' => Rule::in(Ticket::STATUSES),
+    //         'search' => 'string|max:255',
+    //         'sort_by' => 'string|in:created_at,updated_at,priority,status,category,subject',
+    //         'sort_order' => 'string|in:asc,desc',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $query = Ticket::query();
+
+    //     // Apply filters
+    //     if ($request->has('category') && $request->category !== '') {
+    //         $query->byCategory($request->category);
+    //     }
+
+    //     if ($request->has('priority') && $request->priority !== '') {
+    //         $query->where('priority', $request->priority);
+    //     }
+
+    //     if ($request->has('status') && $request->status !== '') {
+    //         $query->byStatus($request->status);
+    //     }
+
+    //     // Apply search
+    //     if ($request->has('search') && $request->search !== '') {
+    //         $searchTerm = $request->search;
+    //         $query->where(function (Builder $q) use ($searchTerm) {
+    //             $q->where('subject', 'like', "%{$searchTerm}%")
+    //                 ->orWhere('description', 'like', "%{$searchTerm}%")
+    //                 ->orWhere('requester_name', 'like', "%{$searchTerm}%")
+    //                 ->orWhere('ticket_number', 'like', "%{$searchTerm}%")
+    //                 ->orWhere('contact_number', 'like', "%{$searchTerm}%")
+    //                 ->orWhere('email_address', 'like', "%{$searchTerm}%");
+    //         });
+    //     }
+
+    //     // Apply sorting
+    //     $sortBy = $request->get('sort_by', 'created_at');
+    //     $sortOrder = $request->get('sort_order', 'desc');
+    //     $query->orderBy($sortBy, $sortOrder);
+
+    //     // Paginate results
+    //     $perPage = $request->get('per_page', 15);
+    //     $tickets = $query->paginate($perPage);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $tickets->items(),
+    //         'pagination' => [
+    //             'current_page' => $tickets->currentPage(),
+    //             'per_page' => $tickets->perPage(),
+    //             'total' => $tickets->total(),
+    //             'last_page' => $tickets->lastPage(),
+    //             'from' => $tickets->firstItem(),
+    //             'to' => $tickets->lastItem(),
+    //             'has_more_pages' => $tickets->hasMorePages(),
+    //         ]
+    //     ]);
+    // }
 
     /**
      * Get help desk statistics

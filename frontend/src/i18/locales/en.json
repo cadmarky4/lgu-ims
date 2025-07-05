@@ -544,7 +544,7 @@
       "descriptionRequired": "Ticket description is required",
       "subjectRequired": "Ticket subject is required",
       "fullNameRequired": "Full name is required",
-      "contactLengthValidation": "Contact number must be 11 characters",
+      "contactLengthValidation": "Contact number must be in +63 XXX XXX XXXX format",
       "completeAddressRequired": "Complete address is required",
       "invalidTimeSlots": "Please select a valid time slot",
       "invalidPriority": "Please select a valid priority"

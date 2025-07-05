@@ -11,7 +11,7 @@ import {
  import { HelpDeskService } from '@/services/helpDesk/helpDesk.service';
  
  const helpDeskService = new HelpDeskService();
- 
+
  export const helpDeskKeys = {
     all: ['helpDeskTickets'] as const,
     lists: () => [...helpDeskKeys.all, 'list'] as const,

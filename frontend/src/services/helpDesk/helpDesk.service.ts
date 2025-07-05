@@ -16,7 +16,7 @@ export class HelpDeskService extends BaseApiService {
         const paginatedSchema = PaginatedResponseSchema(BaseTicketSchema);
 
         return this.request(
-            `/help-desk/${searchParams.toString()}`,
+            `/help-desk?${searchParams.toString()}`,
             paginatedSchema,
             { method: 'GET' }
         );

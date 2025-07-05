@@ -12,12 +12,20 @@ return new class extends Migration {
             $table->uuid('id')->primary();
             $table->uuid('base_ticket_id');
             $table->enum('department', [
-                'CIVIL_REGISTRY',
-                'BARANGAY_ADMINISTRATION',
-                'SOCIAL_SERVICES',
+                'ADMINISTRATION',
                 'HEALTH_SERVICES',
-                'PUBLIC_SAFETY',
-                'BUSINESS_PERMITS'
+                'SOCIAL_SERVICES',
+                'SECURITY_PUBLIC_SAFETY',
+                'FINANCE_TREASURY',
+                'RECORDS_MANAGEMENT',
+                'COMMUNITY_DEVELOPMENT',
+                'DISASTER_RISK_REDUCTION',
+                'ENVIRONMENTAL_MANAGEMENT',
+                'YOUTH_SPORTS_DEVELOPMENT',
+                'SENIOR_CITIZEN_AFFAIRS',
+                'WOMENS_AFFAIRS',
+                'BUSINESS_PERMITS',
+                'INFRASTRUCTURE_DEVELOPMENT'
             ]);
             $table->date('date');
             $table->time('time');

@@ -28,12 +28,20 @@ class Appointment extends Model
 
     // Constants for departments (adjust based on your DepartmentSchema)
     const DEPARTMENTS = [
-        'CIVIL_REGISTRY',
-        'BARANGAY_ADMINISTRATION',
-        'SOCIAL_SERVICES',
+        'ADMINISTRATION',
         'HEALTH_SERVICES',
-        'PUBLIC_SAFETY',
-        'BUSINESS_PERMITS'
+        'SOCIAL_SERVICES',
+        'SECURITY_PUBLIC_SAFETY',
+        'FINANCE_TREASURY',
+        'RECORDS_MANAGEMENT',
+        'COMMUNITY_DEVELOPMENT',
+        'DISASTER_RISK_REDUCTION',
+        'ENVIRONMENTAL_MANAGEMENT',
+        'YOUTH_SPORTS_DEVELOPMENT',
+        'SENIOR_CITIZEN_AFFAIRS',
+        'WOMENS_AFFAIRS',
+        'BUSINESS_PERMITS',
+        'INFRASTRUCTURE_DEVELOPMENT'
     ];
 
     public function ticket(): BelongsTo

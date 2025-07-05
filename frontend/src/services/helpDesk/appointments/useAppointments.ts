@@ -10,6 +10,7 @@ import type {
     CheckScheduleAvailability 
 } from '@/services/helpDesk/appointments/appointments.types';
 import { appointmentsService } from '@/services/helpDesk/appointments/appointments.service';
+import { helpDeskKeys } from '../useHelpDesk';
 
 // Query keys factory
 export const appointmentsKeys = {
@@ -48,6 +49,7 @@ export function useCreateAppointment() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.lists() });
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() });
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
             
             // Set the new appointment data in cache
             queryClient.setQueryData(
