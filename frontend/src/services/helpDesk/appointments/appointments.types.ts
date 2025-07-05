@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { DepartmentSchema } from "@/services/users/users.types";
-import { BaseTicketSchema, timeSlotOptions, TimeSlotsSchema } from "../helpDesk.type";
+import { BaseTicketSchema, TimeSlotsSchema } from "../helpDesk.type";
+import { timeSlotOptions } from "../helpDesk.type";
+
+// Regex for MM-DD-YYYY (allows valid month/day combos but not fully exhaustive)
+const regex = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
+;
 
 export const BookedScheduleSchema = z.object({
   appointment_id: z.string().uuid(),
@@ -17,11 +22,22 @@ export const AppointmentSchema = z.object({
   id: z.string().uuid().optional(), // PK, will be generated on the server-side
   base_ticket_id: z.string().uuid(), // FK, MUST BE UNIQUE
   department: z.enum(DepartmentSchema.options, {
-    errorMap: (issue, ctx) => ({ message: 'helpDesk.appointmentsForm.validation.invalidDepartment' })
+    errorMap: (_, __) => ({ message: 'helpDesk.appointmentsForm.validation.invalidDepartment' })
   }),
-  date: z.string().min(1, 'helpDesk.appointmentsForm.validation.dateRequired'),
+  // date: z.string().min(1, 'helpDesk.appointmentsForm.validation.dateRequired'),
+ 
+  date: z.string()
+    .regex(regex, { message: 'helpDesk.appointmentsForm.validation.dateInMM/DD/YYYY' })
+    .refine((str) => {
+      const [yyyy, mm, dd] = str.split("-").map(Number);
+      const date = new Date(yyyy, mm - 1, dd);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return date >= today;
+    }, { message: 'helpDesk.appointmentsForm.validation.dateNotInThePast' }),
+
   time: z.enum(timeSlotOptions, {
-    errorMap: (issue, ctx) => ({ message: 'helpDesk.validation.invalidTimeSlots' })
+    errorMap: (_, __) => ({ message: 'helpDesk.validation.invalidTimeSlots' })
   }),
   additional_notes: z.string().optional(),
 })

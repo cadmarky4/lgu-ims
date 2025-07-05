@@ -1,7 +1,7 @@
 import {
     type BaseTicket,
   } from "@/services/helpDesk/helpDesk.type";
-  import { AlertCircle, Calendar, Edit, Eye, FileText } from "lucide-react";
+  import { AlertCircle, Calendar, Edit, Eye, FileText, Trash } from "lucide-react";
 import { getTypeColor } from "../utilities/getTypeColor";
 import { getPriorityColor } from "../utilities/getPriorityColor";
 import { getStatusColor } from "../utilities/getStatusColor";
@@ -18,6 +18,7 @@ import { PaginationNavigation } from "./PaginationNavigation";
       total: number;
     },
     handlePageChange: (page: number) => void;
+    handleDelete: (ticket: BaseTicket) => void;
   }
   
   export const TicketsList: React.FC<TicketsListProps> = ({
@@ -25,7 +26,8 @@ import { PaginationNavigation } from "./PaginationNavigation";
     isLoading,
     error,
     pagination,
-    handlePageChange
+    handlePageChange,
+    handleDelete,
   }) => {
     return (
       <div
@@ -208,6 +210,13 @@ import { PaginationNavigation } from "./PaginationNavigation";
                       title="Edit Ticket"
                     >
                       <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(ticket)}
+                      className="cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Delete Ticket"
+                    >
+                      <Trash className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

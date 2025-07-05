@@ -526,7 +526,9 @@
         "fullNameRequired": "Full name is required",
         "contactMaxChar": "Contact number must not exceed 11 characters",
         "completeAddressRequired": "Complete address is required",
-        "invalidDepartment": "Please select a valid department"
+        "invalidDepartment": "Please select a valid department",
+        "dateNotInThePast": "Date must not be in the past",
+        "dateInMM/DD/YYYY": "Date must be in MM/DD/YYYY format"
       },
       "messages": {
         "createSuccess":"Appointment schedule successfully!",

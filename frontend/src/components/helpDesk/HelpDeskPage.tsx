@@ -1,106 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  Search,
-  Plus,
-  Minus,
-  Filter,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  Eye,
-  Edit,
-  Calendar,
-  FileText,
-  Download,
-  ChevronRight,
-  Shield,
-  Lightbulb,
-  Calendar as CalendarIcon,
-  X,
-  Save,
-  Phone,
-  Mail,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Download } from "lucide-react";
 import Breadcrumb from "../_global/Breadcrumb";
 
 // Import API services
-import { AppointmentsService } from "../../services/helpDesk/appointments/appointments.service";
-import { ComplaintsService } from "../../services/helpDesk/complaints/complaints.service";
-import { SuggestionsService } from "../../services/helpDesk/suggestions/suggestions.service";
-import { BlotterService } from "../../services/helpDesk/blotters/blotters.service";
-import type { BaseTicket, HelpDeskTicketParams, Priority, Status, TicketCategory } from "@/services/helpDesk/helpDesk.type";
+import type {
+  BaseTicket,
+  HelpDeskTicketParams,
+  Priority,
+  Status,
+  TicketCategory,
+} from "@/services/helpDesk/helpDesk.type";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useDeleteHelpDeskTicket, useHelpDeskTickets } from "@/services/helpDesk/useHelpDesk";
+import {
+  useDeleteHelpDeskTicket,
+  useHelpDeskTickets,
+} from "@/services/helpDesk/useHelpDesk";
 import { useTranslation } from "react-i18next";
 import { useNotifications } from "../_global/NotificationSystem";
 import StatisticsCard from "./_components/StatisticsCards";
 import { HelpDeskSearch } from "./_components/HelpDeskSearch";
 import { TicketsList } from "./_components/TicketsList";
-import { FloatingPaginationNavigation } from "./_components/FloatingPaginationNavigation";
-import { PaginationNavigation } from "./_components/PaginationNavigation";
-
-
-// interface TicketStats {
-//   total: number;
-//   pending: number;
-//   inProgress: number;
-//   resolved: number;
-//   closed: number;
-// }
-
-// interface TabItem {
-//   key: TabKey;
-//   label: string;
-//   count: number;
-// }
-
-// interface StatCard {
-//   title: string;
-//   value: number;
-//   icon: React.ComponentType<{ className?: string }>;
-//   color: string;
-//   bgColor: string;
-// }
-
-// interface TicketTypeOption {
-//   type: TicketType;
-//   label: string;
-//   description: string;
-//   icon: React.ComponentType<{ className?: string }>;
-//   href: string;
-//   color: string;
-// }
-
-// // Union types for better type safety
-// type TicketType = "Appointment" | "Blotter" | "Complaint" | "Suggestion";
-// type TicketPriority = "High" | "Medium" | "Low";
-// type TicketStatus = "Pending" | "In Progress" | "Resolved" | "Closed";
-// type TabKey = "all" | "pending" | "inprogress" | "resolved" | "closed";
-
-// // Color mapping types
-// type PriorityColorMap = Record<TicketPriority, string>;
-// type StatusColorMap = Record<TicketStatus, string>;
-// type TypeColorMap = Record<TicketType, string>;
+import { TicketFormsDropdown } from "./_components/TicketFormsDropdown";
+import { DeleteConfirmModal } from "./_components/DeleteConfirmModal";
 
 const HelpDeskPage: React.FC = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { t } = useTranslation();
 
   // Notification
   const { showNotification } = useNotifications();
- 
-  // const [showTicketDropdown, setShowTicketDropdown] = useState<boolean>(false);
-  // const [editingStatus, setEditingStatus] = useState<string | null>(null);
-  // const [showModal, setShowModal] = useState<boolean>(false);
 
   // Local state
   const [isLoaded, setIsLoaded] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<TicketCategory | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<TicketCategory | undefined>(
+    undefined
+  );
   const [status, setStatus] = useState<Status | undefined>(undefined);
   const [priority, setPriority] = useState<Priority | undefined>(undefined);
+
+  // Delete states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<BaseTicket | null>(null);
 
   // Debounce search to avoid too many API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -113,82 +55,94 @@ const HelpDeskPage: React.FC = () => {
     category: activeTab,
     status: status,
     priority: priority,
-  }
+  };
 
   // Queries and mutations
   const {
     data: helpDeskTicketData,
     isLoading,
     error,
-    refetch
+    refetch,
   } = useHelpDeskTickets(queryParams);
 
   const deleteTicket = useDeleteHelpDeskTicket();
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
-  }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleDelete = async (ticket: BaseTicket) => {
-    if (!ticket.id) throw new Error (t('helpDesk.errors.ticketNotFound'));
-    if (window.confirm(t('helpDesk.messages.deleteConfirm'))) {
-      try {
-        await deleteTicket.mutateAsync(ticket.id);
-        showNotification({
-          type: 'success',
-          title: t('helpDesk.messages.deleteSuccess'),
-          message: t('helpDesk.messages.deleteSuccess'),
-          duration: 3000,
-          persistent: false,
-        });
-        refetch();
-      } catch (error) {
-        console.error('Delete error:', error);
+  const handleDelete = (ticket: BaseTicket) => {
+    setShowDeleteConfirm(true);
+    setTicketToDelete(ticket);
+  };
 
-        showNotification({
-          type: 'error',
-          title: t('helpDesk.messages.deleteError'),
-          message: t('helpDesk.messages.deleteError'),
-          duration: 3000,
-          persistent: false
-        });
-      }
+  const handleDeleteClose = () => {
+    setShowDeleteConfirm(false);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!ticketToDelete?.id) throw new Error(t("helpDesk.errors.ticketNotFound"));
+
+    try {
+      await deleteTicket.mutateAsync(ticketToDelete.id);
+      showNotification({
+        type: "success",
+        title: t("helpDesk.messages.deleteSuccess"),
+        message: t("helpDesk.messages.deleteSuccess"),
+        duration: 3000,
+        persistent: false,
+      });
+      refetch();
+    } catch (error) {
+      console.error("Delete error:", error);
+
+      showNotification({
+        type: "error",
+        title: t("helpDesk.messages.deleteError"),
+        message: t("helpDesk.messages.deleteError"),
+        duration: 3000,
+        persistent: false,
+      });
+    } finally {
+      setShowDeleteConfirm(false);
     }
   };
 
   const handleActiveTabChange = (category: TicketCategory | undefined) => {
     setActiveTab(category);
     setCurrentPage(1);
-  }
+  };
 
   const handleStatusChange = (status: Status | undefined) => {
     setStatus(status);
     setCurrentPage(1);
-  }
+  };
 
   const handlePriorityChange = (priority: Priority | undefined) => {
     setPriority(priority);
     setCurrentPage(1);
-  }
+  };
 
   // Prepare data
   const tickets: BaseTicket[] = helpDeskTicketData?.data || [];
 
-  const pagination = helpDeskTicketData ? {
-    current_page: helpDeskTicketData.current_page,
-    last_page: helpDeskTicketData.last_page,
-    per_page: helpDeskTicketData.per_page,
-    total: helpDeskTicketData.total,
-  } : {
-    current_page: 1,
-    last_page: 1,
-    per_page: 15,
-    total: 0
-  }
+  const pagination = helpDeskTicketData
+    ? {
+        current_page: helpDeskTicketData.current_page,
+        last_page: helpDeskTicketData.last_page,
+        per_page: helpDeskTicketData.per_page,
+        total: helpDeskTicketData.total,
+      }
+    : {
+        current_page: 1,
+        last_page: 1,
+        per_page: 15,
+        total: 0,
+      };
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -207,6 +161,12 @@ const HelpDeskPage: React.FC = () => {
 
   return (
     <div className="@container/main min-h-screen bg-gray-50 p-6">
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
+      />
+
       {/* Breadcrumb */}
       <Breadcrumb isLoaded={isLoaded} />
 
@@ -221,70 +181,42 @@ const HelpDeskPage: React.FC = () => {
               Process and track resident service requests
             </p>
           </div>
-          {/* <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 @3xl/main:flex-initial relative z-10">
-              <button
-                onClick={() => setShowTicketDropdown(!showTicketDropdown)}
-                className="w-full cursor-pointer bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                {showTicketDropdown ? (
-                  <Minus className="w-4 h-4" />
-                ) : (
-                  <Plus className="w-4 h-4" />
-                )}
-                Create New Ticket
-              </button>
 
-              {showTicketDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <div className="p-2">
-                    {ticketTypeOptions.map((option) => {
-                      const IconComponent = option.icon;
-                      return (
-                        <Link
-                          key={option.type}
-                          to={"/help-desk/" + option.href}
-                          className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                          onClick={() => setShowTicketDropdown(false)}
-                        >
-                          <div
-                            className={`p-2 bg-gray-100 rounded-lg ${option.color}`}
-                          >
-                            <IconComponent className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">
-                              {option.label}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {option.description}
-                            </p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-gray-400 mt-3" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <TicketFormsDropdown />
 
             <button className="cursor-pointer flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
               <Download className="w-4 h-4" />
               Export Report
             </button>
-          </div> */}
+          </div>
         </div>
       </div>
 
       {/* Statistics Card */}
-      <StatisticsCard isLoaded={isLoaded}/>
+      <StatisticsCard isLoaded={isLoaded} />
 
       {/* Filters and Search */}
-      <HelpDeskSearch searchTerm={searchTerm} activeTab={activeTab} status={status} priority={priority} onSearchChange={handleSearchChange} handleActiveTabChange={handleActiveTabChange} handleStatusChange={handleStatusChange} handlePriorityChange={handlePriorityChange}/>
+      <HelpDeskSearch
+        searchTerm={searchTerm}
+        activeTab={activeTab}
+        status={status}
+        priority={priority}
+        onSearchChange={handleSearchChange}
+        handleActiveTabChange={handleActiveTabChange}
+        handleStatusChange={handleStatusChange}
+        handlePriorityChange={handlePriorityChange}
+      />
 
       {/* Tickets List */}
-      <TicketsList filteredTickets={tickets} isLoading={isLoading} error={error} pagination={pagination} handlePageChange={handlePageChange}/>
+      <TicketsList
+        filteredTickets={tickets}
+        isLoading={isLoading}
+        error={error}
+        pagination={pagination}
+        handlePageChange={handlePageChange}
+        handleDelete={handleDelete}
+      />
 
       {/* Modal */}
       {/* {showModal && modalTicket && (
@@ -332,8 +264,8 @@ const HelpDeskPage: React.FC = () => {
 
               {renderModalContent()} */}
 
-              {/* Contact Information */}
-              {/* <div className="mt-6 pt-6 border-t border-gray-200">
+      {/* Contact Information */}
+      {/* <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="font-medium text-gray-900 mb-3">
                   Contact Information
                 </h3>
@@ -357,8 +289,8 @@ const HelpDeskPage: React.FC = () => {
                 </div>
               </div> */}
 
-              {/* Action Buttons */}
-              {/* <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-3">
+      {/* Action Buttons */}
+      {/* <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-3">
                 {isEditMode ? (
                   <>
                     <button
