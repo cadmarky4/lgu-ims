@@ -19,7 +19,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo,
 }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
+  const location = useLocation(); 
 
   // Show loading spinner while checking authentication
   if (isLoading) {
