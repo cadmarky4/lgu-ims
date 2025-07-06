@@ -22,13 +22,11 @@ import HouseholdManagement from "./components/householdManagement/HouseholdManag
 import AddNewHousehold from "./components/householdManagement/AddNewHousehold";
 import EditHousehold from "./components/householdManagement/EditHousehold";
 import ViewHousehold from "./components/householdManagement/ViewHousehold";
-<<<<<<< HEAD
 import BarangayOfficialsPage from "./components/barangayOfficials/BarangayOfficialsPage";
 import EditBarangayOfficial from "./components/barangayOfficials/EditBarangayOfficial";
 import AddBarangayOfficial from "./components/barangayOfficials/AddBarangayOfficial";
 import ListBarangayOfficalsToEdit from "./components/barangayOfficials/ListBarangayOfficalsToEdit";
 
-=======
 import DataImport from "./components/import/DataImport";
 // import ProcessDocument from "./components/processDocument/ProcessDocument";
 // import BarangayClearanceForm from "./components/processDocument/BarangayClearanceForm";
@@ -48,7 +46,7 @@ import DataImport from "./components/import/DataImport";
 // import UserManagement from "./components/userManagement/UserManagement";
 // import EditUserPage from "./components/userManagement/EditUserPage";
 // import ViewUserPage from "./components/userManagement/ViewUserPage";
->>>>>>> origin/feat-bulkimport
+import ReportsPage from "./components/reports/ReportsPage";
 import LoginPage from "./components/_auth/LoginPage";
 import SignupPage from "./components/_auth/SignupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -268,7 +266,7 @@ const router = createBrowserRouter([
       },
       {
         path: "reports",
-        // element: <ReportsPage />,
+        element: <ReportsPage />,
       },
       {
         path: "help-desk",
