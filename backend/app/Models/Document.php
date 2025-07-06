@@ -7,11 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Auth;
 
-class Document extends Model
+class Document extends Model implements Auditable
 {
-    use HasFactory, HasUuids; // Add HasUuids trait
+    use HasFactory, HasUuids, \OwenIt\Auditing\Auditable;
 
+    protected $auditModel = ActivityLog::class;
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -363,5 +366,33 @@ class Document extends Model
         } while (static::where('serial_number', $serialNumber)->exists());
 
         return $serialNumber;
+    }
+
+    // OwenIt Auditing
+    public function transformAudit(array $data): array
+    {
+        return [
+            'user_id' => Auth::id() ?? null,
+            'action_type' => $data['event'],
+            'table_name' => $this->getTable(),
+            'record_id' => $this->getKey(),
+            'old_values' => $data['old_values'] ?? null,
+            'new_values' => $data['new_values'] ?? null,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'timestamp' => now(),
+            'description' => $this->generateDescription($data['event'])
+        ];
+    }
+
+    private function generateDescription($event)
+    {
+        $user = Auth::user() ? Auth::user()->name : 'System';
+        return match($event) {
+            'created' => "$user created a new document record",
+            'updated' => "$user updated document information",
+            'deleted' => "$user deleted a document record",
+            default => "$user performed $event action"
+        };
     }
 }

@@ -8,11 +8,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Carbon\Carbon;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Auth;
 
-class ProjectTeamMember extends Model
+class ProjectTeamMember extends Model implements Auditable
 {
-    use HasFactory, HasUuids; // Add HasUuids trait
+    use HasFactory, HasUuids, \OwenIt\Auditing\Auditable;
 
+    protected $auditModel = ActivityLog::class;
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -282,6 +285,34 @@ class ProjectTeamMember extends Model
     public function getProjectStatus(): string
     {
         return $this->project->status ?? 'UNKNOWN';
+    }
+
+    // OwenIt Auditing
+    public function transformAudit(array $data): array
+    {
+        return [
+            'user_id' => Auth::id() ?? null,
+            'action_type' => $data['event'],
+            'table_name' => $this->getTable(),
+            'record_id' => $this->getKey(),
+            'old_values' => $data['old_values'] ?? null,
+            'new_values' => $data['new_values'] ?? null,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'timestamp' => now(),
+            'description' => $this->generateDescription($data['event'])
+        ];
+    }
+
+    private function generateDescription($event)
+    {
+        $user = Auth::user() ? Auth::user()->name : 'System';
+        return match($event) {
+            'created' => "$user added a new project team member",
+            'updated' => "$user updated project team member information",
+            'deleted' => "$user removed a project team member",
+            default => "$user performed $event action"
+        };
     }
 
     // Boot method

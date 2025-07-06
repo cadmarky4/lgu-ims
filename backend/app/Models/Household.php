@@ -9,11 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Support\Facades\Auth;
 
-class Household extends Model
+class Household extends Model implements Auditable
 {
-    use HasFactory, HasUuids; // Add HasUuids trait
+    use HasFactory, HasUuids, \OwenIt\Auditing\Auditable;
 
+    protected $auditModel = ActivityLog::class;
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -317,5 +320,33 @@ class Household extends Model
     {
         $member = $this->members()->where('residents.id', $resident->id)->first();
         return $member ? $member->pivot->relationship : null;
+    }
+
+    // OwenIt Auditing
+    public function transformAudit(array $data): array
+    {
+        return [
+            'user_id' => Auth::id() ?? null,
+            'action_type' => $data['event'],
+            'table_name' => $this->getTable(),
+            'record_id' => $this->getKey(),
+            'old_values' => $data['old_values'] ?? null,
+            'new_values' => $data['new_values'] ?? null,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'timestamp' => now(),
+            'description' => $this->generateDescription($data['event'])
+        ];
+    }
+
+    private function generateDescription($event)
+    {
+        $user = Auth::user() ? Auth::user()->name : 'System';
+        return match($event) {
+            'created' => "$user created a new household record",
+            'updated' => "$user updated household information",
+            'deleted' => "$user deleted a household record",
+            default => "$user performed $event action"
+        };
     }
 }

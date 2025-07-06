@@ -33,6 +33,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import './i18';
 import ViewBarangayOfficial from "./components/barangayOfficials/ViewBarangayOfficial";
+import ActivityLogManagement from "./components/activityLogs/ActivityLogManagement";
 
 
 // Wrapper components to handle navigation prop
@@ -131,6 +132,19 @@ const router = createBrowserRouter([
           {
             path: "view/:id",
             element: <ViewHousehold />,
+          },
+        ],
+      },
+      {
+        path: "activity-logs",
+        children: [
+          {
+            index: true,
+            element: <ActivityLogManagement />,
+          },
+          {
+            path: "add",
+            element: <AddNewHousehold />,
           },
         ],
       },

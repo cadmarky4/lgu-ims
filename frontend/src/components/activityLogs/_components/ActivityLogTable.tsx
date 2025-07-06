@@ -1,30 +1,24 @@
 // ============================================================================
-// components/residents/ResidentTable.tsx
+// components/activity-logs/ActivityLogTable.tsx
 // ============================================================================
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Resident } from '@/services/residents/residents.types';
-import { ResidentTableRow } from './ResidentTableRow';
+import { type ActivityLog } from '@/services/activityLogs/activity-logs.types';
+import { ActivityLogTableRow } from './ActivityLogTableRow';
 
-interface ResidentTableProps {
-  residents: Resident[];
+interface ActivityLogTableProps {
+  activityLogs: ActivityLog[];
   isLoading: boolean;
   searchTerm: string;
-  onView: (resident: Resident) => void;
-  onEdit: (resident: Resident) => void;
-  onDelete: (resident: Resident) => void;
-  deletingId: string | null;
+  onView: (log: ActivityLog) => void;
 }
 
-export const ResidentTable: React.FC<ResidentTableProps> = ({
-  residents,
+export const ActivityLogTable: React.FC<ActivityLogTableProps> = ({
+  activityLogs,
   isLoading,
   searchTerm,
-  onView,
-  onEdit,
-  onDelete,
-  deletingId
+  onView
 }) => {
   const { t } = useTranslation();
 
@@ -32,7 +26,7 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-smblue-400"></div>
-        <span className="ml-2 text-gray-600">{t('residents.messages.loading')}</span>
+        <span className="ml-2 text-gray-600">{t('activityLogs.messages.loading')}</span>
       </div>
     );
   }
@@ -43,43 +37,43 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.resident')}
+              {t('activityLogs.table.headers.timestamp')}
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.contact')}
+              {t('activityLogs.table.headers.user')}
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.address')}
+              {t('activityLogs.table.headers.action')}
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.category')}
+              {t('activityLogs.table.headers.target')}
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.status')}
+              {t('activityLogs.table.headers.description')}
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('residents.table.headers.actions')}
+              {t('activityLogs.table.headers.ipAddress')}
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {t('activityLogs.table.headers.actions')}
             </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {residents.length === 0 ? (
+          {activityLogs.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+              <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                 {searchTerm
-                  ? t('residents.table.noResultsSearch', { searchTerm })
-                  : t('residents.table.noResults')}
+                  ? t('activityLogs.table.noResultsSearch', { searchTerm })
+                  : t('activityLogs.table.noResults')}
               </td>
             </tr>
           ) : (
-            residents.map((resident) => (
-              <ResidentTableRow
-                key={resident.id}
-                resident={resident}
+            activityLogs.map((log) => (
+              <ActivityLogTableRow
+                key={log.id}
+                log={log}
                 onView={onView}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                isDeleting={deletingId === resident.id}
               />
             ))
           )}
