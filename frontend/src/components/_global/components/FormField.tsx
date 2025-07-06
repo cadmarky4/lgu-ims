@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, type FieldErrors, type FieldValues } from 'react-hook-form';
 
 interface FormFieldProps {
   name: string;
@@ -32,7 +32,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   const { t } = useTranslation();
   const { register, formState: { errors } } = useFormContext();
   
-  const fieldError = errors[name];
+  const fieldError = (name.includes('.') ? (errors[name.split('.')[0]] as FieldErrors<FieldValues>)?.[name.split('.')[1]] : errors[name]);
+
   const baseClassName = `w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
     fieldError 
       ? 'border-red-300 focus:ring-red-200 focus:border-red-300' 

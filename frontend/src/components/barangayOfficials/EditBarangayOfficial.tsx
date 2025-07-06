@@ -32,6 +32,7 @@ const EditBarangayOfficial = () => {  // Loading and error states for API calls
   return (
     <BarangayOfficialForm
       mode="edit"
+      barangayOfficialId={id}
       onClose={handleClose}
       onSuccess={handleSuccess}
     />

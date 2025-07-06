@@ -1,239 +1,89 @@
-// Appointment-specific types and interfaces
+import { z } from "zod";
+import { DepartmentSchema } from "@/services/users/users.types";
+import { BaseTicketSchema, TimeSlotsSchema } from "../helpDesk.type";
+import { timeSlotOptions } from "../helpDesk.type";
 
-export type AppointmentStatus = 
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'RESCHEDULED'
-  | 'COMPLETED'
-  | 'CANCELLED'
-  | 'NO_SHOW';
+// Regex for MM-DD-YYYY (allows valid month/day combos but not fully exhaustive)
+const regex = /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
+;
 
-export type AppointmentPriority =
-  | 'LOW'
-  | 'NORMAL'
-  | 'HIGH'
-  | 'URGENT';
+export const BookedScheduleSchema = z.object({
+  appointment_id: z.string().uuid(),
+  date: z.string().min(1, 'helpDesk.appointmentsForm.validation.dateRequired'),
+  time: TimeSlotsSchema,
+  department: DepartmentSchema,
+})
 
-export interface Appointment {
-  id: number;
-  appointment_number: string;
-  
-  // Basic Information (from frontend form)
-  full_name: string;
-  email: string;
-  phone: string;
-  department: string;
-  purpose: string;
-  
-  // Scheduling Information
-  preferred_date: string;
-  preferred_time: string;
-  alternative_date?: string;
-  alternative_time?: string;
-  additional_notes?: string;
-  
-  // System Processing Fields
-  appointment_date?: string; // Final confirmed date
-  appointment_time?: string; // Final confirmed time
-  end_time?: string;
-  duration_minutes?: number;
-  
-  // Location & Assignment
-  location?: string;
-  room_venue?: string;
-  assigned_official?: number;
-  assigned_official_name?: string;
-  assigned_official_details?: {
-    id: number;
-    name: string;
-    position: string;
-  };
-  
-  // Status & Dates
-  status: AppointmentStatus;
-  date_requested: string;
-  confirmed_date?: string;
-  actual_start_time?: string;
-  actual_end_time?: string;
-  
-  // Rescheduling
-  original_date?: string;
-  original_time?: string;
-  reschedule_reason?: string;
-  reschedule_count: number;
-  
-  // Meeting Details
-  meeting_notes?: string;
-  action_items?: string;
-  outcome_summary?: string;
-  resolution_status?: 'PENDING' | 'RESOLVED' | 'ONGOING' | 'ESCALATED';
-  
-  // Priority & Special Flags
-  priority: AppointmentPriority;
-  is_walk_in: boolean;
-  is_emergency: boolean;
-  
-  // Notifications
-  confirmation_sent: boolean;
-  reminder_sent: boolean;
-  confirmation_sent_at?: string;
-  reminder_sent_at?: string;
-  
-  // Additional
-  attachments?: any[];
-  reference_number?: string;
-  remarks?: string;
-  
-  // System Fields
-  created_by?: number;
-  updated_by?: number;
-  created_at: string;
-  updated_at: string;
-}
+export const CheckScheduleAvailabilitySchema = BookedScheduleSchema.omit({
+  appointment_id: true, // not really needed for checking as booked schedules will be unavailable everywhere (for now)
+})
 
-export interface AppointmentParams {
-  page?: number;
-  per_page?: number;
-  search?: string;
-  department?: string;
-  status?: AppointmentStatus;
-  priority?: AppointmentPriority;
-  date_from?: string;
-  date_to?: string;
-  assigned_official?: number;
-  is_emergency?: boolean;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
-}
+export const AppointmentSchema = z.object({
+  id: z.string().uuid().optional(), // PK, will be generated on the server-side
+  base_ticket_id: z.string().uuid(), // FK, MUST BE UNIQUE
+  department: z.enum(DepartmentSchema.options, {
+    errorMap: (_, __) => ({ message: 'helpDesk.appointmentsForm.validation.invalidDepartment' })
+  }),
+  // date: z.string().min(1, 'helpDesk.appointmentsForm.validation.dateRequired'),
+ 
+  date: z.string()
+    .regex(regex, { message: 'helpDesk.appointmentsForm.validation.dateInMM/DD/YYYY' })
+    .refine((str) => {
+      const [yyyy, mm, dd] = str.split("-").map(Number);
+      const date = new Date(yyyy, mm - 1, dd);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return date >= today;
+    }, { message: 'helpDesk.appointmentsForm.validation.dateNotInThePast' }),
 
-export interface CreateAppointmentData {
-  // Required fields from frontend form
-  full_name: string;
-  email: string;
-  phone: string;
-  department: string;
-  purpose: string;
-  preferred_date: string;
-  preferred_time: string;
-  
-  // Optional fields from frontend form
-  alternative_date?: string;
-  alternative_time?: string;
-  additional_notes?: string;
-  
-  // Optional system fields
-  resident_id?: number;
-  priority?: AppointmentPriority;
-  is_emergency?: boolean;
-}
+  time: z.enum(timeSlotOptions, {
+    errorMap: (_, __) => ({ message: 'helpDesk.validation.invalidTimeSlots' })
+  }),
+  additional_notes: z.string().optional(),
+})
 
-export interface UpdateAppointmentData {
-  full_name?: string;
-  email?: string;
-  phone?: string;
-  department?: string;
-  purpose?: string;
-  preferred_date?: string;
-  preferred_time?: string;
-  alternative_date?: string;
-  alternative_time?: string;
-  additional_notes?: string;
-  
-  // System fields that can be updated
-  appointment_date?: string;
-  appointment_time?: string;
-  end_time?: string;
-  duration_minutes?: number;
-  location?: string;
-  room_venue?: string;
-  assigned_official?: number;
-  assigned_official_name?: string;
-  status?: AppointmentStatus;
-  priority?: AppointmentPriority;
-  meeting_notes?: string;
-  action_items?: string;
-  outcome_summary?: string;
-  resolution_status?: 'PENDING' | 'RESOLVED' | 'ONGOING' | 'ESCALATED';
-  remarks?: string;
-}
+export const ViewAppointmentSchema = z.object({
+  ticket: BaseTicketSchema,
+  appointment: AppointmentSchema,
+})
 
-export interface ConfirmAppointmentData {
-  appointment_date: string;
-  appointment_time: string;
-  end_time?: string;
-  duration_minutes?: number;
-  location?: string;
-  room_venue?: string;
-  assigned_official?: number;
-  confirmation_notes?: string;
-}
+export const CreateAppointmentSchema = z.object({
+  ticket: BaseTicketSchema.omit({
+    id: true, // AUTO GENERATED
+    ticket_number: true, // AUTO GENERATED
+    created_at: true, // AUTO GENERATED
+    updated_at: true, // AUTO GENERATED
+    status: true, // DEFAULTS TO 'OPEN'
+  }).extend({
+    resident_search: z.string().optional().nullable(),
+    category: z.literal('APPOINTMENT')
+  }),
 
-export interface CancelAppointmentData {
-  cancellation_reason: string;
-  refund_required?: boolean;
-  alternative_offered?: boolean;
-}
+  appointment: AppointmentSchema.omit({
+    id: true, // AUTO GENERATED
+    base_ticket_id: true, // AUTO GENERATED
+  })
+})
 
-export interface CompleteAppointmentData {
-  actual_start_time?: string;
-  actual_end_time?: string;
-  meeting_notes?: string;
-  action_items?: string;
-  outcome_summary?: string;
-  resolution_status?: 'PENDING' | 'RESOLVED' | 'ONGOING' | 'ESCALATED';
-  follow_up_required?: boolean;
-  follow_up_date?: string;
-}
+export const EditAppointmentSchema = z.object({
+  ticket: BaseTicketSchema.partial().omit({
+    id: true,           // Cannot change ID
+    ticket_number: true, // Cannot change ticket number
+    created_at: true,   // Cannot change creation date
+    category: true      // Cannot change category type
+  }),
 
-export interface RescheduleAppointmentData {
-  new_date: string;
-  new_time: string;
-  reschedule_reason: string;
-  end_time?: string;
-  duration_minutes?: number;
-  location?: string;
-  room_venue?: string;
-}
+  appointment: AppointmentSchema.partial().omit({ 
+    id: true,        // Cannot change ID
+    base_ticket_id: true  // Cannot change parent ticket reference
+  })
+})
 
-export interface FollowUpData {
-  follow_up_date: string;
-  follow_up_time?: string;
-  follow_up_type: 'PHONE_CALL' | 'EMAIL' | 'IN_PERSON' | 'DOCUMENT_REVIEW';
-  follow_up_notes: string;
-  priority?: AppointmentPriority;
-}
+export type BookedSchedule = z.infer<typeof BookedScheduleSchema>
+export type Appointment = z.infer<typeof AppointmentSchema>
+export type ViewAppointment = z.infer<typeof ViewAppointmentSchema>
+export type CreateAppointment = z.infer<typeof CreateAppointmentSchema>
+export type EditAppointment = z.infer<typeof EditAppointmentSchema>
+export type CheckScheduleAvailability = z.infer<typeof CheckScheduleAvailabilitySchema>
 
-export interface AppointmentStatistics {
-  total_appointments: number;
-  pending_appointments: number;
-  confirmed_appointments: number;
-  completed_appointments: number;
-  cancelled_appointments: number;
-  no_show_appointments: number;
-  today_appointments: number;
-  upcoming_appointments: number;
-  by_department: Record<string, number>;
-  by_priority: Record<AppointmentPriority, number>;
-  by_status: Record<AppointmentStatus, number>;
-  appointments_by_month: Array<{
-    month: string;
-    count: number;
-  }>;
-  average_completion_time: number; // in minutes
-  completion_rate: number; // percentage
-  no_show_rate: number; // percentage
-}
-
-export interface AvailableSlot {
-  time: string;
-  available: boolean;
-  capacity?: number;
-  booked?: number;
-}
-
-export interface AvailableSlotsParams {
-  date: string;
-  department?: string;
-  duration_minutes?: number;
-}
-
+export const departments = DepartmentSchema.options;

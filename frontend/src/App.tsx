@@ -38,10 +38,10 @@ import './i18';
 import ViewBarangayOfficial from "./components/barangayOfficials/ViewBarangayOfficial";
 import ActivityLogManagement from "./components/activityLogs/ActivityLogManagement";
 import HelpDeskPage from "./components/helpDesk/HelpDeskPage";
-import Appointments from "./components/helpDesk/Appointments";
-import Blotter from "./components/helpDesk/Blotter";
-import Complaints from "./components/helpDesk/Complaints";
-import Suggestions from "./components/helpDesk/Suggestions";
+import AppointmentsPage from "./components/helpDesk/Appointments/Appointments";
+import BlotterPage from "./components/helpDesk/Blotter/Blotter";
+import ComplaintsPage from "./components/helpDesk/Complaints/Complaints";
+import SuggestionsPage from "./components/helpDesk/Suggestions/Suggestions";
 
 
 // Wrapper components to handle navigation prop
@@ -264,20 +264,16 @@ const router = createBrowserRouter([
             element: <HelpDeskPage />,
           },
           {
-            path: "schedule-appointment",
-            element: <Appointments />,
-          },
-          {
             path: "file-blotter",
-            element: <Blotter />,
+            element: <BlotterPage />,
           },
           {
             path: "file-complaint",
-            element: <Complaints />,
+            element: <ComplaintsPage />,
           },
           {
             path: "share-suggestions",
-            element: <Suggestions />,
+            element: <SuggestionsPage />,
           },
         ],
       },

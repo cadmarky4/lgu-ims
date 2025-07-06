@@ -40,7 +40,7 @@ const BarangayOfficialsPage: React.FC = () => {
   // Debounce search to avoid too many API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // QUery parameters
+  // Query parameters
   const queryParams: BarangayOfficialParams = {
     page: currentPage,
     per_page: 15,

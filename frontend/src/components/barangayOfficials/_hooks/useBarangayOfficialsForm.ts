@@ -24,11 +24,11 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
 
     const form = useForm<BarangayOfficialFormData>({
         resolver: zodResolver(BarangayOfficialFormDataSchema),
-        defaultValues: transformBarangayOfficialToFormData(null),
+        // defaultValues: transformBarangayOfficialToFormData(null),
         mode: 'onBlur',
     })
 
-    const {  watch, setValue, reset } = form;
+    const { watch, setValue, reset } = form;
     const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
     const residentIdField = watch('resident_id');
     const searchResident = watch('resident_search');
@@ -46,7 +46,6 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     const updateBarangayOfficial = useUpdateBarangayOfficial();
     
     const { getOfficialRegistrationStatus, isChecking } = useIsAlreadyRegisteredAsOfficial();
-
     // set default values of dropdowns to empty strings
     // useEffect(() => {
     //     setValue("committee_assignment", "");
@@ -61,7 +60,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
             const timeoutId = setTimeout(() => {
                 (async () => {
                     const result = await getOfficialRegistrationStatus(selectedResidentId);
-                    if (result.result > 0) {
+                    if (mode === 'create' && result.result > 0) {
                         setIsAlreadyRegisteredAsOfficialWarning('Official already registered');
                     } else if (result.result === -1) {
                         setIsAlreadyRegisteredAsOfficialWarning(result.errorMessage);
@@ -97,11 +96,27 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         }
     }, [selectedResidentId]);
     
-
     // Load official data for edit mode
     useEffect(() => {
         if (mode === 'edit' && official) {
             const formData = transformBarangayOfficialToFormData(official);
+            setIsResidentValidNewOfficial(true);
+            setValue('resident_id', selectedResidentId)
+            setValue('first_name', formData.first_name);
+            setValue('middle_name', formData.middle_name);
+            setValue('last_name', formData.last_name);
+            setValue('gender', formData.gender);
+            setValue('birth_date', formData.birth_date);
+            setValue('mobile_number', formData.mobile_number);
+            setValue('email_address', formData.email_address);
+            setValue('complete_address', formData.complete_address);
+            setValue('civil_status', formData.civil_status);
+            setValue('educational_attainment', formData.educational_attainment);
+            setValue('profile_photo_url', formData.profile_photo_url);
+            setValue('position', formData.position);
+            setValue('committee_assignment', formData.committee_assignment);
+            setValue('term_start', formData.term_start);
+            setValue('term_end', formData.term_end);
             reset(formData);
 
             if (official.profile_photo_url) {

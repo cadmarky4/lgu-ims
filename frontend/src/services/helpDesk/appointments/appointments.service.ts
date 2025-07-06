@@ -1,210 +1,109 @@
 // services/api/appointments.service.ts
 import { BaseApiService } from '@/services/__shared/api';
-import { type PaginatedResponse } from '@/services/__shared/types';
-import { 
-  type Appointment, 
-  type AppointmentParams, 
-  type CreateAppointmentData, 
-  type UpdateAppointmentData,
-  type ConfirmAppointmentData,
-  type CancelAppointmentData,
-  type CompleteAppointmentData,
-  type RescheduleAppointmentData,
-  type FollowUpData,
-  type AppointmentStatistics,
-  type AvailableSlot,
-  type AvailableSlotsParams,
-  type AppointmentStatus
-} from './appointments.types';
+import { CreateAppointmentSchema, EditAppointmentSchema, ViewAppointmentSchema, type CheckScheduleAvailability, type CreateAppointment, type EditAppointment, type ViewAppointment } from './appointments.types';
+import { ApiResponseSchema } from '@/services/__shared/types';
+import { z } from 'zod';
 
 export class AppointmentsService extends BaseApiService {
-  async getAppointments(params: AppointmentParams = {}): Promise<PaginatedResponse<Appointment>['data']> {
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        searchParams.append(key, value.toString());
-      }
-    });
-
-    const response = await this.requestAll<Appointment>(
-      `/appointments?${searchParams.toString()}`
-    );
-
-    if (response.data) {
-      return response.data;
+  async viewAppointment(id: string): Promise<ViewAppointment> {
+    if (!id) {
+      throw new Error('Invalid appointment ID!');
     }
-    throw new Error(JSON.stringify(response) || 'Failed to get appointments');
+
+    try {
+      const responseSchema = ApiResponseSchema(ViewAppointmentSchema);
+      const response = await this.request(
+        `/appointments/view/${id}`,
+        responseSchema,
+        {
+          method: 'GET'
+        }
+      );
+
+      if (!response.data) {
+        throw new Error('Failed to fetch appointment form data');
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get appointment form: ${error.message}`);
+      }
+      throw new Error('An unexpected error occurred while fetching appointment form');
+    }
   }
 
-  async getAppointment(id: number): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}`);
+  async createAppointment(data: CreateAppointment): Promise<ViewAppointment> {
+    // Validate input data
+    const validatedData = CreateAppointmentSchema.parse(data);
+
+    const responseSchema = ApiResponseSchema(ViewAppointmentSchema);
     
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to get appointment');
-  }
-
-  async createAppointment(appointmentData: CreateAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>('/appointments', {
-      method: 'POST',
-      body: JSON.stringify(appointmentData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to create appointment');
-  }
-
-  async updateAppointment(id: number, appointmentData: UpdateAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(appointmentData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to update appointment');
-  }
-  async deleteAppointment(id: number): Promise<void> {
-    const response = await this.request(`/appointments/${id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response) {
-      throw new Error('Failed to delete appointment');
-    }
-  }
-
-  async confirmAppointment(id: number, confirmData: ConfirmAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}/confirm`, {
-      method: 'POST',
-      body: JSON.stringify(confirmData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to confirm appointment');
-  }
-
-  async cancelAppointment(id: number, cancelData: CancelAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}/cancel`, {
-      method: 'POST',
-      body: JSON.stringify(cancelData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to cancel appointment');
-  }
-
-  async completeAppointment(id: number, completeData: CompleteAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}/complete`, {
-      method: 'POST',
-      body: JSON.stringify(completeData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to complete appointment');
-  }
-
-  async rescheduleAppointment(id: number, rescheduleData: RescheduleAppointmentData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}/reschedule`, {
-      method: 'POST',
-      body: JSON.stringify(rescheduleData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to reschedule appointment');
-  }
-
-  async addFollowUp(id: number, followUpData: FollowUpData): Promise<Appointment> {
-    const response = await this.request<Appointment>(`/appointments/${id}/follow-up`, {
-      method: 'POST',
-      body: JSON.stringify(followUpData),
-    });
-
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to add follow-up');
-  }
-
-  async getStatistics(): Promise<AppointmentStatistics> {
-    const response = await this.request<AppointmentStatistics>('/appointments/statistics');
-    if (response.data) {
-      return response.data;
-    }
-    throw new Error(JSON.stringify(response) || 'Failed to get appointment statistics');
-  }
-
-  async getAvailableSlots(params: AvailableSlotsParams): Promise<AvailableSlot[]> {
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        searchParams.append(key, value.toString());
+    const response = await this.request(
+      '/appointments',
+      responseSchema,
+      {
+        method: 'POST',
+        data: validatedData,
       }
-    });
-
-    const response = await this.request<AvailableSlot[]>(
-      `/appointments/available-slots?${searchParams.toString()}`
     );
 
-    if (response.data) {
-      return response.data;
+    if (!response.data) {
+      throw new Error('Failed to create appointment');
     }
-    throw new Error(JSON.stringify(response) || 'Failed to get available slots');
-  }  // Additional utility methods
-  async getUpcomingAppointments(limit: number = 5): Promise<Appointment[]> {
-    const params: AppointmentParams = {
-      per_page: limit,
-      sort_by: 'appointment_date',
-      sort_order: 'asc',
-      status: 'CONFIRMED',
-      date_from: new Date().toISOString().split('T')[0]
-    };
 
-    return await this.getAppointments(params);
+    return response.data;
   }
 
-  async getTodayAppointments(): Promise<Appointment[]> {
-    const today = new Date().toISOString().split('T')[0];
-    const params: AppointmentParams = {
-      date_from: today,
-      date_to: today,
-      sort_by: 'appointment_time',
-      sort_order: 'asc'
-    };
+  async updateAppointment(id: string, data: EditAppointment): Promise<ViewAppointment> {
+    if (!id) {
+      throw new Error('Invalid appointment ID');
+    }
 
-    return await this.getAppointments(params);
+    // Validate input data
+    const validatedData = EditAppointmentSchema.parse(data);
+    
+    const responseSchema = ApiResponseSchema(ViewAppointmentSchema);
+    
+    const response = await this.request(
+      `/appointments/${id}`,
+      responseSchema,
+      {
+        method: 'PUT',
+        data: validatedData,
+      }
+    );
+
+    if (!response.data) {
+      throw new Error('Failed to update appointment');
+    }
+
+    return response.data;
   }
 
-  async getAppointmentsByDepartment(department: string): Promise<Appointment[]> {
-    const params: AppointmentParams = {
-      department,
-      sort_by: 'created_at',
-      sort_order: 'desc'
-    };
+  async isScheduleVacant(schedule: CheckScheduleAvailability): Promise<boolean> {
+    try {
+      const responseSchema = ApiResponseSchema(z.boolean());
 
-    return await this.getAppointments(params);
-  }
+      const response = await this.request(
+        `/appointments/check-vacancy/${schedule}`,
+        responseSchema,
+        {
+          method: 'GET'
+        }
+      );
 
-  async getAppointmentsByStatus(status: AppointmentStatus): Promise<Appointment[]> {
-    const params: AppointmentParams = {
-      status,
-      sort_by: 'created_at',
-      sort_order: 'desc'
-    };
-
-    return await this.getAppointments(params);
+      if (!response.data) {
+        throw new Error('Server returned invalid response format');
+      }
+      return response.data;
+    } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to check official status: ${error.message}`);
+        }
+        throw new Error('An unexpected error occurred while checking official status');
+    } 
   }
 }
 
+export const appointmentsService = new AppointmentsService();

@@ -1,511 +1,318 @@
 <?php
 
+// app/Http/Controllers/AppointmentController.php
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AppointmentController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * View a specific appointment with its ticket details
      */
-    public function index(Request $request): JsonResponse
+    public function view(string $id): JsonResponse
     {
-        $query = Appointment::with(['resident', 'assignedOfficial']);
+        try {
+            $appointment = Appointment::with('ticket')
+                ->where('id', $id)
+                ->first();
 
-        // Apply filters
-        if ($request->has('appointment_type')) {
-            $query->where('appointment_type', $request->appointment_type);
+            if (!$appointment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointment not found',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Appointment retrieved successfully',
+                'data' => [
+                    'ticket' => $appointment->ticket,
+                    'appointment' => $appointment
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving appointment: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('date_from')) {
-            $query->whereDate('appointment_date', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to')) {
-            $query->whereDate('appointment_date', '<=', $request->date_to);
-        }
-
-        if ($request->has('assigned_official_id')) {
-            $query->where('assigned_official_id', $request->assigned_official_id);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('applicant_name', 'like', "%{$search}%")
-                  ->orWhere('applicant_contact', 'like', "%{$search}%")
-                  ->orWhere('purpose', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply sorting
-        $sortBy = $request->get('sort_by', 'appointment_date');
-        $sortOrder = $request->get('sort_order', 'asc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        $appointments = $query->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $appointments->items(),
-            'current_page' => $appointments->currentPage(),
-            'per_page' => $appointments->perPage(),
-            'total' => $appointments->total(),
-            'last_page' => $appointments->lastPage(),
-            'from' => $appointments->firstItem(),
-            'to' => $appointments->lastItem(),
-            'links' => $appointments->linkCollection(),
-            'prev_page_url' => $appointments->previousPageUrl(),
-            'next_page_url' => $appointments->nextPageUrl(),
-            'first_page_url' => $appointments->url(1),
-            'last_page_url' => $appointments->url($appointments->lastPage()),
-            'path' => $appointments->path()
-        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Create a new appointment with ticket
      */
     public function store(Request $request): JsonResponse
     {
-        // Use the schema validation rules
+        // Validation rules
         $validator = Validator::make($request->all(), [
-            // Frontend fields (required)
-            'full_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'department' => 'required|string|max:255',
-            'purpose' => 'required|string',
-            'preferred_date' => 'required|date|after_or_equal:today',
-            'preferred_time' => 'required|string|max:10',
-            
-            // Frontend fields (optional)
-            'alternative_date' => 'nullable|date|after_or_equal:today',
-            'alternative_time' => 'nullable|string|max:10',
-            'additional_notes' => 'nullable|string',
-            
-            // Optional system fields
-            'resident_id' => 'nullable|exists:residents,id',
+            'ticket.subject' => 'required|string|max:255',
+            'ticket.description' => 'required|string',
+            'ticket.priority' => ['required', Rule::in(Ticket::PRIORITIES)],
+            'ticket.requester_name' => 'required|string|max:255',
+            'ticket.resident_id' => 'nullable|string|uuid|exists:residents,id',
+            'ticket.contact_number' => 'nullable|string|max:20',
+            'ticket.email_address' => 'nullable|email|max:255',
+            'ticket.complete_address' => 'nullable|string|max:255',
+            'appointment.department' => ['required', Rule::in(Appointment::DEPARTMENTS)],
+            'appointment.date' => 'required|date|after_or_equal:today',
+            'appointment.time' => 'required|date_format:H:i',
+            'appointment.additional_notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation errors',
+                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        // Generate appointment number
-        $appointmentNumber = Appointment::generateAppointmentNumber();
+        try {
+            DB::beginTransaction();
 
-        // Prepare appointment data
-        $appointmentData = [
-            'appointment_number' => $appointmentNumber,
-            'full_name' => $request->input('full_name'),
-            'email' => $request->input('email'),
-            'phone' => $request->input('phone'),
-            'department' => $request->input('department'),
-            'purpose' => $request->input('purpose'),
-            'preferred_date' => $request->input('preferred_date'),
-            'preferred_time' => $request->input('preferred_time'),
-            'status' => 'PENDING',
-            'date_requested' => now()->toDateString(),
-        ];
+            // Check if the schedule is available
+            $isOccupied = Appointment::byDateAndTime(
+                $request->input('appointment.date'),
+                $request->input('appointment.time')
+            )->byDepartment($request->input('appointment.department'))->exists();
 
-        // Add optional fields if they exist
-        if ($request->filled('alternative_date')) {
-            $appointmentData['alternative_date'] = $request->input('alternative_date');
-        }
-        if ($request->filled('alternative_time')) {
-            $appointmentData['alternative_time'] = $request->input('alternative_time');
-        }
-        if ($request->filled('additional_notes')) {
-            $appointmentData['additional_notes'] = $request->input('additional_notes');
-        }
-        if ($request->filled('resident_id')) {
-            $appointmentData['resident_id'] = $request->input('resident_id');
-        }
-        if (Auth::check()) {
-            $appointmentData['created_by'] = Auth::id();
-        }
+            if ($isOccupied) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected date and time slot is already booked for this department',
+                    'data' => null
+                ], 409);
+            }
 
-        // Create appointment
-        $appointment = Appointment::create($appointmentData);
+            // Create ticket first
+            $ticket = Ticket::create([
+                ...$request->input('ticket'),
+                'category' => 'APPOINTMENT',
+                'status' => 'OPEN'
+            ]);
 
-        $appointment->load(['resident', 'assignedOfficial']);
+            // Create appointment
+            $appointment = Appointment::create([
+                'base_ticket_id' => $ticket->id,
+                ...$request->input('appointment')
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment scheduled successfully',
-            'data' => $appointment
-        ], 201);
+            DB::commit();
+
+            // Load the relationship for response
+            $appointment->load('ticket');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Appointment created successfully',
+                'data' => $appointment
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating appointment: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Update an existing appointment
      */
-    public function show(Appointment $appointment): JsonResponse
+    public function update(Request $request, string $id): JsonResponse
     {
-        $appointment->load(['resident', 'assignedOfficial', 'followUps']);
+        try {
+            $appointment = Appointment::with('ticket')->find($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $appointment
-        ]);
+            if (!$appointment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointment not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Validation rules for update (all fields are optional)
+            $validator = Validator::make($request->all(), [
+                'ticket.subject' => 'sometimes|string|max:255',
+                'ticket.description' => 'sometimes|string',
+                'ticket.priority' => ['sometimes', Rule::in(Ticket::PRIORITIES)],
+                'ticket.requester_name' => 'sometimes|string|max:255',
+                'ticket.resident_id' => 'nullable|integer|exists:residents,id',
+                'ticket.contact_number' => 'nullable|string|max:20',
+                'ticket.email_address' => 'nullable|email|max:255',
+                'ticket.complete_address' => 'nullable|string|max:255',
+                'ticket.status' => ['sometimes', Rule::in(Ticket::STATUSES)],
+                'appointment.department' => ['sometimes', Rule::in(Appointment::DEPARTMENTS)],
+                'appointment.date' => 'sometimes|date|after_or_equal:today',
+                'appointment.time' => 'sometimes|date_format:H:i',
+                'appointment.additional_notes' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // Check for schedule conflicts if date/time is being updated
+            if ($request->has('appointment.date') || $request->has('appointment.time') || $request->has('appointment.department')) {
+                $newDate = $request->input('appointment.date', $appointment->date);
+                $newTime = $request->input('appointment.time', $appointment->time);
+                $newDepartment = $request->input('appointment.department', $appointment->department);
+
+                $isOccupied = Appointment::byDateAndTime($newDate, $newTime)
+                    ->byDepartment($newDepartment)
+                    ->where('id', '!=', $appointment->id)
+                    ->exists();
+
+                if ($isOccupied) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'The selected date and time slot is already booked for this department',
+                        'data' => null
+                    ], 409);
+                }
+            }
+
+            // Update ticket if ticket data is provided
+            if ($request->has('ticket')) {
+                $appointment->ticket->update($request->input('ticket'));
+            }
+
+            // Update appointment if appointment data is provided
+            if ($request->has('appointment')) {
+                $appointment->update($request->input('appointment'));
+            }
+
+            DB::commit();
+
+            // Refresh the appointment with updated ticket
+            $appointment->load('ticket');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Appointment updated successfully',
+                'data' => $appointment
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating appointment: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Check if a schedule is vacant
      */
-    public function update(Request $request, Appointment $appointment): JsonResponse
+    public function checkScheduleVacancy(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'applicant_name' => 'sometimes|string|max:255',
-            'applicant_contact' => 'sometimes|string|max:255',
-            'applicant_email' => 'nullable|email|max:255',
-            'applicant_address' => 'nullable|string',
-            'appointment_type' => 'sometimes|in:CONSULTATION,DOCUMENT_REQUEST,COMPLAINT_FILING,BUSINESS_PERMIT,CERTIFICATION_REQUEST,MEETING,OTHER',
-            'purpose' => 'sometimes|string',
-            'appointment_date' => 'sometimes|date',
-            'appointment_time' => 'sometimes|string',
-            'assigned_official_id' => 'nullable|exists:users,id',
-            'priority_level' => 'nullable|in:LOW,MEDIUM,HIGH,URGENT',
-            'special_requirements' => 'nullable|string',
-            'estimated_duration' => 'nullable|integer|min:15|max:480',
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i',
+            'department' => ['sometimes', Rule::in(Appointment::DEPARTMENTS)],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation errors',
+                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        // Check for scheduling conflicts if date/time is being updated
-        if (($request->has('appointment_date') || $request->has('appointment_time') || $request->has('assigned_official_id')) &&
-            $this->hasSchedulingConflict(
-                $request->get('appointment_date', $appointment->appointment_date),
-                $request->get('appointment_time', $appointment->appointment_time),
-                $request->get('assigned_official_id', $appointment->assigned_official_id),
-                $appointment->id
-            )) {
+        try {
+            $query = Appointment::byDateAndTime(
+                $request->input('date'),
+                $request->input('time')
+            );
+
+            // If department is specified, check for that specific department
+            if ($request->has('department')) {
+                $query->byDepartment($request->input('department'));
+            }
+
+            $isOccupied = $query->exists();
+            $isVacant = !$isOccupied;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Schedule availability checked successfully',
+                'data' => $isVacant
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Scheduling conflict detected for the selected time slot'
-            ], 422);
+                'message' => 'Error checking schedule availability: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        $appointment->update($validator->validated());
-        $appointment->load(['resident', 'assignedOfficial']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment updated successfully',
-            'data' => $appointment
-        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Get all appointments (with optional filters)
      */
-    public function destroy(Appointment $appointment): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $appointment->delete();
+        try {
+            $query = Appointment::with('ticket');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment deleted successfully'
-        ]);
-    }
+            // Apply filters if provided
+            if ($request->has('department')) {
+                $query->byDepartment($request->input('department'));
+            }
 
-    /**
-     * Confirm appointment
-     */
-    public function confirm(Request $request, Appointment $appointment): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'confirmation_notes' => 'nullable|string',
-        ]);
+            if ($request->has('date')) {
+                $query->where('date', $request->input('date'));
+            }
 
-        if ($validator->fails()) {
+            if ($request->has('status')) {
+                $query->whereHas('ticket', function ($q) use ($request) {
+                    $q->byStatus($request->input('status'));
+                });
+            }
+
+            // Pagination
+            $perPage = $request->input('per_page', 15);
+            $appointments = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Appointments retrieved successfully',
+                'data' => $appointments
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Error retrieving appointments: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        $appointment->update([
-            'status' => 'CONFIRMED',
-            'confirmation_notes' => $request->confirmation_notes,
-            'confirmed_at' => now(),
-            'confirmed_by' => Auth::id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment confirmed successfully',
-            'data' => $appointment->fresh(['resident', 'assignedOfficial'])
-        ]);
-    }
-
-    /**
-     * Cancel appointment
-     */
-    public function cancel(Request $request, Appointment $appointment): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'cancellation_reason' => 'required|string',
-            'cancelled_by_client' => 'nullable|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $appointment->update([
-            'status' => 'CANCELLED',
-            'cancellation_reason' => $request->cancellation_reason,
-            'cancelled_by_client' => $request->get('cancelled_by_client', false),
-            'cancelled_at' => now(),
-            'cancelled_by' => Auth::id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment cancelled successfully',
-            'data' => $appointment->fresh(['resident', 'assignedOfficial'])
-        ]);
-    }
-
-    /**
-     * Complete appointment
-     */
-    public function complete(Request $request, Appointment $appointment): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'outcome_summary' => 'required|string',
-            'client_satisfaction' => 'nullable|integer|min:1|max:5',
-            'follow_up_required' => 'nullable|boolean',
-            'follow_up_notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $appointment->update([
-            'status' => 'COMPLETED',
-            'outcome_summary' => $request->outcome_summary,
-            'client_satisfaction' => $request->client_satisfaction,
-            'follow_up_required' => $request->get('follow_up_required', false),
-            'follow_up_notes' => $request->follow_up_notes,
-            'completed_at' => now(),
-            'completed_by' => Auth::id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment completed successfully',
-            'data' => $appointment->fresh(['resident', 'assignedOfficial'])
-        ]);
-    }
-
-    /**
-     * Reschedule appointment
-     */
-    public function reschedule(Request $request, Appointment $appointment): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'new_appointment_date' => 'required|date|after:today',
-            'new_appointment_time' => 'required|string',
-            'reschedule_reason' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Check for scheduling conflicts
-        if ($this->hasSchedulingConflict($request->new_appointment_date, $request->new_appointment_time, $appointment->assigned_official_id, $appointment->id)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Scheduling conflict detected for the new time slot'
-            ], 422);
-        }
-
-        $appointment->update([
-            'appointment_date' => $request->new_appointment_date,
-            'appointment_time' => $request->new_appointment_time,
-            'reschedule_reason' => $request->reschedule_reason,
-            'reschedule_count' => $appointment->reschedule_count + 1,
-            'rescheduled_at' => now(),
-            'rescheduled_by' => Auth::id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Appointment rescheduled successfully',
-            'data' => $appointment->fresh(['resident', 'assignedOfficial'])
-        ]);
-    }
-
-    /**
-     * Add follow-up
-     */
-    public function addFollowUp(Request $request, Appointment $appointment): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'follow_up_date' => 'required|date',
-            'follow_up_type' => 'required|in:PHONE_CALL,EMAIL,IN_PERSON,DOCUMENT_SUBMISSION',
-            'follow_up_notes' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $appointment->followUps()->create(array_merge($validator->validated(), [
-            'created_by' => Auth::id(),
-        ]));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Follow-up added successfully',
-            'data' => $appointment->fresh(['resident', 'assignedOfficial', 'followUps'])
-        ]);
-    }
-
-    /**
-     * Get available time slots
-     */
-    public function getAvailableSlots(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'date' => 'required|date|after:today',
-            'official_id' => 'nullable|exists:users,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $date = $request->date;
-        $officialId = $request->official_id;
-
-        // Define working hours (8 AM to 5 PM)
-        $workingHours = [
-            '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-            '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
-        ];
-
-        // Get booked slots
-        $bookedQuery = Appointment::whereDate('appointment_date', $date)
-            ->whereIn('status', ['SCHEDULED', 'CONFIRMED']);
-
-        if ($officialId) {
-            $bookedQuery->where('assigned_official_id', $officialId);
-        }
-
-        $bookedSlots = $bookedQuery->pluck('appointment_time')->toArray();
-
-        // Filter available slots
-        $availableSlots = array_diff($workingHours, $bookedSlots);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'date' => $date,
-                'available_slots' => array_values($availableSlots),
-                'booked_slots' => $bookedSlots,
-            ]
-        ]);
-    }
-
-    /**
-     * Get appointment statistics
-     */
-    public function statistics(): JsonResponse
-    {
-        $stats = [
-            'total_appointments' => Appointment::count(),
-            'scheduled_appointments' => Appointment::where('status', 'SCHEDULED')->count(),
-            'confirmed_appointments' => Appointment::where('status', 'CONFIRMED')->count(),
-            'completed_appointments' => Appointment::where('status', 'COMPLETED')->count(),
-            'cancelled_appointments' => Appointment::where('status', 'CANCELLED')->count(),
-            'by_appointment_type' => Appointment::selectRaw('appointment_type, COUNT(*) as count')
-                ->groupBy('appointment_type')
-                ->pluck('count', 'appointment_type'),
-            'by_status' => Appointment::selectRaw('status, COUNT(*) as count')
-                ->groupBy('status')
-                ->pluck('count', 'status'),
-            'average_satisfaction' => Appointment::whereNotNull('client_satisfaction')
-                ->avg('client_satisfaction'),
-            'completion_rate' => Appointment::where('status', 'COMPLETED')->count() / max(Appointment::count(), 1) * 100,
-            'cancellation_rate' => Appointment::where('status', 'CANCELLED')->count() / max(Appointment::count(), 1) * 100,
-            'today_appointments' => Appointment::whereDate('appointment_date', today())->count(),
-            'this_week_appointments' => Appointment::whereBetween('appointment_date', [
-                now()->startOfWeek(),
-                now()->endOfWeek()
-            ])->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
-    }
-
-    /**
-     * Check for scheduling conflicts
-     */
-    private function hasSchedulingConflict(string $date, string $time, ?int $officialId, ?int $excludeAppointmentId = null): bool
-    {
-        if (!$officialId) {
-            return false;
-        }
-
-        $query = Appointment::where('appointment_date', $date)
-            ->where('appointment_time', $time)
-            ->where('assigned_official_id', $officialId)
-            ->whereIn('status', ['SCHEDULED', 'CONFIRMED']);
-
-        if ($excludeAppointmentId) {
-            $query->where('id', '!=', $excludeAppointmentId);
-        }
-
-        return $query->exists();
     }
 }

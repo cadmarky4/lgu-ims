@@ -4,502 +4,205 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
-use App\Models\Schemas\ComplaintSchema;
-use Illuminate\Http\Request;
+use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class ComplaintController extends Controller
 {
     /**
-     * Display a listing of complaints.
+     * View a specific complaint
      */
-    public function index(Request $request): JsonResponse
+    public function view(string $id): JsonResponse
     {
-        $query = Complaint::with(['resident', 'assignedTo', 'investigatedBy']);
+        try {
+            $complaint = Complaint::with('ticket')
+                ->where('id', $id)
+                ->first();
 
-        // Apply filters
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
+            if (!$complaint) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Complaint not found',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Complaint retrieved successfully',
+                'data' => [
+                    'ticket' => $complaint->ticket,
+                    'complaint' => $complaint
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving complaint: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        if ($request->has('assigned_to')) {
-            $query->where('assigned_to', $request->assigned_to);
-        }
-
-        if ($request->has('date_from')) {
-            $query->whereDate('date_received', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to')) {
-            $query->whereDate('date_received', '<=', $request->date_to);
-        }
-
-        if ($request->has('is_anonymous')) {
-            $query->where('is_anonymous', $request->boolean('is_anonymous'));
-        }
-
-        // Apply sorting
-        $sortBy = $request->get('sort_by', 'date_received');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        $complaints = $query->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $complaints->items(),
-            'current_page' => $complaints->currentPage(),
-            'per_page' => $complaints->perPage(),
-            'total' => $complaints->total(),
-            'last_page' => $complaints->lastPage(),
-            'from' => $complaints->firstItem(),
-            'to' => $complaints->lastItem(),
-            'links' => $complaints->linkCollection(),
-            'prev_page_url' => $complaints->previousPageUrl(),
-            'next_page_url' => $complaints->nextPageUrl(),
-            'first_page_url' => $complaints->url(1),
-            'last_page_url' => $complaints->url($complaints->lastPage()),
-            'path' => $complaints->path(),
-            'message' => 'Complaints retrieved successfully'
-        ]);
     }
 
     /**
-     * Store a newly created complaint.
+     * Create a new complaint
      */
     public function store(Request $request): JsonResponse
     {
+        // Validation rules
+        $validator = Validator::make($request->all(), [
+            // Ticket fields
+            'ticket.subject' => 'required|string|max:255',
+            'ticket.description' => 'required|string',
+            'ticket.priority' => ['required', Rule::in(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])],
+            'ticket.requester_name' => 'nullable|string|max:255',
+            'ticket.resident_id' => 'nullable|uuid',
+            'ticket.resident_search' => 'nullable|string',
+            'ticket.contact_number' => 'nullable|string|size:16',
+            'ticket.email_address' => 'nullable|email|max:255',
+            'ticket.complete_address' => 'nullable|string|max:255',
+            'ticket.category' => 'required|in:COMPLAINT',
+
+            // Complaint fields
+            'complaint.c_category' => ['required', Rule::in(Complaint::CATEGORIES)],
+            'complaint.department' => ['required', Rule::in(Complaint::DEPARTMENTS)],
+            'complaint.location' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         try {
-            // Use frontend field names for validation
+            DB::beginTransaction();
+
+            // Create ticket
+            $ticket = Ticket::create([
+                ...$request->input('ticket'),
+                'category' => 'COMPLAINT',
+                'status' => 'OPEN'
+            ]);
+
+            // Create complaint
+            $complaintData = $request->input('complaint');
+            $complaint = Complaint::create([
+                'base_ticket_id' => $ticket->id,
+                'c_category' => $complaintData['c_category'],
+                'department' => $complaintData['department'],
+                'location' => $complaintData['location'] ?? null,
+            ]);
+
+            DB::commit();
+
+            // Load relationship for response
+            $complaint->load('ticket');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Complaint created successfully',
+                'data' => [
+                    'ticket' => $complaint->ticket,
+                    'complaint' => $complaint
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating complaint: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Update an existing complaint
+     */
+    public function update(Request $request, string $id): JsonResponse
+    {
+        try {
+            $complaint = Complaint::with('ticket')->find($id);
+
+            if (!$complaint) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Complaint not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Validation rules for update (all fields are optional)
             $validator = Validator::make($request->all(), [
-                // Frontend fields (required)
-                'subject' => 'required|string|max:255',
-                'description' => 'required|string',
-                'complaint_category' => 'required|string|max:255',
-                
-                // Frontend fields (optional)
-                'full_name' => 'nullable|string|max:255', // null when anonymous
-                'email' => 'nullable|email|max:255',
-                'phone' => 'nullable|string|max:20', 
-                'address' => 'nullable|string',
-                'department' => 'nullable|string|max:255',
-                'location' => 'nullable|string|max:255',
-                'urgency' => 'sometimes|in:low,medium,high,critical',
-                'anonymous' => 'boolean',
-                'attachments' => 'nullable|string',
-                
-                // Optional system fields
-                'resident_id' => 'nullable|exists:residents,id',
+                // Ticket fields (all optional for update)
+                'ticket.subject' => 'sometimes|string|max:255',
+                'ticket.description' => 'sometimes|string',
+                'ticket.priority' => ['sometimes', Rule::in(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])],
+                'ticket.requester_name' => 'nullable|string|max:255',
+                'ticket.resident_id' => 'nullable|uuid',
+                'ticket.contact_number' => 'nullable|string|size:16',
+                'ticket.email_address' => 'nullable|email|max:255',
+                'ticket.complete_address' => 'nullable|string|max:255',
+                'ticket.status' => ['sometimes', Rule::in(['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'])],
+
+                // Complaint fields (all optional for update)
+                'complaint.c_category' => ['sometimes', Rule::in(Complaint::CATEGORIES)],
+                'complaint.department' => ['sometimes', Rule::in(Complaint::DEPARTMENTS)],
+                'complaint.location' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation errors',
+                    'message' => 'Validation failed',
                     'errors' => $validator->errors()
                 ], 422);
             }
 
-            // Generate complaint number
-            $complaintNumber = $this->generateComplaintNumber();
+            DB::beginTransaction();
 
-            // Create complaint with frontend field names
-            $complaint = Complaint::create(array_merge($validator->validated(), [
-                'complaint_number' => $complaintNumber,
-                'status' => 'RECEIVED',
-                'date_received' => now()->toDateString(),
-                'created_by' => Auth::id(),
-            ]));
-
-            $complaint->load(['resident', 'assignedTo']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint submitted successfully'
-            ], 201);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to submit complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Display the specified complaint.
-     */
-    public function show(string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::with([
-                'resident',
-                'assignedTo',
-                'investigatedBy',
-                'createdBy',
-                'updatedBy'
-            ])->findOrFail($id);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint retrieved successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        }
-    }
-
-    /**
-     * Update the specified complaint.
-     */
-    public function update(Request $request, string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-
-            $validated = $request->validate([
-                'subject' => 'sometimes|string|max:255',
-                'description' => 'sometimes|string',
-                'category' => 'sometimes|in:INFRASTRUCTURE,PUBLIC_SERVICE,HEALTH_SANITATION,PEACE_ORDER,ENVIRONMENT,CORRUPTION,DISCRIMINATION,NOISE_COMPLAINT,GARBAGE_COLLECTION,WATER_SUPPLY,ELECTRICAL,ROAD_MAINTENANCE,OTHER',
-                'priority' => 'sometimes|in:LOW,NORMAL,HIGH,URGENT',
-                'complainant_contact' => 'nullable|string|max:20',
-                'complainant_email' => 'nullable|email',
-                'complainant_address' => 'nullable|string',
-                'incident_location' => 'nullable|string',
-                'incident_date' => 'nullable|date|before_or_equal:today',
-                'incident_time' => 'nullable|date_format:H:i',
-                'persons_involved' => 'nullable|string',
-                'witnesses' => 'nullable|string',
-                'remarks' => 'nullable|string'
-            ]);
-
-            $validated['updated_by'] = Auth::id();
-            
-            $complaint->update($validated);
-            $complaint->load(['resident', 'assignedTo']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint updated successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Remove the specified complaint.
-     */
-    public function destroy(string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            
-            // Only allow deletion of pending complaints
-            if (!in_array($complaint->status, ['PENDING', 'REJECTED'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete complaint that is being processed'
-                ], 422);
+            // Update ticket if provided
+            if ($request->has('ticket')) {
+                $complaint->ticket->update($request->input('ticket'));
             }
 
-            $complaint->delete();
+            // Update complaint if provided
+            if ($request->has('complaint')) {
+                $complaint->update($request->input('complaint'));
+            }
+
+            DB::commit();
+
+            // Refresh the complaint with updated relationships
+            $complaint->load('ticket');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Complaint deleted successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get complaint statistics.
-     */
-    public function statistics(): JsonResponse
-    {
-        try {
-            $stats = [
-                'total_complaints' => Complaint::count(),
-                'by_status' => Complaint::selectRaw('status, COUNT(*) as count')
-                    ->groupBy('status')
-                    ->get(),
-                'by_category' => Complaint::selectRaw('category, COUNT(*) as count')
-                    ->groupBy('category')
-                    ->orderBy('count', 'desc')
-                    ->get(),
-                'by_priority' => Complaint::selectRaw('priority, COUNT(*) as count')
-                    ->groupBy('priority')
-                    ->get(),
-                'pending_count' => Complaint::pending()->count(),
-                'resolved_count' => Complaint::resolved()->count(),
-                'overdue_count' => Complaint::overdue()->count(),
-                'high_priority_count' => Complaint::highPriority()->count(),
-                'anonymous_count' => Complaint::anonymous()->count(),
-                'average_resolution_time' => Complaint::whereNotNull('actual_resolution_date')
-                    ->selectRaw('AVG(julianday(actual_resolution_date) - julianday(date_received)) as avg_days')
-                    ->value('avg_days') ?? 0,
-                'satisfaction_ratings' => [
-                    'average_rating' => Complaint::whereNotNull('satisfaction_rating')->avg('satisfaction_rating'),
-                    'total_responses' => Complaint::where('is_feedback_received', true)->count()
+                'message' => 'Complaint updated successfully',
+                'data' => [
+                    'ticket' => $complaint->ticket,
+                    'complaint' => $complaint
                 ]
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $stats,
-                'message' => 'Complaint statistics retrieved successfully'
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve statistics: ' . $e->getMessage()
+                'message' => 'Error updating complaint: ' . $e->getMessage(),
+                'data' => null
             ], 500);
         }
-    }
-
-    /**
-     * Acknowledge a complaint.
-     */
-    public function acknowledge(Request $request, string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            
-            $request->validate([
-                'target_resolution_date' => 'nullable|date|after:today'
-            ]);
-
-            if ($complaint->status !== 'PENDING') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending complaints can be acknowledged'
-                ], 422);
-            }
-
-            $targetDate = $request->target_resolution_date ? 
-                Carbon::parse($request->target_resolution_date) : null;
-
-            $complaint->acknowledge(Auth::id(), $targetDate);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint acknowledged successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to acknowledge complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Assign a complaint.
-     */
-    public function assign(Request $request, string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            
-            $request->validate([
-                'assigned_to' => 'required|exists:users,id',
-                'assigned_department' => 'nullable|string'
-            ]);
-
-            $complaint->assign($request->assigned_to, $request->assigned_department);
-            $complaint->load(['assignedTo']);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint assigned successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to assign complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Resolve a complaint.
-     */
-    public function resolve(Request $request, string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            
-            $request->validate([
-                'resolution_details' => 'required|string',
-                'resolution_type' => 'required|in:RESOLVED,REFERRED_TO_AUTHORITIES,MEDIATED,NO_ACTION_REQUIRED,INSUFFICIENT_EVIDENCE,WITHDRAWN,OTHER',
-                'recommendations' => 'nullable|string'
-            ]);
-
-            if (!$complaint->canBeResolved()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Complaint cannot be resolved at this time'
-                ], 422);
-            }
-
-            $complaint->resolve(
-                $request->resolution_details,
-                $request->resolution_type,
-                Auth::id()
-            );
-
-            if ($request->recommendations) {
-                $complaint->addRecommendation($request->recommendations);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Complaint resolved successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to resolve complaint: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Submit feedback for a complaint.
-     */
-    public function submitFeedback(Request $request, string $id): JsonResponse
-    {
-        try {
-            $complaint = Complaint::findOrFail($id);
-            
-            $request->validate([
-                'satisfaction_rating' => 'required|integer|min:1|max:5',
-                'feedback' => 'nullable|string'
-            ]);
-
-            if (!in_array($complaint->status, ['RESOLVED', 'CLOSED'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Feedback can only be submitted for resolved complaints'
-                ], 422);
-            }
-
-            $complaint->submitFeedback($request->satisfaction_rating, $request->feedback);
-
-            return response()->json([
-                'success' => true,
-                'data' => $complaint,
-                'message' => 'Feedback submitted successfully'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Complaint not found'
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to submit feedback: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Generate a unique complaint number
-     */
-    private function generateComplaintNumber(): string
-    {
-        $prefix = 'CPL';
-        $year = date('Y');
-        $month = date('m');
-        
-        // Get the last complaint number for this month
-        $lastComplaint = Complaint::where('complaint_number', 'like', "{$prefix}{$year}{$month}%")
-            ->orderBy('complaint_number', 'desc')
-            ->first();
-        
-        if ($lastComplaint) {
-            $lastNumber = intval(substr($lastComplaint->complaint_number, -4));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -634,6 +634,7 @@
       "editTitle": "Edit Household Profile",
       "viewTitle": "View Household Profile",
       "sections": {
+        "headInfo": "Household Head Information",
         "basicInfo": "Basic Information",
         "addressInfo": "Address Information",
         "economicInfo": "Economic Information",
@@ -778,6 +779,22 @@
         "removeMember": "Are you sure you want to remove this member from the household?",
         "changeHead": "Are you sure you want to change the head of this household?",
         "deleteHousehold": "Are you sure you want to delete this household? This action cannot be undone."
+      },
+      "headSection": {
+        "searchExistingResident": "Search Existing Resident as Head",
+        "searchPlaceholder": "Enter name, ID, or phone number",
+        "selectedHead": "Selected Household Head",
+        "addNewResident": "Add New Resident as Head",
+        "removeHead": "Remove household head",
+        "householdHead": "Household Head",
+        "noContact": "No contact",
+        "or": "OR",
+        "table": {
+          "name": "Name",
+          "contact": "Contact",
+          "role": "Role",
+          "actions": "Actions"
+        }
       }
     },
     "view": {
@@ -821,27 +838,102 @@
         "goBack": "Go Back",
         "tryAgain": "Try Again"
       }
-    },
-    "form": {
-      "sections": {
-        "headInfo": "Household Head Information"
+    }
+  },
+  "helpDesk": {
+    "appointmentsForm":{
+      "fields": {
+        "fullName": "Full Name",
+        "emailAddress": "Email Address",
+        "contactNumber": "Contact Number",
+        "completeAddress": "Complete Address",
+        "subject": "Subject",
+        "department": "Department",
+        "purpose": "Purpose",
+        "date": "Date",
+        "time": "Time", 
+        "additionalNotes": "Additional Notes"
       },
-      "headSection": {
-        "searchExistingResident": "Search Existing Resident as Head",
-        "searchPlaceholder": "Enter name, ID, or phone number",
-        "selectedHead": "Selected Household Head",
-        "addNewResident": "Add New Resident as Head",
-        "removeHead": "Remove household head",
-        "householdHead": "Household Head",
-        "noContact": "No contact",
-        "or": "OR",
-        "table": {
-          "name": "Name",
-          "contact": "Contact",
-          "role": "Role",
-          "actions": "Actions"
-        }
+      "placeholders": {
+        "fullName": "Enter your full name...",
+        "emailAddress": "Enter your email address...",
+        "contactNumber": "Enter contact number...",
+        "completeAddress": "Enter complete address...", 
+        "subject": "Subject",
+        "department": "Select Department",
+        "purpose": "Enter purpose of appointment...",
+        "time": "Select appointment time",
+        "additionalNotes": "Enter any additional notes..."
+      },
+      "validation": {
+        "dateRequired": "Date is required",
+        "timeRequired": "Time is required",
+        "fullNameRequired": "Full name is required",
+        "contactMaxChar": "Contact number must not exceed 11 characters",
+        "completeAddressRequired": "Complete address is required",
+        "invalidDepartment": "Please select a valid department",
+        "dateNotInThePast": "Date must not be in the past",
+        "dateInMM/DD/YYYY": "Date must be in MM/DD/YYYY format"
+      },
+      "messages": {
+        "createSuccess":"Appointment scheduled successfully!",
+        "createError":"Appointment schedule failed!",
+        "error" : "Schedule appointment failed"
       }
+    },
+    "blotterForm":{
+      "fields": {
+        "involvement": "Involvement",
+        "typeOfIncident": "Type of Incident",
+        "dateOfIncident": "Date of Incident",
+        "timeOfIncident": "Time of Incident",
+        "locationOfIncident": "Location of Incident",
+        "incidentDescription": "Incident Description"
+      },
+      "placeholders": {
+        "involvement": "Select Involvement",
+        "typeOfIncident": "Select Incident Type",
+        "timeOfIncident": "Select Incident Time",
+        "locationOfIncident": "Enter Incident Location",
+        "incidentDescription": "Enter Incident Description"
+      },
+      "buttons": {
+        "addNewPerson": "Add New Person"
+      },
+      "validation": {
+        "locationRequired": "Location of incident is required",
+        "invalidIncidentType": "Invalid incident type"
+      },
+      "messages" : {
+        "createSuccess":"Blotter filed successfully!",
+        "createError":"Blotter file failed!",
+        "error" : "File blotter failed"
+      }
+    },
+    "fields": {
+      "fullName": "Full Name",
+      "emailAddress": "Email Address",
+      "contactNumber": "Contact Number",
+      "completeAddress": "Complete Address",
+      "priority": "Priority"
+    },
+    "placeholders": {
+      "fullName": "Enter your full name...",
+      "emailAddress": "Enter your email address...",
+      "contactNumber": "Enter contact number...",
+      "completeAddress": "Enter complete address...",
+      "priority": "Select priority"
+    },
+    "validation": {
+      "invalidEmailFormat": "Invalid email format",
+      "descriptionRequired": "Ticket description is required",
+      "subjectRequired": "Ticket subject is required",
+      "fullNameRequired": "Full name is required",
+      "contactLengthValidation": "Contact number must be in +63 XXX XXX XXXX format",
+      "completeAddressRequired": "Complete address is required",
+      "dateInMM/DD/YYYY": "Date must be in MM/DD/YYYY format",
+      "invalidTimeSlots": "Please select a valid time slot",
+      "invalidPriority": "Please select a valid priority"
     }
   }
 }
