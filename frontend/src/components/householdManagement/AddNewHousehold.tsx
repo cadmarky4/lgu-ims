@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Breadcrumb from '../_global/Breadcrumb';
 import HouseholdFormSections from './_components/HouseholdFormSections';
 import { useHouseholdForm } from './_hooks/useHouseholdForm';
@@ -7,6 +8,7 @@ import { useHouseholdForm } from './_hooks/useHouseholdForm';
 
 const AddNewHousehold: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -31,7 +33,7 @@ const AddNewHousehold: React.FC = () => {
     const isDirty = form.formState.isDirty;
     
     if (isDirty) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+      if (window.confirm(t('households.form.messages.unsavedChanges'))) {
         navigate('/household');
       }
     } else {
@@ -56,10 +58,12 @@ const AddNewHousehold: React.FC = () => {
       <div className={`mb-2 transition-all duration-700 ease-out ${
         isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}>
-        <h1 className="text-2xl font-bold text-darktext pl-0">Add New Household Profile</h1>
+        <h1 className="text-2xl font-bold text-darktext pl-0">
+          {t('households.form.addTitle')}
+        </h1>
         {localStorage.getItem('householdDraft') && (
           <p className="text-sm text-gray-600 mt-1">
-            📝 Draft data loaded from previous session
+            📝 {t('households.form.messages.draftSaved')}
           </p>
         )}
       </div>
@@ -94,7 +98,9 @@ const AddNewHousehold: React.FC = () => {
             {isSavingDraft && (
               <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
+            <span>
+              {isSavingDraft ? t('households.form.actions.savingDraft') : t('households.form.actions.saveDraft')}
+            </span>
           </button>
 
           <div className="flex space-x-4">
@@ -104,7 +110,7 @@ const AddNewHousehold: React.FC = () => {
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('households.form.actions.cancel')}
             </button>
             <button
               type="submit"
@@ -117,7 +123,9 @@ const AddNewHousehold: React.FC = () => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              <span>{isSubmitting ? 'Saving...' : 'Save Household'}</span>
+              <span>
+                {isSubmitting ? t('households.form.actions.saving') : t('households.form.actions.save')}
+              </span>
             </button>
           </div>
         </div>

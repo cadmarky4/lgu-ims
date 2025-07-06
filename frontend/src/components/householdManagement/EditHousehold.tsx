@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FiX } from 'react-icons/fi';
 import Breadcrumb from '../_global/Breadcrumb';
 import HouseholdFormSections from './_components/HouseholdFormSections';
@@ -12,6 +13,7 @@ import ErrorState from './_components/ErrorState';
 const EditHousehold: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Fetch household data
@@ -49,7 +51,7 @@ const EditHousehold: React.FC = () => {
     const isDirty = form.formState.isDirty;
     
     if (isDirty) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+      if (window.confirm(t('households.form.messages.unsavedChanges'))) {
         navigate('/household');
       }
     } else {
@@ -70,7 +72,7 @@ const EditHousehold: React.FC = () => {
 
   // Loading state
   if (isLoading) {
-    return <LoadingState message="Loading household data..." />;
+    return <LoadingState message={t('households.messages.loadingHousehold')} />;
   }
 
   // Error state
@@ -95,16 +97,19 @@ const EditHousehold: React.FC = () => {
       }`}>
         <div>
           <h1 className="text-2xl font-bold text-darktext pl-0">
-            Edit Household Profile
+            {t('households.form.editTitle')}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Editing: {household.household_number} - {household.complete_address}
+            {t('households.form.editingLabel', { 
+              householdNumber: household.household_number, 
+              address: household.complete_address 
+            }) || `Editing: ${household.household_number} - ${household.complete_address}`}
           </p>
         </div>
         <button
           onClick={handleClose}
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Close"
+          title={t('households.form.actions.close')}
         >
           <FiX className="w-6 h-6" />
         </button>
@@ -140,7 +145,9 @@ const EditHousehold: React.FC = () => {
             {isSavingDraft && (
               <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             )}
-            <span>{isSavingDraft ? "Saving Draft..." : "Save Draft"}</span>
+            <span>
+              {isSavingDraft ? t('households.form.actions.savingDraft') : t('households.form.actions.saveDraft')}
+            </span>
           </button>
 
           <div className="flex space-x-4">
@@ -150,7 +157,7 @@ const EditHousehold: React.FC = () => {
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('households.form.actions.cancel')}
             </button>
             <button
               type="submit"
@@ -163,7 +170,9 @@ const EditHousehold: React.FC = () => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              <span>{isSubmitting ? 'Updating...' : 'Update Household'}</span>
+              <span>
+                {isSubmitting ? t('households.form.actions.updating') : t('households.form.actions.update')}
+              </span>
             </button>
           </div>
         </div>

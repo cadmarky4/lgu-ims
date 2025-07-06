@@ -496,5 +496,351 @@
         "loadError": "Hindi makuha ang datos ng opisyal."
       }
     }
+  },
+  "households": {
+    "title": "Pamamahala ng mga Sambahayan",
+    "addNew": "Magdagdag ng Bagong Sambahayan",
+    "search": "Ilagay ang numero, address, o ulo ng pamilya...",
+    "statistics": {
+      "title": "Estadistika ng mga Sambahayan",
+      "totalHouseholds": "Kabuuang Sambahayan",
+      "activeHouseholds": "Aktibong Sambahayan",
+      "fourPsBeneficiaries": "Benepisyaryo ng 4Ps",
+      "indigentFamilies": "Mga Mahirap na Pamilya",
+      "withSeniorCitizens": "May Senior Citizens",
+      "withPWD": "May PWD na Miyembro",
+      "withElectricity": "May Kuryente",
+      "withWaterSupply": "May Tubig",
+      "withInternetAccess": "May Internet"
+    },
+    "table": {
+      "headers": {
+        "householdNumber": "Numero ng Sambahayan",
+        "headOfFamily": "Ulo ng Pamilya",
+        "address": "Address",
+        "members": "Mga Miyembro",
+        "type": "Uri",
+        "classifications": "Mga Klasipikasyon",
+        "actions": "Mga Aksyon",
+        "headAndAddress": "Ulo at Address",
+        "membersAndIncome": "Mga Miyembro at Kita",
+        "programs": "Mga Programa",
+        "status": "Katayuan"
+      },
+      "noHouseholdsFound": "Walang nahanap na sambahayan. Subukang i-adjust ang inyong paghahanap o magdagdag ng bagong sambahayan.",
+      "income": "Kita",
+      "none": "Wala",
+      "noResults": "Walang nahanap na sambahayan",
+      "noResultsSearch": "Walang nahanap na sambahayan na tumugma sa \"{{searchTerm}}\"",
+      "members": "{{count}} miyembro",
+      "members_plural": "{{count}} mga miyembro",
+      "noHead": "Walang Nakatalagang Ulo"
+    },
+    "actions": {
+      "view": "Tingnan ang detalye ng sambahayan",
+      "edit": "I-edit ang sambahayan",
+      "delete": "Burahin ang sambahayan",
+      "deleting": "Binubura..."
+    },
+    "status": {
+      "active": "Aktibo",
+      "inactive": "Hindi Aktibo",
+      "transferred": "Nalipat"
+    },
+    "types": {
+      "NUCLEAR": "Nuclear na Pamilya",
+      "EXTENDED": "Extended na Pamilya",
+      "SINGLE": "Isang Tao",
+      "SINGLE_PARENT": "Single Parent",
+      "OTHER": "Iba pa"
+    },
+    "houseTypes": {
+      "CONCRETE": "Konkretong Bahay",
+      "SEMI_CONCRETE": "Semi-Konkretong Bahay",
+      "WOOD": "Kahoy",
+      "BAMBOO": "Kawayan",
+      "MIXED": "Halo-halong Materyales"
+    },
+    "ownershipStatus": {
+      "OWNED": "Pag-aari",
+      "RENTED": "Inuupahan",
+      "SHARED": "Pinagsasama",
+      "INFORMAL_SETTLER": "Informal Settler"
+    },
+    "incomeRanges": {
+      "BELOW_10000": "Sa ilalim ng ₱10,000",
+      "RANGE_10000_25000": "₱10,000 - ₱25,000",
+      "RANGE_25000_50000": "₱25,000 - ₱50,000",
+      "RANGE_50000_100000": "₱50,000 - ₱100,000",
+      "ABOVE_100000": "Higit sa ₱100,000"
+    },
+    "relationships": {
+      "HEAD": "Ulo",
+      "SPOUSE": "Asawa",
+      "SON": "Anak na Lalaki",
+      "DAUGHTER": "Anak na Babae",
+      "FATHER": "Ama",
+      "MOTHER": "Ina",
+      "BROTHER": "Kapatid na Lalaki",
+      "SISTER": "Kapatid na Babae",
+      "GRANDFATHER": "Lolo",
+      "GRANDMOTHER": "Lola",
+      "GRANDSON": "Apo na Lalaki",
+      "GRANDDAUGHTER": "Apo na Babae",
+      "UNCLE": "Tito",
+      "AUNT": "Tita",
+      "NEPHEW": "Pamangkin na Lalaki",
+      "NIECE": "Pamangkin na Babae",
+      "COUSIN": "Pinsan",
+      "IN_LAW": "Bilas",
+      "BOARDER": "Nakatira",
+      "OTHER": "Iba pa"
+    },
+    "classifications": {
+      "fourPsBeneficiary": "Benepisyaryo ng 4Ps",
+      "indigentFamily": "Mahirap na Pamilya",
+      "hasSeniorCitizen": "May Senior Citizen",
+      "hasPwdMember": "May PWD na Miyembro",
+      "hasElectricity": "May Kuryente",
+      "hasWaterSupply": "May Tubig",
+      "hasInternetAccess": "May Internet"
+    },
+    "messages": {
+      "loading": "Naglo-load ng mga sambahayan...",
+      "loadError": "Hindi ma-load ang mga sambahayan. Subukan ulit.",
+      "statisticsError": "Hindi ma-load ang mga estadistika.",
+      "createError": "Hindi nagawa ang sambahayan. Subukan ulit.",
+      "updateError": "Hindi na-update ang sambahayan. Subukan ulit.",
+      "deleteConfirm": "Sigurado ka bang gusto mong burahin ang sambahayan na ito? Hindi na ito mababawi.",
+      "deleteSuccess": "Matagumpay na nabura ang sambahayan",
+      "deleteError": "Hindi nabura ang sambahayan. Subukan ulit.",
+      "deleteErrorTitle": "Error sa Pagbura",
+      "notFound": "Hindi natagpuan ang sambahayan",
+      "invalidId": "Hindi wasto ang ibinigay na household ID.",
+      "loadingHousehold": "Kinukuha ang datos ng sambahayan...",
+      "networkError": "Hindi makakonekta sa server. Pakisuri ang inyong koneksyon."
+    },
+    "pagination": {
+      "showing": "Nagpapakita ng {{from}} hanggang {{to}} sa {{total}} na resulta",
+      "previous": "Nakaraan",
+      "next": "Susunod"
+    },
+    "form": {
+      "addTitle": "Magdagdag ng Bagong Profile ng Sambahayan",
+      "editTitle": "I-edit ang Profile ng Sambahayan",
+      "viewTitle": "Tingnan ang Profile ng Sambahayan",
+      "sections": {
+        "basicInfo": "Pangunahing Impormasyon",
+        "addressInfo": "Impormasyon ng Address",
+        "economicInfo": "Impormasyon sa Ekonomiya",
+        "housingInfo": "Impormasyon sa Bahay",
+        "utilitiesInfo": "Mga Utility at Access",
+        "classificationsInfo": "Mga Klasipikasyon",
+        "membersInfo": "Mga Miyembro ng Sambahayan",
+        "additionalInfo": "Karagdagang Impormasyon",
+        "headInfo": "Impormasyon ng Ulo ng Sambahayan",
+        "utilitiesAccess": "Access sa mga Utility"
+      },
+      "residentSearch": {
+        "placeholder": "Maghanap ng mga residente...",
+        "searching": "Naghahanap...",
+        "noPhone": "Walang telepono",
+        "noResults": "Walang nahanap na residente na tumugma sa \"{{searchTerm}}\""
+      },
+      "membersSection": {
+        "addMembersFromResidents": "Magdagdag ng mga Miyembro mula sa mga Residente",
+        "searchPlaceholder": "Ilagay ang pangalan, ID, o numero ng telepono upang maghanap ng mga miyembro",
+        "householdMembers": "Mga Miyembro ng Sambahayan",
+        "relationshipToHead": "Relasyon sa Ulo",
+        "residentNotFound": "Hindi natagpuan ang residente",
+        "noMembersYet": "Walang naidagdag na miyembro pa. Maghanap at pumili ng mga residente upang idagdag bilang mga miyembro ng sambahayan.",
+        "totalMembers": "Kabuuang miyembro"
+      },
+      "fields": {
+        "householdNumber": "Numero ng Sambahayan",
+        "householdType": "Uri ng Sambahayan",
+        "headResident": "Ulo ng Pamilya",
+        "houseNumber": "Numero ng Bahay",
+        "streetSitio": "Kalye/Sitio",
+        "barangay": "Barangay",
+        "completeAddress": "Kumpletong Address",
+        "monthlyIncome": "Saklaw ng Buwanang Kita",
+        "primaryIncomeSource": "Pangunahing Pinagkukunan ng Kita",
+        "fourPsBeneficiary": "Benepisyaryo ng 4Ps",
+        "indigentFamily": "Mahirap na Pamilya",
+        "hasSeniorCitizen": "May Senior Citizen na Miyembro",
+        "hasPwdMember": "May PWD na Miyembro",
+        "houseType": "Uri ng Bahay",
+        "ownershipStatus": "Status ng Pagmamay-ari",
+        "hasElectricity": "May Kuryente",
+        "hasWaterSupply": "May Tubig",
+        "hasInternetAccess": "May Internet",
+        "members": "Mga Miyembro ng Sambahayan",
+        "memberName": "Pangalan ng Miyembro",
+        "relationship": "Relasyon sa Ulo",
+        "remarks": "Mga Puna/Karagdagang Tala"
+      },
+      "placeholders": {
+        "householdNumber": "Awtomatikong gagawin kung walang laman",
+        "houseNumber": "hal. 123, Blk 4 Lot 5",
+        "streetSitio": "hal. Rizal Street, Sitio Maligaya",
+        "barangay": "Ilagay ang pangalan ng barangay",
+        "completeAddress": "Ilagay ang kumpletong address ng sambahayan...",
+        "primaryIncomeSource": "hal. Trabaho, Negosyo, Pagsasaka...",
+        "remarks": "Ilagay ang anumang karagdagang impormasyon...",
+        "searchMembers": "Maghanap ng mga residente na idadagdag...",
+        "selectHeadResident": "Pumili ng ulo ng pamilya...",
+        "selectRelationship": "Pumili ng relasyon..."
+      },
+      "options": {
+        "selectHouseholdType": "Pumili ng Uri ng Sambahayan",
+        "selectIncomeRange": "Pumili ng Saklaw ng Kita",
+        "selectHouseType": "Pumili ng Uri ng Bahay",
+        "selectOwnershipStatus": "Pumili ng Status ng Pagmamay-ari",
+        "selectBarangay": "Pumili ng Barangay",
+        "selectHeadResident": "Pumili ng Ulo ng Pamilya",
+        "selectRelationship": "Pumili ng Relasyon"
+      },
+      "actions": {
+        "saveDraft": "I-save ang Draft",
+        "savingDraft": "Sini-save ang Draft...",
+        "cancel": "Kanselahin",
+        "save": "I-save ang Sambahayan",
+        "update": "I-update ang Sambahayan",
+        "saving": "Sini-save...",
+        "updating": "Ina-update...",
+        "close": "Isara",
+        "edit": "I-edit ang Sambahayan",
+        "addMember": "Magdagdag ng Miyembro",
+        "removeMember": "Alisin ang Miyembro",
+        "selectMember": "Pumili ng Miyembro"
+      },
+      "validation": {
+        "required": "Kailangang punan ang patlang na ito",
+        "householdNumberRequired": "Kailangan ang numero ng sambahayan",
+        "houseNumberRequired": "Kailangan ang numero ng bahay",
+        "streetSitioRequired": "Kailangan ang kalye/sitio",
+        "barangayRequired": "Kailangan ang barangay",
+        "completeAddressRequired": "Kailangan ang kumpletong address",
+        "minLength": "Dapat ay hindi bababa sa {{min}} karakter",
+        "maxLength": "Dapat ay hindi hihigit sa {{max}} karakter",
+        "invalidFormat": "Hindi wastong format"
+      },
+      "error": {
+        "householdNumberRequired": "Kailangan ang numero ng sambahayan",
+        "houseNumberRequired": "Kailangan ang numero ng bahay",
+        "streetSitioRequired": "Kailangan ang kalye/sitio",
+        "barangayRequired": "Kailangan ang barangay",
+        "completeAddressRequired": "Kailangan ang kumpletong address"
+      },
+      "messages": {
+        "loadingHousehold": "Kinukuha ang datos ng sambahayan...",
+        "loadingMembers": "Kinukuha ang mga miyembro ng sambahayan...",
+        "duplicateWarning": "May nakitang {{count}} posibleng katulad na sambahayan. Pakisigurado na hindi ito doble.",
+        "duplicatesFound": "Mga kaparehong sambahayan na natagpuan:",
+        "unsavedChanges": "May hindi naisave na pagbabago. Sigurado ka bang nais mong umalis?",
+        "draftSaved": "Matagumpay na naisave ang draft!",
+        "draftSaveError": "Nabigong i-save ang draft. Pakisubukang muli.",
+        "createSuccess": "Matagumpay na nagawa ang sambahayan!",
+        "updateSuccess": "Matagumpay na na-update ang sambahayan!",
+        "createError": "Nabigong i-save ang sambahayan. Pakisubukang muli.",
+        "updateError": "Nabigong i-update ang sambahayan. Pakisubukang muli.",
+        "createErrorTitle": "Error sa Paggawa",
+        "updateErrorTitle": "Error sa Pag-update",
+        "validationError": "Hindi pumasa sa beripikasyon: {{errors}}",
+        "networkError": "Hindi makakonekta sa server. Pakisuri ang inyong koneksyon.",
+        "notFound": "Hindi natagpuan ang sambahayan",
+        "invalidId": "Hindi wasto ang ibinigay na household ID.",
+        "loadError": "Hindi makuha ang datos ng sambahayan.",
+        "memberAlreadyExists": "Ang residenteng ito ay miyembro na ng sambahayan na ito",
+        "headCannotBeRemoved": "Hindi maaaring alisin ang ulo ng pamilya. Magtalaga muna ng bagong ulo.",
+        "noMembersSelected": "Pakipili ng kahit isang miyembro ng sambahayan"
+      },
+      "members": {
+        "title": "Mga Miyembro ng Sambahayan",
+        "noMembers": "Walang nakatalagang miyembro sa sambahayan na ito",
+        "addMember": "Magdagdag ng Miyembro",
+        "removeMember": "Alisin ang Miyembro",
+        "memberCount": "{{count}} miyembro",
+        "memberCount_plural": "{{count}} mga miyembro",
+        "headOfFamily": "Ulo ng Pamilya",
+        "relationship": "Relasyon",
+        "age": "Edad",
+        "gender": "Kasarian",
+        "actions": "Mga Aksyon",
+        "loadError": "Hindi ma-load ang mga miyembro ng sambahayan",
+        "selectResidentAndRelationship": "Pakipili ang residente at relasyon",
+        "addError": "Hindi maidagdag ang miyembro ng sambahayan",
+        "removeError": "Hindi maalis ang miyembro ng sambahayan",
+        "addNewMember": "Magdagdag ng Bagong Miyembro",
+        "relationshipToHead": "Relasyon sa Ulo ng Sambahayan",
+        "noMembersDescription": "I-click ang \"Magdagdag ng Miyembro\" upang magsimulang magdagdag ng mga miyembro ng pamilya.",
+        "memberName": "Pangalan"
+      },
+      "confirmations": {
+        "removeMember": "Sigurado ka bang gusto mong alisin ang miyembrong ito sa sambahayan?",
+        "changeHead": "Sigurado ka bang gusto mong palitan ang ulo ng sambahayan na ito?",
+        "deleteHousehold": "Sigurado ka bang gusto mong burahin ang sambahayan na ito? Hindi na ito mababawi."
+      }
+    },
+    "view": {
+      "householdInformation": "Impormasyon ng Sambahayan",
+      "addressInformation": "Impormasyon ng Address",
+      "economicInformation": "Impormasyon sa Ekonomiya",
+      "housingInformation": "Impormasyon sa Bahay",
+      "householdMembers": "Mga Miyembro ng Sambahayan",
+      "householdClassification": "Klasipikasyon ng Sambahayan",
+      "additionalInformation": "Karagdagang Impormasyon",
+      "utilitiesAccess": "Access sa mga Utility",
+      "totalMembers": "Kabuuang Miyembro",
+      "noHeadAssigned": "Walang Nakatalagang Ulo",
+      "notSpecified": "Hindi tinukoy",
+      "noAdditionalRemarks": "Walang karagdagang puna",
+      "head": "Ulo",
+      "membersTable": {
+        "householdHead": "Ulo ng Sambahayan",
+        "useFullDetails": "Gamitin ang kumpletong detalye ng residente kung kailangan",
+        "otherMembers": "Iba pang mga Miyembro",
+        "name": "Pangalan",
+        "contact": "Contact",
+        "relationship": "Relasyon",
+        "noContact": "Walang contact",
+        "noAdditionalMembers": "Walang karagdagang miyembro na nakatala",
+        "noMembersYet": "Walang miyembro na nakatala pa",
+        "totalHouseholdSize": "Kabuuang laki ng sambahayan"
+      }
+    },
+    "common": {
+      "errors": {
+        "unableToLoadData": "Hindi makuha ang datos.",
+        "resourceNotFound": "Hindi natagpuan ang hiniling na resource.",
+        "networkError": "Hindi makakonekta sa server. Pakisuri ang inyong koneksyon.",
+        "genericError": "May error habang kinukuha ang datos.",
+        "notFound": "Hindi Natagpuan",
+        "error": "Error",
+        "loading": "Naglo-load..."
+      },
+      "actions": {
+        "goBack": "Bumalik",
+        "tryAgain": "Subukan Ulit"
+      }
+    },
+    "headSection": {
+      "searchExistingResident": "Maghanap ng Existing na Residente bilang Ulo",
+      "searchPlaceholder": "Ilagay ang pangalan, ID, o numero ng telepono",
+      "selectedHead": "Napiling Ulo ng Sambahayan",
+      "addNewResident": "Magdagdag ng Bagong Residente bilang Ulo",
+      "removeHead": "Alisin ang ulo ng sambahayan",
+      "householdHead": "Ulo ng Sambahayan",
+      "noContact": "Walang contact",
+      "or": "O",
+      "table": {
+        "name": "Pangalan",
+        "contact": "Contact",
+        "role": "Tungkulin",
+        "actions": "Mga Aksyon"
+      }
+    }
   }
 }
+
