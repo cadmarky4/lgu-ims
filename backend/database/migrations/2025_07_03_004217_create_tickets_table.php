@@ -1,6 +1,5 @@
 <?php
 
-// database/migrations/xxxx_xx_xx_create_tickets_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +13,7 @@ return new class extends Migration {
             $table->string('subject', 255);
             $table->text('description');
             $table->enum('priority', ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
-            $table->string('requester_name', 255);
+            $table->string('requester_name', 255)->nullable();
             $table->uuid('resident_id')->nullable();
             $table->string('contact_number', 20)->nullable();
             $table->string('email_address', 255)->nullable();

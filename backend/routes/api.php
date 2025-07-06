@@ -212,6 +212,7 @@ Route::prefix('appointments')->group(function () {
     Route::get('/check-vacancy/{schedule}', [AppointmentController::class, 'checkScheduleVacancy']);
 });
 // Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
+
 Route::prefix('blotter')->group(function () {
     Route::get('/view/{id}', [BlotterController::class, 'show']);
     Route::post('/', [BlotterController::class, 'store']);
@@ -220,16 +221,13 @@ Route::prefix('blotter')->group(function () {
 });
 // Public Help Desk - Blotter Cases
 
-
 // Public Help Desk - Complaints
-Route::prefix('complaints')->group(function () {
-    Route::get('/statistics', [ComplaintController::class, 'statistics']);
-    Route::post('/{complaint}/assign', [ComplaintController::class, 'assign']);
-    Route::post('/{complaint}/investigate', [ComplaintController::class, 'investigate']);
-    Route::post('/{complaint}/resolve', [ComplaintController::class, 'resolve']);
-    Route::post('/{complaint}/close', [ComplaintController::class, 'close']);
+Route::prefix('complaint')->group(function () {
+    Route::get('/view/{id}', [ComplaintController::class, 'view']);
+    Route::post('/', [ComplaintController::class, 'store']);
+    Route::put('/{id}', [ComplaintController::class, 'update']);
 });
-Route::apiResource('complaints', ComplaintController::class)->only(['index', 'store', 'show', 'update']);
+// Route::apiResource('complaints', ComplaintController::class)->only(['index', 'store', 'show', 'update']);
 
 // Public Help Desk - Suggestions
 Route::prefix('suggestions')->group(function () {
