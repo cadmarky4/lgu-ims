@@ -7,7 +7,7 @@ import {
   type TicketCategory,
 } from "@/services/helpDesk/helpDesk.type";
 import { FiSearch } from "react-icons/fi";
-import { CustomDropdown } from "./CustomDropDown";
+import { CustomDropdown } from "./CustomDropdown";
 import { enumToTitleCase } from "../utilities/enumToTitleCase";
 
 interface HelpDeskSearchProps {

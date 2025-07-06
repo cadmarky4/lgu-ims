@@ -531,14 +531,52 @@
         "dateInMM/DD/YYYY": "Date must be in MM/DD/YYYY format"
       },
       "messages": {
-        "createSuccess":"Appointment schedule successfully!",
-        "createError":"Appointment scheduled failed!"
+        "createSuccess":"Appointment scheduled successfully!",
+        "createError":"Appointment schedule failed!",
+        "error" : "Schedule appointment failed"
+      }
+    },
+    "blotterForm":{
+      "fields": {
+        "involvement": "Involvement",
+        "typeOfIncident": "Type of Incident",
+        "dateOfIncident": "Date of Incident",
+        "timeOfIncident": "Time of Incident",
+        "locationOfIncident": "Location of Incident",
+        "incidentDescription": "Incident Description"
+      },
+      "placeholders": {
+        "involvement": "Select Involvement",
+        "typeOfIncident": "Select Incident Type",
+        "timeOfIncident": "Select Incident Time",
+        "locationOfIncident": "Enter Incident Location",
+        "incidentDescription": "Enter Incident Description"
+      },
+      "buttons": {
+        "addNewPerson": "Add New Person"
+      },
+      "validation": {
+        "locationRequired": "Location of incident is required",
+        "invalidIncidentType": "Invalid incident type"
+      },
+      "messages" : {
+        "createSuccess":"Blotter filed successfully!",
+        "createError":"Blotter file failed!",
+        "error" : "File blotter failed"
       }
     },
     "fields": {
+      "fullName": "Full Name",
+      "emailAddress": "Email Address",
+      "contactNumber": "Contact Number",
+      "completeAddress": "Complete Address",
       "priority": "Priority"
     },
     "placeholders": {
+      "fullName": "Enter your full name...",
+      "emailAddress": "Enter your email address...",
+      "contactNumber": "Enter contact number...",
+      "completeAddress": "Enter complete address...",
       "priority": "Select priority"
     },
     "validation": {
@@ -548,6 +586,7 @@
       "fullNameRequired": "Full name is required",
       "contactLengthValidation": "Contact number must be in +63 XXX XXX XXXX format",
       "completeAddressRequired": "Complete address is required",
+      "dateInMM/DD/YYYY": "Date must be in MM/DD/YYYY format",
       "invalidTimeSlots": "Please select a valid time slot",
       "invalidPriority": "Please select a valid priority"
     }

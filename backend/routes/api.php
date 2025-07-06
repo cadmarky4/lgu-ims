@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\SuggestionController;
-use App\Http\Controllers\Api\BlotterCaseController;
+use App\Http\Controllers\Api\BlotterController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\BarangayOfficialController;
 use App\Http\Controllers\Api\SettingController;
@@ -212,6 +212,14 @@ Route::prefix('appointments')->group(function () {
     Route::get('/check-vacancy/{schedule}', [AppointmentController::class, 'checkScheduleVacancy']);
 });
 // Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
+Route::prefix('blotter')->group(function () {
+    Route::get('/view/{id}', [BlotterController::class, 'show']);
+    Route::post('/', [BlotterController::class, 'store']);
+    Route::put('/{id}', [BlotterController::class, 'update']);
+    Route::post('/{id}/photo', [BlotterController::class, 'uploadPhoto']);
+});
+// Public Help Desk - Blotter Cases
+
 
 // Public Help Desk - Complaints
 Route::prefix('complaints')->group(function () {
@@ -232,17 +240,6 @@ Route::prefix('suggestions')->group(function () {
     Route::post('/{suggestion}/reject', [SuggestionController::class, 'reject']);
 });
 Route::apiResource('suggestions', SuggestionController::class)->only(['index', 'store', 'show', 'update']);
-
-// Public Help Desk - Blotter Cases
-Route::prefix('blotter-cases')->group(function () {
-    Route::get('/statistics', [BlotterCaseController::class, 'statistics']);
-    Route::post('/{blotterCase}/assign-investigator', [BlotterCaseController::class, 'assignInvestigator']);
-    Route::post('/{blotterCase}/investigate', [BlotterCaseController::class, 'investigate']);
-    Route::post('/{blotterCase}/mediate', [BlotterCaseController::class, 'mediate']);
-    Route::post('/{blotterCase}/settle', [BlotterCaseController::class, 'settle']);
-    Route::post('/{blotterCase}/close', [BlotterCaseController::class, 'closeCase']);
-});
-Route::apiResource('blotter-cases', BlotterCaseController::class)->only(['index', 'store', 'show', 'update']);
 
 // Settings - System Configuration (temporarily outside auth for testing)
 Route::get('settings', [SettingController::class, 'index']);
@@ -346,15 +343,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('suggestions', SuggestionController::class);
 
     // Help Desk - Blotter Cases - Specific routes BEFORE apiResource
-    Route::prefix('blotter-cases')->group(function () {
-        Route::get('/statistics', [BlotterCaseController::class, 'statistics']);
-        Route::post('/{blotterCase}/assign-investigator', [BlotterCaseController::class, 'assignInvestigator']);
-        Route::post('/{blotterCase}/schedule-mediation', [BlotterCaseController::class, 'scheduleMediation']);
-        Route::post('/{blotterCase}/complete-mediation', [BlotterCaseController::class, 'completeMediation']);
-        Route::patch('/{blotterCase}/compliance', [BlotterCaseController::class, 'updateCompliance']);
-        Route::post('/{blotterCase}/close', [BlotterCaseController::class, 'closeCase']);
-    });
-    Route::apiResource('blotter-cases', BlotterCaseController::class);
+    // Route::prefix('blotter-cases')->group(function () {
+    //     Route::get('/statistics', [BlotterCaseController::class, 'statistics']);
+    //     Route::post('/{blotterCase}/assign-investigator', [BlotterCaseController::class, 'assignInvestigator']);
+    //     Route::post('/{blotterCase}/schedule-mediation', [BlotterCaseController::class, 'scheduleMediation']);
+    //     Route::post('/{blotterCase}/complete-mediation', [BlotterCaseController::class, 'completeMediation']);
+    //     Route::patch('/{blotterCase}/compliance', [BlotterCaseController::class, 'updateCompliance']);
+    //     Route::post('/{blotterCase}/close', [BlotterCaseController::class, 'closeCase']);
+    // });
+    // Route::apiResource('blotter-cases', BlotterCaseController::class);
 
     // Help Desk - Appointments - Specific routes BEFORE apiResource
     Route::prefix('appointments')->group(function () {

@@ -2,24 +2,25 @@ import React, { useState, useEffect, useRef } from "react";
 import { Calendar, User, Loader } from "lucide-react";
 import Breadcrumb from "../../_global/Breadcrumb";
 import { useCreateAppointmentForm } from "./useCreateAppointmentForm";
-import InformationCards from "./components/InformationCard";
+import InformationCards from "./_components/InformationCard";
 import { FormProvider } from "react-hook-form";
 import { FormField } from "@/components/_global/components/FormField";
 import { useTranslation } from "react-i18next";
 import { departments } from "@/services/helpDesk/appointments/appointments.types";
-import { SearchResidents } from "./components/SearchResidents";
+import { SearchResidents } from "../_components/SearchResidents";
 import { priorities, timeSlotOptions } from "@/services/helpDesk/helpDesk.type";
+import { useNavigate } from "react-router-dom";
 
 const AppointmentsPage: React.FC = () => {
   const { t } = useTranslation();
-
-  // form-post submission loading ni adrian
-  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // loading ng breadcrumbs ni sean
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const onSuccess = () => {};
+  const onSuccess = () => {
+    navigate("/help-desk");
+  };
 
   const {
     form,
@@ -37,16 +38,12 @@ const AppointmentsPage: React.FC = () => {
   } = useCreateAppointmentForm({ onSuccess });
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmitButton = () => {
-    console.log(form.formState.errors)
-  }
-
   // Toast state
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: "success" | "error";
-  }>({ show: false, message: "", type: "success" });
+  // const [toast, setToast] = useState<{
+  //   show: boolean;
+  //   message: string;
+  //   type: "success" | "error";
+  // }>({ show: false, message: "", type: "success" });
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -94,7 +91,10 @@ const AppointmentsPage: React.FC = () => {
             </div>
 
             <div className="mb-6 bg-gray-50 rounded-lg p-4">
-              <label htmlFor="isResident" className="flex items-center cursor-pointer">
+              <label
+                htmlFor="isResident"
+                className="flex items-center cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   name="isResident"
@@ -112,67 +112,74 @@ const AppointmentsPage: React.FC = () => {
               </p>
             </div>
 
-
             {/* Search Residents */}
-            {isResident && <div className="mb-6">
-              <SearchResidents
-                headSearchRef={searchRef}
-                search={searchResident || ''}
-                isSearchingResidents={isLoadingResidents}
-                filteredResidents={filteredResidents?.data || []}
-                residentsFetchErrorMessage={
-                  residentsError?.message
-                }
-                onResidentClick={setSelectedResidentId}
-              />
-            </div>}
+            {isResident && (
+              <div className="mb-6">
+                <SearchResidents
+                  headSearchRef={searchRef}
+                  search={searchResident || ""}
+                  isSearchingResidents={isLoadingResidents}
+                  filteredResidents={filteredResidents?.data || []}
+                  residentsFetchErrorMessage={residentsError?.message}
+                  onResidentClick={setSelectedResidentId}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+              <div>
                 <FormField
                   name="ticket.requester_name"
-                  label={t("helpDesk.appointmentsForm.fields.fullName")}
+                  label={t("helpDesk.fields.fullName")}
                   placeholder={t(
-                  "helpDesk.appointmentsForm.placeholders.fullName"
+                    "helpDesk.placeholders.fullName"
                   )}
                   required
-                  readOnly={residentIdField !== undefined && residentIdField !== null}
+                  readOnly={
+                    residentIdField !== undefined && residentIdField !== null
+                  }
                 />
-                </div>
+              </div>
 
               <div>
                 <FormField
                   type="email"
                   name="ticket.email_address"
-                  label={t("helpDesk.appointmentsForm.fields.emailAddress")}
+                  label={t("helpDesk.fields.emailAddress")}
                   placeholder={t(
-                    "helpDesk.appointmentsForm.placeholders.emailAddress"
+                    "helpDesk.placeholders.emailAddress"
                   )}
-                  readOnly={residentIdField !== undefined && residentIdField !== null}
+                  readOnly={
+                    residentIdField !== undefined && residentIdField !== null
+                  }
                 />
               </div>
 
               <div>
                 <FormField
                   name="ticket.contact_number"
-                  label={t("helpDesk.appointmentsForm.fields.contactNumber")}
+                  label={t("helpDesk.fields.contactNumber")}
                   placeholder={t(
-                    "helpDesk.appointmentsForm.placeholders.contactNumber"
+                    "helpDesk.placeholders.contactNumber"
                   )}
                   required
-                  readOnly={residentIdField !== undefined && residentIdField !== null}
+                  readOnly={
+                    residentIdField !== undefined && residentIdField !== null
+                  }
                 />
               </div>
 
               <div>
                 <FormField
                   name="ticket.complete_address"
-                  label={t("helpDesk.appointmentsForm.fields.completeAddress")}
+                  label={t("helpDesk.fields.completeAddress")}
                   placeholder={t(
-                    "helpDesk.appointmentsForm.placeholders.completeAddress"
+                    "helpDesk.placeholders.completeAddress"
                   )}
                   required
-                  readOnly={residentIdField !== undefined && residentIdField !== null}
+                  readOnly={
+                    residentIdField !== undefined && residentIdField !== null
+                  }
                 />
               </div>
             </div>
@@ -185,41 +192,41 @@ const AppointmentsPage: React.FC = () => {
               </h2>
             </div>
 
-          <div className="grid grid-cols-[3fr_1fr] gap-6">
-            <div className="mb-6">
-              <FormField
-                name="ticket.subject"
-                label={t("helpDesk.appointmentsForm.fields.subject")}
-                placeholder={t(
-                  "helpDesk.appointmentsForm.placeholders.subject"
-                )}
-                required
-              />
-            </div>
+            <div className="grid grid-cols-[3fr_1fr] gap-6">
+              <div className="mb-6">
+                <FormField
+                  name="ticket.subject"
+                  label={t("helpDesk.appointmentsForm.fields.subject")}
+                  placeholder={t(
+                    "helpDesk.appointmentsForm.placeholders.subject"
+                  )}
+                  required
+                />
+              </div>
 
-            <div className="mb-6">
-              <FormField
-                type="select"
-                name="appointment.department"
-                label={t("helpDesk.appointmentsForm.fields.department")}
-                placeholder={t(
-                  "helpDesk.appointmentsForm.placeholders.department"
-                )}
-                options={departments.map((department) => ({
-                  value: department,
-                  label: department
-                    .split("_")
-                    .map(
-                      (word) =>
-                        word.charAt(0).toUpperCase() +
-                        word.slice(1).toLowerCase()
-                    )
-                    .join(" "),
-                }))}
-                required
-              />
+              <div className="mb-6">
+                <FormField
+                  type="select"
+                  name="appointment.department"
+                  label={t("helpDesk.appointmentsForm.fields.department")}
+                  placeholder={t(
+                    "helpDesk.appointmentsForm.placeholders.department"
+                  )}
+                  options={departments.map((department) => ({
+                    value: department,
+                    label: department
+                      .split("_")
+                      .map(
+                        (word) =>
+                          word.charAt(0).toUpperCase() +
+                          word.slice(1).toLowerCase()
+                      )
+                      .join(" "),
+                  }))}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
             <div className="mb-6">
               <FormField
@@ -243,43 +250,45 @@ const AppointmentsPage: React.FC = () => {
                 />
               </div>
 
-                <div>
+              <div>
                 <FormField
                   type="select"
                   name="appointment.time"
                   label={t("helpDesk.appointmentsForm.fields.time")}
                   options={timeSlotOptions.map((slot) => {
-                  // Convert 12-hour format (XX:XX AM/PM) to 24-hour format (HH:mm)
-                  const [time, period] = slot.split(' ');
-                  const [hours, minutes] = time.split(':');
-                  let hour = parseInt(hours);
-                  
-                  if (period === 'PM' && hour !== 12) {
-                    hour += 12;
-                  } else if (period === 'AM' && hour === 12) {
-                    hour = 0;
-                  }
+                    // Convert 12-hour format (XX:XX AM/PM) to 24-hour format (HH:mm)
+                    const [time, period] = slot.split(" ");
+                    const [hours, minutes] = time.split(":");
+                    let hour = parseInt(hours);
 
-                  const formattedTime = `${hour.toString().padStart(2, '0')}:${minutes}`;
-                  
-                  return {
-                    value: formattedTime,
-                    label: slot
-                  };
+                    if (period === "PM" && hour !== 12) {
+                      hour += 12;
+                    } else if (period === "AM" && hour === 12) {
+                      hour = 0;
+                    }
+
+                    const formattedTime = `${hour
+                      .toString()
+                      .padStart(2, "0")}:${minutes}`;
+
+                    return {
+                      value: formattedTime,
+                      label: slot,
+                    };
                   })}
                   placeholder={t("helpDesk.appointmentsForm.placeholders.time")}
                   required
                 />
-                </div>
+              </div>
 
               <div>
                 <FormField
                   type="select"
                   name="ticket.priority"
                   label={t("helpDesk.fields.priority")}
-                  options={priorities.map((priority)=>({
+                  options={priorities.map((priority) => ({
                     value: priority,
-                    label: priority
+                    label: priority,
                   }))}
                   placeholder={t("helpDesk.placeholders.priority")}
                   required
@@ -302,15 +311,15 @@ const AppointmentsPage: React.FC = () => {
               <p className="text-sm text-gray-500">* Required fields</p>{" "}
               <button
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={isSubmitting}
                 className="cursor-pointer @lg/main-form:px-6 px-3 py-3 bg-blue-600 justify-center text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center disabled:opacity-50"
               >
-                {loading ? (
+                {isSubmitting ? (
                   <Loader className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
                   <Calendar className="h-5 w-5 mr-2" />
                 )}
-                {loading ? "Submitting..." : "Submit Appointment Request"}
+                {isSubmitting ? "Submitting..." : "Submit Appointment Request"}
               </button>
             </div>
           </div>

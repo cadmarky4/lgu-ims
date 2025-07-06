@@ -1,4 +1,4 @@
-// import { z } from "zod";
+import { z } from "zod";
 // import { FeedbackCategorySchema, BaseTicketFormDataSchema } from "../helpDesk.type";
 // import { DepartmentSchema } from "@/services/users/users.types";
 
@@ -14,6 +14,12 @@
 //   location: z.string().optional().nullable(),
 //   supporting_documents: z.array(ComplaintSupportingDocumentsSchema).optional().nullable(),
 // });
+
+export const ComplaintSchema = z.object({
+    id: z.string().uuid().optional(),
+    base_ticket_id: z.string().uuid(),
+    
+})
 
 // export const ComplaintSchema = ComplaintFormDataSchema.pick({
 //   requester_name: true,
