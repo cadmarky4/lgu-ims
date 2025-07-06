@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { FiSettings, FiShield, FiServer, FiLoader } from 'react-icons/fi';
-import { SettingsService, type SettingsData } from '../../services/settings/settings.service';
+import { FiSettings, FiShield, FiServer, FiLoader, FiSave, FiRotateCcw, FiDownload, FiUpload, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { ZodError } from 'zod';
+import { 
+  settingsService, 
+  type SettingsData, 
+  type SettingsUpdate,
+  SettingsSection 
+} from '../../services/settings/settings.service';
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState<SettingsSection>(SettingsSection.GENERAL);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [testing, setTesting] = useState(false);
+  const [backing, setBacking] = useState(false);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
-  const [settingsService] = useState(new SettingsService());
+  const [errorMessage, setErrorMessage] = useState('');
+  const [testResults, setTestResults] = useState<Record<string, boolean>>({});
 
   const [formData, setFormData] = useState<SettingsData>({
     // General Information
@@ -16,7 +30,7 @@ const SettingsPage: React.FC = () => {
     city: '',
     province: '',
     region: '',
-    type: '',
+    type: 'Urban',
     contactNumber: '',
     emailAddress: '',
     openingHours: '',
@@ -36,50 +50,112 @@ const SettingsPage: React.FC = () => {
   });
   const [originalData, setOriginalData] = useState<SettingsData | null>(null);
 
+  // Clear messages after timeout
+  const clearMessages = () => {
+    setTimeout(() => {
+      setSuccessMessage('');
+      setErrorMessage('');
+    }, 5000);
+  };
+
+  // Parse Zod validation errors
+  const parseZodErrors = (error: ZodError): ValidationError[] => {
+    return error.errors.map(err => ({
+      field: err.path.join('.'),
+      message: err.message
+    }));
+  };
+
   // Fetch settings from API
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const result = await settingsService.getSettings();
+      setErrorMessage('');
       
-      if (result.data) {
-        setFormData(result.data);
-        setOriginalData(result.data);
-      } else {
-        console.error('Failed to fetch settings:', result.message);
-      }
+      const settings = await settingsService.getSettings();
+      setFormData(settings);
+      setOriginalData(settings);
     } catch (error) {
       console.error('Error fetching settings:', error);
-      // You might want to show a toast notification here
+      setErrorMessage('Failed to load settings. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
   // Save settings to API
   const saveSettings = async () => {
     try {
       setSaving(true);
-      setErrors({});
+      setErrors([]);
       setSuccessMessage('');
+      setErrorMessage('');
 
-      const result = await settingsService.updateSettings(formData);
-
-      if (result.data) {
-        setSuccessMessage('Settings saved successfully!');
-        setOriginalData(formData);
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        if (result.errors) {
-          setErrors(result.errors);
-        } else {
-          console.error('Failed to save settings:', result.message);
-        }
+      // Validate current tab section first
+      const isValid = await settingsService.validateSettings(formData, activeTab);
+      if (!isValid) {
+        setErrorMessage('Please fix validation errors before saving.');
+        return;
       }
+
+      const updatedSettings = await settingsService.updateSettings(formData);
+      
+      setFormData(updatedSettings);
+      setOriginalData(updatedSettings);
+      setSuccessMessage('Settings saved successfully!');
+      clearMessages();
     } catch (error) {
       console.error('Error saving settings:', error);
-      // You might want to show a toast notification here
+      
+      if (error instanceof ZodError) {
+        setErrors(parseZodErrors(error));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Failed to save settings. Please try again.');
+      }
+      clearMessages();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Save specific section
+  const saveSection = async (section: SettingsSection) => {
+    try {
+      setSaving(true);
+      setErrors([]);
+      setSuccessMessage('');
+      setErrorMessage('');
+
+      let updatedSettings: SettingsData;
+
+      switch (section) {
+        case SettingsSection.GENERAL:
+          updatedSettings = await settingsService.updateGeneralSettings(formData);
+          break;
+        case SettingsSection.PRIVACY:
+          updatedSettings = await settingsService.updatePrivacySettings(formData);
+          break;
+        case SettingsSection.SYSTEM:
+          updatedSettings = await settingsService.updateSystemSettings(formData);
+          break;
+        default:
+          updatedSettings = await settingsService.updateSettings(formData);
+          break;
+      }
+
+      setFormData(updatedSettings);
+      setOriginalData(updatedSettings);
+      setSuccessMessage(`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved successfully!`);
+      clearMessages();
+    } catch (error) {
+      console.error('Error saving section:', error);
+      
+      if (error instanceof ZodError) {
+        setErrors(parseZodErrors(error));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Failed to save settings. Please try again.');
+      }
+      clearMessages();
     } finally {
       setSaving(false);
     }
@@ -87,28 +163,71 @@ const SettingsPage: React.FC = () => {
 
   // Reset settings to default values
   const resetSettings = async () => {
+    if (!window.confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
+      return;
+    }
+
     try {
       setSaving(true);
-      setErrors({});
+      setErrors([]);
       setSuccessMessage('');
+      setErrorMessage('');
 
-      const result = await settingsService.resetSettings();
-
-      if (result.data) {
-        setFormData(result.data);
-        setOriginalData(result.data);
-        setSuccessMessage('Settings reset to default values successfully!');
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        console.error('Failed to reset settings:', result.message);
-      }
+      const defaultSettings = await settingsService.resetSettings();
+      
+      setFormData(defaultSettings);
+      setOriginalData(defaultSettings);
+      setSuccessMessage('Settings reset to default values successfully!');
+      clearMessages();
     } catch (error) {
       console.error('Error resetting settings:', error);
-      // You might want to show a toast notification here
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to reset settings. Please try again.');
+      clearMessages();
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Test settings configuration
+  const testSettings = async (section: SettingsSection = SettingsSection.ALL) => {
+    try {
+      setTesting(true);
+      setTestResults({});
+      
+      const success = await settingsService.testSettings(section);
+      setTestResults({ [section]: success });
+      
+      if (success) {
+        setSuccessMessage(`${section.charAt(0).toUpperCase() + section.slice(1)} settings test passed!`);
+      } else {
+        setErrorMessage(`${section.charAt(0).toUpperCase() + section.slice(1)} settings test failed. Please check your configuration.`);
+      }
+      clearMessages();
+    } catch (error) {
+      console.error('Error testing settings:', error);
+      setErrorMessage('Failed to test settings configuration.');
+      clearMessages();
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  // Create settings backup
+  const createBackup = async () => {
+    try {
+      setBacking(true);
+      setSuccessMessage('');
+      setErrorMessage('');
+
+      const backup = await settingsService.backupSettings();
+      setSuccessMessage(`Backup created successfully! Backup ID: ${backup.timestamp}`);
+      clearMessages();
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create backup.');
+      clearMessages();
+    } finally {
+      setBacking(false);
     }
   };
 
@@ -125,12 +244,8 @@ const SettingsPage: React.FC = () => {
     }));
 
     // Clear specific field error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+    if (errors.some(err => err.field === name)) {
+      setErrors(prev => prev.filter(err => err.field !== name));
     }
   };
 
@@ -140,23 +255,30 @@ const SettingsPage: React.FC = () => {
     return JSON.stringify(formData) !== JSON.stringify(originalData);
   };
 
+  // Get field error message
   const getFieldError = (fieldName: string): string | null => {
-    return errors[fieldName] ? errors[fieldName][0] : null;
+    const error = errors.find(err => err.field === fieldName);
+    return error ? error.message : null;
+  };
+
+  // Check if field has error
+  const hasFieldError = (fieldName: string): boolean => {
+    return errors.some(err => err.field === fieldName);
   };
 
   const tabs = [
     {
-      id: 'general',
+      id: SettingsSection.GENERAL,
       label: 'General Information',
       icon: FiSettings
     },
     {
-      id: 'privacy',
+      id: SettingsSection.PRIVACY,
       label: 'Privacy and Security',
       icon: FiShield
     },
     {
-      id: 'system',
+      id: SettingsSection.SYSTEM,
       label: 'System',
       icon: FiServer
     }
@@ -176,14 +298,73 @@ const SettingsPage: React.FC = () => {
   return (
     <main className="p-6 bg-gray-50 min-h-screen flex flex-col gap-4">
       {/* Page Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-darktext pl-0">Settings</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-2xl font-bold text-darktext">Settings</h1>
+        <div className="flex space-x-2">
+          <button
+            onClick={createBackup}
+            disabled={backing}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+          >
+            {backing ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiDownload className="w-4 h-4" />}
+            <span>{backing ? 'Creating...' : 'Backup'}</span>
+          </button>
+          <button
+            onClick={() => testSettings(activeTab)}
+            disabled={testing}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+          >
+            {testing ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiCheckCircle className="w-4 h-4" />}
+            <span>{testing ? 'Testing...' : 'Test'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Success Message */}
+      {/* Success/Error Messages */}
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-          {successMessage}
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center space-x-2">
+          <FiCheckCircle className="w-5 h-5" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center space-x-2">
+          <FiAlertCircle className="w-5 h-5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {/* Validation Errors */}
+      {errors.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          <h3 className="font-medium mb-2">Please fix the following errors:</h3>
+          <ul className="list-disc list-inside space-y-1">
+            {errors.map((error, index) => (
+              <li key={index} className="text-sm">
+                <strong>{error.field}:</strong> {error.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Test Results */}
+      {Object.keys(testResults).length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+          <h3 className="font-medium mb-2">Test Results:</h3>
+          {Object.entries(testResults).map(([section, success]) => (
+            <div key={section} className="flex items-center space-x-2">
+              {success ? (
+                <FiCheckCircle className="w-4 h-4 text-green-600" />
+              ) : (
+                <FiAlertCircle className="w-4 h-4 text-red-600" />
+              )}
+              <span className="text-sm">
+                {section.charAt(0).toUpperCase() + section.slice(1)}: {success ? 'Passed' : 'Failed'}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -207,9 +388,19 @@ const SettingsPage: React.FC = () => {
 
       <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {/* General Information Tab */}
-        {activeTab === 'general' && (
+        {activeTab === SettingsSection.GENERAL && (
           <div>
-            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">General Information</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-darktext border-l-4 border-smblue-400 pl-4">General Information</h2>
+              <button
+                onClick={() => saveSection(SettingsSection.GENERAL)}
+                disabled={saving}
+                className="flex items-center space-x-2 px-4 py-2 bg-smblue-400 hover:bg-smblue-500 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                {saving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiSave className="w-4 h-4" />}
+                <span>{saving ? 'Saving...' : 'Save Section'}</span>
+              </button>
+            </div>
             <div className="border-b border-gray-200 mb-6"></div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -223,7 +414,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.barangay}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('barangay') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('barangay') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('barangay') && (
@@ -241,7 +432,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.city}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('city') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('city') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('city') && (
@@ -259,7 +450,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.province}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('province') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('province') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('province') && (
@@ -277,7 +468,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.region}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('region') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('region') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('region') && (
@@ -294,7 +485,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.type}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('type') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('type') ? 'border-red-300' : 'border-gray-300'
                   }`}
                   title="Select type"
                 >
@@ -318,7 +509,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.contactNumber}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('contactNumber') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('contactNumber') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('contactNumber') && (
@@ -336,7 +527,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.emailAddress}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('emailAddress') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('emailAddress') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('emailAddress') && (
@@ -354,7 +545,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.openingHours}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('openingHours') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('openingHours') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('openingHours') && (
@@ -372,7 +563,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.closingHours}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('closingHours') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('closingHours') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('closingHours') && (
@@ -390,7 +581,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.primaryLanguage}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('primaryLanguage') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('primaryLanguage') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('primaryLanguage') && (
@@ -408,7 +599,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.secondaryLanguage}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('secondaryLanguage') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('secondaryLanguage') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('secondaryLanguage') && (
@@ -420,9 +611,19 @@ const SettingsPage: React.FC = () => {
         )}
 
         {/* Privacy and Security Tab */}
-        {activeTab === 'privacy' && (
+        {activeTab === SettingsSection.PRIVACY && (
           <div>
-            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">Privacy and Security</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-darktext border-l-4 border-smblue-400 pl-4">Privacy and Security</h2>
+              <button
+                onClick={() => saveSection(SettingsSection.PRIVACY)}
+                disabled={saving}
+                className="flex items-center space-x-2 px-4 py-2 bg-smblue-400 hover:bg-smblue-500 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                {saving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiSave className="w-4 h-4" />}
+                <span>{saving ? 'Saving...' : 'Save Section'}</span>
+              </button>
+            </div>
             <div className="border-b border-gray-200 mb-6"></div>
             
             {/* Authentication and Authorization */}
@@ -438,13 +639,16 @@ const SettingsPage: React.FC = () => {
                     name="sessionTimeout"
                     value={formData.sessionTimeout}
                     onChange={handleInputChange}
+                    min="5"
+                    max="480"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                      getFieldError('sessionTimeout') ? 'border-red-300' : 'border-gray-300'
+                      hasFieldError('sessionTimeout') ? 'border-red-300' : 'border-gray-300'
                     }`}
                   />
                   {getFieldError('sessionTimeout') && (
                     <p className="mt-1 text-sm text-red-600">{getFieldError('sessionTimeout')}</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Between 5 and 480 minutes</p>
                 </div>
 
                 <div>
@@ -456,13 +660,16 @@ const SettingsPage: React.FC = () => {
                     name="maxLoginAttempts"
                     value={formData.maxLoginAttempts}
                     onChange={handleInputChange}
+                    min="1"
+                    max="10"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                      getFieldError('maxLoginAttempts') ? 'border-red-300' : 'border-gray-300'
+                      hasFieldError('maxLoginAttempts') ? 'border-red-300' : 'border-gray-300'
                     }`}
                   />
                   {getFieldError('maxLoginAttempts') && (
                     <p className="mt-1 text-sm text-red-600">{getFieldError('maxLoginAttempts')}</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Between 1 and 10 attempts</p>
                 </div>
               </div>
             </div>
@@ -480,13 +687,16 @@ const SettingsPage: React.FC = () => {
                     name="dataRetention"
                     value={formData.dataRetention}
                     onChange={handleInputChange}
+                    min="1"
+                    max="50"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                      getFieldError('dataRetention') ? 'border-red-300' : 'border-gray-300'
+                      hasFieldError('dataRetention') ? 'border-red-300' : 'border-gray-300'
                     }`}
                   />
                   {getFieldError('dataRetention') && (
                     <p className="mt-1 text-sm text-red-600">{getFieldError('dataRetention')}</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Between 1 and 50 years</p>
                 </div>
 
                 <div>
@@ -498,7 +708,7 @@ const SettingsPage: React.FC = () => {
                     value={formData.backupFrequency}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                      getFieldError('backupFrequency') ? 'border-red-300' : 'border-gray-300'
+                      hasFieldError('backupFrequency') ? 'border-red-300' : 'border-gray-300'
                     }`}
                     title="Select backup frequency"
                   >
@@ -516,9 +726,19 @@ const SettingsPage: React.FC = () => {
         )}
 
         {/* System Tab */}
-        {activeTab === 'system' && (
+        {activeTab === SettingsSection.SYSTEM && (
           <div>
-            <h2 className="text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4">System</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-darktext border-l-4 border-smblue-400 pl-4">System</h2>
+              <button
+                onClick={() => saveSection(SettingsSection.SYSTEM)}
+                disabled={saving}
+                className="flex items-center space-x-2 px-4 py-2 bg-smblue-400 hover:bg-smblue-500 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                {saving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiSave className="w-4 h-4" />}
+                <span>{saving ? 'Saving...' : 'Save Section'}</span>
+              </button>
+            </div>
             <div className="border-b border-gray-200 mb-6"></div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -532,7 +752,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.systemName}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('systemName') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('systemName') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('systemName') && (
@@ -550,7 +770,7 @@ const SettingsPage: React.FC = () => {
                   value={formData.versionNumber}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    getFieldError('versionNumber') ? 'border-red-300' : 'border-gray-300'
+                    hasFieldError('versionNumber') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 {getFieldError('versionNumber') && (
@@ -563,27 +783,32 @@ const SettingsPage: React.FC = () => {
 
         {/* Save and Reset Buttons */}
         <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-          {hasUnsavedChanges() && (
-            <p className="text-sm text-amber-600">You have unsaved changes</p>
-          )}
-          <div className="ml-auto flex space-x-2">
+          <div className="flex items-center space-x-4">
+            {hasUnsavedChanges() && (
+              <p className="text-sm text-amber-600 flex items-center space-x-1">
+                <FiAlertCircle className="w-4 h-4" />
+                <span>You have unsaved changes</span>
+              </p>
+            )}
+          </div>
+          <div className="flex space-x-2">
             <button
               type="button"
               onClick={resetSettings}
               disabled={saving}
-              className="px-6 py-2 bg-red-400 hover:bg-red-300 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center space-x-2"
+              className="flex items-center space-x-2 cursor-pointer px-6 py-2 bg-red-500 hover:bg-red-300 disabled:bg-gray-400 text-white rounded-lg transition-colors"
             >
-              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
+              {saving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiRotateCcw className="w-4 h-4" />}
               <span>{saving ? 'Resetting...' : 'Reset to Default'}</span>
             </button>
             <button
               type="button"
               onClick={saveSettings}
               disabled={saving}
-              className="px-6 py-2 bg-smblue-400 hover:bg-smblue-300 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center space-x-2"
+              className="flex items-center space-x-2 px-6 py-2 bg-smblue-400 hover:bg-smblue-500 disabled:bg-gray-400 text-white rounded-lg transition-colors"
             >
-              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
-              <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+              {saving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiSave className="w-4 h-4" />}
+              <span>{saving ? 'Saving...' : 'Save All Changes'}</span>
             </button>
           </div>
         </div>
