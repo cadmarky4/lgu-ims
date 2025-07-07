@@ -214,7 +214,7 @@ Route::prefix('appointments')->group(function () {
 // Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
 
 Route::prefix('blotter')->group(function () {
-    Route::get('/view/{id}', [BlotterController::class, 'show']);
+    Route::get('/view/{id}', [BlotterController::class, 'view']);
     Route::post('/', [BlotterController::class, 'store']);
     Route::put('/{id}', [BlotterController::class, 'update']);
     Route::post('/{id}/photo', [BlotterController::class, 'uploadPhoto']);

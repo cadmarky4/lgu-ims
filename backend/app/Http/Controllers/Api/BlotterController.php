@@ -204,7 +204,19 @@ class BlotterController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         try {
-            $blotter = Blotter::with('ticket')->find($id);
+            // First, find the ticket by its ID
+            $ticket = Ticket::find($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ticket not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Second, find the appointment that belongs to this ticket
+            $blotter = Blotter::where('base_ticket_id', $id)->first();
 
             if (!$blotter) {
                 return response()->json([
