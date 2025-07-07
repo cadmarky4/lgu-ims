@@ -21,10 +21,15 @@ export const SupportingDocumentsSection = () => {
       const mockUrl = `https://example.com/documents/${file.name}`;
       setValue(`blotter.supporting_documents.${index}.url`, mockUrl);
     };
+
+    // Helper function to extract filename from URL
+    const getFilenameFromUrl = (url: string) => {
+      return url.split('/').pop() || url;
+    };
   
     return (
       <div className="space-y-4 mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row items-left lg:justify-between lg:items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
             <Upload className="w-5 h-5" />
             Supporting Documents ({fields.length})
@@ -32,7 +37,7 @@ export const SupportingDocumentsSection = () => {
           <button
             type="button"
             onClick={addDocument}
-            className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="mt-4 lg:mt-0 cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
             Add Document
@@ -53,7 +58,7 @@ export const SupportingDocumentsSection = () => {
                 className="p-4 border border-gray-200 rounded-lg bg-gray-50"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium text-gray-600">
                         Document #{index + 1}
@@ -86,17 +91,29 @@ export const SupportingDocumentsSection = () => {
                     
                     {/* Display current URL if exists */}
                     {watch(`blotter.supporting_documents.${index}.url`) && (
-                      <div className="p-2 bg-green-50 border border-green-200 rounded text-sm">
-                        <p className="text-green-800">
-                          ✓ File uploaded: {watch(`blotter.supporting_documents.${index}.url`)}
-                        </p>
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 text-green-600 mt-0.5">
+                            ✓
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-green-800 mb-1">
+                              File uploaded successfully:
+                            </p>
+                            <p className="text-sm text-green-700 break-all">
+                              {getFilenameFromUrl(watch(`blotter.supporting_documents.${index}.url`))}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                     
                     {errors.blotter?.supporting_documents?.[index]?.url && (
-                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.blotter.supporting_documents[index]?.url?.message}
+                      <p className="text-red-500 text-xs mt-1 flex items-start gap-1">
+                        <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                        <span className="break-words">
+                          {errors.blotter.supporting_documents[index]?.url?.message}
+                        </span>
                       </p>
                     )}
                   </div>
@@ -105,7 +122,7 @@ export const SupportingDocumentsSection = () => {
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="cursor-pointer p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
+                    className="cursor-pointer p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors flex-shrink-0"
                     title="Remove document"
                   >
                     <X className="w-5 h-5" />

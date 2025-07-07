@@ -57,7 +57,7 @@ export const BlotterSchema = z.object({
 
 export const ViewBlotterSchema = z.object({
     ticket: BaseTicketSchema,
-    blotter: BlotterInvolvementSchema,
+    blotter: BlotterSchema,
 })
 
 export const CreateBlotterSchema = z.object({
@@ -83,7 +83,10 @@ export const EditBlotterSchema = z.object({
     id: true,           // Cannot change ID
     ticket_number: true, // Cannot change ticket number
     created_at: true,   // Cannot change creation date
+    updated_at: true, // AUTO GENERATED
     category: true      // Cannot change category type
+  }).extend({
+    resident_search: z.string().optional().nullable(),
   }),
 
   blotter: BlotterSchema.partial().omit({ 

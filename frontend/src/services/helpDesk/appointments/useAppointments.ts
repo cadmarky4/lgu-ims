@@ -78,9 +78,15 @@ export function useUpdateAppointment() {
         onSuccess: (updatedAppointment: ViewAppointment, { id }) => {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() });
+            queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() }); // does not really do anything lol
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: appointmentsKeys.detail(id) })
             
             // Update the specific appointment in cache
+            // not sure if this does anything at all
+            // does not seem to work
+            // so i just invalidated the query (look above)
             queryClient.setQueryData(
                 appointmentsKeys.detail(id),
                 {

@@ -56,9 +56,9 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
         
         {isOpen && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
-            {options.map((option) => (
+            {options.map((option, index) => (
               <button
-                key={option.value}
+                key={index}
                 onClick={() => {
                   onChange(option.value === 'ALL' ? undefined : option.value);
                   setIsOpen(false);

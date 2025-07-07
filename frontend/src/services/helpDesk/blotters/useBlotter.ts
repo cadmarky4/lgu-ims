@@ -78,6 +78,8 @@ export function useUpdateBlotter() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: blotterKeys.lists() });
             queryClient.invalidateQueries({ queryKey: blotterKeys.statistics() });
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
             
             // Update the specific blotter in cache
             queryClient.setQueryData(

@@ -42,6 +42,7 @@ export function useCreateBlotterForm({ onSuccess }: useCreateBlotterFormProps) {
         setValue('ticket.contact_number', "");
         setValue('ticket.email_address', "");
         setValue('ticket.complete_address', "");
+        setSelectedResidentId('');
     }, [isResident])
 
     // selects the resident
