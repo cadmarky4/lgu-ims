@@ -3,6 +3,7 @@ import { FileText } from 'lucide-react';
 import { type ViewSuggestion } from '@/services/helpDesk/suggestions/suggestions.types';
 import { FormField } from '@/components/_global/components/FormField';
 import { priorities, statusOptions } from '@/services/helpDesk/helpDesk.type';
+import { enumToTitleCase } from '@/components/helpDesk/utilities/enumToTitleCase';
 
 interface SuggestionTicketInformationSectionProps {
   suggestion: ViewSuggestion;
@@ -76,7 +77,7 @@ export const SuggestionTicketInformationSection: React.FC<SuggestionTicketInform
                 label=""
                 options={priorities.map(priority => ({
                   value: priority,
-                  label: priority
+                  label: enumToTitleCase(priority)
                 }))}
               />
             )}
@@ -97,7 +98,7 @@ export const SuggestionTicketInformationSection: React.FC<SuggestionTicketInform
                 label=""
                 options={statusOptions.map(status => ({
                   value: status,
-                  label: status
+                  label: enumToTitleCase(status)
                 }))}
               />
             )}
