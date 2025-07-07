@@ -23,7 +23,7 @@ class BlotterController extends Controller
     {
         try {
             $blotter = Blotter::with(['ticket', 'otherPeopleInvolved', 'supportingDocuments'])
-                ->where('id', $id)
+                ->where('base_ticket_id', $id)
                 ->first();
 
             if (!$blotter) {

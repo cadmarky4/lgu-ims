@@ -20,7 +20,7 @@ class SuggestionController extends Controller
     {
         try {
             $suggestion = Suggestion::with('ticket')
-                ->where('id', $id)
+                ->where('base_ticket_id', $id)
                 ->first();
 
             if (!$suggestion) {
@@ -89,7 +89,7 @@ class SuggestionController extends Controller
             // Create ticket
             $ticket = Ticket::create([
                 ...$request->input('ticket'),
-                'ticket_number' => $this->generateTicketNumber(),
+                'category' => 'SUGGESTION',
                 'status' => 'OPEN'
             ]);
 
@@ -207,28 +207,5 @@ class SuggestionController extends Controller
                 'data' => null
             ], 500);
         }
-    }
-
-    /**
-     * Generate unique ticket number
-     */
-    private function generateTicketNumber(): string
-    {
-        $prefix = 'SUG';
-        $date = now()->format('Ymd');
-
-        // Get the latest ticket for today
-        $latestTicket = Ticket::where('ticket_number', 'like', $prefix . $date . '%')
-            ->orderBy('ticket_number', 'desc')
-            ->first();
-
-        if ($latestTicket) {
-            $lastNumber = intval(substr($latestTicket->ticket_number, -4));
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-
-        return $prefix . $date . $newNumber;
     }
 }

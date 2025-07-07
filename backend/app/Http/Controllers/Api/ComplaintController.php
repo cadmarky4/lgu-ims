@@ -20,7 +20,7 @@ class ComplaintController extends Controller
     {
         try {
             $complaint = Complaint::with('ticket')
-                ->where('id', $id)
+                ->where('base_ticket_id', $id)
                 ->first();
 
             if (!$complaint) {
