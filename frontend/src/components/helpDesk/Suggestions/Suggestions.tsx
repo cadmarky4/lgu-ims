@@ -268,7 +268,7 @@ const SuggestionsPage: React.FC = () => {
                 <div>
                   <FormField
                     type="textarea"
-                    name="ticket.expected_benefits"
+                    name="suggestion.expected_benefits"
                     label={t(
                       "helpDesk.suggestionsForm.fields.expectedBenefits"
                     )}
@@ -281,7 +281,7 @@ const SuggestionsPage: React.FC = () => {
                 <div>
                   <FormField
                     type="textarea"
-                    name="ticket.implementation_ideas"
+                    name="suggestion.implementation_ideas"
                     label={t(
                       "helpDesk.suggestionsForm.fields.implementationIdeas"
                     )}
@@ -293,12 +293,11 @@ const SuggestionsPage: React.FC = () => {
 
                 <div>
                   <FormField
-                    name="ticket.resources_needed"
+                    name="suggestion.resources_needed"
                     label={t("helpDesk.suggestionsForm.fields.resourcesNeeded")}
                     placeholder={t(
                       "helpDesk.suggestionsForm.placeholders.resourcesNeeded"
                     )}
-                    required
                   />
                 </div>
               </div>

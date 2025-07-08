@@ -77,7 +77,9 @@ export function useUpdateSuggestion() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: suggestionKeys.lists() });
             queryClient.invalidateQueries({ queryKey: suggestionKeys.statistics() });
-            
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
+
             // Update the specific suggestion in cache
             queryClient.setQueryData(
                 suggestionKeys.detail(id),

@@ -51,6 +51,7 @@ export const useAppointmentModal = ({
     data: appointment,
     isLoading,
     error,
+    refetch,
   } = useAppointment(appointmentId || "", !!appointmentId);
 
   const [isResident, setIsResident] = useState(true);
@@ -109,8 +110,8 @@ export const useAppointmentModal = ({
           persistent: false,
         });
 
-        // onSuccess?.();
-
+        setMode('view');
+        refetch();
       } catch (error) {
         const errorMessage = (error as Error)?.message || t('helpDesk.appointmentsForm.messages.updateError');
         showNotification({
@@ -121,11 +122,12 @@ export const useAppointmentModal = ({
           persistent: false,
         });
         console.error('Form submission error:', error);
-      } finally {
-        handleClose();
-        // console.log("APPOINTMENT")
-        // console.log(appointment);
-      }
+      } 
+      // finally {
+      //   handleClose();
+      //   // console.log("APPOINTMENT")
+      //   // console.log(appointment);
+      // }
   });
 
   // Reset form when appointment data changes

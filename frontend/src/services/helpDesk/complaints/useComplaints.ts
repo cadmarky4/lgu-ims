@@ -77,7 +77,9 @@ export function useUpdateComplaint() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
             queryClient.invalidateQueries({ queryKey: complaintKeys.statistics() });
-            
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
+
             // Update the specific complaint in cache
             queryClient.setQueryData(
                 complaintKeys.detail(id),
