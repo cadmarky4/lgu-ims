@@ -11,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+
 
 class AppointmentController extends Controller
 {
@@ -102,6 +104,8 @@ class AppointmentController extends Controller
                 $request->input('appointment.date'),
                 $request->input('appointment.time')
             )->byDepartment($request->input('appointment.department'))->exists();
+
+            Log::info("Checking availability for {$request->input('appointment.date')} {$request->input('appointment.time')} in {$request->input('appointment.department')}");
 
             if ($isOccupied) {
                 return response()->json([
