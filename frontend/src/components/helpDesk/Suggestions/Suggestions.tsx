@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Lightbulb, User, Send, Loader } from "lucide-react";
-// import { SuggestionsService } from "../../services/helpDesk/suggestions/suggestions.service";
-// import type { CreateSuggestionData } from "../../services/helpDesk/suggestions/suggestions.types";
 import Breadcrumb from "../../_global/Breadcrumb";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
