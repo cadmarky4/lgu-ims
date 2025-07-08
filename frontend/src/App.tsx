@@ -264,6 +264,10 @@ const router = createBrowserRouter([
             element: <HelpDeskPage />,
           },
           {
+            path: "schedule-appointment",
+            element: <AppointmentsPage />,
+          },
+          {
             path: "file-blotter",
             element: <BlotterPage />,
           },

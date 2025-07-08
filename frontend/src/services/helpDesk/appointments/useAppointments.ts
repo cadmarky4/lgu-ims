@@ -51,15 +51,16 @@ export function useCreateAppointment() {
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() });
             queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
             queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: appointmentsKeys.detail(newAppointment.ticket.id!) })
             
             // Set the new appointment data in cache
-            queryClient.setQueryData(
-                appointmentsKeys.detail(newAppointment.ticket.id!),
-                {
-                    ticket: newAppointment.ticket,
-                    appointment: newAppointment.appointment
-                } as ViewAppointment
-            );
+            // queryClient.setQueryData(
+            //     appointmentsKeys.detail(newAppointment.ticket.id!),
+            //     {
+            //         ticket: newAppointment.ticket,
+            //         appointment: newAppointment.appointment
+            //     } as ViewAppointment
+            // );
         },
         onError: (error) => {
             console.error('Failed to create appointment:', error);
@@ -76,13 +77,21 @@ export function useUpdateAppointment() {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: EditAppointment }) => 
             appointmentsService.updateAppointment(id, data),
-        onSuccess: (_, { id }) => {
+        onSuccess: (_: ViewAppointment, { id }) => {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.lists() });
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() }); // does not really do anything lol
             queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
             queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.detail(id) })
+
+            // queryClient.setQueryData(
+            //     appointmentsKeys.detail(id),
+            //     {
+            //         ticket: updatedAppoinment.ticket,
+            //         appointment: updatedAppoinment.appointment
+            //     } as ViewAppointment
+            // );
         },
         onError: (error) => {
             console.error('Failed to update appointment:', error);
