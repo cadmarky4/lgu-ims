@@ -653,6 +653,12 @@
         "additionalInfo": "Additional Information",
         "utilitiesAccess": "Utilities Access"
       },
+      "residentSearch": {
+        "placeholder": "Search residents...",
+        "searching": "Searching...",
+        "noPhone": "No phone",
+        "noResults": "No residents found matching \"{{searchTerm}}\""
+      },  
       "membersSection": {
         "addMembersFromResidents": "Add Members from Residents",
         "searchPlaceholder": "Enter name, ID, or phone number to search for members",
