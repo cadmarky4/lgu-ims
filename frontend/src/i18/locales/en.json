@@ -69,7 +69,11 @@
         "emergencyContactName": "Emergency Contact Name",
         "emergencyContactNumber": "Emergency Contact Number",
         "emergencyContactRelationship": "Emergency Contact Relationship",
-        "householdId": "Household ID"
+        "householdId": "Household ID",
+        "region": "Region",
+        "province": "Province",
+        "city": "City/Municipality",
+        "barangay": "Barangay"
       },
       "placeholders": {
         "houseNumber": "e.g. 123, Blk 4 Lot 5",
@@ -105,7 +109,11 @@
         "fatherName": "Search existing residents or enter new",
         "emergencyContactName": "Full Name of emergency contact",
         "emergencyContactNumber": "+63 XXX XXX XXXX",
-        "emergencyContactRelationship": "e.g. Sibling, Friend, Relative..."
+        "emergencyContactRelationship": "e.g. Sibling, Friend, Relative...",
+        "region": "Select your Region",
+        "province": "Select your Province",
+        "city": "Select your City/Municipality",
+        "barangay": "Select your Barangay"
       },
       "idTypeOptions": {
         "nationalId": "National ID",

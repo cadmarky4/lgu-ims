@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ReportsController;
 use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\AgendaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -395,6 +396,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // File Upload route
     Route::post('/upload', [FileUploadController::class, 'upload']);
+
+    // Agendas - Specific routes BEFORE apiResource
+    Route::prefix('agendas')->group(function () {
+        Route::get('/statistics', [AgendaController::class, 'statistics']);
+        Route::get('/calendar', [AgendaController::class, 'calendar']);
+        Route::get('/date-range', [AgendaController::class, 'dateRange']);
+        Route::get('/search', [AgendaController::class, 'search']);
+        Route::get('/export', [AgendaController::class, 'export']);
+        Route::patch('/{agenda}/status', [AgendaController::class, 'updateStatus']);
+        Route::post('/{agenda}/duplicate', [AgendaController::class, 'duplicate']);
+    });
+    Route::apiResource('agendas', AgendaController::class);
 
     // Temporary test route
     Route::get('/test-appointment-model', function () {

@@ -2,11 +2,7 @@
 
 namespace App\Models\Schemas;
 
-/**
- * Centralized schema definition for Household model
- * This serves as the single source of truth for all household-related data structure
- * Aligned with Zod schema from frontend
- */
+
 class HouseholdSchema
 {
     /**
@@ -16,14 +12,11 @@ class HouseholdSchema
     {
         return [
             // Household Identification
-            'household_number' => ['type' => 'string', 'max' => 50, 'required' => false, 'unique' => true, 'nullable' => true],
+            'household_number' => ['type' => 'string', 'max' => 50, 'required' => true, 'unique' => true], // Changed to required since frontend generates it
             'household_type' => ['type' => 'enum', 'values' => ['NUCLEAR', 'EXTENDED', 'SINGLE', 'SINGLE_PARENT', 'OTHER'], 'required' => true, 'default' => 'NUCLEAR'],
-            'head_resident_id' => ['type' => 'foreignId', 'references' => 'residents.id', 'nullable' => true],
+            'head_resident_id' => ['type' => 'string', 'references' => 'residents.id', 'nullable' => true],
             
             // Address Information
-            'house_number' => ['type' => 'string', 'max' => 50, 'required' => true],
-            'street_sitio' => ['type' => 'string', 'max' => 100, 'required' => true],
-            'barangay' => ['type' => 'string', 'max' => 100, 'required' => true],
             'complete_address' => ['type' => 'text', 'required' => true],
             
             // Socioeconomic Information
@@ -52,8 +45,8 @@ class HouseholdSchema
             'remarks' => ['type' => 'text', 'nullable' => true],
             
             // System Fields
-            'created_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
-            'updated_by' => ['type' => 'foreignId', 'references' => 'users.id', 'nullable' => true],
+            'created_by' => ['type' => 'string', 'references' => 'users.id', 'nullable' => true],
+            'updated_by' => ['type' => 'string', 'references' => 'users.id', 'nullable' => true],
         ];
     }
     
@@ -104,7 +97,8 @@ class HouseholdSchema
             } elseif ($config['type'] === 'foreignId') {
                 if (isset($config['references'])) {
                     $table = explode('.', $config['references'])[0];
-                    $fieldRules[] = "exists:{$table},id";
+                    $column = explode('.', $config['references'])[1];
+                    $fieldRules[] = "exists:{$table},{$column}";
                 }
             }
             
@@ -146,9 +140,20 @@ class HouseholdSchema
     public static function getMemberValidationRules(): array
     {
         return [
-            'members' => 'nullable|array',
-            'members.*.resident_id' => 'required|exists:residents,id',
-            'members.*.relationship' => 'required|in:HEAD,SPOUSE,SON,DAUGHTER,FATHER,MOTHER,BROTHER,SISTER,GRANDFATHER,GRANDMOTHER,GRANDSON,GRANDDAUGHTER,UNCLE,AUNT,NEPHEW,NIECE,COUSIN,IN_LAW,BOARDER,OTHER',
+            'member_ids' => 'nullable|array',
+            'member_ids.*.resident_id' => [
+                'required',
+                'string',
+                'exists:residents,id',
+                function ($attribute, $value, $fail) {
+                    // Get the head_resident_id from the request
+                    $headResidentId = request()->input('head_resident_id');
+                    if ($headResidentId && $value === $headResidentId) {
+                        $fail('A resident cannot be both household head and a member.');
+                    }
+                },
+            ],
+            'member_ids.*.relationship' => 'required|string|in:HEAD,SPOUSE,SON,DAUGHTER,FATHER,MOTHER,BROTHER,SISTER,GRANDFATHER,GRANDMOTHER,GRANDSON,GRANDDAUGHTER,UNCLE,AUNT,NEPHEW,NIECE,COUSIN,IN_LAW,BOARDER,OTHER',
         ];
     }
     

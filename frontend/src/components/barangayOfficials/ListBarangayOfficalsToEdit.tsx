@@ -80,7 +80,7 @@ export default function ListBarangayOfficalsToEdit() {
                 >
                   <div className="flex items-center space-x-4">
                     <img
-                      src={official?.photo ? `${STORAGE_BASE_URL}/${official?.photo}` : 'https://via.placeholder.com/150'}
+                      src={official?.photo ? `${official?.photo}` : 'https://via.placeholder.com/150'}
                       alt={official?.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />

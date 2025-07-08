@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
@@ -34,7 +35,9 @@ class DocumentController extends Controller
             }
 
             if ($request->filled('status')) {
-                $query->where('status', $request->status);
+                // Map frontend status to backend status
+                $status = $this->mapFrontendStatusToBackend($request->status);
+                $query->where('status', $status);
             }
 
             if ($request->filled('priority')) {
@@ -345,7 +348,7 @@ class DocumentController extends Controller
 
             $document->update([
                 'status' => 'processing',
-                'processed_by' => auth()->id(),
+                'processed_by' => Auth::id(),
                 'processed_date' => now(),
                 'notes' => $request->notes,
                 'certifying_official' => $request->certifying_official
@@ -399,7 +402,7 @@ class DocumentController extends Controller
                 'status' => 'rejected',
                 'remarks' => $request->reason,
                 'notes' => $request->notes,
-                'processed_by' => auth()->id(),
+                'processed_by' => Auth::id(),
                 'processed_date' => now()
             ]);
 
@@ -452,7 +455,7 @@ class DocumentController extends Controller
 
             $document->update([
                 'status' => 'approved',
-                'approved_by' => auth()->id(),
+                'approved_by' => Auth::id(),
                 'approved_date' => now(),
                 'notes' => $request->notes,
                 'certifying_official' => $request->certifying_official
@@ -504,7 +507,7 @@ class DocumentController extends Controller
 
             $document->update([
                 'status' => 'released',
-                'released_by' => auth()->id(),
+                'released_by' => Auth::id(),
                 'released_date' => now(),
                 'notes' => $request->notes
             ]);
@@ -555,7 +558,7 @@ class DocumentController extends Controller
             $document->update([
                 'status' => 'cancelled',
                 'remarks' => $request->reason,
-                'processed_by' => auth()->id(),
+                'processed_by' => Auth::id(),
                 'processed_date' => now()
             ]);
 
@@ -865,5 +868,39 @@ class DocumentController extends Controller
                 'message' => 'Failed to retrieve pending documents: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Map frontend status values to backend status values
+     */
+    private function mapFrontendStatusToBackend(string $frontendStatus): string
+    {
+        $statusMap = [
+            'PENDING' => 'pending',
+            'UNDER_REVIEW' => 'processing',
+            'APPROVED' => 'approved',
+            'RELEASED' => 'released',
+            'REJECTED' => 'rejected',
+            'CANCELLED' => 'cancelled'
+        ];
+        
+        return $statusMap[$frontendStatus] ?? strtolower($frontendStatus);
+    }
+
+    /**
+     * Map backend status values to frontend status values
+     */
+    private function mapBackendStatusToFrontend(string $backendStatus): string
+    {
+        $statusMap = [
+            'pending' => 'PENDING',
+            'processing' => 'UNDER_REVIEW',
+            'approved' => 'APPROVED',
+            'released' => 'RELEASED',
+            'rejected' => 'REJECTED',
+            'cancelled' => 'CANCELLED'
+        ];
+        
+        return $statusMap[$backendStatus] ?? strtoupper($backendStatus);
     }
 }

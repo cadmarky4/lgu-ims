@@ -38,8 +38,8 @@ export default function ViewBarangayOfficial() {
             setError(null);
     
             // Validate ID is a valid number
-            const officialId = parseInt(id);
-            if (isNaN(officialId) || officialId <= 0) {
+            const officialId = id;
+            if (!officialId) {
             console.error('Invalid official ID:', id);
             setError('Invalid official ID');
             // setIsLoading(false);
@@ -105,7 +105,7 @@ export default function ViewBarangayOfficial() {
                 <div className="flex flex-col items-center">
                   <div className="w-48 h-48 bg-gray-300 rounded-full flex items-center justify-center mb-4">
                     <img
-                      src={official?.profile_photo ? `${STORAGE_BASE_URL}/${official?.photo}` : 'https://via.placeholder.com/150'}
+                      src={official?.profile_photo ? `${official?.photo}` : 'https://via.placeholder.com/150'}
                       alt={official?.name}
                       className="w-48 h-48 rounded-full object-cover"
                     />

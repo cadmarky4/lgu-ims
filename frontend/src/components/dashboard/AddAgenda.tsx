@@ -1,34 +1,22 @@
 import React, { useState } from 'react';
+import { 
+  type AgendaFormData, 
+  transformAgendaToFormData,
+  agendaCategories,
+  getCategoryColor
+} from '@/services/agenda/agenda.types';
 
 interface AddAgendaProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave?: (agendaData: any) => void;
+  onSave?: (agendaData: AgendaFormData) => void;
 }
 
 const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    date: '',
-    time: '',
-    description: '',
-    category: 'meeting'
-  });
+  const [formData, setFormData] = useState<AgendaFormData>(transformAgendaToFormData(null));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // Category colors that will be used in the calendar - muted versions
-  const categoryColors = {
-    meeting: { bg: 'bg-blue-400', label: 'Meeting', color: '#60a5fa' },
-    review: { bg: 'bg-green-400', label: 'Review', color: '#4ade80' },
-    presentation: { bg: 'bg-purple-400', label: 'Presentation', color: '#a78bfa' },
-    evaluation: { bg: 'bg-yellow-400', label: 'Evaluation', color: '#facc15' },
-    budget: { bg: 'bg-red-400', label: 'Budget', color: '#f87171' },
-    planning: { bg: 'bg-indigo-400', label: 'Planning', color: '#818cf8' },
-    inspection: { bg: 'bg-orange-400', label: 'Inspection', color: '#fb923c' },
-    other: { bg: 'bg-gray-400', label: 'Other', color: '#9ca3af' }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -46,18 +34,11 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const agendaData = {
-      ...formData,
-      color: categoryColors[formData.category as keyof typeof categoryColors].bg,
-      colorHex: categoryColors[formData.category as keyof typeof categoryColors].color,
-      id: Date.now() // Simple ID generation
-    };
-
-    console.log('New agenda item:', agendaData);
+    console.log('New agenda item:', formData);
     
     // Call the onSave callback if provided
     if (onSave) {
-      onSave(agendaData);
+      onSave(formData);
     }
     
     setIsSubmitting(false);
@@ -66,13 +47,7 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
     // Reset form and close modal after success
     setTimeout(() => {
       setShowSuccess(false);
-      setFormData({
-        title: '',
-        date: '',
-        time: '',
-        description: '',
-        category: 'meeting'
-      });
+      setFormData(transformAgendaToFormData(null));
       onClose();
     }, 1500);
   };
@@ -175,8 +150,10 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent transition-all duration-200"
               >
-                {Object.entries(categoryColors).map(([key, { label }]) => (
-                  <option key={key} value={key}>{label}</option>
+                {agendaCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category.charAt(0) + category.slice(1).toLowerCase().replace('_', ' ')}
+                  </option>
                 ))}
               </select>
             </div>
@@ -186,10 +163,11 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
               <span className="text-sm font-medium text-gray-700">Category Preview:</span>
               <div className="flex items-center space-x-2">
                 <div 
-                  className={`w-3 h-3 rounded-full ${categoryColors[formData.category as keyof typeof categoryColors].bg}`}
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: getCategoryColor(formData.category) }}
                 ></div>
                 <span className="text-sm text-gray-600">
-                  {categoryColors[formData.category as keyof typeof categoryColors].label}
+                  {formData.category.charAt(0) + formData.category.slice(1).toLowerCase().replace('_', ' ')}
                 </span>
               </div>
             </div>
@@ -202,7 +180,7 @@ const AddAgenda: React.FC<AddAgendaProps> = ({ isOpen, onClose, onSave }) => {
               <textarea
                 id="description"
                 name="description"
-                value={formData.description}
+                value={formData.description || ''}
                 onChange={handleInputChange}
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-smblue-400 focus:border-transparent transition-all duration-200 resize-none"

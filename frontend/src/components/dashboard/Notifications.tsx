@@ -12,8 +12,11 @@ const Notifications: React.FC = () => {
       try {
         setLoading(true);
         const response = await dashboardService.getNotifications();
+        console.log('Fetched notifications:', response);
+        // Check if response data is valid
+        console.log('Response data:', response.data);
         if (response.data) {
-          setNotifications(response.data);
+          setNotifications(response.data || []);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -36,28 +39,32 @@ const Notifications: React.FC = () => {
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-smblue-400"></div>
           <span className="ml-2 text-gray-600">Loading notifications...</span>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {notifications.map((notification) => (
-            <div key={notification.id} className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
-              <div className="flex items-start space-x-3">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  notification.type === 'success' ? 'bg-green-500' : 
-                  notification.type === 'warning' ? 'bg-yellow-500' :
-                  notification.type === 'error' ? 'bg-red-500' :
-                  'bg-smblue-400'
-                }`}></div>
-                <p className="text-sm text-gray-700 flex-1">
-                  {notification.message}
-                </p>
+      ) : notifications?.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No notifications
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {notifications?.map((notification) => (
+              <div key={notification.id} className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
+          <div className="flex items-start space-x-3">
+            <div className={`w-2 h-2 rounded-full mt-2 ${
+              notification.type === 'success' ? 'bg-green-500' : 
+              notification.type === 'warning' ? 'bg-yellow-500' :
+              notification.type === 'error' ? 'bg-red-500' :
+              'bg-smblue-400'
+            }`}></div>
+            <p className="text-sm text-gray-700 flex-1">
+              {notification.message}
+            </p>
+          </div>
+          <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+            {notification.time}
+          </span>
               </div>
-              <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
-                {notification.time}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
     </div>
   );
 };

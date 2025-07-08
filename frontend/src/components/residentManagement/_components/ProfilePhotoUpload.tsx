@@ -6,6 +6,29 @@ import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiUpload, FiCamera, FiX } from 'react-icons/fi';
 
+// Utility function to get the proper image URL for display
+const getImageUrl = (url: string | null): string => {
+  if (!url) return '';
+  
+  // If it's already a blob URL or full http URL, return as is
+  if (url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // If it's a storage path like '/storage/profile_photos/filename.jpg', prepend the base URL
+  if (url.startsWith('/storage/')) {
+    return `http://127.0.0.1:8000${url}`;
+  }
+  
+  // If it's a relative path like 'public/profile_photos/filename.jpg', convert to storage URL
+  if (url.startsWith('public/')) {
+    return `http://127.0.0.1:8000/storage/${url.replace('public/', '')}`;
+  }
+  
+  // Default: assume it's a filename and construct the full URL
+  return `${url}`;
+};
+
 interface ProfilePhotoUploadProps {
   preview: string | null;
   onFileSelect: (file: File) => void;
@@ -18,12 +41,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   isUploading = false
 }) => {
   const { t } = useTranslation();
-  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const handleFileUpload = () => {
     fileInputRef.current?.click();
@@ -107,9 +138,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-        // Create a local preview URL
-        const url = URL.createObjectURL(blob);
-        setLocalPreview(url);
+        // The parent component will handle the upload and preview
         onFileSelect(file);
         stopCamera();
       } else {
@@ -168,9 +197,13 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     >
       {preview ? (
         <img
-          src={preview}
+          src={getImageUrl(preview)}
           alt="Profile Preview"
           className="w-32 h-32 object-cover rounded-full mx-auto mb-4 border"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "https://placehold.co/128x128/e5e7eb/6b7280?text=No+Photo";
+          }}
         />
       ) : (
         <div className="w-32 h-32 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">

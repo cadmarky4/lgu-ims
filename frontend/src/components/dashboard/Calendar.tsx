@@ -2,102 +2,118 @@ import { useState } from 'react';
 import { FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 import { X, Calendar as CalendarIcon } from 'lucide-react';
 import AddAgenda from './AddAgenda';
-
-interface AgendaItem {
-  id: number;
-  title: string;
-  time: string;
-  color: string;
-}
+import {
+  useCalendarEvents,
+  useCreateAgenda
+} from '@/services/agenda/useAgenda';
+import { type CalendarEvent, type AgendaFormData } from '@/services/agenda/agenda.types';
 
 interface SelectedDate {
   day: number;
   dateKey: string;
-  agendas: AgendaItem[];
+  agendas: CalendarEvent[];
 }
 
 const Calendar = () => {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<SelectedDate | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [showAddAgendaModal, setShowAddAgendaModal] = useState(false);
-    const [agendaData, setAgendaData] = useState<{[key: string]: AgendaItem[]}>({
-    '2025-06-05': [
-        { id: 1, title: 'Progress with Street Enhancement Lighting Program', time: '10:00 AM', color: 'bg-smblue-400' },
-        { id: 2, title: 'Review project milestones', time: '2:00 PM', color: 'bg-green-500' }
-    ],
-    '2025-06-12': [
-        { id: 3, title: 'Community meeting', time: '9:00 AM', color: 'bg-purple-500' }
-    ],
-    '2025-06-18': [
-        { id: 4, title: 'Budget review', time: '3:00 PM', color: 'bg-yellow-500' }
-    ],
-    '2025-06-23': [
-        { id: 5, title: 'Contractor evaluation', time: '11:00 AM', color: 'bg-red-500' }
-    ],
-    });
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<SelectedDate | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showAddAgendaModal, setShowAddAgendaModal] = useState(false);
 
-    const monthNames = [
+  // Use agenda service hooks
+  const { data: calendarEvents = [], refetch, isLoading, error } = useCalendarEvents(
+    currentDate.getMonth() + 1,
+    currentDate.getFullYear()
+  );
+
+  const createAgendaMutation = useCreateAgenda();
+
+  // Debug logging
+  console.log('Calendar Debug:', {
+    currentMonth: currentDate.getMonth() + 1,
+    currentYear: currentDate.getFullYear(),
+    calendarEvents,
+    calendarEventsLength: calendarEvents.length,
+    isLoading,
+    error: error?.message || 'none'
+  });
+
+  // Transform calendar events to agenda data format for rendering
+  const agendaData = calendarEvents.reduce((acc: { [key: string]: CalendarEvent[] }, event: CalendarEvent) => {
+    const dateKey = event.date.substring(0, 10); // Use date in YYYY-MM-DD format
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    acc[dateKey].push(event);
+    return acc;
+  }, {} as { [key: string]: CalendarEvent[] });
+
+  console.log('Agenda Data:', agendaData);
+
+  const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
-    ];
+  ];
 
-    const getDaysInMonth = (date: Date): number => {
+  const getDaysInMonth = (date: Date): number => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    };
+  };
 
-    const getFirstDayOfMonth = (date: Date): number => {
+  const getFirstDayOfMonth = (date: Date): number => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    };
+  };
 
-    const formatDateKey = (year: number, month: number, day: number): string => {
+  const formatDateKey = (year: number, month: number, day: number): string => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    };
+  };
 
-    const handleDateClick = (day: number): void => {
+  const handleDateClick = (day: number): void => {
     const dateKey = formatDateKey(currentDate.getFullYear(), currentDate.getMonth(), day);
     setSelectedDate({ day, dateKey, agendas: agendaData[dateKey] || [] });
     setShowModal(true);
-    };
+  };
 
-    const handlePrevMonth = (): void => {
+  const handlePrevMonth = (): void => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-    };
+  };
 
-    const handleNextMonth = (): void => {
+  const handleNextMonth = (): void => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-    };
+  };
 
-    const handleAddAgenda = (): void => {
-        setShowAddAgendaModal(true);
-    };
+  const handleAddAgenda = (): void => {
+    setShowAddAgendaModal(true);
+  };
 
-    const handleSaveAgenda = (newAgendaData: any): void => {
-        const dateKey = newAgendaData.date; // Date is already in YYYY-MM-DD format from the form
-        
-        setAgendaData(prev => ({
-            ...prev,
-            [dateKey]: prev[dateKey] ? [...prev[dateKey], newAgendaData] : [newAgendaData]
-        }));
-        
-        console.log('Agenda saved:', newAgendaData);
-    };
+  const handleSaveAgenda = async (newAgendaData: AgendaFormData): Promise<void> => {
+    try {
+      await createAgendaMutation.mutateAsync(newAgendaData);
+      // Refetch calendar events after creating a new agenda
+      refetch();
+      console.log('Agenda saved successfully:', newAgendaData);
+    } catch (error) {
+      console.error('Error saving agenda:', error);
+    }
+  };
 
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDayOfMonth = getFirstDayOfMonth(currentDate);
-    const currentMonth = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  // React Query will automatically refetch when the query key changes (month/year)
+  // No manual refetch needed
+
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDayOfMonth = getFirstDayOfMonth(currentDate);
+  const currentMonth = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
   // Get today's date for comparison
-    const today = new Date();
-    const isToday = (day: number): boolean => {
-    return day === today.getDate() && 
-            currentDate.getMonth() === today.getMonth() && 
-            currentDate.getFullYear() === today.getFullYear();
-    };
+  const today = new Date();
+  const isToday = (day: number): boolean => {
+    return day === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear();
+  };
 
-    return (
+  return (
     <>
-        <style>{`
+      <style>{`
             @keyframes fadeIn {
                 from { opacity: 0; }
                 to { opacity: 1; }
@@ -150,90 +166,94 @@ const Calendar = () => {
             .animate-pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
             .animate-subtle-pulse { animation: subtlePulse 2s ease-in-out infinite; }
         `}</style>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-smblue-400 pl-4">
+          <h3 className="text-lg font-semibold text-gray-900 border-l-4 border-smblue-400 pl-4">
             Project Calendar
-            </h3>
+          </h3>
         </div>
-        
+
         <div className="flex justify-between items-center mb-4">
-            <button 
+          <button
             onClick={handlePrevMonth}
             className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
-            >
+          >
             <FiChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h4 className="font-medium text-gray-900 animate-fade-in">{currentMonth}</h4>
-            <button 
+          </button>
+          <h4 className="font-medium text-gray-900 animate-fade-in">{currentMonth}</h4>
+          <button
             onClick={handleNextMonth}
             className="p-2 hover:bg-gray-100 rounded-2xl transition-all duration-150 transform hover:scale-102 active:scale-98"
-            >
+          >
             <FiChevronRight className="w-5 h-5 text-gray-600" />
-            </button>
+          </button>
         </div>
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-            <div 
-                key={index} 
-                className="text-center text-xs font-medium text-gray-500 py-2 animate-slide-in"
-                style={{animationDelay: `${index * 30}ms`}}
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+            <div
+              key={index}
+              className="text-center text-xs font-medium text-gray-500 py-2 animate-slide-in"
+              style={{ animationDelay: `${index * 30}ms` }}
             >
-                {day}
+              {day}
             </div>
-            ))}
+          ))}
         </div>
-        
+
         <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: firstDayOfMonth }, (_, i) => (
+          {Array.from({ length: firstDayOfMonth }, (_, i) => (
             <div key={`empty-${i}`} className="p-2 h-12"></div>
-            ))}
-            {Array.from({ length: daysInMonth }, (_, i) => {
+          ))}
+          {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1;
             const dateKey = formatDateKey(currentDate.getFullYear(), currentDate.getMonth(), day);
-            const hasAgenda = agendaData[dateKey] && agendaData[dateKey].length > 0;
-            
+            const hasAgenda = (agendaData[dateKey] && agendaData[dateKey]?.length > 0) ?? false;
+            console.log("Date Key" + dateKey + " hasAgenda: " + hasAgenda);
+
+
             return (
-                <button
+              <button
                 key={day}
                 onClick={() => handleDateClick(day)}
-                className={`p-2 h-12 text-sm text-center rounded transition-all duration-200 transform hover:scale-102 active:scale-98 hover:shadow-sm animate-fade-in-scale relative cursor-pointer no-underline ${
-                    isToday(day) 
-                        ? 'bg-smblue-400 text-white hover:bg-smblue-500 shadow-md animate-pulse-slow' 
-                        : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                style={{animationDelay: `${day * 15}ms`}}
-                >
+                className={`p-2 h-12 text-sm text-center rounded transition-all duration-200 transform hover:scale-102 active:scale-98 hover:shadow-sm animate-fade-in-scale relative cursor-pointer no-underline ${isToday(day)
+                  ? 'bg-smblue-400 text-white hover:bg-smblue-500 shadow-md animate-pulse-slow'
+                  : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                style={{ animationDelay: `${day * 15}ms` }}
+              >
                 <span className="block relative z-10">{day}</span>
-                {hasAgenda && (
-                    <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-                    {agendaData[dateKey].slice(0, 3).map((agenda, idx) => (
-                        <div
+                {(
+                  <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                    {hasAgenda && agendaData[dateKey]?.slice(0, 3)?.map((agenda: CalendarEvent, idx: number) => (
+                      <div
                         key={idx}
-                        className={`w-1.5 h-1.5 rounded-full ${agenda.color} animate-subtle-pulse`}
-                        style={{animationDelay: `${idx * 300}ms`}}
-                        />
+                        className={`w-1.5 h-1.5 rounded-full animate-subtle-pulse`}
+                        style={{
+                          backgroundColor: agenda.color,
+                          animationDelay: `${idx * 300}ms`
+                        }}
+                      />
                     ))}
-                    </div>
+                  </div>
                 )}
-                </button>
+              </button>
             );
-            })}
+          })}
         </div>
 
         {/* Add Agenda Button - Positioned at bottom */}
         <div className="mt-6 pt-4 border-t border-gray-100">
-            <button
+          <button
             onClick={handleAddAgenda}
             className="cursor-pointer no-underline w-full flex items-center justify-center gap-2 bg-smblue-400 text-white px-4 py-3 rounded-lg hover:bg-smblue-300 transition-all duration-150 transform shadow-sm hover:shadow-md"
-            >
+          >
             <FiPlus className="w-4 h-4" />
             <span className="text-sm font-medium">Add Agenda</span>
-            </button>
+          </button>
         </div>
-    </div>
+      </div>
 
       {/* Modal for Agenda with Professional Animations - FIXED */}
       {showModal && (
@@ -250,25 +270,35 @@ const Calendar = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
               {selectedDate && selectedDate.agendas.length > 0 ? (
                 <div className="space-y-3">
-                  {selectedDate.agendas.map((agenda, index) => (
+                  {selectedDate.agendas.map((agenda: CalendarEvent, index: number) => (
                     <div
                       key={agenda.id}
                       className="border-l-4 pl-4 py-3 transform hover:scale-[1.005] transition-all duration-150 hover:shadow-sm rounded-r animate-slide-up bg-gray-50/30"
-                      style={{ 
-                        borderColor: agenda.color.includes('blue') ? '#93c5fd' :
-                                  agenda.color.includes('green') ? '#6ee7b7' :
-                                  agenda.color.includes('purple') ? '#c4b5fd' :
-                                  agenda.color.includes('yellow') ? '#fde68a' :
-                                  agenda.color.includes('red') ? '#fca5a5' : '#93c5fd',
+                      style={{
+                        borderColor: agenda.color,
                         animationDelay: `${index * 80}ms`
                       }}
                     >
                       <h4 className="font-medium text-gray-900 animate-fade-in">{agenda.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1 animate-fade-in" style={{animationDelay: `${index * 80 + 40}ms`}}>{agenda.time}</p>
+                      <p className="text-sm text-gray-600 mt-1 animate-fade-in" style={{ animationDelay: `${index * 80 + 40}ms` }}>
+                        {agenda.time}
+                        {agenda.end_time && ` - ${agenda.end_time}`}
+                      </p>
+                      {agenda.location && (
+                        <p className="text-xs text-gray-500 mt-1">{agenda.location}</p>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                          {agenda.category}
+                        </span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                          {agenda.priority}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -282,7 +312,7 @@ const Calendar = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="border-t p-4 bg-gray-50/50">
               <button
                 onClick={() => setShowModal(false)}
@@ -296,7 +326,7 @@ const Calendar = () => {
       )}
 
       {/* AddAgenda Modal */}
-      <AddAgenda 
+      <AddAgenda
         isOpen={showAddAgendaModal}
         onClose={() => setShowAddAgendaModal(false)}
         onSave={handleSaveAgenda}

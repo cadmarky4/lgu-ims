@@ -4,6 +4,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import { FiPlus, FiX } from 'react-icons/fi';
 import ResidentSearchDropdown from '../_components/ResidentSearchDropdown';
 import { useResident } from '@/services/residents/useResidents';
+import { useNotifications } from '@/components/_global/NotificationSystem';
 import type { HouseholdFormData } from '@/services/households/households.types';
 
 interface HouseholdHeadSectionProps {
@@ -12,22 +13,34 @@ interface HouseholdHeadSectionProps {
 
 const HouseholdHeadSection: React.FC<HouseholdHeadSectionProps> = ({ form }) => {
  const { t } = useTranslation();
+ const { showNotification } = useNotifications();
  const [searchTerm, setSearchTerm] = useState('');
  
  const selectedHeadId = form.watch('head_resident_id');
- const { data: selectedHead } = useResident(selectedHeadId || 0, !!selectedHeadId);
+ const { data: selectedHead } = useResident(selectedHeadId || '', !!selectedHeadId);
 
- const handleSelectHead = (residentId: number, residentName: string) => {
+ const handleSelectHead = (residentId: string, residentName: string) => {
+   // Check if this resident is already a member
+   const currentMembers = form.getValues('memberRelationships') || [];
+   const isAlreadyMember = currentMembers.some(member => member.residentId === residentId);
+   
+   if (isAlreadyMember) {
+     showNotification({
+       type: 'error',
+       title: 'Cannot Select as Head',
+       message: `${residentName} is already listed as a household member. A resident cannot be both head and member.`
+     });
+     return;
+   }
+
    form.setValue('head_resident_id', residentId);
    setSearchTerm(residentName);
    
-   // Remove from members if already selected as member
-   const currentMembers = form.getValues('members') || [];
-   const updatedMembers = currentMembers.filter(memberId => memberId !== residentId);
-   if (updatedMembers.length !== currentMembers.length) {
-     form.setValue('members', updatedMembers);
-     // Could show a notification here that the person was moved from members to head
-   }
+   showNotification({
+     type: 'success',
+     title: 'Household Head Selected',
+     message: `${residentName} has been selected as the household head.`
+   });
  };
 
  const handleClearHead = () => {

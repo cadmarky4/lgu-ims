@@ -51,7 +51,8 @@ class FileUploadController extends Controller
             $url = Storage::url($path);
 
             return response()->json([
-                'url' => $path,
+                'url' => $url,
+                'path' => $path,
                 'filename' => $filename,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {

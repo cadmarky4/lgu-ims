@@ -60,32 +60,38 @@ const ResidentsChart: React.FC = () => {
         <div className="flex items-center gap-8">
           {/* Pie Chart */}
           <div className="flex-shrink-0" style={{ width: '300px', height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            {ageGroupData.every(item => item.value === 0) ? (
+              <div className="flex justify-center items-center h-full text-gray-500">
+              No data available
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={ageGroupData}
-                  dataKey="value"
-                  nameKey="label"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#367096"
-                  label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
-                  animationDuration={1000}
+                data={ageGroupData}
+                dataKey="value"
+                nameKey="label"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#367096"
+                label={({ percent }) => `${(percent * 100).toFixed(1)}%`}
+                animationDuration={1000}
                 >
-                  {ageGroupData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
+                {ageGroupData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: "16px",
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb"
-                  }} 
+                contentStyle={{ 
+                  borderRadius: "16px",
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb"
+                }} 
                 />
               </PieChart>
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Legend */}
@@ -104,13 +110,13 @@ const ResidentsChart: React.FC = () => {
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-sm font-bold">
-                    {(
+                    {item.value == 0 ? 0 : (
                       (item.value / ageGroupData.reduce((acc, curr) => acc + curr.value, 0)) *
                       100
                     ).toFixed(1)}%
                   </span>
                   <span className="text-xs text-gray-500">
-                    {item.value.toLocaleString()} residents
+                    {item?.value?.toLocaleString()} residents
                 </span>
                 </div>
               </div>

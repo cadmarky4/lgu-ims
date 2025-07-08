@@ -11,13 +11,13 @@ class ActivityLog extends AuditModel
     protected $fillable = [
         'user_id',
         'action_type',
+        'event',
         'table_name', 
         'record_id',
         'old_values',
         'new_values',
         'ip_address',
         'user_agent',
-        'timestamp',
         'description'
     ];
 

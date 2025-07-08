@@ -19,16 +19,20 @@ return new class extends Migration
             $morphPrefix = config('audit.user.morph_prefix', 'user');
 
             $table->bigIncrements('id');
-            $table->string($morphPrefix . '_type')->nullable();
+            $table->string('action_type')->nullable();
             $table->unsignedBigInteger($morphPrefix . '_id')->nullable();
-            $table->string('event');
+            $table->string('event')->nullable();
             $table->morphs('auditable');
+            $table->string('table_name')->nullable();
+            $table->string('record_id')->nullable();
+            $table->string('description')->nullable();
             $table->text('old_values')->nullable();
             $table->text('new_values')->nullable();
             $table->text('url')->nullable();
             $table->ipAddress('ip_address')->nullable();
             $table->string('user_agent', 1023)->nullable();
             $table->string('tags')->nullable();
+            $table->timestamp('timestamp')->nullable(); // Adjusted to nullable for compatibility
             $table->timestamps();
 
             $table->index([$morphPrefix . '_id', $morphPrefix . '_type']);

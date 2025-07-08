@@ -142,7 +142,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
     } catch (error) {
       console.error('Error checking duplicates:', error);
     }
-  }, [t]);
+  }, []);
 
   // Watch for changes that might indicate duplicates
   const watchFirstName = form.watch('first_name');
@@ -161,10 +161,8 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
   // Handle form submission
   const handleSubmit = form.handleSubmit(async (data: ResidentFormData) => {
     try {
-      let savedResident;
-
       if (mode === 'create') {
-        savedResident = await createResidentMutation.mutateAsync(data);
+        await createResidentMutation.mutateAsync(data);
         showNotification({
           type: 'success',
           title: t('residents.form.messages.createSuccessTitle'),
@@ -174,7 +172,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
         // Clear draft on successful creation
         localStorage.removeItem(DRAFT_STORAGE_KEY);
       } else {
-        savedResident = await updateResidentMutation.mutateAsync({
+        await updateResidentMutation.mutateAsync({
           id: residentId!,
           data
         });
@@ -217,38 +215,73 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
       return;
     }
 
-    // Create preview
+    // Create preview for immediate display
     const previewUrl = URL.createObjectURL(file);
-    setProfilePhotoPreview(previewUrl);
-
-    // Upload if in edit mode and resident exists
-    if (mode === 'edit' && residentId) {
+    setProfilePhotoPreview(previewUrl);      // Always upload the file first (for both create and edit modes)
       setIsUploadingFile(true);
       try {
-        const updatedResident = await uploadPhotoMutation.mutateAsync({
-          id: residentId,
-          photo: file
-        });
-        
-        showNotification({
-          type: 'success',
-          title: t('residents.form.messages.uploadSuccessTitle'),
-          message: t('residents.form.messages.uploadSuccess'),
+        // Use the file upload service to upload the file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('http://127.0.0.1:8000/api/upload', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')}`,
+          },
         });
 
-        // Update form with new photo URL
-        form.setValue('profile_photo_url', updatedResident.profile_photo_url || '');
-      } catch (error) {
-        console.error('Photo upload error:', error);
-        // Reset preview on error
-        setProfilePhotoPreview(resident?.profile_photo_url || null);
-      } finally {
-        setIsUploadingFile(false);
+        if (!response.ok) {
+          throw new Error('Failed to upload file');
+        }
+
+        const uploadResult = await response.json();
+        const uploadedFileUrl = uploadResult.url;
+
+        // Store the uploaded file URL in form field and update preview
+        form.setValue('profile_photo_url', uploadedFileUrl);
+        // Clean up the blob URL and use the server URL
+        URL.revokeObjectURL(previewUrl);
+        setProfilePhotoPreview(uploadedFileUrl);
+
+      // If in edit mode, also update the resident's photo immediately
+      if (mode === 'edit' && residentId) {
+        try {
+          const updatedResident = await uploadPhotoMutation.mutateAsync({
+            id: residentId,
+            photo: file
+          });
+          
+          // Update form with the resident's photo URL from the response
+          form.setValue('profile_photo_url', updatedResident.profile_photo_url || '');
+          setProfilePhotoPreview(updatedResident.profile_photo_url || null);
+        } catch (error) {
+          console.error('Resident photo update error:', error);
+          // Keep the uploaded file URL in form even if resident update fails
+        }
       }
-    } else {
-      // In create mode, just store the file reference
-      // The actual upload will happen after resident creation
-      form.setValue('profile_photo_url', previewUrl);
+
+      showNotification({
+        type: 'success',
+        title: t('residents.form.messages.uploadSuccessTitle'),
+        message: t('residents.form.messages.uploadSuccess'),
+      });
+
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      
+      showNotification({
+        type: 'error',
+        title: t('residents.form.messages.uploadErrorTitle'),
+        message: t('residents.form.messages.uploadError'),
+      });
+
+      // Reset preview on error
+      setProfilePhotoPreview(resident?.profile_photo_url || null);
+      form.setValue('profile_photo_url', resident?.profile_photo_url || '');
+    } finally {
+      setIsUploadingFile(false);
     }
   };
 

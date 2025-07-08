@@ -5,6 +5,7 @@ import { useFieldArray } from 'react-hook-form';
 import { FiX } from 'react-icons/fi';
 import ResidentSearchDropdown from './ResidentSearchDropdown';
 import { useResident } from '@/services/residents/useResidents';
+import { useNotifications } from '@/components/_global/NotificationSystem';
 import type { HouseholdFormData } from '@/services/households/households.types';
 
 interface HouseholdMembersSectionProps {
@@ -33,7 +34,7 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const MemberRow: React.FC<{ 
- memberId: number; 
+ memberId: string; 
  index: number; 
  onRemove: () => void;
  onRelationshipChange: (relationship: string) => void;
@@ -114,6 +115,7 @@ const MemberRow: React.FC<{
 
 const HouseholdMembersSection: React.FC<HouseholdMembersSectionProps> = ({ form }) => {
  const { t } = useTranslation();
+ const { showNotification } = useNotifications();
  const [memberSearchTerm, setMemberSearchTerm] = useState('');
  
  // Use field array for members with relationships
@@ -125,16 +127,24 @@ const HouseholdMembersSection: React.FC<HouseholdMembersSectionProps> = ({ form 
  const headResidentId = form.watch('head_resident_id');
  const currentMemberIds = fields.map(field => field.residentId);
 
- const handleSelectMember = (residentId: number, residentName: string) => {
+ const handleSelectMember = (residentId: string, residentName: string) => {
    // Check if already selected as head
    if (headResidentId === residentId) {
-     // Could show error notification here
+     showNotification({
+       type: 'error',
+       title: 'Cannot Add Member',
+       message: `${residentName} is already selected as the household head. A resident cannot be both head and member.`
+     });
      return;
    }
 
    // Check if already a member
    if (currentMemberIds.includes(residentId)) {
-     // Could show error notification here
+     showNotification({
+       type: 'error',
+       title: 'Already a Member',
+       message: `${residentName} is already added as a household member.`
+     });
      return;
    }
 
@@ -146,6 +156,12 @@ const HouseholdMembersSection: React.FC<HouseholdMembersSectionProps> = ({ form 
 
    // Clear search
    setMemberSearchTerm('');
+   
+   showNotification({
+     type: 'success',
+     title: 'Member Added',
+     message: `${residentName} has been added as a household member.`
+   });
  };
 
  const handleRemoveMember = (index: number) => {

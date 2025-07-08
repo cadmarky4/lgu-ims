@@ -67,7 +67,7 @@ export const ResidentTableRow: React.FC<ResidentTableRowProps> = ({
   const fullName = `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}${resident.suffix ? ', ' + resident.suffix : ''}`;
   const age = resident.age || calculateAge(resident.birth_date);
   const gender = resident.gender === 'MALE' ? 'Male' : 'Female';
-  const phone = resident.mobile_number || resident.telephone_number || 'N/A';
+  const phone = resident.mobile_number || resident.landline_number || 'N/A';
   const email = resident.email_address || 'N/A';
 
   return (
@@ -77,7 +77,7 @@ export const ResidentTableRow: React.FC<ResidentTableRowProps> = ({
           <img
             src={
               resident.profile_photo_url
-                ? `${STORAGE_BASE_URL}/${resident.profile_photo_url}`
+                ? `${resident.profile_photo_url}`
                 : "https://placehold.co/80"
             }
             alt={fullName}

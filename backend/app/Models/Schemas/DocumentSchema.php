@@ -26,13 +26,13 @@ class DocumentSchema
             'applicant_email' => ['type' => 'string', 'max' => 255, 'nullable' => true],
             
             // Request Details
-            'priority' => ['type' => 'string', 'max' => 50, 'required' => true], // normal, urgent, rush
+            'priority' => ['type' => 'string', 'max' => 50, 'default' => 'NORMAL'],
             'needed_date' => ['type' => 'date', 'nullable' => true],
             'processing_fee' => ['type' => 'decimal', 'precision' => 10, 'scale' => 2, 'default' => 0],
             
             // Document Status and Payment
-            'status' => ['type' => 'string', 'max' => 50, 'default' => 'pending'], // pending, processing, approved, released, rejected
-            'payment_status' => ['type' => 'string', 'max' => 50, 'default' => 'unpaid'], // unpaid, paid, waived
+            'status' => ['type' => 'string', 'max' => 50, 'default' => 'PENDING'],
+            'payment_status' => ['type' => 'string', 'max' => 50, 'default' => 'UNPAID'],
             
             // System tracking fields
             'document_number' => ['type' => 'string', 'max' => 255, 'nullable' => true, 'unique' => true],
@@ -213,9 +213,10 @@ class DocumentSchema
     public static function getPriorityOptions(): array
     {
         return [
-            'normal' => 'Normal',
-            'urgent' => 'Urgent',
-            'rush' => 'Rush',
+            'LOW' => 'Low',
+            'NORMAL' => 'Normal',
+            'HIGH' => 'High',
+            'URGENT' => 'Urgent',
         ];
     }
     
@@ -225,11 +226,12 @@ class DocumentSchema
     public static function getStatusOptions(): array
     {
         return [
-            'pending' => 'Pending',
-            'processing' => 'Processing',
-            'approved' => 'Approved',
-            'released' => 'Released',
-            'rejected' => 'Rejected',
+            'PENDING' => 'Pending',
+            'UNDER_REVIEW' => 'Under Review',
+            'APPROVED' => 'Approved',
+            'RELEASED' => 'Released',
+            'REJECTED' => 'Rejected',
+            'CANCELLED' => 'Cancelled',
         ];
     }
     
@@ -239,9 +241,9 @@ class DocumentSchema
     public static function getPaymentStatusOptions(): array
     {
         return [
-            'unpaid' => 'Unpaid',
-            'paid' => 'Paid',
-            'waived' => 'Waived',
+            'UNPAID' => 'Unpaid',
+            'PAID' => 'Paid',
+            'WAIVED' => 'Waived',
         ];
     }
 }

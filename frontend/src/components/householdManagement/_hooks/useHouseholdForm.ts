@@ -1,12 +1,13 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useEffect } from 'react';
-import { HouseholdFormDataSchema, transformHouseholdToFormData, type HouseholdFormData } from '@/services/households/households.types';
+import { useState, useEffect, useCallback } from 'react';
+import { HouseholdFormDataSchema, transformHouseholdToFormData, type HouseholdFormData, type Household } from '@/services/households/households.types';
 import { useCreateHousehold, useUpdateHousehold } from '@/services/households/useHouseholds';
 import { useNotifications } from '@/components/_global/NotificationSystem';
+import { generateHouseholdNumber } from '@/utils/householdNumberGenerator';
 
 interface UseHouseholdFormProps {
-  initialData?: any; // For edit mode
+  initialData?: Household; // For edit mode - changed from any to Household
   mode?: 'create' | 'edit';
 }
 
@@ -27,19 +28,14 @@ export const useHouseholdForm = ({ initialData, mode = 'create' }: UseHouseholdF
   const updateHouseholdMutation = useUpdateHousehold();
 
   // Get draft key based on mode
-  const getDraftKey = () => {
+  const getDraftKey = useCallback(() => {
     if (mode === 'edit' && initialData?.id) {
       return `householdDraft_${initialData.id}`;
     }
     return 'householdDraft';
-  };
-
-  // Load draft data on mount
-  useEffect(() => {
-    loadDraftData();
   }, [mode, initialData?.id]);
 
-  const loadDraftData = () => {
+  const loadDraftData = useCallback(() => {
     try {
       const draftKey = getDraftKey();
       const savedDraft = localStorage.getItem(draftKey);
@@ -55,7 +51,12 @@ export const useHouseholdForm = ({ initialData, mode = 'create' }: UseHouseholdF
     } catch (error) {
       console.error('Failed to load draft data:', error);
     }
-  };
+  }, [getDraftKey, form, showNotification]);
+
+  // Load draft data on mount
+  useEffect(() => {
+    loadDraftData();
+  }, [loadDraftData]);
 
   const saveDraft = (data: HouseholdFormData) => {
     setIsSavingDraft(true);
@@ -98,11 +99,30 @@ export const useHouseholdForm = ({ initialData, mode = 'create' }: UseHouseholdF
         return;
       }
 
-      // Transform memberRelationships to simple members array for API
+      // Validate that head resident is not also a member
+      const memberIds = data.memberRelationships?.map(mr => mr.residentId) || [];
+      if (memberIds.includes(data.head_resident_id)) {
+        setFormError('The household head cannot also be listed as a member. Please remove them from the members list.');
+        return;
+      }
+
+      // Auto-generate household number if not provided (frontend-side generation)
+      if (!data.household_number || data.household_number.trim() === '') {
+        data.household_number = generateHouseholdNumber();
+      }
+
+      // Transform memberRelationships to member_ids format expected by backend
       const submitData = {
         ...data,
-        members: data.memberRelationships?.map(mr => mr.residentId) || null
+        member_ids: data.memberRelationships?.map(mr => ({
+          resident_id: mr.residentId,
+          relationship: mr.relationship
+        })) || null
       };
+      
+      // Remove memberRelationships and members from submitData as they're not needed by backend
+      delete submitData.memberRelationships;
+      delete submitData.members;
 
       if (mode === 'create') {
         await createHouseholdMutation.mutateAsync(submitData);
@@ -132,14 +152,28 @@ export const useHouseholdForm = ({ initialData, mode = 'create' }: UseHouseholdF
       if (onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Form submission error:', error);
-      const errorMessage = error.message || `Failed to ${mode} household. Please try again.`;
-      setFormError(errorMessage);
+      
+      // Handle validation errors from backend
+      const axiosError = error as { response?: { status?: number; data?: { errors?: Record<string, string[]>; message?: string } } };
+      if (axiosError.response?.status === 422 && axiosError.response?.data?.errors) {
+        const validationErrors = axiosError.response.data.errors;
+        const errorMessages = Object.entries(validationErrors)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        setFormError(`Validation errors:\n${errorMessages}`);
+      } else if (axiosError.response?.data?.message) {
+        setFormError(axiosError.response.data.message);
+      } else {
+        const errorMessage = (error instanceof Error ? error.message : 'Unknown error') || `Failed to ${mode} household. Please try again.`;
+        setFormError(errorMessage);
+      }
+      
       showNotification({
         type: 'error',
         title: `${mode === 'create' ? 'Create' : 'Update'} Failed`,
-        message: errorMessage
+        message: axiosError.response?.data?.message || (error instanceof Error ? error.message : 'Unknown error') || `Failed to ${mode} household. Please try again.`
       });
     }
   };

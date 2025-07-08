@@ -6,8 +6,8 @@ import { useResidentSearch } from '@/services/residents/useResidents';
 interface ResidentSearchDropdownProps {
  searchTerm: string;
  onSearchChange: (term: string) => void;
- onSelectResident: (id: number, name: string) => void;
- excludeIds?: number[];
+ onSelectResident: (id: string, name: string) => void;
+ excludeIds?: string[];
  placeholder?: string;
  disabled?: boolean;
 }

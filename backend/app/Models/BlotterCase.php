@@ -24,6 +24,8 @@ class BlotterCase extends Model implements Auditable
         return [
             'user_id' => Auth::id() ?? null, 
             'action_type' => $data['event'], // created, updated, deleted
+            'auditable_type' => get_class($this),
+            'auditable_id' => $this->getKey(),
             'table_name' => $this->getTable(),
             'record_id' => $this->getKey(),
             'old_values' => $data['old_values'] ?? null,

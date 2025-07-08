@@ -65,35 +65,8 @@ class Household extends Model implements Auditable
     {
         parent::boot();
         
-        // Auto-generate household number if not provided
-        static::creating(function ($household) {
-            if (empty($household->household_number)) {
-                $household->household_number = static::generateHouseholdNumber();
-            }
-        });
-    }
-
-    /**
-     * Generate a unique household number
-     */
-    public static function generateHouseholdNumber(): string
-    {
-        $prefix = 'HH';
-        $year = date('Y');
-        
-        // Get the last household number for this year
-        $lastHousehold = static::where('household_number', 'like', $prefix . $year . '%')
-            ->orderBy('household_number', 'desc')
-            ->first();
-        
-        if ($lastHousehold) {
-            $lastNumber = (int) substr($lastHousehold->household_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-        
-        return $prefix . $year . $newNumber;
+        // Household number is now generated on the frontend side
+        // Following the principle that frontend is the source of truth
     }
 
     /**
@@ -212,9 +185,6 @@ class Household extends Model implements Auditable
 
         return $query->where(function ($q) use ($search) {
             $q->where('household_number', 'like', "%{$search}%")
-              ->orWhere('house_number', 'like', "%{$search}%")
-              ->orWhere('street_sitio', 'like', "%{$search}%")
-              ->orWhere('barangay', 'like', "%{$search}%")
               ->orWhere('complete_address', 'like', "%{$search}%")
               ->orWhereHas('headResident', function ($headQuery) use ($search) {
                   $headQuery->where('first_name', 'like', "%{$search}%")
@@ -328,6 +298,8 @@ class Household extends Model implements Auditable
         return [
             'user_id' => Auth::id() ?? null,
             'action_type' => $data['event'],
+            'auditable_type' => get_class($this),
+            'auditable_id' => $this->getKey(),
             'table_name' => $this->getTable(),
             'record_id' => $this->getKey(),
             'old_values' => $data['old_values'] ?? null,

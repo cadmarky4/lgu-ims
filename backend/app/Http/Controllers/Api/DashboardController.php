@@ -9,8 +9,12 @@ use App\Models\BarangayOfficial;
 use App\Models\BlotterCase;
 use App\Models\Project;
 use App\Models\Document;
+use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -100,39 +104,44 @@ class DashboardController extends Controller
     public function notifications(): JsonResponse
     {
         try {
-            // Sample notifications data based on recent system activity
-            $notifications = [
-                [
-                    'id' => 1,
-                    'message' => 'New resident registration submitted',
-                    'time' => '2 hours ago',
-                    'type' => 'info'
-                ],
-                [
-                    'id' => 2,
-                    'message' => 'Blotter case #BLT-2025-001 has been resolved',
-                    'time' => '4 hours ago',
-                    'type' => 'success'
-                ],
-                [
-                    'id' => 3,
-                    'message' => 'Project milestone deadline approaching',
-                    'time' => '1 day ago',
-                    'type' => 'warning'
-                ],
-                [
-                    'id' => 4,
-                    'message' => 'Monthly report is due tomorrow',
-                    'time' => '2 days ago',
-                    'type' => 'warning'
-                ],
-                [
-                    'id' => 5,
-                    'message' => 'System backup completed successfully',
-                    'time' => '3 days ago',
-                    'type' => 'success'
-                ]
-            ];
+            $notifications = [];
+            $notificationId = 1;
+
+            try {
+                // Get recent activities from audit table to generate notifications
+                // Using the audits table directly since ActivityLog extends Audit
+                $recentAudits = DB::table('audits')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(10)
+                    ->get();
+
+                foreach ($recentAudits as $audit) {
+                    $message = $this->generateNotificationMessage($audit);
+                    $type = $this->getNotificationType($audit);
+                    $timeAgo = $this->formatTimeAgo($audit->created_at);
+
+                    if ($message) {
+                        $notifications[] = [
+                            'id' => $notificationId++,
+                            'message' => $message,
+                            'time' => $timeAgo,
+                            'type' => $type
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                // If audit table doesn't exist or query fails, we'll use default notifications
+                Log::info('Audit table query failed, using default notifications: ' . $e->getMessage());
+            }
+
+            // If no audit records, provide some default notifications
+            if (empty($notifications)) {
+                $notifications = [
+                ];
+            }
+
+            // Limit to 5 most recent notifications
+            $notifications = array_slice($notifications, 0, 5);
 
             return response()->json([
                 'message' => 'Notifications retrieved successfully',
@@ -143,6 +152,172 @@ class DashboardController extends Controller
                 'message' => 'Failed to retrieve notifications',
                 'errors' => ['general' => [$e->getMessage()]]
             ], 500);
+        }
+    }
+
+    /**
+     * Generate notification message from audit log
+     */
+    private function generateNotificationMessage($audit): ?string
+    {
+        // Check if we have auditable_type (from migration) or table_name (custom field)
+        $tableName = $audit->table_name ?? $this->getTableFromAuditableType($audit->auditable_type ?? '');
+        $event = $audit->event;
+        $description = $audit->description;
+
+        // If description is already provided, use it
+        if ($description) {
+            return $description;
+        }
+
+        // Generate message based on table and event
+        switch ($tableName) {
+            case 'residents':
+                switch ($event) {
+                    case 'created':
+                        return 'New resident has been registered';
+                    case 'updated':
+                        return 'Resident information has been updated';
+                    case 'deleted':
+                        return 'Resident record has been removed';
+                    default:
+                        return 'Resident record has been modified';
+                }
+            case 'households':
+                switch ($event) {
+                    case 'created':
+                        return 'New household has been registered';
+                    case 'updated':
+                        return 'Household information has been updated';
+                    case 'deleted':
+                        return 'Household record has been removed';
+                    default:
+                        return 'Household record has been modified';
+                }
+            case 'blotter_cases':
+                switch ($event) {
+                    case 'created':
+                        return 'New blotter case has been filed';
+                    case 'updated':
+                        return 'Blotter case has been updated';
+                    case 'deleted':
+                        return 'Blotter case has been removed';
+                    default:
+                        return 'Blotter case has been modified';
+                }
+            case 'projects':
+                switch ($event) {
+                    case 'created':
+                        return 'New project has been created';
+                    case 'updated':
+                        return 'Project information has been updated';
+                    case 'deleted':
+                        return 'Project has been removed';
+                    default:
+                        return 'Project has been modified';
+                }
+            case 'documents':
+                switch ($event) {
+                    case 'created':
+                        return 'New document has been issued';
+                    case 'updated':
+                        return 'Document has been updated';
+                    case 'deleted':
+                        return 'Document has been removed';
+                    default:
+                        return 'Document has been modified';
+                }
+            case 'barangay_officials':
+                switch ($event) {
+                    case 'created':
+                        return 'New barangay official has been added';
+                    case 'updated':
+                        return 'Barangay official information has been updated';
+                    case 'deleted':
+                        return 'Barangay official has been removed';
+                    default:
+                        return 'Barangay official record has been modified';
+                }
+            default:
+                if ($tableName) {
+                    switch ($event) {
+                        case 'created':
+                            return 'New record has been created';
+                        case 'updated':
+                            return 'Record has been updated';
+                        case 'deleted':
+                            return 'Record has been removed';
+                        default:
+                            return 'System activity occurred';
+                    }
+                }
+                return null; // Skip if we can't determine the table
+        }
+    }
+
+    /**
+     * Extract table name from auditable_type (e.g., "App\Models\Resident" -> "residents")
+     */
+    private function getTableFromAuditableType($auditableType): string
+    {
+        if (empty($auditableType)) {
+            return '';
+        }
+
+        // Extract model name from full class path
+        $modelName = basename(str_replace('\\', '/', $auditableType));
+        
+        // Convert to snake_case and pluralize
+        $tableName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $modelName));
+        
+        // Add simple pluralization
+        if (!str_ends_with($tableName, 's')) {
+            $tableName .= 's';
+        }
+        
+        return $tableName;
+    }
+
+    /**
+     * Get notification type based on audit event
+     */
+    private function getNotificationType($audit): string
+    {
+        $event = $audit->event;
+
+        switch ($event) {
+            case 'created':
+                return 'info';
+            case 'updated':
+                return 'success';
+            case 'deleted':
+                return 'warning';
+            default:
+                return 'info';
+        }
+    }
+
+    /**
+     * Format timestamp to human-readable time ago
+     */
+    private function formatTimeAgo($timestamp): string
+    {
+        try {
+            $now = now();
+            $timestamp = \Carbon\Carbon::parse($timestamp);
+            $diff = $now->diff($timestamp);
+
+            if ($diff->d > 0) {
+                return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
+            } elseif ($diff->h > 0) {
+                return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
+            } elseif ($diff->i > 0) {
+                return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
+            } else {
+                return 'Just now';
+            }
+        } catch (\Exception $e) {
+            return 'Recently';
         }
     }
 

@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  * {
  *   "household_number": "string|optional", // Auto-generated if not provided
  *   "household_type": "nuclear|extended|single|single-parent|other",
- *   "head_resident_id": "number|optional",
+ *   "head_resident_id": "string|optional", // UUID string
  *   "house_number": "string|required",
  *   "street_sitio": "string|required", 
  *   "barangay": "string|required",
@@ -44,7 +44,7 @@ use Illuminate\Support\Facades\DB;
  *   "remarks": "string|optional",
  *   "member_ids": [
  *     {
- *       "resident_id": "number",
+ *       "resident_id": "string", // UUID string
  *       "relationship": "string"
  *     }
  *   ]
@@ -142,11 +142,15 @@ class HouseholdController extends Controller
             
             // Use validation rules from schema
             $validated = $request->validate(HouseholdSchema::getCreateValidationRules());
-
-            // Generate unique household number if not provided
-            if (!isset($validated['household_number']) || empty($validated['household_number'])) {
-                $validated['household_number'] = $this->generateHouseholdNumber();
+            
+            // Validate member relationships if provided
+            if ($request->has('member_ids')) {
+                $memberValidationRules = HouseholdSchema::getMemberValidationRules();
+                $request->validate($memberValidationRules);
             }
+
+            // Household number is now required to be provided by frontend
+            // Following the principle that frontend is the source of truth
 
             // Ensure head_resident_id is properly handled
             if (isset($validated['head_resident_id'])) {
@@ -159,10 +163,24 @@ class HouseholdController extends Controller
                 }
                 
                 // Check if resident is already assigned to another household
-                if ($headResident->household_id && $headResident->household_id !== null) {
+                if ($headResident->households()->count() > 0) {
                     return response()->json([
                         'message' => 'Validation failed',
                         'errors' => ['head_resident_id' => ['This resident is already assigned to another household.']]
+                    ], 422);
+                }
+            }
+
+            // Additional validation: ensure head resident is not in member list
+            if (isset($validated['head_resident_id']) && $request->has('member_ids')) {
+                $memberIds = collect($request->member_ids)->pluck('resident_id');
+                if ($memberIds->contains($validated['head_resident_id'])) {
+                    return response()->json([
+                        'message' => 'Validation failed',
+                        'errors' => [
+                            'member_ids' => ['The household head cannot also be listed as a member.'],
+                            'head_resident_id' => ['The household head cannot also be listed as a member.']
+                        ]
                     ], 422);
                 }
             }
@@ -176,51 +194,72 @@ class HouseholdController extends Controller
             $household = DB::transaction(function () use ($validated, $request) {
                 $household = Household::create($validated);
                 
-                // If a head resident is specified, update their household relationship
+                // If a head resident is specified, add them to the household members with HEAD relationship
                 if (isset($validated['head_resident_id']) && $validated['head_resident_id']) {
                     $headResident = Resident::find($validated['head_resident_id']);
                     if ($headResident) {
-                        $headResident->update([
-                            'household_id' => $household->id,
-                            'is_household_head' => true,
-                            'relationship_to_head' => 'Self'
+                        // Check if resident is already in another household
+                        if ($headResident->households()->count() > 0) {
+                            Log::warning("Head resident {$headResident->id} is already assigned to another household");
+                            throw new \Exception("This resident is already assigned to another household.");
+                        }
+                        
+                        // Add head resident to household members with HEAD relationship
+                        $household->members()->attach($headResident->id, [
+                            'relationship' => 'HEAD'
                         ]);
                     }
                 }
                 
-                // If member IDs are provided, update their household relationships
+                // If member IDs are provided, add them to household members
                 if ($request->has('member_ids') && is_array($request->member_ids)) {
                     Log::info("Processing member IDs", ['member_ids' => $request->member_ids]);
+                    
+                    $memberIds = collect($request->member_ids)->pluck('resident_id');
+                    $duplicateMembers = $memberIds->duplicates();
+                    
+                    // Check for duplicate members in the same request
+                    if ($duplicateMembers->isNotEmpty()) {
+                        Log::warning("Duplicate members found in request", ['duplicates' => $duplicateMembers->toArray()]);
+                        throw new \Exception("Duplicate residents found in member list.");
+                    }
                     
                     foreach ($request->member_ids as $memberData) {
                         if (isset($memberData['resident_id']) && isset($memberData['relationship'])) {
                             $member = Resident::find($memberData['resident_id']);
-                            if ($member && $member->id != $validated['head_resident_id']) {
-                                // Check if member is already assigned to another household
-                                if ($member->household_id && $member->household_id !== null) {
-                                    Log::warning("Member {$member->id} is already assigned to household {$member->household_id}");
-                                    continue; // Skip this member but don't fail the entire operation
-                                }
-                                
-                                Log::info("Assigning member to household", [
+                            if (!$member) {
+                                Log::warning("Member not found", ['member_id' => $memberData['resident_id']]);
+                                throw new \Exception("Member with ID {$memberData['resident_id']} not found.");
+                            }
+                            
+                            // Ensure member is not the same as head resident
+                            if ($member->id === $validated['head_resident_id']) {
+                                Log::warning("Member is same as head resident", [
                                     'member_id' => $member->id,
-                                    'household_id' => $household->id,
-                                    'relationship' => $memberData['relationship']
-                                ]);
-                                
-                                $member->update([
-                                    'household_id' => $household->id,
-                                    'is_household_head' => false,
-                                    'relationship_to_head' => $memberData['relationship']
-                                ]);
-                            } else {
-                                Log::warning("Member not found or is head resident", [
-                                    'member_id' => $memberData['resident_id'],
                                     'head_resident_id' => $validated['head_resident_id']
                                 ]);
+                                throw new \Exception("A resident cannot be both household head and a member.");
                             }
+                            
+                            // Check if member is already assigned to another household
+                            if ($member->households()->count() > 0) {
+                                Log::warning("Member {$member->id} is already assigned to another household");
+                                throw new \Exception("Member {$member->first_name} {$member->last_name} is already assigned to another household.");
+                            }
+                            
+                            Log::info("Assigning member to household", [
+                                'member_id' => $member->id,
+                                'household_id' => $household->id,
+                                'relationship' => $memberData['relationship']
+                            ]);
+                            
+                            // Add member to household with specified relationship
+                            $household->members()->attach($member->id, [
+                                'relationship' => $memberData['relationship']
+                            ]);
                         } else {
                             Log::warning("Invalid member data structure", ['member_data' => $memberData]);
+                            throw new \Exception("Invalid member data structure.");
                         }
                     }
                 } else {
@@ -290,6 +329,12 @@ class HouseholdController extends Controller
         try {
             // Use validation rules from schema for updates
             $validated = $request->validate(HouseholdSchema::getUpdateValidationRules());
+            
+            // Validate member relationships if provided
+            if ($request->has('member_ids')) {
+                $memberValidationRules = HouseholdSchema::getMemberValidationRules();
+                $request->validate($memberValidationRules);
+            }
 
             // Validate head_resident_id if provided
             if (isset($validated['head_resident_id'])) {
@@ -302,10 +347,25 @@ class HouseholdController extends Controller
                 }
                 
                 // Check if resident is already assigned to another household (excluding current household)
-                if ($headResident->household_id && $headResident->household_id !== $household->id && $headResident->household_id !== null) {
+                $currentHouseholdIds = $headResident->households()->pluck('households.id')->toArray();
+                if (count($currentHouseholdIds) > 0 && !in_array($household->id, $currentHouseholdIds)) {
                     return response()->json([
                         'message' => 'Validation failed',
                         'errors' => ['head_resident_id' => ['This resident is already assigned to another household.']]
+                    ], 422);
+                }
+            }
+
+            // Additional validation: ensure head resident is not in member list
+            if (isset($validated['head_resident_id']) && $request->has('member_ids')) {
+                $memberIds = collect($request->member_ids)->pluck('resident_id');
+                if ($memberIds->contains($validated['head_resident_id'])) {
+                    return response()->json([
+                        'message' => 'Validation failed',
+                        'errors' => [
+                            'member_ids' => ['The household head cannot also be listed as a member.'],
+                            'head_resident_id' => ['The household head cannot also be listed as a member.']
+                        ]
                     ], 422);
                 }
             }
@@ -324,40 +384,23 @@ class HouseholdController extends Controller
                 
                 // Update head resident relationship if changed
                 if (isset($validated['head_resident_id']) && $validated['head_resident_id'] != $oldHeadResidentId) {
-                    // Clear old head relationship
+                    // Remove old head relationship from pivot table
                     if ($oldHeadResidentId) {
-                        $oldHead = Resident::find($oldHeadResidentId);
-                        if ($oldHead) {
-                            $oldHead->update([
-                                'household_id' => null,
-                                'is_household_head' => false,
-                                'relationship_to_head' => null
-                            ]);
-                        }
+                        $household->members()->wherePivot('relationship', 'HEAD')->detach($oldHeadResidentId);
                     }
                     
-                    // Set new head relationship
+                    // Add new head relationship to pivot table
                     if ($validated['head_resident_id']) {
-                        $newHead = Resident::find($validated['head_resident_id']);
-                        if ($newHead) {
-                            $newHead->update([
-                                'household_id' => $household->id,
-                                'is_household_head' => true,
-                                'relationship_to_head' => 'Self'
-                            ]);
-                        }
+                        $household->members()->attach($validated['head_resident_id'], [
+                            'relationship' => 'HEAD'
+                        ]);
                     }
                 }
                 
                 // Handle member updates if provided
                 if ($request->has('member_ids') && is_array($request->member_ids)) {
-                    // Clear existing member relationships (except head)
-                    Resident::where('household_id', $household->id)
-                        ->where('is_household_head', false)
-                        ->update([
-                            'household_id' => null,
-                            'relationship_to_head' => null
-                        ]);
+                    // Clear existing non-head member relationships
+                    $household->members()->wherePivot('relationship', '!=', 'HEAD')->detach();
                         
                     // Add new member relationships
                     foreach ($request->member_ids as $memberData) {
@@ -365,15 +408,15 @@ class HouseholdController extends Controller
                             $member = Resident::find($memberData['resident_id']);
                             if ($member && $member->id != $household->head_resident_id) {
                                 // Check if member is already assigned to another household
-                                if ($member->household_id && $member->household_id !== $household->id && $member->household_id !== null) {
-                                    Log::warning("Member {$member->id} is already assigned to household {$member->household_id}");
+                                $currentHouseholdIds = $member->households()->pluck('households.id')->toArray();
+                                if (count($currentHouseholdIds) > 0 && !in_array($household->id, $currentHouseholdIds)) {
+                                    Log::warning("Member {$member->id} is already assigned to another household");
                                     continue; // Skip this member but don't fail the entire operation
                                 }
                                 
-                                $member->update([
-                                    'household_id' => $household->id,
-                                    'is_household_head' => false,
-                                    'relationship_to_head' => $memberData['relationship']
+                                // Add member to household with specified relationship
+                                $household->members()->attach($member->id, [
+                                    'relationship' => $memberData['relationship']
                                 ]);
                             }
                         }
@@ -418,13 +461,8 @@ class HouseholdController extends Controller
             
             // Use database transaction for data integrity
             DB::transaction(function () use ($household) {
-                // Clear all resident relationships to this household
-                Resident::where('household_id', $household->id)
-                    ->update([
-                        'household_id' => null,
-                        'is_household_head' => false,
-                        'relationship_to_head' => null
-                    ]);
+                // Clear all resident relationships from the pivot table
+                $household->members()->detach();
                     
                 $household->delete();
             });
@@ -739,47 +777,44 @@ class HouseholdController extends Controller
     {
         try {
             $request->validate([
-                'head_resident_id' => 'required|integer|exists:residents,id',
+                'head_resident_id' => 'required|string|exists:residents,id',
                 'member_ids' => 'sometimes|array',
-                'member_ids.*.resident_id' => 'required|integer|exists:residents,id',
+                'member_ids.*.resident_id' => 'required|string|exists:residents,id',
                 'member_ids.*.relationship' => 'required|string|max:100'
             ]);
 
-            // Remove all current household members
-            Resident::where('household_id', $household->id)->update([
-                'household_id' => null,
-                'is_household_head' => false,
-                'relationship_to_head' => null
-            ]);
+            // Use database transaction for data integrity
+            DB::transaction(function () use ($request, $household) {
+                // Remove all current household members from pivot table
+                $household->members()->detach();
 
-            // Set the new head resident
-            $headResident = Resident::find($request->head_resident_id);
-            if ($headResident) {
-                $headResident->update([
-                    'household_id' => $household->id,
-                    'is_household_head' => true,
-                    'relationship_to_head' => 'Self'
-                ]);
-                
-                // Update the household's head_resident_id
-                $household->update(['head_resident_id' => $request->head_resident_id]);
-            }
+                // Set the new head resident in pivot table
+                $headResident = Resident::find($request->head_resident_id);
+                if ($headResident) {
+                    // Add head resident to household members with HEAD relationship
+                    $household->members()->attach($headResident->id, [
+                        'relationship' => 'HEAD'
+                    ]);
+                    
+                    // Update the household's head_resident_id
+                    $household->update(['head_resident_id' => $request->head_resident_id]);
+                }
 
-            // Add new members
-            if ($request->has('member_ids') && is_array($request->member_ids)) {
-                foreach ($request->member_ids as $memberData) {
-                    if (isset($memberData['resident_id']) && isset($memberData['relationship'])) {
-                        $member = Resident::find($memberData['resident_id']);
-                        if ($member && $member->id != $request->head_resident_id) {
-                            $member->update([
-                                'household_id' => $household->id,
-                                'is_household_head' => false,
-                                'relationship_to_head' => $memberData['relationship']
-                            ]);
+                // Add new members
+                if ($request->has('member_ids') && is_array($request->member_ids)) {
+                    foreach ($request->member_ids as $memberData) {
+                        if (isset($memberData['resident_id']) && isset($memberData['relationship'])) {
+                            $member = Resident::find($memberData['resident_id']);
+                            if ($member && $member->id != $request->head_resident_id) {
+                                // Add member to household with specified relationship
+                                $household->members()->attach($member->id, [
+                                    'relationship' => $memberData['relationship']
+                                ]);
+                            }
                         }
                     }
                 }
-            }
+            });
 
             // Load updated relationships
             $household->load(['headResident', 'members']);
@@ -803,33 +838,9 @@ class HouseholdController extends Controller
     }
 
     /**
-     * Generate a unique household number.
+     * Validate that residents can be assigned to household (using pivot table)
      */
-    private function generateHouseholdNumber(): string
-    {
-        $prefix = 'HH';
-        $year = date('Y');
-        
-        // Get the last household number for this year
-        $lastHousehold = Household::where('household_number', 'LIKE', "{$prefix}{$year}%")
-            ->orderBy('household_number', 'desc')
-            ->first();
-        
-        if ($lastHousehold) {
-            // Extract the sequence number and increment
-            $lastNumber = intval(substr($lastHousehold->household_number, -4));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . $year . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * Validate that residents can be assigned to household
-     */
-    private function validateResidentAssignment(array $residentIds, ?int $excludeHouseholdId = null): array
+    private function validateResidentAssignment(array $residentIds, ?string $excludeHouseholdId = null): array
     {
         $errors = [];
         
@@ -841,10 +852,13 @@ class HouseholdController extends Controller
                 continue;
             }
             
-            // Check if resident is already assigned to another household
-            if ($resident->household_id && 
-                ($excludeHouseholdId === null || $resident->household_id !== $excludeHouseholdId)) {
-                $errors[] = "Resident {$resident->first_name} {$resident->last_name} is already assigned to another household";
+            // Check if resident is already assigned to another household using pivot table
+            $existingHouseholdIds = $resident->households()->pluck('households.id')->toArray();
+            if (count($existingHouseholdIds) > 0) {
+                // If excluding a household, check if resident is assigned to other households
+                if ($excludeHouseholdId === null || !in_array($excludeHouseholdId, $existingHouseholdIds)) {
+                    $errors[] = "Resident {$resident->first_name} {$resident->last_name} is already assigned to another household";
+                }
             }
         }
         
@@ -852,10 +866,15 @@ class HouseholdController extends Controller
     }
 
     /**
-     * Bulk update resident household assignments
+     * Bulk update resident household assignments (using pivot table)
      */
-    private function updateResidentHouseholdAssignments(int $householdId, array $memberData, ?int $headResidentId = null): void
+    private function updateResidentHouseholdAssignments(string $householdId, array $memberData, ?string $headResidentId = null): void
     {
+        $household = Household::find($householdId);
+        if (!$household) {
+            return;
+        }
+
         foreach ($memberData as $member) {
             if (!isset($member['resident_id']) || !isset($member['relationship'])) {
                 continue;
@@ -866,20 +885,20 @@ class HouseholdController extends Controller
                 continue;
             }
             
-            // Skip if already assigned to another household
-            if ($resident->household_id && $resident->household_id !== $householdId) {
+            // Check if resident is already assigned to another household using pivot table
+            $existingHouseholdIds = $resident->households()->pluck('households.id')->toArray();
+            if (count($existingHouseholdIds) > 0 && !in_array($householdId, $existingHouseholdIds)) {
                 Log::warning("Skipping resident assignment - already assigned to another household", [
                     'resident_id' => $resident->id,
-                    'current_household' => $resident->household_id,
+                    'existing_households' => $existingHouseholdIds,
                     'target_household' => $householdId
                 ]);
                 continue;
             }
             
-            $resident->update([
-                'household_id' => $householdId,
-                'is_household_head' => false,
-                'relationship_to_head' => $member['relationship']
+            // Add to household via pivot table
+            $household->members()->attach($resident->id, [
+                'relationship' => $member['relationship']
             ]);
         }
     }
