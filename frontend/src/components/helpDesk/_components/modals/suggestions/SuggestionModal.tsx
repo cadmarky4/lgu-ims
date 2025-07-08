@@ -5,6 +5,7 @@ import { useSuggestionModal } from './useSuggestionModal';
 import { SuggestionModalContent } from './_components/SuggestionModalContent';
 import { SuggestionModalFooter } from './_components/SuggestionModalFooter';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { SearchResidentContext } from '../../_contexts/searchResidentContex';
 
 interface SuggestionModalProps {
   suggestionId: string | null;
@@ -25,6 +26,17 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
     suggestion,
     isLoading,
     error,
+
+    // RESIDENT FIELDS
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    residentIdField,
+    setSelectedResidentId,
+
     form,
     isDirty,
     isSubmitting,
@@ -82,10 +94,21 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({
       {suggestion && (
         <FormProvider {...form}>
           <form onSubmit={handleSubmit}>
-            <SuggestionModalContent
-              suggestion={suggestion}
-              mode={mode}
-            />
+            <SearchResidentContext.Provider value={{
+              isResident: isResident,
+              setIsResident: setIsResident,
+              searchResident: searchResident,
+              filteredResidents: filteredResidents,
+              isLoadingResidents: isLoadingResidents,
+              residentsError: residentsError,
+              residentIdField: residentIdField,
+              setSelectedResidentId: setSelectedResidentId,
+            }}>
+              <SuggestionModalContent
+                suggestion={suggestion}
+                mode={mode}
+              />
+            </SearchResidentContext.Provider>
           </form>
         </FormProvider>
       )}

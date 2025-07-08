@@ -5,6 +5,7 @@ import { useComplaintModal } from './useComplaintModal';
 import { ComplaintModalContent } from './_components/ComplaintModalContent';
 import { ComplaintModalFooter } from './_components/ComplaintModalFooter';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { SearchResidentContext } from '../../_contexts/searchResidentContex';
 
 interface ComplaintModalProps {
   complaintId: string | null;
@@ -24,6 +25,17 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
   const {
     complaint,
     isLoading,
+
+    // RESIDENT FIELDS
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    residentIdField,
+    setSelectedResidentId,
+
     error,
     form,
     isDirty,
@@ -77,10 +89,21 @@ export const ComplaintModal: React.FC<ComplaintModalProps> = ({
       {complaint && (
         <FormProvider {...form}>
           <form onSubmit={handleSubmit}>
-            <ComplaintModalContent
-              complaint={complaint}
-              mode={mode}
-            />
+            <SearchResidentContext.Provider value={{
+              isResident: isResident,
+              setIsResident: setIsResident,
+              searchResident: searchResident,
+              filteredResidents: filteredResidents,
+              isLoadingResidents: isLoadingResidents,
+              residentsError: residentsError,
+              residentIdField: residentIdField,
+              setSelectedResidentId: setSelectedResidentId,
+            }}>
+              <ComplaintModalContent
+                complaint={complaint}
+                mode={mode}
+              />
+            </SearchResidentContext.Provider>
           </form>
         </FormProvider>
       )}

@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useComplaint, useUpdateComplaint } from '@/services/helpDesk/complaints/useComplaints';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNotifications } from '@/components/_global/NotificationSystem';
 import { EditComplaintSchema, type EditComplaint } from '@/services/helpDesk/complaints/complaints.types';
 import { useTranslation } from 'react-i18next';
+import { useResidents } from '@/services/residents/useResidents';
+import { residentsService } from '@/services/residents/residents.service';
 
 interface UseComplaintModalProps {
   complaintId: string | null;
@@ -16,17 +18,6 @@ interface UseComplaintModalProps {
 export const useComplaintModal = ({ complaintId, onClose, mode, setMode }: UseComplaintModalProps) => {
   const { t } = useTranslation();
   const { showNotification } = useNotifications();
-  
-  // Fetch complaint data
-  const { 
-    data: complaint, 
-    isLoading, 
-    error,
-    refetch 
-  } = useComplaint(complaintId || '', !!complaintId);
-
-  // Update complaint mutation
-  const updateComplaintMutation = useUpdateComplaint();
 
   // Form setup
   const form = useForm<EditComplaint>({
@@ -37,11 +28,63 @@ export const useComplaintModal = ({ complaintId, onClose, mode, setMode }: UseCo
     }
   });
 
-  const { handleSubmit, reset, formState: { errors, isDirty } } = form;
+  const { setValue, watch, handleSubmit, reset, formState: { errors, isDirty } } = form;
+
+  // Fetch complaint data
+  const { 
+    data: complaint, 
+    isLoading, 
+    error,
+    refetch 
+  } = useComplaint(complaintId || '', !!complaintId);
+
+  const [isResident, setIsResident] = useState(true);
+  const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
+  const residentIdField = watch('ticket.resident_id');
+  const searchResident = watch('ticket.resident_search');
+
+  // Update complaint mutation
+  const updateComplaintMutation = useUpdateComplaint();
+  const { data: filteredResidents, isLoading: isLoadingResidents, error: residentsError } = useResidents({ search: searchResident || "" });
+
+  useEffect(() => {
+    setValue('ticket.resident_id', null);
+    setValue('ticket.requester_name', "");
+    setValue('ticket.contact_number', "");
+    setValue('ticket.email_address', "");
+    setValue('ticket.complete_address', "");
+    setSelectedResidentId('');
+  }, [isResident])
+ 
+  // selects the resident
+  // The effect won't re-execute unless residentId changes.
+  useEffect(() => {
+      if (selectedResidentId.trim().length !== 0) {
+          const timeoutId = setTimeout(() => {
+              (async () => {
+                  // backend search
+                  const res = await residentsService.getResident(
+                      selectedResidentId
+                      );
+                  setValue('ticket.resident_id', selectedResidentId)
+                  setValue('ticket.requester_name', res.first_name + " " + (res.middle_name ? res.middle_name + " " : '') + res.last_name);
+                  setValue('ticket.contact_number', res.mobile_number || "");
+                  setValue('ticket.email_address', res.email_address || "");
+                  setValue('ticket.complete_address', res.complete_address);
+              })();
+          }, 1000);
+  
+          return () => clearTimeout(timeoutId);
+      }
+  }, [selectedResidentId]);
 
   // Reset form when complaint data changes
   useEffect(() => {
     if (complaint) {
+
+      // console.log(appointment);
+      setIsResident(complaint.ticket.resident_id !== null && complaint.ticket.resident_id !== undefined);
+
       reset({
         ticket: {
           subject: complaint.ticket.subject,
@@ -111,6 +154,17 @@ export const useComplaintModal = ({ complaintId, onClose, mode, setMode }: UseCo
   return {
     complaint,
     isLoading,
+
+    // RESIDENT STUFF
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    residentIdField,
+    setSelectedResidentId,
+
     error,
     mode,
     form,

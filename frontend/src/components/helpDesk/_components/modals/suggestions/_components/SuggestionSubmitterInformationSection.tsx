@@ -1,7 +1,9 @@
-import React from 'react';
-import { User, Phone, Mail, MapPin, EyeOff } from 'lucide-react';
+import React, { useRef } from 'react';
+import { User, Phone, Mail, MapPin, EyeOff, Check } from 'lucide-react';
 import { type ViewSuggestion } from '@/services/helpDesk/suggestions/suggestions.types';
 import { FormField } from '@/components/_global/components/FormField';
+import { useSearchFilterResident } from '../../../_contexts/searchResidentContex';
+import { SearchResidents } from '../../../SearchResidents';
 
 interface SuggestionSubmitterInformationSectionProps {
   suggestion: ViewSuggestion;
@@ -12,6 +14,19 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
   suggestion,
   mode,
 }) => {
+  const {
+    // RESIDENT FIELDS
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    residentIdField,
+    setSelectedResidentId,
+  } = useSearchFilterResident();
+  const searchRef = useRef(null);
+
   // Check if submission is anonymous
   const isAnonymous = !suggestion.ticket.requester_name || 
                      suggestion.ticket.requester_name.trim() === '' ||
@@ -40,6 +55,49 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
         <h3 className="text-lg font-semibold">Submitter Information</h3>
       </div>
 
+      <div>
+        {mode === "view" ? null : (
+          <div>
+            {/* IS RESIDENT? */}
+            <div className="mb-6 bg-gray-50 rounded-lg p-4">
+              <label
+                htmlFor="isResident"
+                className="flex items-center cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  name="isResident"
+                  id="isResident"
+                  checked={isResident}
+                  onChange={(event) => setIsResident(event.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">
+                  I am a registered resident
+                </span>
+              </label>
+              <p className="text-sm text-gray-500 mt-1 ml-6">
+                Check this if you are a registered resident of the municipality
+              </p>
+            </div>
+
+            {/* Search Residents */}
+            {isResident && (
+              <div className="mb-6">
+                <SearchResidents
+                  headSearchRef={searchRef}
+                  search={searchResident || ""}
+                  isSearchingResidents={isLoadingResidents}
+                  filteredResidents={filteredResidents?.data || []}
+                  residentsFetchErrorMessage={residentsError?.message}
+                  onResidentClick={setSelectedResidentId}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           {mode === 'view' ? (
@@ -48,12 +106,21 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
                 Full Name
               </label>
               <p className="text-sm text-gray-900">{suggestion.ticket.requester_name}</p>
+              {isResident && (
+                  <div className="flex items-center gap-1">
+                    <Check className="text-green-600 w-4 h-4" />{" "}
+                    <span className="text-sm text-green-600">
+                      Registered resident
+                    </span>
+                  </div>
+              )}
             </div>
           ) : (
             <FormField
               name="ticket.requester_name"
               label="Full Name"
               placeholder="Enter full name"
+              readOnly={isResident !== undefined && residentIdField !== null}
             />
           )}
         </div>
@@ -74,6 +141,7 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
               name="ticket.contact_number"
               label="Contact Number"
               placeholder="Enter contact number"
+              readOnly={isResident !== undefined && residentIdField !== null}
             />
           )}
         </div>
@@ -97,6 +165,7 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
               name="ticket.email_address"
               label="Email Address"
               placeholder="Enter email address"
+              readOnly={isResident !== undefined && residentIdField !== null}
             />
           )}
         </div>
@@ -117,6 +186,7 @@ export const SuggestionSubmitterInformationSection: React.FC<SuggestionSubmitter
               name="ticket.complete_address"
               label="Complete Address"
               placeholder="Enter complete address"
+              readOnly={isResident !== undefined && residentIdField !== null}
             />
           )}
         </div>

@@ -2,13 +2,15 @@
 // hooks/suggestions/useSuggestionModal.ts - Modal state management hook
 // ============================================================================
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSuggestion, useUpdateSuggestion } from '@/services/helpDesk/suggestions/useSuggestions';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNotifications } from '@/components/_global/NotificationSystem';
 import { EditSuggestionSchema, type EditSuggestion } from '@/services/helpDesk/suggestions/suggestions.types';
 import { useTranslation } from 'react-i18next';
+import { useResidents } from '@/services/residents/useResidents';
+import { residentsService } from '@/services/residents/residents.service';
 
 interface UseSuggestionModalProps {
   suggestionId: string | null;
@@ -20,17 +22,6 @@ interface UseSuggestionModalProps {
 export const useSuggestionModal = ({ suggestionId, onClose, mode, setMode }: UseSuggestionModalProps) => {
   const { t } = useTranslation();
   const { showNotification } = useNotifications();
-  
-  // Fetch suggestion data
-  const { 
-    data: suggestion, 
-    isLoading, 
-    error,
-    refetch 
-  } = useSuggestion(suggestionId || '', !!suggestionId);
-
-  // Update suggestion mutation
-  const updateSuggestionMutation = useUpdateSuggestion();
 
   // Form setup
   const form = useForm<EditSuggestion>({
@@ -41,11 +32,63 @@ export const useSuggestionModal = ({ suggestionId, onClose, mode, setMode }: Use
     }
   });
 
-  const { handleSubmit, reset, formState: { errors, isDirty } } = form;
+  const { setValue, watch, handleSubmit, reset, formState: { errors, isDirty } } = form;
+  
+  // Fetch suggestion data
+  const { 
+    data: suggestion, 
+    isLoading, 
+    error,
+    refetch 
+  } = useSuggestion(suggestionId || '', !!suggestionId);
+
+  const [isResident, setIsResident] = useState(true);
+  const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
+  const residentIdField = watch('ticket.resident_id');
+  const searchResident = watch('ticket.resident_search');
+
+  // Update suggestion mutation
+  const updateSuggestionMutation = useUpdateSuggestion();
+  const { data: filteredResidents, isLoading: isLoadingResidents, error: residentsError } = useResidents({ search: searchResident || "" });
+
+  useEffect(() => {
+    setValue('ticket.resident_id', null);
+    setValue('ticket.requester_name', "");
+    setValue('ticket.contact_number', "");
+    setValue('ticket.email_address', "");
+    setValue('ticket.complete_address', "");
+    setSelectedResidentId('');
+  }, [isResident])
+
+  // selects the resident
+  // The effect won't re-execute unless residentId changes.
+  useEffect(() => {
+      if (selectedResidentId.trim().length !== 0) {
+          const timeoutId = setTimeout(() => {
+              (async () => {
+                  // backend search
+                  const res = await residentsService.getResident(
+                      selectedResidentId
+                      );
+                  setValue('ticket.resident_id', selectedResidentId)
+                  setValue('ticket.requester_name', res.first_name + " " + (res.middle_name ? res.middle_name + " " : '') + res.last_name);
+                  setValue('ticket.contact_number', res.mobile_number || "");
+                  setValue('ticket.email_address', res.email_address || "");
+                  setValue('ticket.complete_address', res.complete_address);
+              })();
+          }, 1000);
+  
+          return () => clearTimeout(timeoutId);
+      }
+  }, [selectedResidentId]);
 
   // Reset form when suggestion data changes
   useEffect(() => {
     if (suggestion) {
+
+      // console.log(appointment);
+      setIsResident(suggestion.ticket.resident_id !== null && suggestion.ticket.resident_id !== undefined);
+
       reset({
         ticket: {
           subject: suggestion.ticket.subject,
@@ -117,6 +160,17 @@ export const useSuggestionModal = ({ suggestionId, onClose, mode, setMode }: Use
   return {
     suggestion,
     isLoading,
+
+    // RESIDENT STUFF
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    residentIdField,
+    setSelectedResidentId,
+    
     error,
     mode,
     form,

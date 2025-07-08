@@ -38,7 +38,7 @@ export const useBlotterModal = ({ blotterId, mode, setMode, onClose }: UseBlotte
     refetch,
   } = useBlotter(blotterId || '', !!blotterId);
 
-  const [isResident, setIsResident] = useState(false);
+  const [isResident, setIsResident] = useState(true);
   const [selectedResidentId, setSelectedResidentId]  = useState<string>('');
   const residentIdField = watch('ticket.resident_id');
   const searchResident = watch('ticket.resident_search');
@@ -91,8 +91,8 @@ export const useBlotterModal = ({ blotterId, mode, setMode, onClose }: UseBlotte
 
     const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-    // console.log(appointment);
-    // setIsResident(blotter?.ticket.resident_id !== null && blotter?.ticket.resident_id !== undefined);
+    // console.log(blotter);
+    setIsResident(blotter?.ticket.resident_id !== null && blotter?.ticket.resident_id !== undefined);
 
     if (isResident && blotter) {
       setValue('ticket.resident_id', selectedResidentId)
