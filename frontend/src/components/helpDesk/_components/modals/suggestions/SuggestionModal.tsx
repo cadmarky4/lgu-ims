@@ -1,3 +1,8 @@
+/**
+ * Future implementation idea
+ * if i had more time: ability to toggle anonymity in update suggestion modal
+ */
+
 import React from 'react';
 import { FormProvider } from 'react-hook-form';
 import { BaseModal } from '../BaseModal';
