@@ -223,7 +223,7 @@ Route::prefix('appointments')->group(function () {
 // Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
 
 Route::prefix('blotter')->group(function () {
-    Route::get('/view/{id}', [BlotterController::class, 'show']);
+    Route::get('/view/{id}', [BlotterController::class, 'view']);
     Route::post('/', [BlotterController::class, 'store']);
     Route::put('/{id}', [BlotterController::class, 'update']);
     Route::post('/{id}/photo', [BlotterController::class, 'uploadPhoto']);
@@ -239,14 +239,12 @@ Route::prefix('complaint')->group(function () {
 // Route::apiResource('complaints', ComplaintController::class)->only(['index', 'store', 'show', 'update']);
 
 // Public Help Desk - Suggestions
-Route::prefix('suggestions')->group(function () {
-    Route::get('/statistics', [SuggestionController::class, 'statistics']);
-    Route::post('/{suggestion}/review', [SuggestionController::class, 'review']);
-    Route::post('/{suggestion}/approve', [SuggestionController::class, 'approve']);
-    Route::post('/{suggestion}/implement', [SuggestionController::class, 'implement']);
-    Route::post('/{suggestion}/reject', [SuggestionController::class, 'reject']);
+Route::prefix('suggestion')->group(function () {
+    Route::get('/view/{id}', [SuggestionController::class, 'view']);
+    Route::post('/', [SuggestionController::class, 'store']);
+    Route::put('/{id}', [SuggestionController::class, 'update']);
 });
-Route::apiResource('suggestions', SuggestionController::class)->only(['index', 'store', 'show', 'update']);
+// Route::apiResource('suggestions', SuggestionController::class)->only(['index', 'store', 'show', 'update']);
 
 // Settings - System Configuration (temporarily outside auth for testing)
 Route::get('settings', [SettingController::class, 'index']);
@@ -340,23 +338,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('documents', DocumentController::class);
 
     // Help Desk - Complaints - Specific routes BEFORE apiResource
-    Route::prefix('complaints')->group(function () {
-        Route::get('/statistics', [ComplaintController::class, 'statistics']);
-        Route::post('/{complaint}/acknowledge', [ComplaintController::class, 'acknowledge']);
-        Route::post('/{complaint}/assign', [ComplaintController::class, 'assign']);
-        Route::post('/{complaint}/resolve', [ComplaintController::class, 'resolve']);
-        Route::post('/{complaint}/feedback', [ComplaintController::class, 'submitFeedback']);
-    });
-    Route::apiResource('complaints', ComplaintController::class);
+    // Route::prefix('complaints')->group(function () {
+    //     Route::get('/statistics', [ComplaintController::class, 'statistics']);
+    //     Route::post('/{complaint}/acknowledge', [ComplaintController::class, 'acknowledge']);
+    //     Route::post('/{complaint}/assign', [ComplaintController::class, 'assign']);
+    //     Route::post('/{complaint}/resolve', [ComplaintController::class, 'resolve']);
+    //     Route::post('/{complaint}/feedback', [ComplaintController::class, 'submitFeedback']);
+    // });
+    // Route::apiResource('complaints', ComplaintController::class);
 
     // Help Desk - Suggestions - Specific routes BEFORE apiResource
-    Route::prefix('suggestions')->group(function () {
-        Route::get('/statistics', [SuggestionController::class, 'statistics']);
-        Route::post('/{suggestion}/review', [SuggestionController::class, 'review']);
-        Route::post('/{suggestion}/vote', [SuggestionController::class, 'vote']);
-        Route::patch('/{suggestion}/implementation', [SuggestionController::class, 'updateImplementation']);
-    });
-    Route::apiResource('suggestions', SuggestionController::class);
+    // Route::prefix('suggestions')->group(function () {
+    //     Route::get('/statistics', [SuggestionController::class, 'statistics']);
+    //     Route::post('/{suggestion}/review', [SuggestionController::class, 'review']);
+    //     Route::post('/{suggestion}/vote', [SuggestionController::class, 'vote']);
+    //     Route::patch('/{suggestion}/implementation', [SuggestionController::class, 'updateImplementation']);
+    // });
+    // Route::apiResource('suggestions', SuggestionController::class);
 
     // Help Desk - Blotter Cases - Specific routes BEFORE apiResource
     // Route::prefix('blotter-cases')->group(function () {
@@ -370,16 +368,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::apiResource('blotter-cases', BlotterCaseController::class);
 
     // Help Desk - Appointments - Specific routes BEFORE apiResource
-    Route::prefix('appointments')->group(function () {
-        Route::get('/statistics', [AppointmentController::class, 'statistics']);
-        Route::get('/available-slots', [AppointmentController::class, 'getAvailableSlots']);
-        Route::post('/{appointment}/confirm', [AppointmentController::class, 'confirm']);
-        Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
-        Route::post('/{appointment}/complete', [AppointmentController::class, 'complete']);
-        Route::post('/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
-        Route::post('/{appointment}/follow-up', [AppointmentController::class, 'addFollowUp']);
-    });
-    Route::apiResource('appointments', AppointmentController::class);
+    // Route::prefix('appointments')->group(function () {
+    //     Route::get('/statistics', [AppointmentController::class, 'statistics']);
+    //     Route::get('/available-slots', [AppointmentController::class, 'getAvailableSlots']);
+    //     Route::post('/{appointment}/confirm', [AppointmentController::class, 'confirm']);
+    //     Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
+    //     Route::post('/{appointment}/complete', [AppointmentController::class, 'complete']);
+    //     Route::post('/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
+    //     Route::post('/{appointment}/follow-up', [AppointmentController::class, 'addFollowUp']);
+    // });
+    // Route::apiResource('appointments', AppointmentController::class);
 
     // Barangay Officials - Specific routes BEFORE apiResource
     Route::prefix('barangay-officials')->group(function () {

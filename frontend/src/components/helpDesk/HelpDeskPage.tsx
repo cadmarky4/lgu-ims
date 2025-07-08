@@ -22,6 +22,10 @@ import { HelpDeskSearch } from "./_components/HelpDeskSearch";
 import { TicketsList } from "./_components/TicketsList";
 import { TicketFormsDropdown } from "./_components/TicketFormsDropdown";
 import { DeleteConfirmModal } from "./_components/DeleteConfirmModal";
+import { AppointmentModal } from "./_components/modals/appointments/AppointmentModal";
+import { BlotterModal } from "./_components/modals/blotter/BlotterModal";
+import { SuggestionModal } from "./_components/modals/suggestions/SuggestionModal";
+import { ComplaintModal } from "./_components/modals/complaints/ComplaintModal";
 
 const HelpDeskPage: React.FC = () => {
   // const navigate = useNavigate();
@@ -39,6 +43,12 @@ const HelpDeskPage: React.FC = () => {
   );
   const [status, setStatus] = useState<Status | undefined>(undefined);
   const [priority, setPriority] = useState<Priority | undefined>(undefined);
+  const [showModal, setShowModal] = useState(false);
+  const [modalId, setModalId] = useState<string | null>(null);
+  const [modalCategory, setModalCategory] = useState<TicketCategory | null>(
+    null
+  );
+  const [mode, setMode] = useState<"edit" | "view">("view");
 
   // Delete states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -82,10 +92,11 @@ const HelpDeskPage: React.FC = () => {
 
   const handleDeleteClose = () => {
     setShowDeleteConfirm(false);
-  }
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!ticketToDelete?.id) throw new Error(t("helpDesk.errors.ticketNotFound"));
+    if (!ticketToDelete?.id)
+      throw new Error(t("helpDesk.errors.ticketNotFound"));
 
     try {
       await deleteTicket.mutateAsync(ticketToDelete.id);
@@ -99,11 +110,11 @@ const HelpDeskPage: React.FC = () => {
       refetch();
     } catch (error) {
       console.error("Delete error:", error);
-
+      const errorMessage = (error as Error)?.message || t('helpDesk.complaintsForm.messages.updateError');
       showNotification({
         type: "error",
         title: t("helpDesk.messages.deleteError"),
-        message: t("helpDesk.messages.deleteError"),
+        message: errorMessage,
         duration: 3000,
         persistent: false,
       });
@@ -125,6 +136,27 @@ const HelpDeskPage: React.FC = () => {
   const handlePriorityChange = (priority: Priority | undefined) => {
     setPriority(priority);
     setCurrentPage(1);
+  };
+
+  const handleEditTicket = (id: string, category: TicketCategory) => {
+    setMode("edit");
+    setShowModal(true);
+    setModalId(id);
+    setModalCategory(category);
+  };
+
+  const handleViewTicket = (id: string, category: TicketCategory) => {
+    setMode("view");
+    setShowModal(true);
+    setModalId(id);
+    setModalCategory(category);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalId(null);
+    setModalCategory(null);
+    setMode("view");
   };
 
   // Prepare data
@@ -166,6 +198,54 @@ const HelpDeskPage: React.FC = () => {
         onClose={handleDeleteClose}
         onConfirm={handleDeleteConfirm}
       />
+
+      {/* EDIT AND VIEW MODAL */}
+      {(() => {
+        switch (modalCategory) {
+          case "APPOINTMENT":
+            return (
+              <AppointmentModal
+                appointmentId={modalId}
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                mode={mode}
+                setMode={setMode}
+              />
+            );
+          case "BLOTTER":
+            return (
+              <BlotterModal
+                blotterId={modalId}
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                mode={mode}
+                setMode={setMode}
+              />
+            )
+            case "COMPLAINT":
+              return (
+                <ComplaintModal
+                  complaintId={modalId}
+                  isOpen={showModal}
+                  onClose={handleCloseModal}
+                  mode={mode}
+                  setMode={setMode}
+                />
+              )
+            case "SUGGESTION":
+              return (
+                <SuggestionModal
+                  suggestionId={modalId}
+                  isOpen={showModal}
+                  onClose={handleCloseModal}
+                  mode={mode}
+                  setMode={setMode}
+                />
+              )
+          default:
+            return null;
+        }
+      })()}
 
       {/* Breadcrumb */}
       <Breadcrumb isLoaded={isLoaded} />
@@ -216,6 +296,8 @@ const HelpDeskPage: React.FC = () => {
         pagination={pagination}
         handlePageChange={handlePageChange}
         handleDelete={handleDelete}
+        handleEdit={handleEditTicket}
+        handleView={handleViewTicket}
       />
 
       {/* Modal */}

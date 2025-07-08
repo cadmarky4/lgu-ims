@@ -47,7 +47,8 @@ export const BaseTicketSchema = z.object({
         .refine(val => val === '' || z.string().email().safeParse(val).success, {
             message: 'helpDesk.validation.invalidEmailFormat',
         })
-        .optional(),
+        .optional()
+        .nullable(),
     complete_address: z.string().min(1,'helpDesk.validation.completeAddressRequired').max(255, 'helpDesk.validation.maxCharExcceeded'),
     category: TicketCategorySchema,
     status: StatusSchema,
@@ -99,3 +100,4 @@ export const statusOptions = StatusSchema.options;
 export const statusOptionsAll = z.enum(["ALL", ...StatusSchema.options] as const).options;
 export const categoryOptions = TicketCategorySchema.options;
 export const categoryOptionsAll = z.enum(["ALL", ...TicketCategorySchema.options] as const).options;
+export const feedbackCategoryOptions = FeedbackCategorySchema.options;

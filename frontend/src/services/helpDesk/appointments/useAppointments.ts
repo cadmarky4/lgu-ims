@@ -49,6 +49,7 @@ export function useCreateAppointment() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.lists() });
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() });
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
             queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
             
             // Set the new appointment data in cache
@@ -75,19 +76,13 @@ export function useUpdateAppointment() {
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: EditAppointment }) => 
             appointmentsService.updateAppointment(id, data),
-        onSuccess: (updatedAppointment: ViewAppointment, { id }) => {
+        onSuccess: (_, { id }) => {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: appointmentsKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() });
-            
-            // Update the specific appointment in cache
-            queryClient.setQueryData(
-                appointmentsKeys.detail(id),
-                {
-                    ticket: updatedAppointment.ticket,
-                    appointment: updatedAppointment.appointment
-                } as ViewAppointment
-            );
+            queryClient.invalidateQueries({ queryKey: appointmentsKeys.statistics() }); // does not really do anything lol
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.statistics() }) // this one does the REAL thing
+            queryClient.invalidateQueries({ queryKey: helpDeskKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: appointmentsKeys.detail(id) })
         },
         onError: (error) => {
             console.error('Failed to update appointment:', error);

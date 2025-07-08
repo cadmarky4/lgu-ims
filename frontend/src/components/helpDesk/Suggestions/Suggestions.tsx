@@ -1,127 +1,52 @@
-import React, { useState, useEffect } from "react";
-import {
-  Lightbulb,
-  User,
-  Target,
-  ThumbsUp,
-  Send,
-  Star,
-  TrendingUp,
-  Award,
-  Loader,
-  AlertCircle,
-  CheckCircle,
-} from "lucide-react";
-// import { SuggestionsService } from "../../services/helpDesk/suggestions/suggestions.service";
-// import type { CreateSuggestionData } from "../../services/helpDesk/suggestions/suggestions.types";
+import React, { useState, useEffect, useRef } from "react";
+import { Lightbulb, User, Send, Loader } from "lucide-react";
 import Breadcrumb from "../../_global/Breadcrumb";
-
-interface SuggestionFormData {
-  // Personal Information
-  name: string;
-  email: string;
-  phone: string;
-  isResident: "yes" | "no";
-
-  // Suggestion Details
-  category: string;
-  title: string;
-  description: string;
-  benefits: string;
-  implementation: string;
-  resources: string;
-
-  // Additional
-  priority: "low" | "medium" | "high";
-  allowContact: boolean;
-}
-
-interface ValidationErrors {
-  name?: string;
-  category?: string;
-  title?: string;
-  description?: string;
-}
-
-interface RecentSuggestion {
-  id: number;
-  title: string;
-  category: string;
-  likes: number;
-}
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useCreateSuggestionForm } from "./useCreateSuggestionForm";
+import { FormProvider } from "react-hook-form";
+import { Tips } from "./_components/Tips";
+import { MotivationalBanner } from "./_components/MotivationalBanner";
+import { FormField } from "@/components/_global/components/FormField";
+import {
+  feedbackCategoryOptions,
+  priorities,
+} from "@/services/helpDesk/helpDesk.type";
+import { enumToTitleCase } from "../utilities/enumToTitleCase";
+import { SearchResidents } from "../_components/SearchResidents";
 
 const SuggestionsPage: React.FC = () => {
-  const [formData, setFormData] = useState<SuggestionFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    isResident: "yes",
-    category: "",
-    title: "",
-    description: "",
-    benefits: "",
-    implementation: "",
-    resources: "",
-    priority: "medium",
-    allowContact: true,
-  });
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  const [submitted, setSubmitted] = useState<boolean>(false);
-  // form-post submission loading ni adrian
-  const [loading, setLoading] = useState<boolean>(false);
-  // error na dapat lumabas pag unsuccessful yung submit pero valid naman yung fields (network error, etc.)
-  const [error, setError] = useState<string>("");
-  const [suggestionNumber, setSuggestionNumber] = useState<string>("");
-
-  const suggestionsService = new SuggestionsService();
-  // field-related errors for inline display
-  const [errors, setErrors] = useState<ValidationErrors>({});
   // loading ng breadcrumbs ni sean
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const suggestionCategories: string[] = [
-    "Community Development",
-    "Infrastructure Improvement",
-    "Environmental Protection",
-    "Public Safety",
-    "Health Services",
-    "Education",
-    "Tourism and Culture",
-    "Economic Development",
-    "Digital Services",
-    "Transportation",
-    "Social Welfare",
-    "Youth and Sports",
-    "Senior Citizens Affairs",
-    "Other",
-  ];
+  const onSuccess = () => {
+    navigate("/help-desk");
+  };
 
-  const recentSuggestions: RecentSuggestion[] = [
-    {
-      id: 1,
-      title: "Community Garden Project",
-      category: "Environmental Protection",
-      likes: 45,
-    },
-    {
-      id: 2,
-      title: "Mobile App for LGU Services",
-      category: "Digital Services",
-      likes: 78,
-    },
-    {
-      id: 3,
-      title: "Weekend Night Market",
-      category: "Economic Development",
-      likes: 62,
-    },
-    {
-      id: 4,
-      title: "Bike Lanes on Main Roads",
-      category: "Transportation",
-      likes: 93,
-    },
-  ];
+  const {
+    form,
+    isAnonymous,
+    setIsAnonymous,
+    isResident,
+    setIsResident,
+    searchResident,
+    filteredResidents,
+    isLoadingResidents,
+    residentsError,
+    isSubmitting,
+    residentIdField,
+    setSelectedResidentId,
+    handleSubmit,
+  } = useCreateSuggestionForm({ onSuccess });
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const handleSubmitButton = () => {
+    console.log(form.formState.errors);
+    handleSubmit();
+  };
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -131,149 +56,17 @@ const SuggestionsPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ): void => {
-    const { name, value, type } = e.target;
-
-    if (type === "checkbox") {
-      const target = e.target as HTMLInputElement;
-      setFormData({
-        ...formData,
-        [name]: target.checked,
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-
-    // Clear error when user starts typing
-    if (errors[name as keyof ValidationErrors]) {
-      setErrors({
-        ...errors,
-        [name]: undefined,
-      });
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: ValidationErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!formData.category) {
-      newErrors.category = "Please select a category";
-    }
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Suggestion title is required";
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Detailed description is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }; 
-
-  const handleSubmit = async (): Promise<void> => {
-    // Validate required fields
-    if (!validateForm()) return;
-
-    console.log("Submit button clicked, form data:", formData);
-
-    setLoading(true);
-    setError("");
-    console.log("Starting API call...");
-
-    try {
-      // Transform frontend form data to backend API format
-      const suggestionData: CreateSuggestionData = {
-        name: formData.name,
-        category: formData.category,
-        title: formData.title,
-        description: formData.description,
-        email: formData.email || undefined,
-        phone: formData.phone || undefined,
-        is_resident: formData.isResident === "yes",
-        benefits: formData.benefits || undefined,
-        implementation: formData.implementation || undefined,
-        resources: formData.resources || undefined,
-        priority: formData.priority,
-        allow_contact: formData.allowContact,
-      }; const response = await suggestionsService.createSuggestion(suggestionData);
-      console.log("API response received:", response);
-
-      setSuggestionNumber(response.suggestion_number);
-      setSubmitted(true);
-      console.log("Form submitted successfully with number:", response.suggestion_number);
-
-      // Reset form after 5 seconds
-      setTimeout(() => {
-        setSubmitted(false);
-        setSuggestionNumber("");
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          isResident: "yes",
-          category: "",
-          title: "",
-          description: "",
-          benefits: "",
-          implementation: "",
-          resources: "",
-          priority: "medium",
-          allowContact: true,
-        });
-      }, 5000);
-    } catch (err) {
-      console.error("Error submitting suggestion:", err);
-
-      // More detailed error handling
-      if (err instanceof Error) {
-        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-          setError("Unable to connect to the server. Please check your internet connection and try again.");
-        } else if (err.message.includes('Authentication failed')) {
-          setError("Your session has expired. Please log in again.");
-        } else {
-          setError(err.message || "Failed to submit suggestion");
-        }
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getInputClassName = (fieldName: keyof ValidationErrors): string => {
-    const baseClasses = "w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent";
-    const hasError = errors[fieldName];
-    
-    if (hasError) {
-      return `${baseClasses} border-red-500 focus:ring-red-500`;
-    }
-    
-    return `${baseClasses} border-gray-300 focus:ring-yellow-500`;
-  };
-
   return (
     <div className="@container/main p-6 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
+      <div
+        className={`mb-8 transition-all duration-700 ease-out ${
+          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+        }`}
+      >
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
           <Lightbulb className="h-8 w-8 mr-3 text-yellow-500" />
           Process Resident Suggestions
@@ -285,405 +78,250 @@ const SuggestionsPage: React.FC = () => {
       </div>
 
       {/* Motivational Banner */}
-      <div className={`bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg p-6 mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '100ms' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold mb-2">Community Impact</h3>
-            <p className="text-purple-100">
-              Track and process valuable suggestions from residents to improve
-              our services.
-            </p>
-          </div>
-          <Award className="h-16 w-16 text-yellow-300" />
-        </div>
-      </div>
+      <MotivationalBanner isLoaded={isLoaded} />
 
-      {/* Popular Suggestions */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '150ms' }}>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-          <TrendingUp className="h-5 w-5 mr-2" />
-          Popular Recent Suggestions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {recentSuggestions.map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <p className="font-semibold text-gray-800 text-sm mb-1">
-                {suggestion.title}
+      <FormProvider {...form}>
+        <form onSubmit={handleSubmit}>
+          <div
+            className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
+              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+            style={{ transitionDelay: "200ms" }}
+          >
+            {/* Anonymous Option */}
+            <div className="mb-6 bg-gray-50 rounded-lg p-4">
+              <label
+                htmlFor="isAnonymous"
+                className="flex items-center cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  name="isAnonymous"
+                  id="isAnonymous"
+                  checked={isAnonymous}
+                  onChange={(event) => setIsAnonymous(event.target.checked)}
+                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">
+                  Submit this complaint anonymously
+                </span>
+              </label>
+              <p className="text-sm text-gray-500 mt-1 ml-6">
+                Your identity will be kept confidential
               </p>
-              <p className="text-xs text-gray-500 mb-2">
-                {suggestion.category}
-              </p>
-              <div className="flex items-center text-sm text-gray-600">
-                <ThumbsUp className="h-4 w-4 mr-1" />
-                <span>{suggestion.likes} likes</span>
-              </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {submitted ? (
-        <div className={`bg-green-50 border border-green-200 rounded-lg p-6 flex items-center space-x-3 transition-all duration-700 ease-out ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`} style={{ transitionDelay: '200ms' }}>
-          <Star className="h-6 w-6 text-green-600" />
-          <div>
-            <h3 className="text-lg font-semibold text-green-900">
-              Suggestion Recorded Successfully!
-            </h3>
-            <p className="text-green-700">
-              Your suggestion has been submitted with reference number: <strong>{suggestionNumber}</strong>
-            </p>
-            <p className="text-green-700 text-sm mt-1">
-              The planning committee will review and evaluate this proposal.
-            </p>
-          </div>
-        </div>
-      ) : (
-      <>
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-6 flex items-center space-x-3">
-            <AlertCircle className="h-6 w-6 text-red-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-red-900">Error</h3>
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        )}
+            {/* Personal Information */}
+            {!isAnonymous && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Submitter Information
+                </h2>
 
-          <div className={`@container/main-form bg-white shadow-lg rounded-lg p-6 transition-all duration-700 ease-out ${
-                    isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                  }`} style={{ transitionDelay: '200ms' }}>
-          {/* Personal Information */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Submitter Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={getInputClassName("name")}
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Contact Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  id="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="isResident"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Are you a resident?
-                </label>
-                <select
-                  name="isResident"
-                  id="isResident"
-                  value={formData.isResident}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                >
-                  <option value="yes">Yes, I'm a resident</option>
-                  <option value="no">No, I'm a visitor/non-resident</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Suggestion Details */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2" />
-              Suggestion Details
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Category *
-                </label>
-                <select
-                  name="category"
-                  id="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className={getInputClassName("category")}
-                >
-                  <option value="">Select a category</option>
-                  {suggestionCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Suggestion Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  id="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Give your suggestion a clear, descriptive title"
-                  className={getInputClassName("title")}
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Detailed Description *
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={5}
-                  className={getInputClassName("description")}
-                  placeholder="Describe your suggestion in detail. What problem does it solve? How will it work?"
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                )}
-              </div>
-
-                <div>
+                <div className="mb-6 bg-gray-50 rounded-lg p-4">
                   <label
-                    htmlFor="benefits"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Expected Benefits
-                  </label>
-                  <textarea
-                    name="benefits"
-                    id="benefits"
-                    value={formData.benefits}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                    placeholder="What positive impacts will this suggestion have on the community?"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="implementation"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Implementation Ideas
-                  </label>
-                  <textarea
-                    name="implementation"
-                    id="implementation"
-                    value={formData.implementation}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                    placeholder="Do you have ideas on how this could be implemented?"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="resources"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Resources Needed
-                  </label>
-                  <input
-                    type="text"
-                    name="resources"
-                    id="resources"
-                    value={formData.resources}
-                    onChange={handleChange}
-                    placeholder="What resources (budget, manpower, equipment) might be needed?"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority Level
-                  </label>
-                  <div className="flex space-x-4">
-                    <label htmlFor="priority-low" className="flex items-center">
-                      <input
-                        type="radio"
-                        name="priority"
-                        id="priority-low"
-                        value="low"
-                        checked={formData.priority === "low"}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-                      />
-                      <span className="ml-2 text-gray-700">Low</span>
-                    </label>
-                    <label
-                      htmlFor="priority-medium"
-                      className="flex items-center"
-                    >
-                      <input
-                        type="radio"
-                        name="priority"
-                        id="priority-medium"
-                        value="medium"
-                        checked={formData.priority === "medium"}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-                      />
-                      <span className="ml-2 text-gray-700">Medium</span>
-                    </label>
-                    <label htmlFor="priority-high" className="flex items-center">
-                      <input
-                        type="radio"
-                        name="priority"
-                        id="priority-high"
-                        value="high"
-                        checked={formData.priority === "high"}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-                      />
-                      <span className="ml-2 text-gray-700">High</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <label
-                    htmlFor="allowContact"
+                    htmlFor="isResident"
                     className="flex items-center cursor-pointer"
                   >
                     <input
                       type="checkbox"
-                      name="allowContact"
-                      id="allowContact"
-                      checked={formData.allowContact}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                      name="isResident"
+                      id="isResident"
+                      checked={isResident}
+                      onChange={(event) => setIsResident(event.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <span className="ml-2 text-gray-700">
-                      I'm willing to be contacted for further discussion about
-                      this suggestion
+                      I am a registered resident
                     </span>
                   </label>
+                  <p className="text-sm text-gray-500 mt-1 ml-6">
+                    Check this if you are a registered resident of the
+                    municipality
+                  </p>
+                </div>
+
+                {/* Search Residents */}
+                {isResident && (
+                  <div className="mb-6">
+                    <SearchResidents
+                      headSearchRef={searchRef}
+                      search={searchResident || ""}
+                      isSearchingResidents={isLoadingResidents}
+                      filteredResidents={filteredResidents?.data || []}
+                      residentsFetchErrorMessage={residentsError?.message}
+                      onResidentClick={setSelectedResidentId}
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <FormField
+                      name="ticket.requester_name"
+                      label={t("helpDesk.fields.fullName")}
+                      placeholder={t("helpDesk.placeholders.fullName")}
+                      readOnly={
+                        residentIdField !== undefined &&
+                        residentIdField !== null
+                      }
+                    />
+                  </div>
+                  <div>
+                    <FormField
+                      type="email"
+                      name="ticket.email_address"
+                      label={t("helpDesk.fields.emailAddress")}
+                      placeholder={t("helpDesk.placeholders.emailAddress")}
+                      readOnly={
+                        residentIdField !== undefined &&
+                        residentIdField !== null
+                      }
+                    />
+                  </div>
+                  <div>
+                    <FormField
+                      name="ticket.contact_number"
+                      label={t("helpDesk.fields.contactNumber")}
+                      placeholder={t("helpDesk.placeholders.contactNumber")}
+                      readOnly={
+                        residentIdField !== undefined &&
+                        residentIdField !== null
+                      }
+                    />
+                  </div>
+                  <div>
+                    <FormField
+                      name="ticket.complete_address"
+                      label={t("helpDesk.fields.completeAddress")}
+                      placeholder={t("helpDesk.placeholders.completeAddress")}
+                      readOnly={
+                        residentIdField !== undefined &&
+                        residentIdField !== null
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Suggestion Details */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Lightbulb className="h-5 w-5 mr-2" />
+                Suggestion Details
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField
+                    type="select"
+                    name="suggestion.s_category"
+                    label={t("helpDesk.suggestionsForm.fields.cCategory")}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.cCategory"
+                    )}
+                    options={feedbackCategoryOptions.map((feedback) => ({
+                      value: feedback,
+                      label: enumToTitleCase(feedback),
+                    }))}
+                    required
+                  />
+
+                  <FormField
+                    type="select"
+                    name="ticket.priority"
+                    label={t("helpDesk.fields.priority")}
+                    options={priorities.map((priority) => ({
+                      value: priority,
+                      label: enumToTitleCase(priority),
+                    }))}
+                    placeholder={t("helpDesk.placeholders.priority")}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    name="ticket.subject"
+                    label={t("helpDesk.suggestionsForm.fields.subject")}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.subject"
+                    )}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    type="textarea"
+                    name="ticket.description"
+                    label={t("helpDesk.suggestionsForm.fields.description")}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.description"
+                    )}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    type="textarea"
+                    name="suggestion.expected_benefits"
+                    label={t(
+                      "helpDesk.suggestionsForm.fields.expectedBenefits"
+                    )}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.expectedBenefits"
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    type="textarea"
+                    name="suggestion.implementation_ideas"
+                    label={t(
+                      "helpDesk.suggestionsForm.fields.implementationIdeas"
+                    )}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.implementationIdeas"
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    name="suggestion.resources_needed"
+                    label={t("helpDesk.suggestionsForm.fields.resourcesNeeded")}
+                    placeholder={t(
+                      "helpDesk.suggestionsForm.placeholders.resourcesNeeded"
+                    )}
+                  />
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between">
-              <p className="text-sm text-gray-500">* Required fields</p>            <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50"
+              <p className="text-sm text-gray-500">* Required fields</p>{" "}
+              <button
+                onClick={handleSubmitButton}
+                disabled={isSubmitting}
+                className="cursor-pointer px-6 py-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50"
               >
-                {loading ? (
+                {isSubmitting ? (
                   <Loader className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
                   <Send className="h-5 w-5 mr-2" />
                 )}
-                {loading ? "Submitting..." : "Submit Suggestion"}
+                {isSubmitting ? "Submitting..." : "Submit Suggestion"}
               </button>
             </div>
           </div>
-        </>
-      )}
+        </form>
+      </FormProvider>
 
       {/* Tips Section */}
-      <div className={`mt-8 grid grid-cols-1 @lg/main:grid-cols-2 @4xl/main:grid-cols-3 gap-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '300ms' }}>
-        <div className="bg-blue-50 rounded-lg p-6">
-          <Target className="h-8 w-8 text-blue-600 mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-2">Be Specific</h3>
-          <p className="text-sm text-gray-600">
-            Clear, detailed suggestions are more likely to be implemented
-          </p>
-        </div>
-
-        <div className="bg-green-50 rounded-lg p-6">
-          <ThumbsUp className="h-8 w-8 text-green-600 mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-2">Think Practical</h3>
-          <p className="text-sm text-gray-600">
-            Consider feasibility and available resources
-          </p>
-        </div>
-
-        <div className="bg-purple-50 rounded-lg p-6">
-          <Star className="h-8 w-8 text-purple-600 mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-2">Focus on Impact</h3>
-          <p className="text-sm text-gray-600">
-            Highlight how your idea benefits the community
-          </p>
-        </div>
-      </div>
+      <Tips isLoaded={isLoaded} />
     </div>
   );
 };

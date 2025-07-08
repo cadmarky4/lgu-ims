@@ -4,343 +4,220 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Suggestion;
-use App\Models\Schemas\SuggestionSchema;
-use Illuminate\Http\Request;
+use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class SuggestionController extends Controller
 {
     /**
-     * Display the specified resource.
+     * View a specific suggestion
      */
-    public function index(Request $request): JsonResponse
+    public function view(string $id): JsonResponse
     {
-        $query = Suggestion::with('resident');
+        try {
+            $suggestion = Suggestion::with('ticket')
+                ->where('base_ticket_id', $id)
+                ->first();
 
-        // Apply filters
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
+            if (!$suggestion) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Suggestion not found',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Suggestion retrieved successfully',
+                'data' => [
+                    'ticket' => $suggestion->ticket,
+                    'suggestion' => $suggestion
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving suggestion: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('implementation_status')) {
-            $query->where('implementation_status', $request->implementation_status);
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('suggester_name', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply sorting
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
-
-        $suggestions = $query->paginate($request->get('per_page', 15));
-
-        return response()->json([
-            'success' => true,
-            'data' => $suggestions->items(),
-            'current_page' => $suggestions->currentPage(),
-            'per_page' => $suggestions->perPage(),
-            'total' => $suggestions->total(),
-            'last_page' => $suggestions->lastPage(),
-            'from' => $suggestions->firstItem(),
-            'to' => $suggestions->lastItem(),
-            'links' => $suggestions->linkCollection(),
-            'prev_page_url' => $suggestions->previousPageUrl(),
-            'next_page_url' => $suggestions->nextPageUrl(),
-            'first_page_url' => $suggestions->url(1),
-            'last_page_url' => $suggestions->url($suggestions->lastPage()),
-            'path' => $suggestions->path()
-        ]);
     }
 
     /**
-     * Store a newly created suggestion in storage.
+     * Create a new suggestion
      */
     public function store(Request $request): JsonResponse
     {
-        // Use frontend field names for validation
+        // Validation rules
         $validator = Validator::make($request->all(), [
-            // Frontend fields (required)
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            
-            // Frontend fields (optional)
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'is_resident' => 'sometimes|in:yes,no',
-            'benefits' => 'nullable|string',
-            'implementation' => 'nullable|string',
-            'resources' => 'nullable|string|max:255',
-            'priority' => 'sometimes|in:low,medium,high',
-            'allow_contact' => 'boolean',
-            
-            // Optional system fields
-            'resident_id' => 'nullable|exists:residents,id',
+            // Ticket fields
+            'ticket.subject' => 'required|string|max:255',
+            'ticket.description' => 'required|string',
+            'ticket.priority' => ['required', Rule::in(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])],
+            'ticket.requester_name' => 'nullable|string|max:255',
+            'ticket.resident_id' => 'nullable|uuid',
+            'ticket.resident_search' => 'nullable|string',
+            'ticket.contact_number' => 'nullable|string|size:16',
+            'ticket.email_address' => 'nullable|email|max:255',
+            'ticket.complete_address' => 'nullable|string|max:255',
+            'ticket.category' => 'required|in:SUGGESTION',
+
+            // Suggestion fields
+            'suggestion.s_category' => ['required', Rule::in(Suggestion::CATEGORIES)],
+            'suggestion.expected_benefits' => 'nullable|string',
+            'suggestion.implementation_ideas' => 'nullable|string',
+            'suggestion.resources_needed' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation errors',
+                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        // Generate suggestion number
-        $suggestionNumber = $this->generateSuggestionNumber();
+        try {
+            DB::beginTransaction();
 
-        $suggestion = Suggestion::create(array_merge($validator->validated(), [
-            'suggestion_number' => $suggestionNumber,
-            'status' => 'SUBMITTED',
-            'date_submitted' => now()->toDateString(),
-            'created_by' => Auth::id(),
-        ]));
-
-        $suggestion->load('resident');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Suggestion submitted successfully',
-            'data' => $suggestion
-        ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Suggestion $suggestion): JsonResponse
-    {
-        $suggestion->load(['resident', 'votes']);
-
-        return response()->json([
-            'success' => true,
-            'data' => $suggestion
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Suggestion $suggestion): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'suggester_name' => 'sometimes|string|max:255',
-            'suggestor_contact' => 'nullable|string|max:255',
-            'suggestor_email' => 'nullable|email|max:255',
-            'suggestor_address' => 'nullable|string',
-            'category' => 'sometimes|in:INFRASTRUCTURE,SERVICES,PROGRAMS,POLICIES,FACILITIES,TECHNOLOGY,OTHER',
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'priority_level' => 'nullable|in:LOW,MEDIUM,HIGH,URGENT',
-            'expected_impact' => 'nullable|string',
-            'estimated_cost' => 'nullable|numeric|min:0',
-            'target_department' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $suggestion->update($validator->validated());
-        $suggestion->load('resident');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Suggestion updated successfully',
-            'data' => $suggestion
-        ]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Suggestion $suggestion): JsonResponse
-    {
-        $suggestion->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Suggestion deleted successfully'
-        ]);
-    }
-
-    /**
-     * Review a suggestion
-     */
-    public function review(Request $request, Suggestion $suggestion): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:UNDER_REVIEW,APPROVED,REJECTED,IMPLEMENTED',
-            'review_notes' => 'nullable|string',
-            'estimated_budget' => 'nullable|numeric|min:0',
-            'target_completion_date' => 'nullable|date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $suggestion->update(array_merge($validator->validated(), [
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-        ]));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Suggestion reviewed successfully',
-            'data' => $suggestion->fresh(['resident'])
-        ]);
-    }
-
-    /**
-     * Vote on a suggestion
-     */
-    public function vote(Request $request, Suggestion $suggestion): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'vote_type' => 'required|in:UPVOTE,DOWNVOTE',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Check if user already voted
-        $existingVote = $suggestion->votes()->where('user_id', Auth::id())->first();
-
-        if ($existingVote) {
-            // Update existing vote
-            $existingVote->update(['vote_type' => $request->vote_type]);
-        } else {
-            // Create new vote
-            $suggestion->votes()->create([
-                'user_id' => Auth::id(),
-                'vote_type' => $request->vote_type,
+            // Create ticket
+            $ticket = Ticket::create([
+                ...$request->input('ticket'),
+                'category' => 'SUGGESTION',
+                'status' => 'OPEN'
             ]);
-        }
 
-        // Update vote counts
-        $suggestion->updateVoteCounts();
+            // Create suggestion
+            $suggestionData = $request->input('suggestion');
+            $suggestion = Suggestion::create([
+                'base_ticket_id' => $ticket->id,
+                's_category' => $suggestionData['s_category'],
+                'expected_benefits' => $suggestionData['expected_benefits'] ?? null,
+                'implementation_ideas' => $suggestionData['implementation_ideas'] ?? null,
+                'resources_needed' => $suggestionData['resources_needed'] ?? null,
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Vote recorded successfully',
-            'data' => $suggestion->fresh(['resident', 'votes'])
-        ]);
-    }
+            DB::commit();
 
-    /**
-     * Update implementation status
-     */
-    public function updateImplementation(Request $request, Suggestion $suggestion): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'implementation_status' => 'required|in:NOT_STARTED,IN_PROGRESS,COMPLETED,ON_HOLD,CANCELLED',
-            'implementation_notes' => 'nullable|string',
-            'actual_cost' => 'nullable|numeric|min:0',
-            'completion_percentage' => 'nullable|integer|min:0|max:100',
-        ]);
+            // Load relationship for response
+            $suggestion->load('ticket');
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Suggestion created successfully',
+                'data' => [
+                    'ticket' => $suggestion->ticket,
+                    'suggestion' => $suggestion
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Error creating suggestion: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-
-        $updateData = $validator->validated();
-        
-        if ($request->implementation_status === 'COMPLETED') {
-            $updateData['implemented_at'] = now();
-            $updateData['completion_percentage'] = 100;
-        }
-
-        $suggestion->update($updateData);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Implementation status updated successfully',
-            'data' => $suggestion->fresh(['resident'])
-        ]);
     }
 
     /**
-     * Get suggestion statistics
+     * Update an existing suggestion
      */
-    public function statistics(): JsonResponse
+    public function update(Request $request, string $id): JsonResponse
     {
-        $stats = [
-            'total_suggestions' => Suggestion::count(),
-            'pending_suggestions' => Suggestion::where('status', 'PENDING')->count(),
-            'under_review' => Suggestion::where('status', 'UNDER_REVIEW')->count(),
-            'approved_suggestions' => Suggestion::where('status', 'APPROVED')->count(),
-            'implemented_suggestions' => Suggestion::where('status', 'IMPLEMENTED')->count(),
-            'rejected_suggestions' => Suggestion::where('status', 'REJECTED')->count(),
-            'by_category' => Suggestion::selectRaw('category, COUNT(*) as count')
-                ->groupBy('category')
-                ->pluck('count', 'category'),            'by_implementation_status' => Suggestion::selectRaw('implementation_status, COUNT(*) as count')
-                ->groupBy('implementation_status')
-                ->pluck('count', 'implementation_status'),
-            'average_votes' => Suggestion::avg('votes_count'),
-            'total_estimated_cost' => Suggestion::sum('estimated_cost'),
-            'total_actual_cost' => Suggestion::sum('actual_cost'),
-        ];
+        try {
+            // First, find the ticket by its ID
+            $ticket = Ticket::find($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
-    }
+            if (!$ticket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ticket not found',
+                    'data' => null
+                ], 404);
+            }
 
-    /**
-     * Generate a unique suggestion number
-     */
-    private function generateSuggestionNumber(): string
-    {
-        $prefix = 'SUG';
-        $year = date('Y');
-        $month = date('m');
-        
-        // Get the last suggestion number for this month
-        $lastSuggestion = Suggestion::where('suggestion_number', 'like', "{$prefix}{$year}{$month}%")
-            ->orderBy('suggestion_number', 'desc')
-            ->first();
-        
-        if ($lastSuggestion) {
-            $lastNumber = intval(substr($lastSuggestion->suggestion_number, -4));
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
+            // Second, find the appointment that belongs to this ticket
+            $suggestion = Suggestion::where('base_ticket_id', $id)->first();
+
+            if (!$suggestion) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Suggestion not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Validation rules for update (all fields are optional)
+            $validator = Validator::make($request->all(), [
+                // Ticket fields (all optional for update)
+                'ticket.subject' => 'sometimes|string|max:255',
+                'ticket.description' => 'sometimes|string',
+                'ticket.priority' => ['sometimes', Rule::in(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])],
+                'ticket.requester_name' => 'nullable|string|max:255',
+                'ticket.resident_id' => 'nullable|uuid',
+                'ticket.contact_number' => 'nullable|string|size:16',
+                'ticket.email_address' => 'nullable|email|max:255',
+                'ticket.complete_address' => 'nullable|string|max:255',
+                'ticket.status' => ['sometimes', Rule::in(['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'])],
+
+                // Suggestion fields (all optional for update)
+                'suggestion.s_category' => ['sometimes', Rule::in(Suggestion::CATEGORIES)],
+                'suggestion.expected_benefits' => 'nullable|string',
+                'suggestion.implementation_ideas' => 'nullable|string',
+                'suggestion.resources_needed' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // Update ticket if provided
+            if ($request->has('ticket')) {
+                $suggestion->ticket->update($request->input('ticket'));
+            }
+
+            // Update suggestion if provided
+            if ($request->has('suggestion')) {
+                $suggestion->update($request->input('suggestion'));
+            }
+
+            DB::commit();
+
+            // Refresh the suggestion with updated relationships
+            $suggestion->load('ticket');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Suggestion updated successfully',
+                'data' => [
+                    'ticket' => $suggestion->ticket,
+                    'suggestion' => $suggestion
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating suggestion: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
         }
-        
-        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

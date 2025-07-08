@@ -20,7 +20,7 @@ class ComplaintController extends Controller
     {
         try {
             $complaint = Complaint::with('ticket')
-                ->where('id', $id)
+                ->where('base_ticket_id', $id)
                 ->first();
 
             if (!$complaint) {
@@ -132,7 +132,18 @@ class ComplaintController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         try {
-            $complaint = Complaint::with('ticket')->find($id);
+            // First, find the ticket by its ID
+            $ticket = Ticket::find($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ticket not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $complaint = Complaint::where('base_ticket_id', $id)->first();
 
             if (!$complaint) {
                 return response()->json([

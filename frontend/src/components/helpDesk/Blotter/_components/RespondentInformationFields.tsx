@@ -34,22 +34,24 @@ export const RespondentInformationFields: React.FC = () => {
   return (
     <div>
       <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Respondent Information ({fields.length})
-          </h2>
+        <div className="flex flex-col lg:flex-row items-left lg:justify-between lg:items-center mb-4 lg:mb-2">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Respondent Information ({fields.length})
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              If known, please provide information about the person(s) involved
+            </p>
+          </div>
           <button
             onClick={addPerson}
             type="button"
-            className="w-fit cursor-pointer py-2 p-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-4 lg:mt-0 cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:cursor-not-allowed"
           >
             <FiPlus />
             {t("helpDesk.blotterForm.buttons.addNewPerson")}
           </button>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          If known, please provide information about the person(s) involved
-        </p>
         <div className="flex flex-col gap-4">
           {fields.length === 0 ? (
             <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -63,50 +65,51 @@ export const RespondentInformationFields: React.FC = () => {
             <div className="flex flex-col gap-4">
               {fields.map((field, index) => (
                 <div key={field.id} className="flex-1 p-4 border border-gray-200 bg-gray-50 hover:bg-gray-100 rounded-xl flex @container/add-involve">
-                  <div className="flex-1 grid grid-cols-3 gap-4">
+                  {/* <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> */}
+                  <div className="flex-1 gap-4">
                     <span className="col-span-3 text-sm font-medium text-gray-600">
                       Resident #{index + 1}
                     </span>
-                    <FormField
-                      name={`blotter.other_people_involved.${index}.full_name`}
-                      label={t("helpDesk.fields.fullName")}
-                      placeholder={t("helpDesk.placeholders.fullName")}
-                      required
-                    />
-
-                    <FormField
-                      name={`blotter.other_people_involved.${index}.contact_number`}
-                      label={t(
-                        "helpDesk.fields.contactNumber"
-                      )}
-                      placeholder={t(
-                        "helpDesk.placeholders.contactNumber"
-                      )}
-                      required
-                    />
-
-                    <FormField
-                      type="select"
-                      name={`blotter.other_people_involved.${index}.involvement`}
-                      label={t("helpDesk.blotterForm.fields.involvement")}
-                      placeholder={t(
-                        "helpDesk.blotterForm.fields.involvement"
-                      )}
-                      options={blotterInvolvementOptions.map((role) => ({
-                        value: role,
-                        label: enumToTitleCase(role),
-                      }))}
-                      required
-                    />
-
-                    <div className="col-span-3">
+                    <div className="my-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField
+                        name={`blotter.other_people_involved.${index}.full_name`}
+                        label={t("helpDesk.fields.fullName")}
+                        placeholder={t("helpDesk.placeholders.fullName")}
+                        required
+                      />
+
+                      <FormField
+                        name={`blotter.other_people_involved.${index}.contact_number`}
+                        label={t(
+                          "helpDesk.fields.contactNumber"
+                        )}
+                        placeholder={t(
+                          "helpDesk.placeholders.contactNumber"
+                        )}
+                        required
+                      />
+
+                      <FormField
+                        type="select"
+                        name={`blotter.other_people_involved.${index}.involvement`}
+                        label={t("helpDesk.blotterForm.fields.involvement")}
+                        placeholder={t(
+                          "helpDesk.blotterForm.fields.involvement"
+                        )}
+                        options={blotterInvolvementOptions.map((role) => ({
+                          value: role,
+                          label: enumToTitleCase(role),
+                        }))}
+                        required
+                      />                  
+                    </div>
+
+                    <FormField
                         name={`blotter.other_people_involved.${index}.address`}
                         label={t("helpDesk.fields.completeAddress")}
                         placeholder={t("helpDesk.placeholders.completeAddress")}
                         required
-                      />
-                    </div>
+                    />
 
                     {/* <input
                         {...register(

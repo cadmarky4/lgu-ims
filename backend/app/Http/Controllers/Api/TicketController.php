@@ -208,12 +208,12 @@ class TicketController extends Controller
             $ticket = Ticket::findOrFail($id);
 
             // Check if ticket can be deleted (optional business logic)
-            if (in_array($ticket->status, ['IN_PROGRESS', 'PENDING'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete ticket that is currently in progress or pending'
-                ], 409);
-            }
+            // if (in_array($ticket->status, ['IN_PROGRESS', 'PENDING'])) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Cannot delete ticket that is currently in progress or pending'
+            //     ], 409);
+            // }
 
             $ticket->delete();
 

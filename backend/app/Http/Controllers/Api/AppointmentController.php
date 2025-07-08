@@ -20,9 +20,8 @@ class AppointmentController extends Controller
     public function view(string $id): JsonResponse
     {
         try {
-            $appointment = Appointment::with('ticket')
-                ->where('id', $id)
-                ->first();
+            // Find appointment without eager loading the ticket relationship
+            $appointment = Appointment::where('base_ticket_id', $id)->first();
 
             if (!$appointment) {
                 return response()->json([
@@ -32,12 +31,26 @@ class AppointmentController extends Controller
                 ], 404);
             }
 
+            // Get the ticket (this triggers lazy loading)
+            $ticket = $appointment->ticket;
+
+            if (!$ticket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Related ticket not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Remove the ticket relation from the appointment to prevent nesting
+            $appointment->unsetRelation('ticket');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Appointment retrieved successfully',
                 'data' => [
-                    'ticket' => $appointment->ticket,
-                    'appointment' => $appointment
+                    'ticket' => $ticket,
+                    'appointment' => $appointment->toArray()
                 ]
             ]);
 
@@ -137,12 +150,24 @@ class AppointmentController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         try {
-            $appointment = Appointment::with('ticket')->find($id);
+            // First, find the ticket by its ID
+            $ticket = Ticket::find($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ticket not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Second, find the appointment that belongs to this ticket
+            $appointment = Appointment::where('base_ticket_id', $id)->first();
 
             if (!$appointment) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Appointment not found',
+                    'message' => 'Appointment not found for this ticket',
                     'data' => null
                 ], 404);
             }
@@ -153,7 +178,7 @@ class AppointmentController extends Controller
                 'ticket.description' => 'sometimes|string',
                 'ticket.priority' => ['sometimes', Rule::in(Ticket::PRIORITIES)],
                 'ticket.requester_name' => 'sometimes|string|max:255',
-                'ticket.resident_id' => 'nullable|integer|exists:residents,id',
+                'ticket.resident_id' => 'nullable|string|uuid|exists:residents,id',
                 'ticket.contact_number' => 'nullable|string|max:20',
                 'ticket.email_address' => 'nullable|email|max:255',
                 'ticket.complete_address' => 'nullable|string|max:255',
@@ -196,7 +221,7 @@ class AppointmentController extends Controller
 
             // Update ticket if ticket data is provided
             if ($request->has('ticket')) {
-                $appointment->ticket->update($request->input('ticket'));
+                $ticket->update($request->input('ticket'));
             }
 
             // Update appointment if appointment data is provided
@@ -206,7 +231,7 @@ class AppointmentController extends Controller
 
             DB::commit();
 
-            // Refresh the appointment with updated ticket
+            // Load the ticket relationship for the response
             $appointment->load('ticket');
 
             return response()->json([

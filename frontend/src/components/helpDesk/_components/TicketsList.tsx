@@ -1,5 +1,6 @@
 import {
     type BaseTicket,
+    type TicketCategory,
   } from "@/services/helpDesk/helpDesk.type";
   import { AlertCircle, Calendar, Edit, Eye, FileText, Trash } from "lucide-react";
 import { getTypeColor } from "../utilities/getTypeColor";
@@ -19,6 +20,8 @@ import { PaginationNavigation } from "./PaginationNavigation";
     },
     handlePageChange: (page: number) => void;
     handleDelete: (ticket: BaseTicket) => void;
+    handleView: (baseTicketId: string, category: TicketCategory) => void;
+    handleEdit: (baseTicketId: string, category: TicketCategory) => void;
   }
   
   export const TicketsList: React.FC<TicketsListProps> = ({
@@ -28,6 +31,8 @@ import { PaginationNavigation } from "./PaginationNavigation";
     pagination,
     handlePageChange,
     handleDelete,
+    handleView,
+    handleEdit,
   }) => {
     return (
       <div
@@ -174,7 +179,7 @@ import { PaginationNavigation } from "./PaginationNavigation";
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <span className="font-medium">Submitted by:</span>
-                            {ticket.requester_name}
+                            {ticket.requester_name || "Anonymous"}
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
@@ -198,14 +203,14 @@ import { PaginationNavigation } from "./PaginationNavigation";
   
                   <div className="flex items-center gap-2">
                     <button
-                      // onClick={() => openModal(ticket, false)}
+                      onClick={() => handleView(ticket.id || '', ticket.category)}
                       className="cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      // onClick={() => openModal(ticket, true)}
+                      onClick={() => handleEdit(ticket.id || '', ticket.category)}
                       className="cursor-pointer p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Edit Ticket"
                     >

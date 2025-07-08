@@ -39,7 +39,7 @@ export const AppointmentSchema = z.object({
   time: z.enum(timeSlotOptions, {
     errorMap: (_, __) => ({ message: 'helpDesk.validation.invalidTimeSlots' })
   }),
-  additional_notes: z.string().optional(),
+  additional_notes: z.string().optional().nullable(),
 })
 
 export const ViewAppointmentSchema = z.object({
@@ -70,7 +70,10 @@ export const EditAppointmentSchema = z.object({
     id: true,           // Cannot change ID
     ticket_number: true, // Cannot change ticket number
     created_at: true,   // Cannot change creation date
+    updated_at: true, // AUTO GENERATED
     category: true      // Cannot change category type
+  }).extend({
+    resident_search: z.string().optional().nullable(),
   }),
 
   appointment: AppointmentSchema.partial().omit({ 

@@ -10,6 +10,7 @@ import { departments } from "@/services/helpDesk/appointments/appointments.types
 import { SearchResidents } from "../_components/SearchResidents";
 import { priorities, timeSlotOptions } from "@/services/helpDesk/helpDesk.type";
 import { useNavigate } from "react-router-dom";
+import { enumToTitleCase } from "../utilities/enumToTitleCase";
 
 const AppointmentsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -90,6 +91,7 @@ const AppointmentsPage: React.FC = () => {
               </h2>
             </div>
 
+            {/* IS RESIDENT? */}
             <div className="mb-6 bg-gray-50 rounded-lg p-4">
               <label
                 htmlFor="isResident"
@@ -288,7 +290,7 @@ const AppointmentsPage: React.FC = () => {
                   label={t("helpDesk.fields.priority")}
                   options={priorities.map((priority) => ({
                     value: priority,
-                    label: priority,
+                    label: enumToTitleCase(priority),
                   }))}
                   placeholder={t("helpDesk.placeholders.priority")}
                   required

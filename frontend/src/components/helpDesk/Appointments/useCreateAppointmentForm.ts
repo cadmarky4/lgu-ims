@@ -48,6 +48,7 @@ export function useCreateAppointmentForm ({ onSuccess }: useCreateAppointmentFor
         setValue('ticket.contact_number', "");
         setValue('ticket.email_address', "");
         setValue('ticket.complete_address', "");
+        setSelectedResidentId('');
     }, [isResident])
 
     // real-time validation of booked schedule
