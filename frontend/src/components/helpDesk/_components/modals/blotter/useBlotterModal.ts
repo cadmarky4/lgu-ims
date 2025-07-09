@@ -10,8 +10,8 @@ import { residentsService } from '@/services/residents/residents.service';
 
 interface UseBlotterModalProps {
   blotterId: string | null;
-  onClose: () => void;
   mode: "view" | "edit",
+  onClose: () => void;
   setMode: (mode: "view" | "edit") => void;
 }
 

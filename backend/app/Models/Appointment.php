@@ -16,13 +16,13 @@ class Appointment extends Model implements Auditable
     use HasFactory, HasUuids;
 
     use \OwenIt\Auditing\Auditable;
-    
+
     protected $auditModel = ActivityLog::class;
-    
+
     public function transformAudit(array $data): array
     {
         return [
-            'user_id' => Auth::id() ?? null, 
+            'user_id' => Auth::id() ?? null,
             'action_type' => $data['event'], // created, updated, deleted
             'auditable_type' => get_class($this),
             'auditable_id' => $this->getKey(),
@@ -36,13 +36,13 @@ class Appointment extends Model implements Auditable
             'description' => $this->generateDescription($data['event'])
         ];
     }
-    
+
     private function generateDescription($event)
     {
         $user = Auth::user() ? Auth::user()->name : 'System';
-        return match($event) {
+        return match ($event) {
             'created' => "{$user} created a new appointment record",
-            'updated' => "{$user} updated appointment information", 
+            'updated' => "{$user} updated appointment information",
             'deleted' => "{$user} deleted a appointment record",
             default => "{$user} performed {$event} action"
         };
@@ -89,10 +89,15 @@ class Appointment extends Model implements Auditable
         return $this->belongsTo(Ticket::class, 'base_ticket_id');
     }
 
-    // Scope for checking schedule conflicts
+    // // Scope for checking schedule conflicts
+    // public function scopeByDateAndTime($query, $date, $time)
+    // {
+    //     return $query->where('date', $date)->where('time', $time);
+    // }
     public function scopeByDateAndTime($query, $date, $time)
     {
-        return $query->where('date', $date)->where('time', $time);
+        return $query->whereRaw('DATE(date) = ?', [$date])
+            ->where('time', $time);
     }
 
     public function scopeByDepartment($query, $department)

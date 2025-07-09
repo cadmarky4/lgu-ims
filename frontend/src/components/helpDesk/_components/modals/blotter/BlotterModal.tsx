@@ -44,7 +44,7 @@ export const BlotterModal: React.FC<BlotterModalProps> = ({
     handleClose,
     handleSubmit,
     handleCancel,
-  } = useBlotterModal({ blotterId, onClose, mode, setMode });
+  } = useBlotterModal({ blotterId, mode, onClose, setMode });
 
   if (!isOpen) return null;
 

@@ -11,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+
 
 class AppointmentController extends Controller
 {
@@ -21,7 +23,9 @@ class AppointmentController extends Controller
     {
         try {
             // Find appointment without eager loading the ticket relationship
-            $appointment = Appointment::where('base_ticket_id', $id)->first();
+            $appointment = Appointment::with(['ticket'])
+                ->where('base_ticket_id', $id)
+                ->first();
 
             if (!$appointment) {
                 return response()->json([
@@ -31,26 +35,26 @@ class AppointmentController extends Controller
                 ], 404);
             }
 
-            // Get the ticket (this triggers lazy loading)
-            $ticket = $appointment->ticket;
+            // // Get the ticket (this triggers lazy loading)
+            // $ticket = $appointment->ticket;
 
-            if (!$ticket) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Related ticket not found',
-                    'data' => null
-                ], 404);
-            }
+            // if (!$ticket) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Related ticket not found',
+            //         'data' => null
+            //     ], 404);
+            // }
 
-            // Remove the ticket relation from the appointment to prevent nesting
-            $appointment->unsetRelation('ticket');
+            // // Remove the ticket relation from the appointment to prevent nesting
+            // $appointment->unsetRelation('ticket');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Appointment retrieved successfully',
                 'data' => [
-                    'ticket' => $ticket,
-                    'appointment' => $appointment->toArray()
+                    'ticket' => $appointment->ticket,
+                    'appointment' => $appointment
                 ]
             ]);
 
@@ -100,6 +104,8 @@ class AppointmentController extends Controller
                 $request->input('appointment.date'),
                 $request->input('appointment.time')
             )->byDepartment($request->input('appointment.department'))->exists();
+
+            Log::info("Checking availability for {$request->input('appointment.date')} {$request->input('appointment.time')} in {$request->input('appointment.department')}");
 
             if ($isOccupied) {
                 return response()->json([

@@ -27,8 +27,8 @@ export const useAppointmentModal = ({
   setMode,
   onClose,
 }: UseAppointmentModalProps) => {
-  const { showNotification } = useNotifications();
   const { t } = useTranslation();
+  const { showNotification } = useNotifications();
 
   // Form setup
   const form = useForm<EditAppointment>({
@@ -43,6 +43,7 @@ export const useAppointmentModal = ({
     setValue,
     watch,
     reset,
+    handleSubmit,
     formState: { errors, isDirty },
   } = form;
 
@@ -95,41 +96,6 @@ export const useAppointmentModal = ({
         }
     }, [selectedResidentId]);
 
-  const handleSubmit = form.handleSubmit(async (data: EditAppointment) => {
-      // console.log("ERRORS")
-      try {
-        if (!appointmentId) throw new Error("Ticket ID is null");
-        // console.log("ERRORS")
-        // console.log(form.formState.errors);
-        await updateAppointmentMutation.mutateAsync({ id: appointmentId, data });
-        showNotification({
-          type: 'success',
-          title: t('helpDesk.appointmentsForm.messages.updateSuccess'),
-          // message: t('helpDesk.appointmentsForm.messages.updateSuccess'),
-          duration: 3000,
-          persistent: false,
-        });
-
-        setMode('view');
-        refetch();
-      } catch (error) {
-        const errorMessage = (error as Error)?.message || t('helpDesk.appointmentsForm.messages.updateError');
-        showNotification({
-          type: 'error',
-          title: t('helpDesk.appointmentsForm.messages.error'),
-          message: errorMessage,
-          duration: 3000,
-          persistent: false,
-        });
-        console.error('Form submission error:', error);
-      } 
-      // finally {
-      //   handleClose();
-      //   // console.log("APPOINTMENT")
-      //   // console.log(appointment);
-      // }
-  });
-
   // Reset form when appointment data changes
   useEffect(() => {
     if (!appointment || !appointment.appointment) {
@@ -150,25 +116,28 @@ export const useAppointmentModal = ({
       // console.log(appointment);
       setIsResident(appointment.ticket.resident_id !== null && appointment.ticket.resident_id !== undefined);
       
-      reset({
-        ticket: {
-          subject: appointment.ticket.subject,
-          description: appointment.ticket.description,
-          priority: appointment.ticket.priority,
-          requester_name: appointment.ticket.requester_name,
-          contact_number: appointment.ticket.contact_number,
-          email_address: appointment.ticket.email_address,
-          complete_address: appointment.ticket.complete_address,
-          status: appointment.ticket.status,
-        },
-        appointment: {
-          department: appointment.appointment.department,
-          date: formattedDate,
-          time: appointment.appointment.time,
-          additional_notes: appointment.appointment.additional_notes,
-        },
-      });
-      setValue('ticket.resident_id', appointment.ticket.resident_id);
+      // console.log("APP",appointment);
+      if (appointment) {
+        reset({
+          ticket: {
+            subject: appointment.ticket.subject,
+            description: appointment.ticket.description,
+            priority: appointment.ticket.priority,
+            requester_name: appointment.ticket.requester_name,
+            contact_number: appointment.ticket.contact_number,
+            email_address: appointment.ticket.email_address,
+            complete_address: appointment.ticket.complete_address,
+            status: appointment.ticket.status,
+          },
+          appointment: {
+            department: appointment.appointment.department,
+            date: formattedDate,
+            time: appointment.appointment.time,
+            additional_notes: appointment.appointment.additional_notes,
+          },
+        });
+        setValue('ticket.resident_id', appointment.ticket.resident_id);
+      }
     }
   }, [appointment, reset]);
 
@@ -180,6 +149,37 @@ export const useAppointmentModal = ({
     setMode("view");
     reset();
     onClose();
+  };
+
+  const handleSubmiForm = async (data: EditAppointment) => {
+    if (!appointmentId) return;
+    // console.log("ERRORS")
+    try {
+      if (!appointmentId) throw new Error("Ticket ID is null");
+      // console.log("ERRORS")
+      // console.log(form.formState.errors);
+      await updateAppointmentMutation.mutateAsync({ id: appointmentId, data });
+      showNotification({
+        type: 'success',
+        title: t('helpDesk.appointmentsForm.messages.updateSuccess'),
+        // message: t('helpDesk.appointmentsForm.messages.updateSuccess'),
+        duration: 3000,
+        persistent: false,
+      });
+
+      setMode('view');
+      refetch();
+    } catch (error) {
+      const errorMessage = (error as Error)?.message || t('helpDesk.appointmentsForm.messages.updateError');
+      showNotification({
+        type: 'error',
+        title: t('helpDesk.appointmentsForm.messages.error'),
+        message: errorMessage,
+        duration: 3000,
+        persistent: false,
+      });
+      console.error('Form submission error:', error);
+    } 
   };
 
   const handleCancel = () => {
@@ -209,7 +209,7 @@ export const useAppointmentModal = ({
     isSubmitting: updateAppointmentMutation.isPending,
     handleModeToggle,
     handleClose,
-    handleSubmit,
+    handleSubmit: handleSubmit(handleSubmiForm),
     handleCancel,
   };
 };
