@@ -13,22 +13,18 @@ import {
   SystemSettingsSchema,
   SettingsValidationSchema,
   SettingsBackupSchema,
-  SettingsRestoreSchema,
   DEFAULT_SETTINGS,
   type SettingsData,
   type SettingsUpdate,
   type GeneralSettings,
   type PrivacySettings,
   type SystemSettings,
-  type SettingsValidation,
   type SettingsBackup,
-  type SettingsRestore,
   SettingsSection
 } from '@/services/settings/settings.types';
 
 import { 
-  ApiResponseSchema, 
-  type ApiResponse 
+  ApiResponseSchema
 } from '@/services/__shared/types';
 
 export class SettingsService extends BaseApiService {
@@ -101,7 +97,7 @@ export class SettingsService extends BaseApiService {
   async validateSettings(settingsData: SettingsUpdate, section: SettingsSection = SettingsSection.ALL): Promise<boolean> {
     try {
       switch (section) {
-        case SettingsSection.GENERAL:
+        case SettingsSection.GENERAL: {
           // Extract only general settings fields
           const generalData = {
             ...(settingsData.barangay !== undefined && { barangay: settingsData.barangay }),
@@ -118,8 +114,9 @@ export class SettingsService extends BaseApiService {
           };
           GeneralSettingsSchema.partial().parse(generalData);
           break;
+        }
         
-        case SettingsSection.PRIVACY:
+        case SettingsSection.PRIVACY: {
           const privacyData = {
             ...(settingsData.sessionTimeout !== undefined && { sessionTimeout: settingsData.sessionTimeout }),
             ...(settingsData.maxLoginAttempts !== undefined && { maxLoginAttempts: settingsData.maxLoginAttempts }),
@@ -128,14 +125,16 @@ export class SettingsService extends BaseApiService {
           };
           PrivacySettingsSchema.partial().parse(privacyData);
           break;
+        }
         
-        case SettingsSection.SYSTEM:
+        case SettingsSection.SYSTEM: {
           const systemData = {
             ...(settingsData.systemName !== undefined && { systemName: settingsData.systemName }),
             ...(settingsData.versionNumber !== undefined && { versionNumber: settingsData.versionNumber })
           };
           SystemSettingsSchema.partial().parse(systemData);
           break;
+        }
         
         default:
           SettingsUpdateSchema.parse(settingsData);
@@ -244,7 +243,7 @@ export class SettingsService extends BaseApiService {
   }
 
   /**
-   * Create backup of current settings
+   * Create backup of current settings (simplified)
    */
   async backupSettings(): Promise<SettingsBackup> {
     const currentSettings = await this.getSettings();
@@ -277,47 +276,7 @@ export class SettingsService extends BaseApiService {
   }
 
   /**
-   * Restore settings from backup
-   */
-  async restoreSettings(restoreData: SettingsRestore): Promise<SettingsData> {
-    // Validate restore data
-    const validatedData = SettingsRestoreSchema.parse(restoreData);
-    
-    const responseSchema = ApiResponseSchema(SettingsDataSchema);
-    
-    const response = await this.request(
-      '/settings/restore',
-      responseSchema,
-      {
-        method: 'POST',
-        data: validatedData,
-      }
-    );
-
-    if (!response.data) {
-      throw new Error('Failed to restore settings');
-    }
-
-    return response.data;
-  }
-
-  /**
-   * Get list of available backups
-   */
-  async getBackups(): Promise<SettingsBackup[]> {
-    const responseSchema = ApiResponseSchema(z.array(SettingsBackupSchema));
-    
-    const response = await this.request(
-      '/settings/backups',
-      responseSchema,
-      { method: 'GET' }
-    );
-
-    return response.data || [];
-  }
-
-  /**
-   * Test settings connectivity (e.g., email configuration)
+   * Test settings connectivity (simplified)
    */
   async testSettings(section: SettingsSection = SettingsSection.ALL): Promise<boolean> {
     try {
@@ -345,31 +304,6 @@ export class SettingsService extends BaseApiService {
     } catch (error) {
       console.error('Error testing settings:', error);
       return false;
-    }
-  }
-
-  /**
-   * Get settings change history (if supported by backend)
-   */
-  async getSettingsHistory(limit = 10): Promise<any[]> {
-    try {
-      const responseSchema = ApiResponseSchema(z.array(z.object({
-        id: z.string(),
-        changes: z.record(z.any()),
-        timestamp: z.string(),
-        changedBy: z.string().optional()
-      })));
-      
-      const response = await this.request(
-        `/settings/history?limit=${limit}`,
-        responseSchema,
-        { method: 'GET' }
-      );
-
-      return response.data || [];
-    } catch (error) {
-      console.error('Error fetching settings history:', error);
-      return [];
     }
   }
 }

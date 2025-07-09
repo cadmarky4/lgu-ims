@@ -109,7 +109,7 @@ export class UsersService extends BaseApiService {
   /**
    * Get single user by ID
    */
-  async getUser(id: number): Promise<User> {
+  async getUser(id: string): Promise<User> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
@@ -174,7 +174,7 @@ export class UsersService extends BaseApiService {
   /**
    * Update existing user
    */
-  async updateUser(id: number, userData: UpdateUserFormData): Promise<User> {
+  async updateUser(id: string, userData: UpdateUserFormData): Promise<User> {
     this.validateId(id, 'User ID');
 
     // Validate input data
@@ -223,7 +223,7 @@ export class UsersService extends BaseApiService {
   /**
    * Delete user (soft delete)
    */
-  async deleteUser(id: number): Promise<void> {
+  async deleteUser(id: string): Promise<void> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -240,7 +240,7 @@ export class UsersService extends BaseApiService {
   /**
    * Restore deleted user
    */
-  async restoreUser(id: number): Promise<User> {
+  async restoreUser(id: string): Promise<User> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
@@ -261,7 +261,7 @@ export class UsersService extends BaseApiService {
   /**
    * Permanently delete user
    */
-  async forceDeleteUser(id: number): Promise<void> {
+  async forceDeleteUser(id: string): Promise<void> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -278,7 +278,7 @@ export class UsersService extends BaseApiService {
   /**
    * Change user password
    */
-  async changePassword(id: number, passwordData: ChangePasswordData): Promise<void> {
+  async changePassword(id: string, passwordData: ChangePasswordData): Promise<void> {
     this.validateId(id, 'User ID');
 
     // Validate input data
@@ -322,7 +322,7 @@ export class UsersService extends BaseApiService {
   /**
    * Reset user password (admin only)
    */
-  async resetUserPassword(id: number, sendEmail = true): Promise<{ temporary_password?: string; message: string }> {
+  async resetUserPassword(id: string, sendEmail = true): Promise<{ temporary_password?: string; message: string }> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -346,7 +346,7 @@ export class UsersService extends BaseApiService {
    * Change user status (activate/deactivate/suspend)
    */
   async changeUserStatus(
-    id: number, 
+    id: string, 
     status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED', 
     reason?: string
   ): Promise<User> {
@@ -373,28 +373,28 @@ export class UsersService extends BaseApiService {
   /**
    * Activate user
    */
-  async activateUser(id: number, reason?: string): Promise<User> {
+  async activateUser(id: string, reason?: string): Promise<User> {
     return this.changeUserStatus(id, 'ACTIVE', reason);
   }
 
   /**
    * Deactivate user
    */
-  async deactivateUser(id: number, reason?: string): Promise<User> {
+  async deactivateUser(id: string, reason?: string): Promise<User> {
     return this.changeUserStatus(id, 'INACTIVE', reason);
   }
 
   /**
    * Suspend user
    */
-  async suspendUser(id: number, reason?: string): Promise<User> {
+  async suspendUser(id: string, reason?: string): Promise<User> {
     return this.changeUserStatus(id, 'SUSPENDED', reason);
   }
 
   /**
    * Verify user email
    */
-  async verifyUser(id: number): Promise<User> {
+  async verifyUser(id: string): Promise<User> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
@@ -415,7 +415,7 @@ export class UsersService extends BaseApiService {
   /**
    * Unverify user email
    */
-  async unverifyUser(id: number): Promise<User> {
+  async unverifyUser(id: string): Promise<User> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
@@ -436,7 +436,7 @@ export class UsersService extends BaseApiService {
   /**
    * Resend verification email
    */
-  async resendVerificationEmail(id: number): Promise<void> {
+  async resendVerificationEmail(id: string): Promise<void> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -453,7 +453,7 @@ export class UsersService extends BaseApiService {
   /**
    * Send user credentials via email
    */
-  async sendUserCredentials(id: number, includePassword = false): Promise<void> {
+  async sendUserCredentials(id: string, includePassword = false): Promise<void> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -473,7 +473,7 @@ export class UsersService extends BaseApiService {
   /**
    * Link user to resident
    */
-  async linkToResident(userId: number, residentId: number): Promise<User> {
+  async linkToResident(userId: string, residentId: string): Promise<User> {
     this.validateId(userId, 'User ID');
     this.validateId(residentId, 'Resident ID');
 
@@ -498,7 +498,7 @@ export class UsersService extends BaseApiService {
   /**
    * Unlink user from resident
    */
-  async unlinkFromResident(userId: number): Promise<User> {
+  async unlinkFromResident(userId: string): Promise<User> {
     this.validateId(userId, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserSchema);
@@ -701,7 +701,7 @@ export class UsersService extends BaseApiService {
   /**
    * Get user activity log
    */
-  async getUserActivity(id: number, limit = 50): Promise<UserActivity[]> {
+  async getUserActivity(id: string, limit = 50): Promise<UserActivity[]> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.array(UserActivitySchema));
@@ -718,7 +718,7 @@ export class UsersService extends BaseApiService {
   /**
    * Get user active sessions
    */
-  async getUserSessions(id: number): Promise<UserSession[]> {
+  async getUserSessions(id: string): Promise<UserSession[]> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.array(UserSessionSchema));
@@ -735,7 +735,7 @@ export class UsersService extends BaseApiService {
   /**
    * Terminate user session
    */
-  async terminateUserSession(userId: number, sessionId: string): Promise<void> {
+  async terminateUserSession(userId: string, sessionId: string): Promise<void> {
     this.validateId(userId, 'User ID');
 
     if (!sessionId.trim()) {
@@ -756,7 +756,7 @@ export class UsersService extends BaseApiService {
   /**
    * Terminate all user sessions except current
    */
-  async terminateAllUserSessions(id: number): Promise<void> {
+  async terminateAllUserSessions(id: string): Promise<void> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(z.object({
@@ -773,7 +773,7 @@ export class UsersService extends BaseApiService {
   /**
    * Get user permissions
    */
-  async getUserPermissions(id: number): Promise<UserPermissions> {
+  async getUserPermissions(id: string): Promise<UserPermissions> {
     this.validateId(id, 'User ID');
 
     const responseSchema = ApiResponseSchema(UserPermissionsSchema);
@@ -794,7 +794,7 @@ export class UsersService extends BaseApiService {
   /**
    * Update user permissions
    */
-  async updateUserPermissions(id: number, permissions: UserPermissions): Promise<UserPermissions> {
+  async updateUserPermissions(id: string, permissions: UserPermissions): Promise<UserPermissions> {
     this.validateId(id, 'User ID');
 
     const validatedPermissions = UserPermissionsSchema.parse(permissions);
@@ -990,8 +990,8 @@ export class UsersService extends BaseApiService {
   /**
    * Private helper method to validate IDs
    */
-  private validateId(id: number, fieldName: string): void {
-    if (!id || id <= 0) {
+  private validateId(id: string, fieldName: string): void {
+    if (!id || !id.trim() || isNaN(Number(id)) || Number(id) <= 0) {
       throw new Error(`Invalid ${fieldName}: must be a positive number`);
     }
   }

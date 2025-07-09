@@ -6,7 +6,7 @@ export interface StatisticsOverview {
   activeBarangayOfficials: number;
   totalBlotterCases: number;
   totalIssuedClearance: number;
-  ongoingProjects: number;
+  // ongoingProjects: number;
 }
 
 export interface AgeGroupDistribution {
@@ -24,7 +24,7 @@ export interface MonthlyRevenue {
   value: number;
 }
 
-export interface PopulationDistributionByPurok {
+export interface PopulationDistributionByStreet {
   label: string;
   value: number;
 }
@@ -45,11 +45,11 @@ export interface MostRequestedService {
 export interface FilterOptions {
   years: number[];
   quarters: string[];
-  puroks: string[];
+  streets: string[];
 }
 
 export interface ReportsFilters {
   year?: string | number;
   quarter?: string;
-  purok?: string;
+  street?: string;
 }

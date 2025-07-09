@@ -250,6 +250,11 @@ Route::prefix('suggestion')->group(function () {
 Route::get('settings', [SettingController::class, 'index']);
 Route::put('settings', [SettingController::class, 'update']);
 Route::post('settings/reset', [SettingController::class, 'reset']);
+Route::post('settings/backup', [SettingController::class, 'backup']);
+Route::get('settings/backups', [SettingController::class, 'backups']);
+Route::post('settings/restore', [SettingController::class, 'restore']);
+Route::get('settings/history', [SettingController::class, 'history']);
+Route::post('settings/test', [SettingController::class, 'test']);
 
 // Dashboard routes (temporarily outside auth for testing)
 Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
@@ -267,11 +272,11 @@ Route::apiResource('projects', ProjectController::class);
 
 // Reports routes (temporarily outside auth for testing)
 Route::prefix('reports')->group(function () {
-    Route::get('/statistics-overview', [ReportsController::class, 'getStatisticsOverview']);
+    Route::get('/statistics', [ReportsController::class, 'getStatisticsOverview']);
     Route::get('/age-group-distribution', [ReportsController::class, 'getAgeGroupDistribution']);
     Route::get('/special-population-registry', [ReportsController::class, 'getSpecialPopulationRegistry']);
     Route::get('/monthly-revenue', [ReportsController::class, 'getMonthlyRevenue']);
-    Route::get('/population-distribution-by-purok', [ReportsController::class, 'getPopulationDistributionByPurok']);
+    Route::get('/population-distribution-by-street', [ReportsController::class, 'getPopulationDistributionByPurok']);
     Route::get('/document-types-issued', [ReportsController::class, 'getDocumentTypesIssued']);
     Route::get('/most-requested-services', [ReportsController::class, 'getMostRequestedServices']);
     Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);

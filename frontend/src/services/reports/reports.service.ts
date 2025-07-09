@@ -5,7 +5,7 @@ import {
   type AgeGroupDistribution,
   type SpecialPopulationRegistry,
   type MonthlyRevenue,
-  type PopulationDistributionByPurok,
+  type PopulationDistributionByStreet,
   type DocumentTypesIssued,
   type MostRequestedService,
   type FilterOptions,
@@ -20,7 +20,6 @@ export class ReportsService extends BaseApiService {
     const params = new URLSearchParams();
     if (filters?.year) params.append('year', filters.year.toString());
     if (filters?.quarter) params.append('quarter', filters.quarter);
-    if (filters?.purok) params.append('purok', filters.purok);
 
     const queryString = params.toString();
     const endpoint = `/reports/statistics-overview${queryString ? `?${queryString}` : ''}`;
@@ -33,7 +32,6 @@ export class ReportsService extends BaseApiService {
    */
   async getAgeGroupDistribution(filters?: ReportsFilters): Promise<ApiResponse<AgeGroupDistribution[]>> {
     const params = new URLSearchParams();
-    if (filters?.purok) params.append('purok', filters.purok);
 
     const queryString = params.toString();
     const endpoint = `/reports/age-group-distribution${queryString ? `?${queryString}` : ''}`;
@@ -46,7 +44,6 @@ export class ReportsService extends BaseApiService {
    */
   async getSpecialPopulationRegistry(filters?: ReportsFilters): Promise<ApiResponse<SpecialPopulationRegistry[]>> {
     const params = new URLSearchParams();
-    if (filters?.purok) params.append('purok', filters.purok);
 
     const queryString = params.toString();
     const endpoint = `/reports/special-population-registry${queryString ? `?${queryString}` : ''}`;
@@ -68,16 +65,16 @@ export class ReportsService extends BaseApiService {
   }
 
   /**
-   * Get population distribution by purok data
+   * Get population distribution by street data
    */
-  async getPopulationDistributionByPurok(filters?: ReportsFilters): Promise<ApiResponse<PopulationDistributionByPurok[]>> {
+  async getPopulationDistributionByStreet(filters?: ReportsFilters): Promise<ApiResponse<PopulationDistributionByStreet[]>> {
     const params = new URLSearchParams();
     if (filters?.year) params.append('year', filters.year.toString());
 
     const queryString = params.toString();
     const endpoint = `/reports/population-distribution-by-purok${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<PopulationDistributionByPurok[]>(endpoint);
+    return await this.request<PopulationDistributionByStreet[]>(endpoint);
   }
 
   /**
@@ -122,7 +119,7 @@ export class ReportsService extends BaseApiService {
     const params = new URLSearchParams();
     if (filters?.year) params.append('year', filters.year.toString());
     if (filters?.quarter) params.append('quarter', filters.quarter);
-    if (filters?.purok) params.append('purok', filters.purok);
+    if (filters?.street) params.append('street', filters.street);
 
     const queryString = params.toString();
     const endpoint = `/reports/export${queryString ? `?${queryString}` : ''}`;

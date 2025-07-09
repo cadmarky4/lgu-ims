@@ -1,5 +1,5 @@
 import type { BarangayOfficial } from "@/services/officials/barangayOfficials.types"
-import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
+import { buildImageUrl, getPlaceholderImageUrl } from "@/utils/imageUtils";
 
 interface OrganizationalChartProps {
   captain?: BarangayOfficial;
@@ -26,9 +26,13 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = ({
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={captain?.profile_photo_url ? `${captain?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    src={buildImageUrl(captain?.profile_photo_url || null)}
                     alt={`${captain?.first_name} ${captain?.last_name}`}
                     className="w-24 h-24 rounded-full object-cover"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getPlaceholderImageUrl(96, 'No Photo');
+                    }}
                   />
                 </div>
                 <h3 className="font-semibold text-gray-900">{`${captain?.first_name} ${captain?.last_name}`}</h3>
@@ -47,9 +51,13 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = ({
               <div className="flex flex-col items-center">
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={secretary?.profile_photo_url ? `${secretary?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    src={buildImageUrl(secretary?.profile_photo_url || null)}
                     alt={`${secretary?.first_name} ${secretary?.last_name}`}
                     className="w-20 h-20 rounded-full object-cover"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getPlaceholderImageUrl(80, 'No Photo');
+                    }}
                   />
                 </div>
                 <h3 className="font-medium text-gray-900">{`${secretary?.first_name} ${secretary?.last_name}`}</h3>
@@ -68,9 +76,13 @@ export const OrganizationalChart: React.FC<OrganizationalChartProps> = ({
               <div key={index} className={`flex flex-col items-center transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`} style={{ animationDelay: `${700 + (index * 100)}ms` }}>
                 <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <img
-                    src={councilor?.profile_photo_url ? `${councilor?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    src={buildImageUrl(councilor?.profile_photo_url || null)}
                     alt={`${councilor?.first_name} ${councilor?.last_name}`}
                     className="w-20 h-20 rounded-full object-cover"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getPlaceholderImageUrl(80, 'No Photo');
+                    }}
                   />
                 </div>
                 <h4 className="text-sm font-medium text-gray-900 text-center">{`${councilor?.first_name} ${councilor?.last_name}`}</h4>

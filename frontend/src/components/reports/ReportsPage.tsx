@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiDownload } from "react-icons/fi";
 import {
   FaUsers,
   FaHouseUser,
   FaStamp,
   FaPen,
-  FaClipboardList,
+  // FaClipboardList,
   FaUserCheck,
 } from "react-icons/fa";
 import HorizontalStackedBarChart from "./HorizontalStackedBarChart";
@@ -20,7 +20,7 @@ import type {
   AgeGroupDistribution,
   SpecialPopulationRegistry,
   MonthlyRevenue,
-  PopulationDistributionByPurok,
+  PopulationDistributionByStreet,
   DocumentTypesIssued,
   MostRequestedService,
   FilterOptions,
@@ -30,22 +30,22 @@ import Breadcrumb from "../_global/Breadcrumb";
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedQuarter, setSelectedQuarter] = useState<string>("All Quarters");
-  const [selectedPurok, setSelectedPurok] = useState<string>("All");
+  const [selectedStreet, setSelectedStreet] = useState<string>("All");
 
   // State for data
-  const [statisticsOverviewData, setStatisticsOverviewData] = useState<any[]>([]);
+  const [statisticsOverviewData, setStatisticsOverviewData] = useState<StatisticsOverview[]>([]);
   const [statisticsOverview, setStatisticsOverview] = useState<StatisticsOverview>({
     totalResidents: 0,
     totalHouseholds: 0,
     activeBarangayOfficials: 0,
     totalBlotterCases: 0,
     totalIssuedClearance: 0,
-    ongoingProjects: 0,
+    // ongoingProjects: 0,
   });
   const [ageGroupDistributionData, setAgeGroupDistributionData] = useState<AgeGroupDistribution[]>([]);
   const [specialPopulationRegistryData, setSpecialPopulationRegistryData] = useState<SpecialPopulationRegistry[]>([]);
   const [revenueData, setRevenueData] = useState<MonthlyRevenue[]>([]);
-  const [populationDistributionByPurokData, setPopulationDistributionByPurokData] = useState<PopulationDistributionByPurok[]>([]);
+  const [populationDistributionByStreetData, setPopulationDistributionByStreetData] = useState<PopulationDistributionByStreet[]>([]);
   const [documentsIssuedData, setDocumentsIssuedData] = useState<DocumentTypesIssued[]>([]);
   const [mostRequestedServicesData, setMostRequestedServicesData] = useState<MostRequestedService[]>([]);
   
@@ -53,7 +53,7 @@ export default function ReportsPage() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     years: [],
     quarters: ["Q1", "Q2", "Q3", "Q4", "All Quarters"],
-    puroks: []
+    streets: []
   });
 
   // Loading states
@@ -62,7 +62,7 @@ export default function ReportsPage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Service instance
-  const reportsService = new ReportsService();
+  const reportsService = useMemo(() => new ReportsService(), []);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -80,8 +80,8 @@ export default function ReportsPage() {
         const response = await reportsService.getFilterOptions();
         if (response.data) {
           setFilterOptions(response.data);
-          // Add "All" option to puroks
-          response.data.puroks.unshift("All");
+          // Add "All" option to streets
+          response.data.streets.unshift("All");
         }
       } catch (err) {
         console.error('Error loading filter options:', err);
@@ -89,7 +89,7 @@ export default function ReportsPage() {
     };
 
     loadFilterOptions();
-  }, []);
+  }, [reportsService]);
 
   // Load data when filters change
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function ReportsPage() {
         const filters = {
           year: selectedYear,
           quarter: selectedQuarter === "All Quarters" ? undefined : selectedQuarter,
-          purok: selectedPurok === "All" ? undefined : selectedPurok,
+          street: selectedStreet === "All" ? undefined : selectedStreet,
         };
 
         // Load all reports data in parallel
@@ -118,7 +118,7 @@ export default function ReportsPage() {
           reportsService.getAgeGroupDistribution(filters),
           reportsService.getSpecialPopulationRegistry(filters),
           reportsService.getMonthlyRevenue(filters),
-          reportsService.getPopulationDistributionByPurok(filters),
+          reportsService.getPopulationDistributionByStreet(filters),
           reportsService.getDocumentTypesIssued(filters),
           reportsService.getMostRequestedServices(filters),
         ]);
@@ -153,11 +153,11 @@ export default function ReportsPage() {
               value: stats.totalIssuedClearance,
               icon: FaStamp,
             },
-            {
-              label: "Ongoing Projects",
-              value: stats.ongoingProjects,
-              icon: FaClipboardList,
-            },
+            // {
+            //   label: "Ongoing Projects",
+            //   value: stats.ongoingProjects,
+            //   icon: FaClipboardList,
+            // },
           ]);
         }
 
@@ -165,7 +165,7 @@ export default function ReportsPage() {
         if (ageGroupResponse.data) setAgeGroupDistributionData(ageGroupResponse.data);
         if (specialPopulationResponse.data) setSpecialPopulationRegistryData(specialPopulationResponse.data);
         if (revenueResponse.data) setRevenueData(revenueResponse.data);
-        if (populationDistResponse.data) setPopulationDistributionByPurokData(populationDistResponse.data);
+        if (populationDistResponse.data) setPopulationDistributionByStreetData(populationDistResponse.data);
         if (documentsResponse.data) setDocumentsIssuedData(documentsResponse.data);
         if (servicesResponse.data) setMostRequestedServicesData(servicesResponse.data);
 
@@ -181,7 +181,7 @@ export default function ReportsPage() {
     if (filterOptions.years.length > 0) {
       loadReportsData();
     }
-  }, [selectedYear, selectedQuarter, selectedPurok, filterOptions.years.length]);
+  }, [selectedYear, selectedQuarter, selectedStreet, filterOptions.years.length, reportsService]);
 
   // Handle export button click
   const handleExportClick = () => {
@@ -198,13 +198,13 @@ export default function ReportsPage() {
     ageGroupDistribution: ageGroupDistributionData,
     specialPopulationRegistry: specialPopulationRegistryData,
     monthlyRevenue: revenueData,
-    populationDistributionByPurok: populationDistributionByPurokData,
+    populationDistributionByStreet: populationDistributionByStreetData,
     documentTypesIssued: documentsIssuedData,
     mostRequestedServices: mostRequestedServicesData,
     filters: {
       year: selectedYear,
       quarter: selectedQuarter === "All Quarters" ? undefined : selectedQuarter,
-      purok: selectedPurok === "All" ? undefined : selectedPurok,
+      street: selectedStreet === "All" ? undefined : selectedStreet,
     }
   };
 
@@ -276,16 +276,16 @@ export default function ReportsPage() {
               </div>
 
               <div className="col-span-2 @lg/filter:col-span-1 flex flex-col gap-1">
-                <h4>Purok/Sitio</h4>
+                <h4>Street</h4>
                 <select
-                  value={selectedPurok}
-                  onChange={(e) => setSelectedPurok(e.target.value)}
+                  value={selectedStreet}
+                  onChange={(e) => setSelectedStreet(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 h-10"
-                  title="Filter purok"
+                  title="Filter street"
                 >
-                  {filterOptions.puroks.map((purok) => (
-                    <option key={purok} value={purok}>
-                      {purok}
+                  {filterOptions.streets.map((street) => (
+                    <option key={street} value={street}>
+                      {street}
                     </option>
                   ))}
                 </select>
@@ -381,15 +381,15 @@ export default function ReportsPage() {
               <ResponsiveAreaChart data={revenueData} />
             </article>
 
-            {/* Population Distribution by Purok */}
+            {/* Population Distribution by Street */}
             <article className="flex flex-col shadow-sm rounded-2xl border border-gray-100 p-6 bg-white col-span-2 min-h-[450px] @xl/main:col-span-1">
               <h3 className={`text-lg font-semibold text-darktext mb-6 border-l-4 border-smblue-400 pl-4 transition-all duration-700 ease-out ${
                 isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`} style={{ transitionDelay: '450ms' }}>
-                Population Distribution by Purok/Sitio
+                Population Distribution by Street
               </h3>
 
-              <ResponsiveBarGraph data={populationDistributionByPurokData} />
+              <ResponsiveBarGraph data={populationDistributionByStreetData} />
             </article>
 
             {/* Document Types Issued */}

@@ -194,7 +194,7 @@ class DashboardController extends Controller
                     default:
                         return 'Household record has been modified';
                 }
-            case 'blotter_cases':
+            case 'blotters':
                 switch ($event) {
                     case 'created':
                         return 'New blotter case has been filed';

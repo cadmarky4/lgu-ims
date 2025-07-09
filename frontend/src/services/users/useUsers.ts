@@ -29,7 +29,7 @@ export const usersKeys = {
   lists: () => [...usersKeys.all, 'list'] as const,
   list: (params: UserParams) => [...usersKeys.lists(), params] as const,
   details: () => [...usersKeys.all, 'detail'] as const,
-  detail: (id: number) => [...usersKeys.details(), id] as const,
+  detail: (id: string) => [...usersKeys.details(), id] as const,
   current: () => [...usersKeys.all, 'current'] as const,
   statistics: () => [...usersKeys.all, 'statistics'] as const,
   search: (term: string) => [...usersKeys.all, 'search', term] as const,
@@ -40,9 +40,9 @@ export const usersKeys = {
     [...usersKeys.availability(), 'email', email, excludeId] as const,
   byRole: (role: UserRole) => [...usersKeys.all, 'by-role', role] as const,
   byDepartment: (department: Department) => [...usersKeys.all, 'by-department', department] as const,
-  activity: (id: number) => [...usersKeys.all, 'activity', id] as const,
-  sessions: (id: number) => [...usersKeys.all, 'sessions', id] as const,
-  permissions: (id: number) => [...usersKeys.all, 'permissions', id] as const,
+  activity: (id: string) => [...usersKeys.all, 'activity', id] as const,
+  sessions: (id: string) => [...usersKeys.all, 'sessions', id] as const,
+  permissions: (id: string) => [...usersKeys.all, 'permissions', id] as const,
 };
 
 // Queries
@@ -54,11 +54,11 @@ export function useUsers(params: UserParams = {}) {
   });
 }
 
-export function useUser(id: number, enabled = true) {
+export function useUser(id: string, enabled = true) {
   return useQuery({
     queryKey: usersKeys.detail(id),
     queryFn: () => usersService.getUser(id),
-    enabled: enabled && !!id && id > 0,
+    enabled: enabled && !!id,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -123,29 +123,29 @@ export function useUsersByDepartment(department: Department) {
   });
 }
 
-export function useUserActivity(id: number, enabled = true) {
+export function useUserActivity(id: string, enabled = true) {
   return useQuery({
     queryKey: usersKeys.activity(id),
     queryFn: () => usersService.getUserActivity(id),
-    enabled: enabled && !!id && id > 0,
+    enabled: enabled && !!id,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
-export function useUserSessions(id: number, enabled = true) {
+export function useUserSessions(id: string, enabled = true) {
   return useQuery({
     queryKey: usersKeys.sessions(id),
     queryFn: () => usersService.getUserSessions(id),
-    enabled: enabled && !!id && id > 0,
+    enabled: enabled && !!id,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 }
 
-export function useUserPermissions(id: number, enabled = true) {
+export function useUserPermissions(id: string, enabled = true) {
   return useQuery({
     queryKey: usersKeys.permissions(id),
     queryFn: () => usersService.getUserPermissions(id),
-    enabled: enabled && !!id && id > 0,
+    enabled: enabled && !!id,
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
 }
@@ -189,7 +189,7 @@ export function useUpdateUser() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateUserFormData }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserFormData }) =>
       usersService.updateUser(id, data),
     onSuccess: (updatedUser: User) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
@@ -250,7 +250,7 @@ export function useDeleteUser() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: (id: number) => usersService.deleteUser(id),
+    mutationFn: (id: string) => usersService.deleteUser(id),
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
       queryClient.invalidateQueries({ queryKey: usersKeys.statistics() });
@@ -278,7 +278,7 @@ export function useChangePassword() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ChangePasswordData }) =>
+    mutationFn: ({ id, data }: { id: string; data: ChangePasswordData }) =>
       usersService.changePassword(id, data),
     onSuccess: () => {
       showNotification({
@@ -327,7 +327,7 @@ export function useResetUserPassword() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, sendEmail }: { id: number; sendEmail?: boolean }) =>
+    mutationFn: ({ id, sendEmail }: { id: string; sendEmail?: boolean }) =>
       usersService.resetUserPassword(id, sendEmail),
     onSuccess: () => {
       showNotification({
@@ -354,7 +354,7 @@ export function useChangeUserStatus() {
 
   return useMutation({
     mutationFn: ({ id, status, reason }: { 
-      id: number; 
+      id: string; 
       status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'; 
       reason?: string 
     }) => usersService.changeUserStatus(id, status, reason),
@@ -392,7 +392,7 @@ export function useSendUserCredentials() {
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, includePassword }: { id: number; includePassword?: boolean }) =>
+    mutationFn: ({ id, includePassword }: { id: string; includePassword?: boolean }) =>
       usersService.sendUserCredentials(id, includePassword),
     onSuccess: () => {
       showNotification({
@@ -414,11 +414,10 @@ export function useSendUserCredentials() {
 
 export function useTerminateUserSession() {
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ userId, sessionId }: { userId: number; sessionId: string }) =>
+    mutationFn: ({ userId, sessionId }: { userId: string; sessionId: string }) =>
       usersService.terminateUserSession(userId, sessionId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.sessions(variables.userId) });
@@ -442,11 +441,10 @@ export function useTerminateUserSession() {
 
 export function useUpdateUserPermissions() {
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
   const { showNotification } = useNotifications();
 
   return useMutation({
-    mutationFn: ({ id, permissions }: { id: number; permissions: UserPermissions }) =>
+    mutationFn: ({ id, permissions }: { id: string; permissions: UserPermissions }) =>
       usersService.updateUserPermissions(id, permissions),
     onSuccess: (updatedPermissions: UserPermissions, variables) => {
       queryClient.setQueryData(
@@ -473,7 +471,6 @@ export function useUpdateUserPermissions() {
 
 export function useBulkUserAction() {
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
   const { showNotification } = useNotifications();
 
   return useMutation({
@@ -501,7 +498,6 @@ export function useBulkUserAction() {
 
 export function useImportUsers() {
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
   const { showNotification } = useNotifications();
 
   return useMutation({

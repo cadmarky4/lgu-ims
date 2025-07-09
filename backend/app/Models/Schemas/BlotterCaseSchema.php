@@ -117,7 +117,7 @@ class BlotterCaseSchema
                     $fieldRules[] = "max:{$config['max']}";
                 }
                 if (isset($config['unique']) && $config['unique']) {
-                    $fieldRules[] = 'unique:blotter_cases,' . $field;
+                    $fieldRules[] = 'unique:blotters,' . $field;
                 }
             } elseif ($config['type'] === 'date') {
                 $fieldRules[] = 'date';

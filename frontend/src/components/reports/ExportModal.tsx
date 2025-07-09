@@ -6,7 +6,7 @@ import type {
   AgeGroupDistribution,
   SpecialPopulationRegistry,
   MonthlyRevenue,
-  PopulationDistributionByPurok,
+  PopulationDistributionByStreet,
   DocumentTypesIssued,
   MostRequestedService,
   ReportsFilters,
@@ -20,7 +20,7 @@ interface ExportModalProps {
     ageGroupDistribution: AgeGroupDistribution[];
     specialPopulationRegistry: SpecialPopulationRegistry[];
     monthlyRevenue: MonthlyRevenue[];
-    populationDistributionByPurok: PopulationDistributionByPurok[];
+    populationDistributionByStreet: PopulationDistributionByStreet[];
     documentTypesIssued: DocumentTypesIssued[];
     mostRequestedServices: MostRequestedService[];
     filters: ReportsFilters;
@@ -125,7 +125,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, data }) => {
                   <span className="font-medium">Quarter:</span> {data.filters.quarter || 'All'}
                 </div>
                 <div className="col-span-2">
-                  <span className="font-medium">Purok/Sitio:</span> {data.filters.purok || 'All'}
+                  <span className="font-medium">Street:</span> {data.filters.street || 'All'}
                 </div>
               </div>
             </div>

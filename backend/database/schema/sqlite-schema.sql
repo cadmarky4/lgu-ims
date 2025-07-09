@@ -394,8 +394,7 @@ CREATE INDEX "audits_auditable_type_auditable_id_index" on "audits"(
   "auditable_id"
 );
 CREATE INDEX "audits_user_id_user_type_index" on "audits"(
-  "user_id",
-  "user_type"
+  "user_id"
 );
 CREATE TABLE IF NOT EXISTS "barangay_officials"(
   "id" varchar not null,

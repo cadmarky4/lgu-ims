@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('blotter_cases', function (Blueprint $table) {
+        Schema::create('blotters', function (Blueprint $table) {
             $table->id();
             
             // Basic Case Information
@@ -114,6 +114,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('blotter_cases');
+        Schema::dropIfExists('blotters');
     }
 };

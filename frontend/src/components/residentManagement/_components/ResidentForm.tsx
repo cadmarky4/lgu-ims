@@ -13,6 +13,7 @@ import { ProfilePhotoUpload } from './ProfilePhotoUpload';
 import { DuplicateWarning } from './DuplicateWarning';
 import { LoadingSpinner } from '@/components/__shared/LoadingSpinner';
 import { usePhilippineAddress } from '../_hooks/usePhilippineAddress';
+import { type ResidentFormData } from '@/services/residents/residents.types';
 
 interface ResidentFormProps {
   mode: 'create' | 'edit';
@@ -121,7 +122,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const isLastStep = currentStep === 7;
   const isFirstStep = currentStep === 0;
 
-  // Watch for address changes to load dependent options
+  // Watch for address changes to load dependent options - only clear dependent fields when user changes selection
   const selectedRegion = form.watch('region');
   const selectedProvince = form.watch('province');
   const selectedCity = form.watch('city');
@@ -129,29 +130,120 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const watchIndigenousPeople = form.watch('indigenous_people');
   const watchFourPsBeneficiary = form.watch('four_ps_beneficiary');
 
+  // State to track if we're initially loading data (to prevent clearing dependent fields)
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   useEffect(() => {
     if (selectedRegion) {
       loadProvinces(selectedRegion);
-      form.setValue('province', '');
-      form.setValue('city', '');
-      form.setValue('barangay', '');
+      // Only clear dependent fields if this is user interaction, not initial load
+      if (!isInitialLoad) {
+        form.setValue('province', '');
+        form.setValue('city', '');
+        form.setValue('barangay', '');
+      }
     }
-  }, [selectedRegion, loadProvinces, form]);
+  }, [selectedRegion, loadProvinces, form, isInitialLoad]);
 
   useEffect(() => {
     if (selectedProvince) {
       loadCities(selectedProvince);
-      form.setValue('city', '');
-      form.setValue('barangay', '');
+      // Only clear dependent fields if this is user interaction, not initial load
+      if (!isInitialLoad) {
+        form.setValue('city', '');
+        form.setValue('barangay', '');
+      }
     }
-  }, [selectedProvince, loadCities, form]);
+  }, [selectedProvince, loadCities, form, isInitialLoad]);
 
   useEffect(() => {
     if (selectedCity) {
       loadBarangays(selectedCity);
-      form.setValue('barangay', '');
+      // Only clear dependent fields if this is user interaction, not initial load
+      if (!isInitialLoad) {
+        form.setValue('barangay', '');
+      }
     }
-  }, [selectedCity, loadBarangays, form]);
+  }, [selectedCity, loadBarangays, form, isInitialLoad]);
+
+  // Handle initial address cascade when form data is loaded (draft or edit)
+  useEffect(() => {
+    const handleInitialAddressCascade = async () => {
+      const formValues = form.getValues();
+      console.log('Address cascade triggered with values:', formValues);
+      
+      // If we have complete address data, load all cascading options sequentially
+      if (formValues.region && formValues.province && formValues.city) {
+        console.log('Loading full address cascade for:', formValues.region, formValues.province, formValues.city, formValues.barangay);
+        
+        try {
+          // Load provinces first
+          await loadProvinces(formValues.region);
+          
+          // Wait for provinces to load, then load cities
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await loadCities(formValues.province);
+          
+          // Wait for cities to load, then load barangays
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await loadBarangays(formValues.city);
+          
+          // Mark initial load as complete after everything is loaded
+          await new Promise(resolve => setTimeout(resolve, 300));
+          console.log('Address cascade completed, setting initial load to false');
+          setIsInitialLoad(false);
+        } catch (error) {
+          console.error('Error loading address cascade:', error);
+          setIsInitialLoad(false);
+        }
+      } else if (formValues.region) {
+        // Partial address data - load what we can
+        console.log('Loading partial address cascade for region:', formValues.region);
+        try {
+          await loadProvinces(formValues.region);
+          if (formValues.province) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadCities(formValues.province);
+          }
+          setTimeout(() => setIsInitialLoad(false), 300);
+        } catch (error) {
+          console.error('Error loading partial address cascade:', error);
+          setIsInitialLoad(false);
+        }
+      } else {
+        // No address data
+        console.log('No address data found, setting initial load to false');
+        setIsInitialLoad(false);
+      }
+    };
+
+    // Subscribe to form watch for reset events
+    const subscription = form.watch((value, { name, type }) => {
+      // Only run on form reset (when data is loaded)
+      if (type === 'change' && !name) {
+        console.log('Form reset detected, triggering address cascade');
+        // Use setTimeout to ensure the form values are set before running cascade
+        setTimeout(() => {
+          handleInitialAddressCascade();
+        }, 100);
+      }
+    });
+
+    // Also run on mount
+    handleInitialAddressCascade();
+
+    return () => subscription.unsubscribe();
+  }, [form, loadProvinces, loadCities, loadBarangays]);
+
+  // Debug form values (can be removed in production)
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (name === 'region' || name === 'province' || name === 'city' || name === 'barangay' || name === 'profile_photo_url') {
+        console.log(`Form field ${name} changed:`, value[name], 'type:', type);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Check if current step is valid
   const validateCurrentStep = () => {
@@ -160,12 +252,40 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     const errors = form.formState.errors;
 
     // Check for required fields in current step
-    const requiredFields = ['first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 'civil_status', 'nationality', 'religion', 'complete_address', 'voter_status'];
+    const requiredFields = [
+      'first_name', 'last_name', 'birth_date', 'birth_place', 'gender', 
+      'civil_status', 'nationality', 'religion', 'complete_address', 
+      'voter_status', 'region', 'province', 'city', 'barangay'
+    ];
     
     const hasErrors = stepFields.some(field => errors[field as keyof typeof errors]);
     const missingRequired = stepFields.some(field => 
       requiredFields.includes(field) && !formValues[field as keyof typeof formValues]
     );
+
+    // Log validation details for debugging
+    if (currentStepData.id === 'contact') {
+      console.log('Contact step validation:', {
+        stepFields,
+        hasErrors,
+        missingRequired,
+        formValues: {
+          region: formValues.region,
+          province: formValues.province,
+          city: formValues.city,
+          barangay: formValues.barangay,
+          complete_address: formValues.complete_address
+        },
+        errors: {
+          region: errors.region,
+          province: errors.province,
+          city: errors.city,
+          barangay: errors.barangay,
+          complete_address: errors.complete_address
+        }
+      });
+    }
+    
     return !hasErrors && !missingRequired;
   };
 
@@ -177,7 +297,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       }
       console.log("Going next!");
     } else {
-      form.trigger(currentStepData.fields as any);
+      form.trigger(currentStepData.fields as (keyof ResidentFormData)[]);
     }
     console.log("last?",currentStep, FORM_STEPS.length-1);
     console.log("is last?",isLastStep)

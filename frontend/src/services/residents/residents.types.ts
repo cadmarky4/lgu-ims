@@ -137,11 +137,11 @@ export const ResidentFormDataSchema = z.object({
   landline_number: z.string().optional(),
   email_address: z.union([z.string().email('residents.form.validation.email'), z.literal('')]).optional(),
 
-  // Address Information - Fixed field mapping
-  region: z.string().optional(),
-  province: z.string().optional(),
-  city: z.string().optional(),
-  barangay: z.string().optional(),
+  // Address Information - Make required fields actually required
+  region: z.string().min(1, 'residents.form.error.regionRequired'),
+  province: z.string().min(1, 'residents.form.error.provinceRequired'),
+  city: z.string().min(1, 'residents.form.error.cityRequired'),
+  barangay: z.string().min(1, 'residents.form.error.barangayRequired'),
   house_number: z.string().optional(),
   street: z.string().optional(),
   complete_address: z.string().min(1, 'residents.form.validation.required'),

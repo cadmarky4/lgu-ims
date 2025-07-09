@@ -9,7 +9,7 @@ import type {
   AgeGroupDistribution,
   SpecialPopulationRegistry,
   MonthlyRevenue,
-  PopulationDistributionByPurok,
+  PopulationDistributionByStreet,
   DocumentTypesIssued,
   MostRequestedService,
   ReportsFilters,
@@ -20,7 +20,7 @@ interface ExportData {
   ageGroupDistribution: AgeGroupDistribution[];
   specialPopulationRegistry: SpecialPopulationRegistry[];
   monthlyRevenue: MonthlyRevenue[];
-  populationDistributionByPurok: PopulationDistributionByPurok[];
+  populationDistributionByStreet: PopulationDistributionByStreet[];
   documentTypesIssued: DocumentTypesIssued[];
   mostRequestedServices: MostRequestedService[];
   filters: ReportsFilters;
@@ -47,8 +47,8 @@ export class ExportService {
       // Add Monthly Revenue sheet
       this.addMonthlyRevenueSheet(workbook, data.monthlyRevenue, data.filters);
 
-      // Add Population Distribution by Purok sheet
-      this.addPopulationDistributionSheet(workbook, data.populationDistributionByPurok, data.filters);
+      // Add Population Distribution by Street sheet
+      this.addPopulationDistributionSheet(workbook, data.populationDistributionByStreet, data.filters);
 
       // Add Document Types Issued sheet
       this.addDocumentTypesSheet(workbook, data.documentTypesIssued, data.filters);
@@ -103,7 +103,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['STATISTICS OVERVIEW'],
       [''],
@@ -113,7 +113,7 @@ export class ExportService {
       ['Active Barangay Officials', data.activeBarangayOfficials],
       ['Total Blotter Cases', data.totalBlotterCases],
       ['Total Issued Clearance', data.totalIssuedClearance],
-      ['Ongoing Projects', data.ongoingProjects],
+      // ['Ongoing Projects', data.ongoingProjects],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -144,7 +144,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['AGE GROUP DISTRIBUTION'],
       [''],
@@ -187,7 +187,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['SPECIAL POPULATION REGISTRY'],
       [''],
@@ -217,7 +217,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['MONTHLY REVENUE COLLECTION'],
       [''],
@@ -243,26 +243,26 @@ export class ExportService {
   }
 
   /**
-   * Add Population Distribution by Purok sheet to workbook
+   * Add Population Distribution by Street sheet to workbook
    */
-  private addPopulationDistributionSheet(workbook: XLSX.WorkBook, data: PopulationDistributionByPurok[], filters: ReportsFilters): void {
+  private addPopulationDistributionSheet(workbook: XLSX.WorkBook, data: PopulationDistributionByStreet[], filters: ReportsFilters): void {
     const wsData = [
-      ['BARANGAY MANAGEMENT SYSTEM - POPULATION DISTRIBUTION BY PUROK/SITIO'],
+      ['BARANGAY MANAGEMENT SYSTEM - POPULATION DISTRIBUTION BY STREET'],
       [''],
       ['Report Generated:', new Date().toLocaleDateString()],
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
-      ['POPULATION DISTRIBUTION BY PUROK/SITIO'],
+      ['POPULATION DISTRIBUTION BY STREET'],
       [''],
-      ['Purok/Sitio', 'Population'],
+      ['Street', 'Population'],
       ...data.map(item => [item.label, item.value]),
       [''],
       ['SUMMARY'],
       ['Total Population:', data.reduce((sum, item) => sum + item.value, 0)],
-      ['Average per Purok:', data.length > 0 ? Math.round(data.reduce((sum, item) => sum + item.value, 0) / data.length) : 0],
+      ['Average per Street:', data.length > 0 ? Math.round(data.reduce((sum, item) => sum + item.value, 0) / data.length) : 0],
       ['Most Populated:', data.length > 0 ? data.reduce((max, item) => item.value > max.value ? item : max).label : 'N/A'],
       ['Least Populated:', data.length > 0 ? data.reduce((min, item) => item.value < min.value ? item : min).label : 'N/A']
     ];
@@ -275,7 +275,7 @@ export class ExportService {
       { width: 15 }
     ];
 
-    XLSX.utils.book_append_sheet(workbook, ws, 'Population by Purok');
+    XLSX.utils.book_append_sheet(workbook, ws, 'Population by Street');
   }
 
   /**
@@ -289,7 +289,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['DOCUMENT TYPES ISSUED'],
       [''],
@@ -325,7 +325,7 @@ export class ExportService {
       ['Filters Applied:'],
       ['Year:', filters.year || 'All'],
       ['Quarter:', filters.quarter || 'All'],
-      ['Purok/Sitio:', filters.purok || 'All'],
+      ['Street:', filters.street || 'All'],
       [''],
       ['MOST REQUESTED SERVICES'],
       [''],
@@ -369,7 +369,7 @@ export class ExportService {
     const filterInfo = `
       <p><strong>Year:</strong> ${data.filters.year || 'All'}</p>
       <p><strong>Quarter:</strong> ${data.filters.quarter || 'All'}</p>
-      <p><strong>Purok/Sitio:</strong> ${data.filters.purok || 'All'}</p>
+      <p><strong>Street:</strong> ${data.filters.street || 'All'}</p>
     `;
 
     return `
@@ -505,10 +505,6 @@ export class ExportService {
                 <div class="stat-value">${data.statisticsOverview.totalIssuedClearance.toLocaleString()}</div>
                 <div class="stat-label">Total Issued Clearance</div>
               </div>
-              <div class="stat-card">
-                <div class="stat-value">${data.statisticsOverview.ongoingProjects.toLocaleString()}</div>
-                <div class="stat-label">Ongoing Projects</div>
-              </div>
             </div>
           </div>
 
@@ -578,16 +574,16 @@ export class ExportService {
           </div>
 
           <div class="section page-break">
-            <h2 class="section-title">Population Distribution by Purok/Sitio</h2>
+            <h2 class="section-title">Population Distribution by Street</h2>
             <table>
               <thead>
                 <tr>
-                  <th>Purok/Sitio</th>
+                  <th>Street</th>
                   <th>Population</th>
                 </tr>
               </thead>
               <tbody>
-                ${data.populationDistributionByPurok.map(item => `
+                ${data.populationDistributionByStreet.map(item => `
                   <tr>
                     <td>${item.label}</td>
                     <td>${item.value.toLocaleString()}</td>
@@ -597,8 +593,8 @@ export class ExportService {
             </table>
             <div class="summary">
               <h3>Population Summary</h3>
-              <p><strong>Total Population:</strong> ${data.populationDistributionByPurok.reduce((sum, item) => sum + item.value, 0).toLocaleString()}</p>
-              <p><strong>Average per Purok:</strong> ${data.populationDistributionByPurok.length > 0 ? Math.round(data.populationDistributionByPurok.reduce((sum, item) => sum + item.value, 0) / data.populationDistributionByPurok.length).toLocaleString() : 0}</p>
+              <p><strong>Total Population:</strong> ${data.populationDistributionByStreet.reduce((sum, item) => sum + item.value, 0).toLocaleString()}</p>
+              <p><strong>Average per Street:</strong> ${data.populationDistributionByStreet.length > 0 ? Math.round(data.populationDistributionByStreet.reduce((sum, item) => sum + item.value, 0) / data.populationDistributionByStreet.length).toLocaleString() : 0}</p>
             </div>
           </div>
 
@@ -672,11 +668,11 @@ export class ExportService {
     const date = new Date().toISOString().split('T')[0];
     const year = filters.year || 'All';
     const quarter = filters.quarter || 'All';
-    const purok = filters.purok || 'All';
+    const street = filters.street || 'All';
     
     const extension = format === 'excel' ? 'xlsx' : 'docx';
     
-    return `Barangay_Reports_${year}_${quarter}_${purok}_${date}.${extension}`;
+    return `Barangay_Reports_${year}_${quarter}_${street}_${date}.${extension}`;
   }
 
   /**

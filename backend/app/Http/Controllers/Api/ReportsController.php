@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Resident;
 use App\Models\Household;
 use App\Models\BarangayOfficial;
-use App\Models\BlotterCase;
+use App\Models\Blotter;
 use App\Models\Document;
-use App\Models\Project;
+// use App\Models\Project;
 use App\Models\Appointment;
 use App\Models\Complaint;
 use Illuminate\Http\Request;
@@ -26,18 +26,17 @@ class ReportsController extends Controller
         try {
             $year = $request->get('year');
             $quarter = $request->get('quarter');
-            $purok = $request->get('purok');
 
             // Build date filters
             $dateFilter = $this->buildDateFilter($year, $quarter);
 
             $stats = [
-                'totalResidents' => $this->getTotalResidents($purok, $dateFilter),
-                'totalHouseholds' => $this->getTotalHouseholds($purok, $dateFilter),
+                'totalResidents' => $this->getTotalResidents($dateFilter),
+                'totalHouseholds' => $this->getTotalHouseholds($dateFilter),
                 'activeBarangayOfficials' => $this->getActiveBarangayOfficials($dateFilter),
-                'totalBlotterCases' => $this->getTotalBlotterCases($purok, $dateFilter),
+                'totalBlotterCases' => $this->getTotalBlotterCases($dateFilter),
                 'totalIssuedClearance' => $this->getTotalIssuedDocuments($dateFilter),
-                'ongoingProjects' => $this->getOngoingProjects($dateFilter),
+                // 'ongoingProjects' => $this->getOngoingProjects($dateFilter),
             ];
 
             return response()->json([
@@ -58,14 +57,8 @@ class ReportsController extends Controller
     public function getAgeGroupDistribution(Request $request): JsonResponse
     {
         try {
-            $purok = $request->get('purok');
-            
             $query = Resident::query();
             
-            if ($purok && $purok !== 'All') {
-                $query->where('purok', $purok);
-            }
-
             $residents = $query->whereNotNull('birth_date')->get();
             $totalResidents = $residents->count();
 
@@ -120,14 +113,8 @@ class ReportsController extends Controller
     public function getSpecialPopulationRegistry(Request $request): JsonResponse
     {
         try {
-            $purok = $request->get('purok');
-            
             $baseQuery = Resident::query();
             
-            if ($purok && $purok !== 'All') {
-                $baseQuery->where('purok', $purok);
-            }
-
             $totalResidents = $baseQuery->count();
 
             if ($totalResidents === 0) {
@@ -203,7 +190,7 @@ class ReportsController extends Controller
     }
 
     /**
-     * Get population distribution by purok/sitio
+     * Get population distribution by street
      */
     public function getPopulationDistributionByPurok(Request $request): JsonResponse
     {
@@ -217,26 +204,27 @@ class ReportsController extends Controller
                 $query->whereYear('created_at', '<=', $year);
             }
 
-            $purokData = $query->select('purok', DB::raw('count(*) as total'))
-                ->whereNotNull('purok')
-                ->groupBy('purok')
-                ->orderBy('purok')
+            $streetData = $query->select('street', DB::raw('count(*) as total'))
+                ->whereNotNull('street')
+                ->where('street', '!=', '')
+                ->groupBy('street')
+                ->orderBy('street')
                 ->get();
 
-            $data = $purokData->map(function ($item) {
+            $data = $streetData->map(function ($item) {
                 return [
-                    'label' => $item->purok,
+                    'label' => $item->street ?: 'No Street Specified',
                     'value' => $item->total,
                 ];
             })->toArray();
 
             return response()->json([
-                'message' => 'Population distribution by purok retrieved successfully',
+                'message' => 'Population distribution by street retrieved successfully',
                 'data' => $data,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to retrieve population distribution by purok',
+                'message' => 'Failed to retrieve population distribution by street',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -386,11 +374,12 @@ class ReportsController extends Controller
             
             $quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'All Quarters'];
             
-            $puroks = Resident::select('purok')
-                ->whereNotNull('purok')
+            $streets = Resident::select('street')
+                ->whereNotNull('street')
+                ->where('street', '!=', '')
                 ->distinct()
-                ->orderBy('purok')
-                ->pluck('purok')
+                ->orderBy('street')
+                ->pluck('street')
                 ->toArray();
 
             return response()->json([
@@ -398,7 +387,7 @@ class ReportsController extends Controller
                 'data' => [
                     'years' => $years,
                     'quarters' => $quarters,
-                    'puroks' => $puroks,
+                    'streets' => $streets,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -431,13 +420,9 @@ class ReportsController extends Controller
         return $quarterMap[$quarter] ?? null;
     }
 
-    private function getTotalResidents($purok, $dateFilter)
+    private function getTotalResidents($dateFilter)
     {
         $query = Resident::query();
-        
-        if ($purok && $purok !== 'All') {
-            $query->where('purok', $purok);
-        }
         
         if ($dateFilter && isset($dateFilter['year'])) {
             $query->whereYear('created_at', '<=', $dateFilter['year']);
@@ -446,13 +431,9 @@ class ReportsController extends Controller
         return $query->count();
     }
 
-    private function getTotalHouseholds($purok, $dateFilter)
+    private function getTotalHouseholds($dateFilter)
     {
         $query = Household::query();
-        
-        if ($purok && $purok !== 'All') {
-            $query->where('purok', $purok);
-        }
         
         if ($dateFilter && isset($dateFilter['year'])) {
             $query->whereYear('created_at', '<=', $dateFilter['year']);
@@ -472,14 +453,9 @@ class ReportsController extends Controller
         return $query->count();
     }
 
-    private function getTotalBlotterCases($purok, $dateFilter)
+    private function getTotalBlotterCases($dateFilter)
     {
-        $query = BlotterCase::query();
-        
-        if ($purok && $purok !== 'All') {
-            // Assuming blotter cases have purok field or related to residents
-            $query->where('purok', $purok);
-        }
+        $query = Blotter::query();
         
         if ($dateFilter) {
             if (isset($dateFilter['start']) && isset($dateFilter['end'])) {
@@ -507,14 +483,14 @@ class ReportsController extends Controller
         return $query->count();
     }
 
-    private function getOngoingProjects($dateFilter)
-    {
-        $query = Project::where('status', 'Active');
-        
-        if ($dateFilter && isset($dateFilter['year'])) {
-            $query->whereYear('created_at', '<=', $dateFilter['year']);
-        }
-        
-        return $query->count();
-    }
+    // private function getOngoingProjects($dateFilter)
+    // {
+    //     $query = Project::where('status', 'Active');
+    //     
+    //     if ($dateFilter && isset($dateFilter['year'])) {
+    //         $query->whereYear('created_at', '<=', $dateFilter['year']);
+    //     }
+    //     
+    //     return $query->count();
+    // }
 }

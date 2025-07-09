@@ -82,27 +82,36 @@ export const ResidentFormField: React.FC<ResidentFormFieldProps> = ({
 
       case 'select':
         return (
-          <div className="relative">
-            <select
-              {...register(name, { required })}
-              disabled={disabled || loading}
-              className={`${baseInputClasses} pr-8 ${loading ? 'pl-8' : ''}`}
-            >
-              {placeholder && (
-                <option value="" disabled>
-                  {placeholder}
-                </option>
-              )}
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {loading && (
-              <FiLoader className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+          <Controller
+            name={name}
+            control={control}
+            rules={{ required }}
+            render={({ field: { onChange, value, ...field } }) => (
+              <div className="relative">
+                <select
+                  {...field}
+                  value={value || ''}
+                  onChange={(e) => onChange(e.target.value)}
+                  disabled={disabled || loading}
+                  className={`${baseInputClasses} pr-8 ${loading ? 'pl-8' : ''}`}
+                >
+                  {placeholder && (
+                    <option value="" disabled>
+                      {placeholder}
+                    </option>
+                  )}
+                  {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {loading && (
+                  <FiLoader className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                )}
+              </div>
             )}
-          </div>
+          />
         );
 
       case 'checkbox':

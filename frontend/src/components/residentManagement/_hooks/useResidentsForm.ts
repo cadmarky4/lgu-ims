@@ -89,12 +89,24 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
     }
   }, [watchAge, form]);
 
+  // Watch profile_photo_url field and sync with preview state
+  const watchProfilePhotoUrl = form.watch('profile_photo_url');
+  useEffect(() => {
+    if (watchProfilePhotoUrl && watchProfilePhotoUrl !== profilePhotoPreview) {
+      setProfilePhotoPreview(watchProfilePhotoUrl);
+    } else if (!watchProfilePhotoUrl && profilePhotoPreview) {
+      setProfilePhotoPreview(null);
+    }
+  }, [watchProfilePhotoUrl, profilePhotoPreview]);
+
   // Load existing resident data in edit mode
   useEffect(() => {
     if (mode === 'edit' && resident) {
       const formData = transformResidentToFormData(resident);
+      // Reset form synchronously first
       form.reset(formData);
       
+      // Then set photo preview
       if (resident.profile_photo_url) {
         setProfilePhotoPreview(resident.profile_photo_url);
       }
@@ -108,7 +120,14 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
       if (savedDraft) {
         try {
           const draftData = JSON.parse(savedDraft);
+          // Reset form synchronously first
           form.reset(draftData);
+          
+          // Then set photo preview
+          if (draftData.profile_photo_url) {
+            setProfilePhotoPreview(draftData.profile_photo_url);
+          }
+          
           showNotification({
             type: 'info',
             title: t('residents.form.messages.draftLoadedTitle'),
@@ -237,13 +256,13 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
         }
 
         const uploadResult = await response.json();
-        const uploadedFileUrl = uploadResult.url;
+        const uploadedFilename = uploadResult.filename;
 
-        // Store the uploaded file URL in form field and update preview
-        form.setValue('profile_photo_url', uploadedFileUrl);
+        // Store the uploaded filename in form field and update preview
+        form.setValue('profile_photo_url', uploadedFilename);
         // Clean up the blob URL and use the server URL
         URL.revokeObjectURL(previewUrl);
-        setProfilePhotoPreview(uploadedFileUrl);
+        setProfilePhotoPreview(uploadedFilename);
 
       // If in edit mode, also update the resident's photo immediately
       if (mode === 'edit' && residentId) {
@@ -289,7 +308,12 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
   const saveDraft = useCallback(() => {
     if (mode === 'create') {
       const formData = form.getValues();
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(formData));
+      // Include profile photo in draft
+      const draftData = {
+        ...formData,
+        profile_photo_url: profilePhotoPreview || formData.profile_photo_url
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
       
       showNotification({
         type: 'success',
@@ -297,7 +321,7 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
         message: t('residents.form.messages.draftSaved'),
       });
     }
-  }, [mode, form, t, showNotification]);
+  }, [mode, form, profilePhotoPreview, t, showNotification]);
 
   // Clear draft
   const clearDraft = useCallback(() => {
@@ -322,13 +346,17 @@ export function useResidentForm({ mode, residentId, onSuccess }: UseResidentForm
         const formData = form.getValues();
         // Only save if form has meaningful data
         if (formData.first_name || formData.last_name || formData.email_address) {
-          localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(formData));
+          const draftData = {
+            ...formData,
+            profile_photo_url: profilePhotoPreview || formData.profile_photo_url
+          };
+          localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
         }
       }, 30000); // Auto-save every 30 seconds
 
       return () => clearInterval(autoSaveInterval);
     }
-  }, [mode, form]);
+  }, [mode, form, profilePhotoPreview]);
 
   return {
     form,

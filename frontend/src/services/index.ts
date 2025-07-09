@@ -8,6 +8,7 @@ import { SuggestionsService } from './helpDesk/suggestions/suggestions.service';
 import { BlotterService } from './helpDesk/blotters/blotters.service';
 import { AppointmentsService } from './helpDesk/appointments/appointments.service';
 import { barangayOfficialsService, BarangayOfficialsService } from './officials/barangayOfficials.service';
+import { settingsService, SettingsService } from './settings/settings.service';
 
 // Create singleton instances
 export const authService = new AuthService();
@@ -32,7 +33,8 @@ export {
   SuggestionsService,
   BlotterService,
   AppointmentsService,
-  BarangayOfficialsService
+  BarangayOfficialsService,
+  SettingsService
 };
 
 // Export all services as a single object for backward compatibility
@@ -62,6 +64,19 @@ export const apiService = {
   updateBarangayOfficial: barangayOfficialsService.updateBarangayOfficial.bind(barangayOfficialsService),
   deleteBarangayOfficial: barangayOfficialsService.deleteBarangayOfficial.bind(barangayOfficialsService),
   getBarangayOfficialStatistics: barangayOfficialsService.getStatistics.bind(barangayOfficialsService),
+  
+  // Settings
+  getSettings: settingsService.getSettings.bind(settingsService),
+  updateSettings: settingsService.updateSettings.bind(settingsService),
+  resetSettings: settingsService.resetSettings.bind(settingsService),
+  validateSettings: settingsService.validateSettings.bind(settingsService),
+  updateGeneralSettings: settingsService.updateGeneralSettings.bind(settingsService),
+  updatePrivacySettings: settingsService.updatePrivacySettings.bind(settingsService),
+  updateSystemSettings: settingsService.updateSystemSettings.bind(settingsService),
+  getSettingsSection: settingsService.getSettingsSection.bind(settingsService),
+  isDefaultSettings: settingsService.isDefaultSettings.bind(settingsService),
+  backupSettings: settingsService.backupSettings.bind(settingsService),
+  testSettings: settingsService.testSettings.bind(settingsService),
 };
 
 export default apiService;

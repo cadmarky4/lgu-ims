@@ -1,5 +1,5 @@
 import type { BarangayOfficial } from "@/services/officials/barangayOfficials.types"
-import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
+import { buildImageUrl, getPlaceholderImageUrl } from "@/utils/imageUtils";
 import { getStatusBadgeColor } from "../utils/getStatusBadgeColor";
 import { FiEdit, FiEye, FiTrash2 } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
@@ -26,9 +26,13 @@ export const BarangayOfficialsTableRow: React.FC<BarangayOfficialsTableRowProps>
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                 <img
-                    src={official?.profile_photo_url ? `${STORAGE_BASE_URL}/${official?.profile_photo_url}` : 'https://via.placeholder.com/150'}
+                    src={buildImageUrl(official?.profile_photo_url || null)}
                     alt={official?.first_name}
                     className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getPlaceholderImageUrl(40, 'No Photo');
+                    }}
                 />
                 <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900">{official?.full_name}</div>

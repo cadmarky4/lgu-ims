@@ -25,35 +25,26 @@ class FileUploadController extends Controller
             ]);
 
             $file = $request->file('file');
-            $extension = $file->getClientOriginalExtension();
-            $filename = 'resident_' . Str::random(16) . '_' . time() . '.' . $extension;
-
-            // Ensure the directory exists
-            $directory = storage_path('app/public/profile_photos');
-            if (!is_dir($directory)) {
-                if (!mkdir($directory, 0775, true) && !is_dir($directory)) {
-                    throw new \RuntimeException('Failed to create directory: ' . $directory);
-                }
-            }
-
-            $path = $file->storeAs('public/profile_photos', $filename);
+            
+            // Store the file and let Laravel generate the filename
+            $path = $file->store('public/residents/photos');
+            
+            // Extract just the filename from the path
+            $filename = basename($path);
 
             // Double-check file existence
-            if (!Storage::exists('public/profile_photos/' . $filename)) {
-                Log::error('File not found after upload: ' . $filename);
+            if (!Storage::exists($path)) {
+                Log::error('File not found after upload: ' . $path);
                 return response()->json([
                     'error' => 'File was not saved to storage.',
                     'filename' => $filename,
                 ], 500);
             }
 
-            // Generate a public URL
-            $url = Storage::url($path);
-
+            // Return only the filename - frontend will build the full URL
             return response()->json([
-                'url' => $url,
-                'path' => $path,
                 'filename' => $filename,
+                'path' => $path,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

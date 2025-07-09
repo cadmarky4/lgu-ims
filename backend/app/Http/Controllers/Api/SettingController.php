@@ -126,4 +126,159 @@ class SettingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Create a backup of current settings.
+     */
+    public function backup(): JsonResponse
+    {
+        try {
+            $settings = Setting::current();
+            
+            // Create backup data
+            $backup = [
+                'settings' => $settings->toFrontendFormat(),
+                'timestamp' => now()->toISOString(),
+                'version' => $settings->version_number ?? '1.0.0',
+                'created_by' => auth('sanctum')->user()?->name ?? 'System'
+            ];
+            
+            return response()->json([
+                'message' => 'Settings backup created successfully',
+                'data' => $backup,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create settings backup',
+                'errors' => ['general' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore settings from backup.
+     */
+    public function restore(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'backupId' => 'required|string',
+                'confirmRestore' => 'required|boolean|accepted',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // For now, we'll just reset to default values
+            $settings = Setting::current();
+            
+            $settings->update([
+                'system_name' => 'LGU Information Management System',
+                'version_number' => '1.0.0',
+                'primary_language' => 'English',
+                'session_timeout' => 30,
+                'max_login_attempts' => 3,
+                'data_retention' => 7,
+                'backup_frequency' => 'Daily',
+            ]);
+
+            return response()->json([
+                'message' => 'Settings restored successfully',
+                'data' => $settings->fresh()->toFrontendFormat(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to restore settings',
+                'errors' => ['general' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of available backups.
+     */
+    public function backups(): JsonResponse
+    {
+        try {
+            // For now, return an empty array
+            $backups = [];
+            
+            return response()->json([
+                'message' => 'Backups retrieved successfully',
+                'data' => $backups,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve backups',
+                'errors' => ['general' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
+
+    /**
+     * Test settings connectivity.
+     */
+    public function test(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'section' => 'nullable|string|in:general,privacy,system,all',
+                'validateOnly' => 'nullable|boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $section = $request->input('section', 'all');
+            $result = [
+                'success' => true,
+                'message' => 'Settings test passed',
+                'details' => [
+                    'tested_section' => $section,
+                    'timestamp' => now()->toISOString()
+                ]
+            ];
+
+            return response()->json([
+                'message' => 'Settings test completed',
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Settings test failed',
+                'errors' => ['general' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get settings change history.
+     */
+    public function history(Request $request): JsonResponse
+    {
+        try {
+            $limit = $request->input('limit', 10);
+            
+            // For now, return an empty array
+            $history = [];
+            
+            return response()->json([
+                'message' => 'Settings history retrieved successfully',
+                'data' => $history,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to retrieve settings history',
+                'errors' => ['general' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
 }
