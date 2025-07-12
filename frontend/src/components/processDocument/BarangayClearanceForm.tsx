@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
 
 import { useResidents } from '../../services/residents/useResidents';
+import { useBarangayOfficials } from '../../services/officials/useBarangayOfficials';
 import { useDocumentForm } from './_hooks/useDocumentForm';
 import { DocumentFormDataSchema, type DocumentFormData } from '../../services/documents/documents.types';
 import { type Resident } from '../../services/residents/residents.types';
@@ -32,7 +33,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
     resolver: zodResolver(DocumentFormDataSchema),
     defaultValues: {
       document_type: 'BARANGAY_CLEARANCE',
-      resident_id: 0,
+      resident_id: '',
       applicant_name: '',
     purpose: '',
       applicant_address: '',
@@ -51,7 +52,6 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   });
 
   const { 
-    register, 
     setValue, 
     watch, 
     handleSubmit, 
@@ -63,7 +63,7 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
   // Document form hook for API integration
   const documentForm = useDocumentForm({
     documentType: 'BARANGAY_CLEARANCE',
-    onSuccess: (document) => {
+    onSuccess: (_document) => {
       showNotification({
         type: 'success',
         title: 'Request Submitted',
@@ -119,12 +119,14 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
     'Legal Purposes'
   ];
 
-  const barangayOfficials = [
-    'Hon. Juan Dela Cruz - Punong Barangay',
-    'Hon. Maria Santos - Kagawad',
-    'Hon. Roberto Garcia - Kagawad',
-    'Carmen Rodriguez - Barangay Secretary'
-  ];
+  // Fetch active barangay officials for the certifying official dropdown
+  const { data: officialsData, isLoading: isLoadingOfficials } = useBarangayOfficials({
+    status: 'ACTIVE',
+    current_term: true,
+    per_page: 100 // Get all active officials
+  });
+
+  const officials = officialsData?.data || [];
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -391,11 +393,20 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
               <select
                 onChange={(e) => handleCertifyingOfficialChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                disabled={isLoadingOfficials}
               >
-                <option value="">Select official</option>
-                {barangayOfficials.map((official) => (
-                  <option key={official} value={official}>{official}</option>
-                ))}
+                <option value="">
+                  {isLoadingOfficials ? 'Loading officials...' : 'Select official'}
+                </option>
+                {officials.map((official) => {
+                  const fullName = `${official.prefix} ${official.first_name} ${official.middle_name ? official.middle_name + ' ' : ''}${official.last_name}${official.suffix ? ' ' + official.suffix : ''}`.trim();
+                  const positionText = official.position.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                  return (
+                    <option key={official.id} value={fullName}>
+                      {fullName} ({positionText})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -528,10 +539,9 @@ const BarangayClearanceForm: React.FC<BarangayClearanceFormProps> = ({ onNavigat
           onClick={() => {
             setStep(1);
             setSelectedResident(null);
-            setSearchTerm('');
-            reset({
-              document_type: 'BARANGAY_CLEARANCE',
-              resident_id: 0,
+            setSearchTerm('');          reset({
+            document_type: 'BARANGAY_CLEARANCE',
+            resident_id: '',
               applicant_name: '',
               purpose: '',
               applicant_address: '',

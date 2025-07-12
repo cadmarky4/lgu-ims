@@ -101,16 +101,16 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                         setIsAlreadyRegisteredAsOfficialWarning(null);
                         setValue('resident_id', selectedResidentId)
                         setValue('first_name', res.first_name);
-                        setValue('middle_name', res.middle_name);
+                        setValue('middle_name', res.middle_name || '');
                         setValue('last_name', res.last_name);
                         setValue('gender', res.gender);
                         setValue('birth_date', new Date(res.birth_date).toISOString().split('T')[0]);
-                        setValue('mobile_number', res.mobile_number);
-                        setValue('email_address', res.email_address);
+                        setValue('mobile_number', res.mobile_number || '');
+                        setValue('email_address', res.email_address || '');
                         setValue('complete_address', res.complete_address);
                         setValue('civil_status', res.civil_status);
                         setValue('educational_attainment', res.educational_attainment);
-                        setValue('profile_photo_url', res.profile_photo_url);
+                        setValue('profile_photo_url', res.profile_photo_url || '');
                     }
                 })();
             }, 1000);
@@ -153,10 +153,21 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
     // Form submission
     const handleSubmit = form.handleSubmit(async (data: BarangayOfficialFormData) => {
         console.log('Form handleSubmit called with data:', data);
+        
+        // Transform data to ensure null values become empty strings
+        const transformedData = {
+            ...data,
+            mobile_number: data.mobile_number || '',
+            email_address: data.email_address || '',
+            middle_name: data.middle_name || '',
+            suffix: data.suffix || '',
+            profile_photo_url: data.profile_photo_url || '',
+        };
+        
         try {
             if (mode === 'create') {
                 console.log('Creating barangay official...');
-                const result = await createBarangayOfficial.mutateAsync(data);
+                const result = await createBarangayOfficial.mutateAsync(transformedData);
                 console.log('Create result:', result);
                 showNotification({
                     type: 'success',
@@ -167,7 +178,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                 });
             } else if (mode === 'edit' && barangayOfficialId) {
                 console.log('Updating barangay official...');
-                const result = await updateBarangayOfficial.mutateAsync({ id: barangayOfficialId, data });
+                const result = await updateBarangayOfficial.mutateAsync({ id: barangayOfficialId, data: transformedData });
                 console.log('Update result:', result);
                 showNotification({
                     type: 'success',

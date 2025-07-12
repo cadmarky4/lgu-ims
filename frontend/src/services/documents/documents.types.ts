@@ -38,7 +38,7 @@ export const PaymentStatusSchema = z.enum([
 export const DocumentFormDataSchema = z.object({
   // Basic Document Information
   document_type: DocumentTypeSchema,
-  resident_id: z.number().min(1, 'Resident is required'),
+  resident_id: z.string().uuid('Resident is required'),
   applicant_name: z.string().min(1, 'Applicant name is required'),
   purpose: z.string().min(1, 'Purpose is required'),
   

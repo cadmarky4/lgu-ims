@@ -27,7 +27,7 @@ const ViewHousehold: React.FC = () => {
   // Validate ID format - simplified validation
   const isValidId = (id: string) => {
     // Just check if it's a non-empty string
-    const isValid = id && id.trim().length > 0;
+    const isValid = !!(id && id.trim().length > 0);
     
     // Log for debugging
     console.log('ID validation:', { id, isValid });

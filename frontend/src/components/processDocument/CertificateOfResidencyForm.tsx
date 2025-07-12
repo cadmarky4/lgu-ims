@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FiSearch, FiUser, FiCheck, FiArrowLeft, FiAlertCircle, FiHome, FiCalendar } from 'react-icons/fi';
 
 import { useResidents } from '../../services/residents/useResidents';
+import { useBarangayOfficials } from '../../services/officials/useBarangayOfficials';
 import { useDocumentForm } from './_hooks/useDocumentForm';
 import { DocumentFormDataSchema, type DocumentFormData } from '../../services/documents/documents.types';
 import { type Resident } from '../../services/residents/residents.types';
@@ -32,7 +33,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
     resolver: zodResolver(DocumentFormDataSchema),
     defaultValues: {
       document_type: 'CERTIFICATE_OF_RESIDENCY',
-      resident_id: 0,
+      resident_id: '',
       applicant_name: '',
       purpose: '',
       applicant_address: '',
@@ -50,11 +51,10 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
     mode: 'onChange',
   });
 
-  const { 
-    register, 
-    setValue, 
-    watch, 
-    handleSubmit, 
+  const {
+    setValue,
+    watch,
+    handleSubmit,
     formState: { errors, isValid },
     getValues,
     reset
@@ -63,7 +63,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   // Document form hook for API integration
   const documentForm = useDocumentForm({
     documentType: 'CERTIFICATE_OF_RESIDENCY',
-    onSuccess: (document) => {
+    onSuccess: (_document) => {
       showNotification({
         type: 'success',
         title: 'Request Submitted',
@@ -81,12 +81,12 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   });
 
   // Residents query for search  
-  const { 
-    data: residentsData, 
-    isLoading: searchLoading 
-  } = useResidents({ 
-    search: searchTerm, 
-    per_page: 10 
+  const {
+    data: residentsData,
+    isLoading: searchLoading
+  } = useResidents({
+    search: searchTerm,
+    per_page: 10
   });
 
   const residents = residentsData?.data || [];
@@ -112,12 +112,14 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
     'Caretaker'
   ];
 
-  const barangayOfficials = [
-    'Hon. Juan Dela Cruz - Punong Barangay',
-    'Hon. Maria Santos - Kagawad',
-    'Hon. Roberto Garcia - Kagawad',
-    'Carmen Rodriguez - Barangay Secretary'
-  ];
+  // Fetch active barangay officials for the certifying official dropdown
+  const { data: officialsData, isLoading: isLoadingOfficials } = useBarangayOfficials({
+    status: 'ACTIVE',
+    current_term: true,
+    per_page: 100 // Get all active officials
+  });
+
+  const officials = officialsData?.data || [];
 
   // Animation trigger on component mount
   useEffect(() => {
@@ -131,7 +133,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   useEffect(() => {
     if (selectedResident) {
       const fullName = `${selectedResident.first_name} ${selectedResident.middle_name || ''} ${selectedResident.last_name}`.trim();
-      
+
       setValue('resident_id', selectedResident.id);
       setValue('applicant_name', fullName);
       setValue('applicant_address', selectedResident.complete_address);
@@ -173,7 +175,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   // Handle custom field updates
   const handleYearsOfResidenceChange = (value: string) => {
     setValue('residency_period', `${value} years`);
-    
+
     const currentRemarks = getValues('remarks') || '';
     const newRemarks = currentRemarks.replace(/Years of Residence: \d+/, '') + ` Years of Residence: ${value}`;
     setValue('remarks', newRemarks.trim());
@@ -196,13 +198,12 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   };
 
   const renderStep1 = () => (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${
-      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-    }`} style={{ transitionDelay: '200ms' }}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
       <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
         Select Resident
       </h2>
-      
+
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Search for resident *
@@ -217,14 +218,14 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
             className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
           />
         </div>
-        
+
         {searchLoading && (
           <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
             <LoadingSpinner size="sm" />
             <span>Searching...</span>
           </div>
         )}
-        
+
         {residents.length > 0 && searchTerm && (
           <div className="mt-2 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
             {residents.map((resident) => (
@@ -282,16 +283,15 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
 
   const renderStep2 = () => (
     <FormProvider {...form}>
-      <form onSubmit={onSubmit} className={`space-y-6 transition-all duration-700 ease-out ${
-      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '300ms' }}>
-        
+      <form onSubmit={onSubmit} className={`space-y-6 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '300ms' }}>
+
         {/* Resident Information Display */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Resident Information
           </h2>
-          
+
           {selectedResident && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
@@ -318,7 +318,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               </div>
             </div>
           )}
-          
+
           <div className="mt-4 pt-4 border-t border-gray-200">
             <button
               type="button"
@@ -336,7 +336,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
           <h2 className="text-lg font-semibold text-darktext mb-4 border-l-4 border-smblue-400 pl-4">
             Certificate of Residency Details
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Purpose Field - ABSTRACTED! */}
             <DocumentFormField
@@ -387,11 +387,20 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
               <select
                 onChange={(e) => handleCertifyingOfficialChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+                disabled={isLoadingOfficials}
               >
-                <option value="">Select official</option>
-                {barangayOfficials.map((official) => (
-                  <option key={official} value={official}>{official}</option>
-                ))}
+                <option value="">
+                  {isLoadingOfficials ? 'Loading officials...' : 'Select official'}
+                </option>
+                {officials.map((official) => {
+                  const fullName = `${official.prefix} ${official.first_name} ${official.middle_name ? official.middle_name + ' ' : ''}${official.last_name}${official.suffix ? ' ' + official.suffix : ''}`.trim();
+                  const positionText = official.position.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                  return (
+                    <option key={official.id} value={fullName}>
+                      {fullName} ({positionText})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -507,7 +516,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
                   <FiAlertCircle className="w-5 h-5 text-red-400 mr-2" />
                   <p className="text-red-800 text-sm">{documentForm.error}</p>
                 </div>
-                <button 
+                <button
                   type="button"
                   onClick={documentForm.clearError}
                   className="text-red-600 underline text-sm hover:text-red-700"
@@ -522,7 +531,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
           <div className="flex justify-end space-x-4 mt-6">
             <button
               type="button"
-              onClick={() => setStep(1)} 
+              onClick={() => setStep(1)}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               disabled={documentForm.isSubmitting}
             >
@@ -545,21 +554,20 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
   );
 
   const renderStep3 = () => (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center transition-all duration-700 ease-out ${
-      isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-    }`} style={{ transitionDelay: '200ms' }}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`} style={{ transitionDelay: '200ms' }}>
       <div className="flex justify-center mb-4">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
           <FiCheck className="w-8 h-8 text-green-600" />
         </div>
       </div>
-      
+
       <h2 className="text-xl font-semibold text-darktext mb-2">Request Submitted Successfully!</h2>
       <p className="text-gray-600 mb-6">
-        Your Certificate of Residency request has been submitted and is now being processed. 
+        Your Certificate of Residency request has been submitted and is now being processed.
         You will be notified once it's ready for pickup.
       </p>
-      
+
       {selectedResident && (
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
           <h3 className="font-medium text-gray-900 mb-2">Request Details</h3>
@@ -572,7 +580,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex">
           <FiCalendar className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5" />
@@ -591,7 +599,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-center space-x-4">
         <button
           onClick={() => onNavigate('process-document')}
@@ -606,7 +614,7 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
             setSearchTerm('');
             reset({
               document_type: 'CERTIFICATE_OF_RESIDENCY',
-              resident_id: 0,
+              resident_id: '',
               applicant_name: '',
               purpose: '',
               applicant_address: '',
@@ -635,33 +643,29 @@ const CertificateOfResidencyForm: React.FC<CertificateOfResidencyFormProps> = ({
       <Breadcrumb isLoaded={isLoaded} />
 
       {/* Header */}
-      <div className={`mb-6 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}>
+      <div className={`mb-6 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}>
         <h1 className="text-2xl font-bold text-darktext">Certificate of Residency Request</h1>
         <p className="text-gray-600 mt-1">Request a certificate of residency for various transactions</p>
       </div>
 
       {/* Step Indicator */}
-      <div className={`mb-8 transition-all duration-700 ease-out ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`} style={{ transitionDelay: '100ms' }}>
+      <div className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`} style={{ transitionDelay: '100ms' }}>
         <div className="flex items-center justify-center space-x-4">
           {[1, 2, 3].map((stepNumber) => (
             <div key={stepNumber} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step === stepNumber
-                  ? 'bg-smblue-400 text-white' 
-                  : step > stepNumber
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step === stepNumber
+                ? 'bg-smblue-400 text-white'
+                : step > stepNumber
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-200 text-gray-600'
-              }`}>
+                }`}>
                 {step > stepNumber ? <FiCheck /> : stepNumber}
               </div>
               {stepNumber < 3 && (
-                <div className={`w-16 h-0.5 ${
-                  step > stepNumber ? 'bg-green-500' : 'bg-gray-200'
-                }`} />
+                <div className={`w-16 h-0.5 ${step > stepNumber ? 'bg-green-500' : 'bg-gray-200'
+                  }`} />
               )}
             </div>
           ))}

@@ -215,16 +215,16 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
     resident_id: official.resident_id,
     prefix: official.prefix,
     first_name: official.first_name,
-    middle_name: official.middle_name,
+    middle_name: official.middle_name || '',
     last_name: official.last_name,
-    suffix: official.suffix,
+    suffix: official.suffix || '',
     birth_date: official.birth_date,
     gender: official.gender,
     nationality: official.nationality,
     civil_status: official.civil_status,
     educational_attainment: official.educational_attainment,
-    mobile_number: official.mobile_number,
-    email_address: official.email_address,
+    mobile_number: official.mobile_number || '',
+    email_address: official.email_address || '',
     complete_address: official.complete_address,
     position: official.position,
     committee_assignment: official.committee_assignment,
@@ -233,7 +233,7 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
     term_number: official.term_number,
     is_current_term: official.is_current_term,
     status: official.status,
-    profile_photo_url: official.profile_photo_url
+    profile_photo_url: official.profile_photo_url || ''
   };
   
   console.log(formData);
@@ -245,16 +245,16 @@ export function transformResidentToBarangayOfficialFormData(resident: Resident):
     resident_id: resident.id.toString(),
     prefix: 'Mr.',
     first_name: resident.first_name,
-    middle_name: resident.middle_name,
+    middle_name: resident.middle_name || '',
     last_name: resident.last_name,
-    suffix: resident.suffix,
+    suffix: resident.suffix || '',
     birth_date: resident.birth_date,
     gender: resident.gender,
     civil_status: resident.civil_status,
     nationality: resident.nationality,
     educational_attainment: resident.educational_attainment,
-    mobile_number: resident.mobile_number,
-    email_address: resident.email_address,
+    mobile_number: resident.mobile_number || '',
+    email_address: resident.email_address || '',
     complete_address: resident.complete_address,
     position: 'BARANGAY_CAPTAIN',
     committee_assignment: 'Health',
@@ -263,7 +263,7 @@ export function transformResidentToBarangayOfficialFormData(resident: Resident):
     term_number: 0,
     is_current_term: true,
     status: 'ACTIVE',
-    profile_photo_url: resident.profile_photo_url
+    profile_photo_url: resident.profile_photo_url || ''
   };
 }
 
