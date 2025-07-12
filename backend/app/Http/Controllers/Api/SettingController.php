@@ -46,15 +46,15 @@ class SettingController extends Controller
                 'type' => 'nullable|string|max:255',
                 'contactNumber' => 'nullable|string|max:255',
                 'emailAddress' => 'nullable|email|max:255',
-                'openingHours' => 'nullable|string|date_format:H:i',
-                'closingHours' => 'nullable|string|date_format:H:i',
+                'openingHours' => 'nullable|string|max:20',
+                'closingHours' => 'nullable|string|max:20',
                 'primaryLanguage' => 'nullable|string|max:255',
                 'secondaryLanguage' => 'nullable|string|max:255',
                 
                 // Privacy and Security
-                'sessionTimeout' => 'nullable|integer|min:5|max:1440', // 5 minutes to 24 hours
-                'maxLoginAttempts' => 'nullable|integer|min:1|max:10',
-                'dataRetention' => 'nullable|integer|min:1|max:50', // 1 to 50 years
+                'sessionTimeout' => 'nullable|string|numeric|min:5|max:480',
+                'maxLoginAttempts' => 'nullable|string|numeric|min:1|max:10',
+                'dataRetention' => 'nullable|string|numeric|min:1|max:50',
                 'backupFrequency' => 'nullable|in:Daily,Weekly,Monthly',
                 
                 // System

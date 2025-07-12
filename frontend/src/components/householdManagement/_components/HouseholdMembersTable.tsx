@@ -2,44 +2,51 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiUsers } from 'react-icons/fi';
 import { useResident } from '@/services/residents/useResidents';
-import type { Household } from '@/services/households/households.types';
+import type { Household, HouseholdMember } from '@/services/households/households.types';
 
 interface HouseholdMembersTableProps {
- household: Household;
+  household: Household;
 }
 
-const MemberRow: React.FC<{ memberId: number; relationship: string; index: number }> = ({ 
- memberId, 
- relationship, 
- index 
+// Extended type to handle pivot data from backend
+interface HouseholdMemberWithPivot extends HouseholdMember {
+  pivot?: {
+    relationship?: string;
+  };
+}
+
+const MemberRow: React.FC<{ memberId: string; relationship: string; index: number }> = ({ 
+  memberId, 
+  relationship, 
+  index 
 }) => {
- const { t } = useTranslation();
- const { data: resident, isLoading } = useResident(memberId);
+  const { t } = useTranslation();
+  const { data: resident, isLoading } = useResident(memberId);
 
- if (isLoading) {
-   return (
-     <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-       <td className="px-4 py-3 border-b" colSpan={3}>
-         <div className="animate-pulse flex space-x-4">
-           <div className="rounded-full bg-gray-200 h-4 w-20"></div>
-           <div className="flex-1 space-y-2 py-1">
-             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-           </div>
-         </div>
-       </td>
-     </tr>
-   );
- }
+  if (isLoading) {
+    return (
+      <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+        <td className="px-4 py-3 border-b" colSpan={3}>
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-gray-200 h-4 w-20"></div>
+            <div className="flex-1 space-y-2 py-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  }
 
- if (!resident) {
-   return (
-     <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-       <td className="px-4 py-3 border-b" colSpan={3}>
-         <span className="text-red-500 text-sm">{t('households.form.membersSection.residentNotFound')}</span>
-       </td>
-     </tr>
-   );
- }
+  if (!resident) {
+    return (
+      <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+        <td className="px-4 py-3 border-b" colSpan={3}>
+          <span className="text-red-500 text-sm">{t('households.form.membersSection.residentNotFound')}</span>
+        </td>
+      </tr>
+    );
+  }
 
  return (
    <tr className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -103,14 +110,17 @@ const HouseholdMembersTable: React.FC<HouseholdMembersTableProps> = ({ household
                </tr>
              </thead>
              <tbody>
-               {household.members.map((member, index) => (
-                 <MemberRow
-                   key={member.id}
-                   memberId={member.id}
-                   relationship={member.relationship}
-                   index={index}
-                 />
-               ))}
+               {household.members.map((member, index) => {
+                 const memberWithPivot = member as HouseholdMemberWithPivot;
+                 return (
+                   <MemberRow
+                     key={member.id}
+                     memberId={member.id}
+                     relationship={memberWithPivot.pivot?.relationship || member.relationship || 'OTHER'}
+                     index={index}
+                   />
+                 );
+               })}
              </tbody>
            </table>
          </div>

@@ -34,7 +34,7 @@ export type FileUploadRequest = z.infer<typeof FileUploadSchema>;
 export type MultipleUploadResult = z.infer<typeof MultipleUploadResultSchema>;
 
 // Constants
-export const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_BASE_URL || 'http://127.0.0.1:8000/storage';
+export const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_BASE_URL || 'http://localhost:8000/storage/public/residents/photos';
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const ALLOWED_FILE_TYPES = [
   'image/jpeg',

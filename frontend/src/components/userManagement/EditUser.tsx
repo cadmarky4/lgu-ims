@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FiX, FiSave, FiUser } from 'react-icons/fi';
 import { UsersService } from '../../services/users/users.service';
-import type { User, UserFormData } from '../../services/users/users.types';
+import type { User, CreateUserFormData, UserRole, Department } from '../../services/users/users.types';
 
 interface EditUserProps {
-  userId: number;
+  userId: string;
   onClose: () => void;
   onSave: (user: User) => void;
 }
@@ -12,58 +12,63 @@ interface EditUserProps {
 const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);  const [formData, setFormData] = useState<UserFormData>({
-    firstName: '',
-    lastName: '',
-    middleName: '',
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState<CreateUserFormData>({
+    first_name: '',
+    last_name: '',
+    middle_name: '',
     username: '',
     email: '',
     phone: '',
-    role: 'USER',
-    department: '',
+    role: 'VIEWER' as UserRole,
+    department: 'ADMINISTRATION' as Department,
     position: '',
-    employeeId: '',
+    employee_id: '',
     password: '',
-    confirmPassword: '',
-    isActive: true,
-    sendCredentials: false,
+    confirm_password: '',
+    is_active: true,
+    send_credentials: false,
     notes: ''
   });
 
-  const usersService = new UsersService();
+  const usersService = useMemo(() => new UsersService(), []);
 
-  useEffect(() => {
-    fetchUser();
-  }, [userId]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const user = await usersService.getUser(userId);
-        setFormData({
-        firstName: user.first_name || '',
-        lastName: user.last_name || '',
-        middleName: user.middle_name || '',
-        username: user.username || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        role: user.role || 'USER',
-        department: user.department || '',
-        position: user.position || '',
-        employeeId: user.employee_id || '',
+      const userData = await usersService.getUser(userId);
+      
+      // Transform API data to form data
+      setFormData({
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        middle_name: userData.middle_name || '',
+        username: userData.username || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        role: userData.role || 'VIEWER',
+        department: userData.department || 'ADMINISTRATION',
+        position: userData.position || '',
+        employee_id: userData.employee_id || '',
         password: '', // Don't populate password
-        confirmPassword: '',
-        isActive: user.is_active ?? true,
-        sendCredentials: false,
-        notes: user.notes || ''
+        confirm_password: '',
+        is_active: userData.is_active ?? true,
+        send_credentials: false,
+        notes: userData.notes || ''
       });
+      
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to load user data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, usersService]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -73,11 +78,11 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.firstName.trim()) {
+    if (!formData.first_name.trim()) {
       setError('First name is required');
       return false;
     }
-    if (!formData.lastName.trim()) {
+    if (!formData.last_name.trim()) {
       setError('Last name is required');
       return false;
     }
@@ -95,7 +100,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
     }
     
     // Only validate password if it's provided (for updates)
-    if (formData.password && formData.password !== formData.confirmPassword) {
+    if (formData.password && formData.password !== formData.confirm_password) {
       setError('Passwords do not match');
       return false;
     }
@@ -113,37 +118,42 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
 
     try {
       setSaving(true);
-        // Create update data, excluding password if not provided
-      const updateData: Partial<UserFormData> = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
+      // Create update data, excluding password if not provided
+      const updateData: Partial<CreateUserFormData> = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name,
         username: formData.username,
         email: formData.email,
         phone: formData.phone,
         role: formData.role,
         department: formData.department,
         position: formData.position,
-        employeeId: formData.employeeId,
-        isActive: formData.isActive,
+        employee_id: formData.employee_id,
+        is_active: formData.is_active,
         notes: formData.notes
       };
 
       // Only include password if provided
       if (formData.password) {
         updateData.password = formData.password;
-        updateData.confirmPassword = formData.confirmPassword;
+        updateData.confirm_password = formData.confirm_password;
       }
 
-      const updatedUser = await usersService.updateUser(userId, updateData);
+      const updatedUser = await usersService.updateUser(userId, updateData as CreateUserFormData);
       onSave(updatedUser);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating user:', err);
       
-      if (err.response?.data?.errors) {
-        const validationErrors = err.response.data.errors;
-        const errorMessages = Object.values(validationErrors).flat();
-        setError(errorMessages.join(', '));
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = err.response as { data?: { errors?: Record<string, string[]> } };
+        if (response?.data?.errors) {
+          const validationErrors = response.data.errors;
+          const errorMessages = Object.values(validationErrors).flat();
+          setError(errorMessages.join(', '));
+        } else {
+          setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to update user');
+        }
       } else {
         setError((err instanceof Error ? err.message : 'Unknown error') || 'Failed to update user');
       }
@@ -195,27 +205,27 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
               </h3>
               
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                   First Name *
                 </label>
                 <input
                   type="text"
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
+                  id="first_name"
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
                 />
               </div>              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                   Last Name *
                 </label>
                 <input
                   type="text"
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
+                  id="last_name"
+                  name="last_name"
+                  value={formData.last_name}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                   required
@@ -223,14 +233,14 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
               </div>
 
               <div>
-                <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="middle_name" className="block text-sm font-medium text-gray-700 mb-1">
                   Middle Name
                 </label>
                 <input
                   type="text"
-                  id="middleName"
-                  name="middleName"
-                  value={formData.middleName}
+                  id="middle_name"
+                  name="middle_name"
+                  value={formData.middle_name || ''}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
@@ -334,7 +344,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
                   type="text"
                   id="position"
                   name="position"
-                  value={formData.position}
+                  value={formData.position || ''}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
@@ -345,8 +355,8 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
                 <input
                   type="text"
                   id="employeeId"
-                  name="employeeId"
-                  value={formData.employeeId}
+                  name="employee_id"
+                  value={formData.employee_id || ''}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />
@@ -356,8 +366,8 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
+                    name="is_active"
+                    checked={formData.is_active}
                     onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                     className="w-4 h-4 text-smblue-400 border-gray-300 rounded focus:ring-smblue-200"
                   />
@@ -376,7 +386,7 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
               <textarea
                 id="notes"
                 name="notes"
-                value={formData.notes}
+                value={formData.notes || ''}
                 onChange={handleInputChange}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
@@ -412,8 +422,8 @@ const EditUser: React.FC<EditUserProps> = ({ userId, onClose, onSave }) => {
                 <input
                   type="password"
                   id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+                  name="confirm_password"
+                  value={formData.confirm_password}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                 />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { FiDownload } from "react-icons/fi";
 import {
   FaUsers,
@@ -14,7 +14,7 @@ import ResponsiveBarGraph from "./ResponsiveBarGraph";
 import ResponsivePieChart from "./ResponsivePieChart";
 import ResponsiveServicesTable from "./ResponsiveServicesTable";
 import ExportModal from "./ExportModal";
-import { ReportsService } from "../../services/reports/reports.service";
+import { reportsService } from "../../services/reports/reports.service";
 import type {
   StatisticsOverview,
   AgeGroupDistribution,
@@ -27,13 +27,22 @@ import type {
 } from "../../services/reports/reports.types";
 import Breadcrumb from "../_global/Breadcrumb";
 
+import { type IconType } from 'react-icons';
+
+// Type for statistics display data
+interface StatisticsDisplayData {
+  label: string;
+  value: number;
+  icon: IconType;
+}
+
 export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedQuarter, setSelectedQuarter] = useState<string>("All Quarters");
   const [selectedStreet, setSelectedStreet] = useState<string>("All");
 
   // State for data
-  const [statisticsOverviewData, setStatisticsOverviewData] = useState<StatisticsOverview[]>([]);
+  const [statisticsOverviewData, setStatisticsOverviewData] = useState<StatisticsDisplayData[]>([]);
   const [statisticsOverview, setStatisticsOverview] = useState<StatisticsOverview>({
     totalResidents: 0,
     totalHouseholds: 0,
@@ -61,8 +70,8 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  // Service instance
-  const reportsService = useMemo(() => new ReportsService(), []);
+  // Service instance - using singleton
+  // const reportsService = useMemo(() => new ReportsService(), []);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Animation trigger on component mount
@@ -89,7 +98,7 @@ export default function ReportsPage() {
     };
 
     loadFilterOptions();
-  }, [reportsService]);
+  }, []);
 
   // Load data when filters change
   useEffect(() => {
@@ -181,7 +190,7 @@ export default function ReportsPage() {
     if (filterOptions.years.length > 0) {
       loadReportsData();
     }
-  }, [selectedYear, selectedQuarter, selectedStreet, filterOptions.years.length, reportsService]);
+  }, [selectedYear, selectedQuarter, selectedStreet, filterOptions.years.length]);
 
   // Handle export button click
   const handleExportClick = () => {

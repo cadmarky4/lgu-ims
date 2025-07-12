@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { id: "share-suggestions", label: "Share suggestions" },
       ],
     },
-    { id: "projects", label: "Projects & Programs", icon: FiBriefcase },
+    // { id: "projects", label: "Projects & Programs", icon: FiBriefcase },
     { id: "officials", label: "Barangay Officials", icon: FiUserCheck },
     { id: "reports", label: "Reports", icon: FiBarChart },
     { id: "users", label: "Manage Users", icon: FiUsers },

@@ -1,89 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiPlus, FiTrash2, FiSearch, FiEdit2 } from 'react-icons/fi';
-import { apiService, residentsService } from '../../../services';
+import { FiPlus, FiTrash2, FiSearch } from 'react-icons/fi';
+import { residentsService } from '../../../services/residents/residents.service';
+import { householdsService } from '../../../services/households/households.service';
 import type { Resident } from '../../../services/residents/residents.types';
+import type { HouseholdMember, RelationshipType, Household } from '../../../services/households/households.types';
 
 interface HouseholdMembersProps {
- householdId: string;
- householdHead: any;
- onMembersUpdate?: (members: any[]) => void;
+  householdId: string;
+  householdHead: Resident | null;
+  onMembersUpdate?: (members: HouseholdMemberWithResident[]) => void;
 }
 
-interface MemberResident {
- id: number,
- resident: Resident
- household_id: string,
- resident_id: number
- relationship_to_head: string,
- is_household_head: boolean
+interface HouseholdMemberWithResident extends HouseholdMember {
+  resident: Resident;
+  household_id: string;
+  resident_id: string;
+  relationship_to_head: RelationshipType;
+  is_household_head: boolean;
 }
 
 const HouseholdMembers: React.FC<HouseholdMembersProps> = ({ 
- householdId, 
- householdHead, 
- onMembersUpdate 
+  householdId, 
+  householdHead, 
+  onMembersUpdate 
 }) => {
- const { t } = useTranslation();
- const [members, setMembers] = useState<MemberResident[]>([]);
- const [isLoading, setIsLoading] = useState(false);
- const [error, setError] = useState<string | null>(null);
- const [showAddMember, setShowAddMember] = useState(false);
- const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
- const [relationship, setRelationship] = useState('');
- const [searchTerm, setSearchTerm] = useState('');
- const [searchResults, setSearchResults] = useState<unknown[]>([]);
- const [isSearching, setIsSearching] = useState(false);
+  const { t } = useTranslation();
+  const [members, setMembers] = useState<HouseholdMemberWithResident[]>([]);
+  const [_isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [relationship, setRelationship] = useState<RelationshipType | ''>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<Resident[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
- const relationshipOptions = [
-   'SPOUSE',
-   'SON',
-   'DAUGHTER',
-   'FATHER',
-   'MOTHER',
-   'BROTHER',
-   'SISTER',
-   'GRANDSON',
-   'GRANDDAUGHTER',
-   'GRANDFATHER',
-   'GRANDMOTHER',
-   'UNCLE',
-   'AUNT',
-   'NEPHEW',
-   'NIECE',
-   'COUSIN',
-   'IN_LAW',
-   'OTHER'
- ];
+  const relationshipOptions: RelationshipType[] = [
+    'SPOUSE',
+    'SON',
+    'DAUGHTER',
+    'FATHER',
+    'MOTHER',
+    'BROTHER',
+    'SISTER',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'GRANDFATHER',
+    'GRANDMOTHER',
+    'UNCLE',
+    'AUNT',
+    'NEPHEW',
+    'NIECE',
+    'COUSIN',
+    'IN_LAW',
+    'BOARDER',
+    'OTHER'
+  ];  // Fetch household members
+  const fetchMembers = useCallback(async () => {
+    if (!householdId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Use the actual households service to get members
+      const response = await householdsService.getHousehold(householdId);
+      // Assuming the backend returns members with full resident data
+      setMembers((response as Household & { members: HouseholdMemberWithResident[] }).members || []);
+    } catch (err) {
+      setError(t('households.form.members.loadError', { defaultValue: 'Failed to load household members' }));
+      console.error('Error fetching members:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [householdId, t]);
 
- // Fetch household members
- useEffect(() => {
-   fetchMembers();
- }, [householdId]);
-
- const fetchMembers = async () => {
-   if (!householdId) return;
-   
-   setIsLoading(true);
-   setError(null);
-   
-   try {
-     // TODO: Replace with actual API endpoint
-     // const response = await apiService.getHouseholdMembers(householdId);
-     // setMembers(response);
-     
-     // Mock data for now
-     setMembers([]);
-   } catch (err) {
-     setError(t('households.form.members.loadError', { defaultValue: 'Failed to load household members' }));
-     console.error('Error fetching members:', err);
-   } finally {
-     setIsLoading(false);
-   }
- };
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
  // Search for residents to add
- const searchResidents = async (term: string) => {
+ const searchResidents = useCallback(async (term: string) => {
    if (!term.trim()) {
      setSearchResults([]);
      return;
@@ -92,12 +90,11 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
    setIsSearching(true);
    try {
      const results = await residentsService.searchResidents(term);
-     
-     // Filter out the household head and existing members
-     const filteredResults = results.filter((resident: Resident) => 
-       resident.id !== householdHead?.id &&
-       !members.some((member: any) => member.resident_id === resident.id)
-     );
+        // Filter out the household head and existing members
+    const filteredResults = results.filter((resident: Resident) => 
+      resident.id !== householdHead?.id &&
+      !members.some((member: HouseholdMemberWithResident) => member.resident_id === resident.id)
+    );
      
      setSearchResults(filteredResults);
    } catch (err) {
@@ -106,7 +103,7 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
    } finally {
      setIsSearching(false);
    }
- };
+ }, [householdHead?.id, members]);
 
  // Handle search input change
  useEffect(() => {
@@ -115,66 +112,60 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
    }, 300);
 
    return () => clearTimeout(delayedSearch);
- }, [searchTerm]);
+ }, [searchTerm, searchResidents]);  const handleAddMember = async () => {
+    if (!selectedResident || !relationship) {
+      setError(t('households.form.members.selectResidentAndRelationship', { 
+        defaultValue: 'Please select a resident and relationship' 
+      }));
+      return;
+    }
 
- const handleAddMember = async () => {
-   if (!selectedResident || !relationship) {
-     setError(t('households.form.members.selectResidentAndRelationship', { 
-       defaultValue: 'Please select a resident and relationship' 
-     }));
-     return;
-   }
+    try {
+      const newMember: HouseholdMemberWithResident = {
+        id: `temp-${Date.now()}`, // Temporary ID until saved
+        household_id: householdId,
+        resident_id: selectedResident.id,
+        relationship: relationship as RelationshipType,
+        relationship_to_head: relationship as RelationshipType,
+        is_household_head: false,
+        resident: selectedResident
+      };
 
-   try {
-     const memberData = {
-       household_id: householdId,
-       resident_id: selectedResident.id,
-       relationship_to_head: relationship,
-       is_household_head: false
-     };
+      setMembers((prev) => [...prev, newMember]);
+      
+      setSelectedResident(null);
+      setRelationship('');
+      setSearchTerm('');
+      setSearchResults([]);
+      setShowAddMember(false);
+      setError(null);
 
-     const newMember = {
-       id: Date.now(),
-       ...memberData,
-       resident: selectedResident
-     };
+      if (onMembersUpdate) {
+        onMembersUpdate([...members, newMember]);
+      }
 
-     setMembers((prev) => [...prev, newMember]);
-     
-     setSelectedResident(null);
-     setRelationship('');
-     setSearchTerm('');
-     setSearchResults([]);
-     setShowAddMember(false);
-     setError(null);
+    } catch (err) {
+      setError(t('households.form.members.addError', { defaultValue: 'Failed to add household member' }));
+      console.error('Error adding member:', err);
+    }
+  };  const handleRemoveMember = async (memberId: string) => {
+    if (!window.confirm(t('households.form.confirmations.removeMember'))) {
+      return;
+    }
 
-     if (onMembersUpdate) {
-       onMembersUpdate([...members, newMember]);
-     }
+    try {
+      const updatedMembers = members.filter(member => member.id !== memberId);
+      setMembers(updatedMembers);
+      
+      if (onMembersUpdate) {
+        onMembersUpdate(updatedMembers);
+      }
 
-   } catch (err) {
-     setError(t('households.form.members.addError', { defaultValue: 'Failed to add household member' }));
-     console.error('Error adding member:', err);
-   }
- };
-
- const handleRemoveMember = async (memberId: number) => {
-   if (!window.confirm(t('households.form.confirmations.removeMember'))) {
-     return;
-   }
-
-   try {
-     setMembers(prev => prev.filter(member => member.id !== memberId));
-     
-     if (onMembersUpdate) {
-       onMembersUpdate(members.filter(member => member.id !== memberId));
-     }
-
-   } catch (err) {
-     setError(t('households.form.members.removeError', { defaultValue: 'Failed to remove household member' }));
-     console.error('Error removing member:', err);
-   }
- };
+    } catch (err) {
+      setError(t('households.form.members.removeError', { defaultValue: 'Failed to remove household member' }));
+      console.error('Error removing member:', err);
+    }
+  };
 
  return (
    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -221,13 +212,66 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
          <h4 className="font-medium text-gray-900 mb-4">{t('households.form.members.addNewMember', { defaultValue: 'Add New Member' })}</h4>
          
          <div className="space-y-4">
+           {/* Resident Search */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-2">
+               {t('households.form.members.searchResident', { defaultValue: 'Search for Resident' })} *
+             </label>
+             <div className="relative">
+               <input
+                 type="text"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 placeholder={t('households.form.members.searchPlaceholder', { defaultValue: 'Type name to search...' })}
+                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
+               />
+               <FiSearch className="absolute right-3 top-3 text-gray-400" />
+               {isSearching && (
+                 <div className="absolute right-10 top-3 text-gray-400">
+                   <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-smblue-400 rounded-full"></div>
+                 </div>
+               )}
+             </div>
+             
+             {/* Search Results */}
+             {searchResults.length > 0 && (
+               <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                 {searchResults.map((resident: Resident) => (
+                   <button
+                     key={resident.id}
+                     type="button"
+                     onClick={() => {
+                       setSelectedResident(resident);
+                       setSearchTerm(`${resident.first_name} ${resident.last_name}`);
+                       setSearchResults([]);
+                     }}
+                     className={`w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                       selectedResident?.id === resident.id ? 'bg-smblue-50 text-smblue-700' : ''
+                     }`}
+                   >
+                     <div>
+                       <p className="font-medium">{resident.first_name} {resident.last_name}</p>
+                       <p className="text-sm text-gray-600">Age: {resident.age} | Gender: {resident.gender}</p>
+                     </div>
+                   </button>
+                 ))}
+               </div>
+             )}
+             
+             {searchTerm && searchResults.length === 0 && !isSearching && (
+               <p className="mt-2 text-sm text-gray-500">
+                 {t('households.form.members.noResidentsFound', { defaultValue: 'No residents found. Try a different search term.' })}
+               </p>
+             )}
+           </div>
+
            <div>
              <label className="block text-sm font-medium text-gray-700 mb-2">
                {t('households.form.members.relationshipToHead', { defaultValue: 'Relationship to Household Head' })} *
              </label>
              <select
                value={relationship}
-               onChange={(e) => setRelationship(e.target.value)}
+               onChange={(e) => setRelationship(e.target.value as RelationshipType)}
                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
                required
              >
@@ -243,7 +287,7 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
            <div className="flex space-x-3">
              <button
                onClick={handleAddMember}
-               disabled={!relationship}
+               disabled={!selectedResident || !relationship}
                className="bg-smblue-400 hover:bg-smblue-300 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
              >
                {t('households.form.members.addMember')}
@@ -251,7 +295,10 @@ const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
              <button
                onClick={() => {
                  setShowAddMember(false);
+                 setSelectedResident(null);
                  setRelationship('');
+                 setSearchTerm('');
+                 setSearchResults([]);
                  setError(null);
                }}
                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"

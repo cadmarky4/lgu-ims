@@ -26,9 +26,6 @@ use Illuminate\Support\Facades\DB;
  *   "household_number": "string|optional", // Auto-generated if not provided
  *   "household_type": "nuclear|extended|single|single-parent|other",
  *   "head_resident_id": "string|optional", // UUID string
- *   "house_number": "string|required",
- *   "street_sitio": "string|required", 
- *   "barangay": "string|required",
  *   "complete_address": "string|required",
  *   "monthly_income": "below-10000|10000-25000|25000-50000|50000-100000|above-100000|optional",
  *   "primary_income_source": "string|optional",
@@ -65,19 +62,12 @@ class HouseholdController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('complete_address', 'LIKE', "%{$search}%")
-                      ->orWhere('barangay', 'LIKE', "%{$search}%")
                       ->orWhere('household_number', 'LIKE', "%{$search}%")
-                      ->orWhere('street_sitio', 'LIKE', "%{$search}%")
                       ->orWhereHas('headResident', function ($subQuery) use ($search) {
                           $subQuery->where('first_name', 'LIKE', "%{$search}%")
                                    ->orWhere('last_name', 'LIKE', "%{$search}%");
                       });
                 });
-            }
-
-            // Apply filters based on the new schema
-            if ($request->has('barangay')) {
-                $query->where('barangay', $request->barangay);
             }
 
             if ($request->has('household_type')) {
@@ -501,11 +491,9 @@ class HouseholdController extends Controller
             $withInternetAccess = Household::where('has_internet_access', true)->count();
 
             // Distribution by categories
-            $householdsByBarangay = Household::selectRaw('barangay, COUNT(*) as count')
-                ->whereNotNull('barangay')
-                ->groupBy('barangay')
-                ->pluck('count', 'barangay')
-                ->toArray();
+            // Note: Barangay data is now part of complete_address, 
+            // so we cannot easily group by barangay anymore
+            $householdsByBarangay = [];
 
             $householdsByType = Household::selectRaw('household_type, COUNT(*) as count')
                 ->whereNotNull('household_type')
@@ -606,9 +594,7 @@ class HouseholdController extends Controller
         $households = Household::with(['headResident'])
             ->where(function ($q) use ($query) {
                 $q->where('complete_address', 'LIKE', "%{$query}%")
-                  ->orWhere('barangay', 'LIKE', "%{$query}%")
                   ->orWhere('household_number', 'LIKE', "%{$query}%")
-                  ->orWhere('street_sitio', 'LIKE', "%{$query}%")
                   ->orWhereHas('headResident', function ($subQuery) use ($query) {
                       $subQuery->where('first_name', 'LIKE', "%{$query}%")
                                ->orWhere('last_name', 'LIKE', "%{$query}%");
@@ -624,12 +610,12 @@ class HouseholdController extends Controller
     }
 
     /**
-     * Get households by barangay.
+     * Get households by barangay (searches in complete_address).
      */
     public function byBarangay(string $barangay): JsonResponse
     {
         $households = Household::with(['headResident'])
-            ->where('barangay', $barangay)
+            ->where('complete_address', 'LIKE', "%{$barangay}%")
             ->orderBy('complete_address')
             ->get();
 
@@ -647,13 +633,11 @@ class HouseholdController extends Controller
     {
         try {
             $request->validate([
-                'complete_address' => 'required|string',
-                'barangay' => 'required|string'
+                'complete_address' => 'required|string'
             ]);
 
             $duplicates = Household::where('complete_address', 'like', '%' . $request->complete_address . '%')
-                                ->where('barangay', $request->barangay)
-                                ->get(['id', 'household_number', 'complete_address', 'barangay', 'head_resident_id']);
+                                ->get(['id', 'household_number', 'complete_address', 'head_resident_id']);
 
             return response()->json($duplicates);
 

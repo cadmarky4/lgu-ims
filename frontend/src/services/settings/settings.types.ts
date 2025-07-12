@@ -19,7 +19,7 @@ export const SettingsDataSchema = z.object({
   }),
   contactNumber: z.string()
     .min(1, 'Contact number is required')
-    .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid contact number format')
+    .regex(/^[\d\s\-+()]+$/, 'Invalid contact number format')
     .max(20, 'Contact number too long'),
   emailAddress: z.string()
     .min(1, 'Email address is required')

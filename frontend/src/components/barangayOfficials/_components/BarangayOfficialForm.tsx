@@ -13,6 +13,7 @@ import {
 import { civilStatuses, educationalAttainments, genders } from "@/services/__shared/types";
 import { SearchResidents } from "./SearchResidents";
 import { FiCheck, FiX } from "react-icons/fi";
+import { STORAGE_BASE_URL } from "@/services/__shared/_storage/storage.types";
 
 interface BarangayOfficialFormProps {
   mode: "create" | "edit";
@@ -51,10 +52,29 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
   const [showResidentIdEmptyError, setShowResidentIdEmptyError] = useState(false);
 
-  const handleSubmitButton = () => {
-    if (!residentIdField) setShowResidentIdEmptyError(true);
-    if (!showResidentIdEmptyError) handleSubmit();
-    console.log(form.formState.errors);
+  const handleSubmitButton = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault(); // Prevent the default form submission
+    
+    console.log('Submit button clicked');
+    console.log('residentIdField:', residentIdField);
+    console.log('isResidentValidNewOfficial:', isResidentValidNewOfficial);
+    console.log('Form values:', form.getValues());
+    console.log('Form errors before submission:', form.formState.errors);
+    
+    if (!residentIdField) {
+      setShowResidentIdEmptyError(true);
+      console.log('No resident selected, showing error');
+      return; // Don't submit if no resident selected
+    }
+    
+    if (!isResidentValidNewOfficial) {
+      console.log('Resident is not valid for new official');
+      return;
+    }
+    
+    setShowResidentIdEmptyError(false); // Clear the error if resident is selected
+    console.log('Calling handleSubmit...');
+    handleSubmit(); // This will trigger form validation and submission
   }
 
   const title =
@@ -127,9 +147,30 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
         </div>
       )}
 
+      {/* Success: Resident Selected */}
+      {residentIdField && isResidentValidNewOfficial && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <p className="text-green-800 text-sm">✓ Resident selected successfully. You can now fill out the form and submit.</p>
+        </div>
+      )}
+
+      {/* Debug: Show all form validation errors */}
+      {Object.keys(form.formState.errors).length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <p className="text-yellow-800 text-sm font-medium mb-2">Form Validation Errors:</p>
+          <ul className="text-yellow-800 text-xs space-y-1">
+            {Object.entries(form.formState.errors).map(([field, error]) => (
+              <li key={field}>
+                <strong>{field}:</strong> {(error as { message?: string })?.message || 'Invalid value'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Main Form */}
       <FormProvider {...form}>
-        <form onSubmit={handleSubmit}>
+        <form>
           <div
             className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 transform transition-all duration-500 ${
               isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
@@ -182,7 +223,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                 >
                   {official?.profile_photo_url && (
                     <img
-                      src={official?.profile_photo_url}
+                      src={`${STORAGE_BASE_URL}/${official?.profile_photo_url}`}
                       alt="barangay official profile picture"
                       className="w-72 h-72 rounded-full"
                     />
@@ -637,7 +678,7 @@ export const BarangayOfficialForm: React.FC<BarangayOfficialFormProps> = ({
                 <button
                   type="submit"
                   onClick={handleSubmitButton}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !residentIdField || !isResidentValidNewOfficial}
                   className="px-6 py-2 bg-smblue-400 text-white rounded-lg hover:bg-smblue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 hover:shadow-sm"
                 >
                   {isSubmitting && (

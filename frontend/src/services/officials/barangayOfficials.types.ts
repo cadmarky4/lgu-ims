@@ -99,15 +99,55 @@ export const BarangayOfficialBaseSchema = z.object({
   profile_photo_url: z.string().nullable().optional(), 
 })
 
-// Yung pang forms lang
-export const BarangayOfficialFormDataSchema = BarangayOfficialBaseSchema.extend({
+// Form data schema - excludes system fields that are handled by backend
+export const BarangayOfficialFormDataSchema = z.object({
+  // Optional search field for forms
   resident_search: z.string().optional(),
+  
+  // Foreign Key
+  resident_id: z.string().uuid('barangayOfficials.form.validation.invalidUUID'),
+
+  // Basic information
+  prefix: PrefixSchema,
+  first_name: z.string().min(1, 'barangayOfficials.form.validation.firstNameRequired'),
+  middle_name: z.string().nullable().optional(),
+  last_name: z.string().min(1, 'barangayOfficials.form.validation.lastNameRequired'),
+  suffix: z.string().optional(),
+
+  birth_date: z.string().min(1, 'barangayOfficials.form.validation.birthDateRequired'), 
+  gender: GenderSchema,
+  nationality: NationalitySchema.nullable().optional(),
+  civil_status: CivilStatusSchema,
+  educational_attainment: EducationalAttainmentSchema,
+
+  // Contact Information
+  mobile_number: z.string().optional(),
+  email_address: z.union([z.string().email('barangayOfficials.form.validation.invalidEmailAddress'), z.literal('')]).optional(),
+
+  // Address Information
+  complete_address: z.string().min(1, 'barangayOfficials.form.validation.completeAddressRequired'),
+
+  // Position Information
+  position: OfficialPositionSchema,
+  committee_assignment: CommitteeAssignmentSchema.optional(),
+
+  // Term Information
+  term_start: z.string().min(1, 'barangayOfficials.form.validation.termStartRequired'),
+  term_end: z.string().min(1, 'barangayOfficials.form.validation.termEndRequired'),
+  term_number: z.number().optional(),
+  is_current_term: z.boolean().optional(),
+
+  // Status
+  status: OfficialStatusSchema.optional().default('ACTIVE'),
+
+  // Profile photo (optional for forms)
+  profile_photo_url: z.string().nullable().optional(),
 })
 
 export const BarangayOfficialSchema = BarangayOfficialBaseSchema.extend({
   id: z.string().uuid(),
-
-  // Computed attributes
+  
+  // Computed attributes (can be added if needed)
   // full_name: z.string().optional(),
   // age: z.number().optional(),
   // term_duration: z.number().optional(),
@@ -166,8 +206,6 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
       term_number: 0,
       is_current_term: false,
       status: 'ACTIVE',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       profile_photo_url: ''
     };
   }
@@ -195,8 +233,6 @@ export function transformBarangayOfficialToFormData(official: BarangayOfficial |
     term_number: official.term_number,
     is_current_term: official.is_current_term,
     status: official.status,
-    created_at: official.created_at,
-    updated_at: official.updated_at,
     profile_photo_url: official.profile_photo_url
   };
   
@@ -227,8 +263,6 @@ export function transformResidentToBarangayOfficialFormData(resident: Resident):
     term_number: 0,
     is_current_term: true,
     status: 'ACTIVE',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     profile_photo_url: resident.profile_photo_url
   };
 }

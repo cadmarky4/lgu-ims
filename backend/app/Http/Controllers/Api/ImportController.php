@@ -210,7 +210,6 @@ class ImportController extends Controller
             'City' => 'city',
             'Barangay' => 'barangay',
             'Purok' => 'purok',
-            'House Number' => 'house_number',
             'Street' => 'street',
             'Complete Address' => 'complete_address',
             

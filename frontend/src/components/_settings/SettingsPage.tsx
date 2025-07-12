@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { FiSettings, FiShield, FiServer, FiLoader, FiSave, FiRotateCcw, FiDownload, FiUpload, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FiSettings, FiShield, FiServer, FiLoader, FiSave, FiRotateCcw, FiDownload, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import { ZodError } from 'zod';
 import { 
   settingsService, 
   type SettingsData, 
-  type SettingsUpdate,
   SettingsSection 
 } from '../../services/settings/settings.service';
+import { useSettingsAddress } from './hooks/useSettingsAddress';
+import TimeInput from '../ui/TimeInput';
 
 interface ValidationError {
   field: string;
@@ -50,6 +51,20 @@ const SettingsPage: React.FC = () => {
   });
   const [originalData, setOriginalData] = useState<SettingsData | null>(null);
 
+  // Address cascade hook
+  const {
+    regions,
+    provinces,
+    cities,
+    barangays,
+    isLoadingAddress,
+    handleRegionChange,
+    handleProvinceChange,
+    handleCityChange,
+    handleBarangayChange,
+    loadInitialAddress,
+  } = useSettingsAddress();
+
   // Clear messages after timeout
   const clearMessages = () => {
     setTimeout(() => {
@@ -67,7 +82,7 @@ const SettingsPage: React.FC = () => {
   };
 
   // Fetch settings from API
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       setErrorMessage('');
@@ -81,7 +96,21 @@ const SettingsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Handle initial address loading when regions are available and formData has address data
+  useEffect(() => {
+    const loadInitialAddressData = async () => {
+      if (regions.length > 0 && formData.region && !isLoadingAddress) {
+        const regionCode = regions.find(r => r.name === formData.region)?.code || '';
+        if (regionCode) {
+          await loadInitialAddress(regionCode, formData.province, formData.city, formData.barangay);
+        }
+      }
+    };
+
+    loadInitialAddressData();
+  }, [regions, formData.region, formData.province, formData.city, formData.barangay, loadInitialAddress, isLoadingAddress]);
 
   // Save settings to API
   const saveSettings = async () => {
@@ -234,7 +263,7 @@ const SettingsPage: React.FC = () => {
   // Load settings on component mount
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -246,6 +275,68 @@ const SettingsPage: React.FC = () => {
     // Clear specific field error when user starts typing
     if (errors.some(err => err.field === name)) {
       setErrors(prev => prev.filter(err => err.field !== name));
+    }
+  };
+
+  // Special handler for address fields to trigger cascade
+  const handleAddressChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Clear specific field error
+    if (errors.some(err => err.field === name)) {
+      setErrors(prev => prev.filter(err => err.field !== name));
+    }
+
+    // Handle cascading based on field - find the code for the selected name
+    switch (name) {
+      case 'region': {
+        const selectedRegion = regions.find(r => r.name === value);
+        const regionCode = selectedRegion ? selectedRegion.code : '';
+        handleRegionChange(regionCode);
+        // Reset dependent fields
+        setFormData(prev => ({
+          ...prev,
+          province: '',
+          city: '',
+          barangay: ''
+        }));
+        break;
+      }
+      case 'province': {
+        const selectedProvince = provinces.find(p => p.name === value);
+        const provinceCode = selectedProvince ? selectedProvince.code : '';
+        handleProvinceChange(provinceCode);
+        // Reset dependent fields
+        setFormData(prev => ({
+          ...prev,
+          city: '',
+          barangay: ''
+        }));
+        break;
+      }
+      case 'city': {
+        const selectedCity = cities.find(c => c.name === value);
+        const cityCode = selectedCity ? selectedCity.code : '';
+        handleCityChange(cityCode);
+        // Reset dependent fields
+        setFormData(prev => ({
+          ...prev,
+          barangay: ''
+        }));
+        break;
+      }
+      case 'barangay': {
+        const selectedBarangay = barangays.find(b => b.name === value);
+        const barangayCode = selectedBarangay ? selectedBarangay.code : '';
+        handleBarangayChange(barangayCode);
+        break;
+      }
     }
   };
 
@@ -406,37 +497,26 @@ const SettingsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Barangay *
+                  Region *
                 </label>
-                <input
-                  type="text"
-                  name="barangay"
-                  value={formData.barangay}
-                  onChange={handleInputChange}
+                <select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleAddressChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    hasFieldError('barangay') ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {getFieldError('barangay') && (
-                  <p className="mt-1 text-sm text-red-600">{getFieldError('barangay')}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  City *
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    hasFieldError('city') ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {getFieldError('city') && (
-                  <p className="mt-1 text-sm text-red-600">{getFieldError('city')}</p>
+                    hasFieldError('region') ? 'border-red-300' : 'border-gray-300'
+                  } ${isLoadingAddress ? 'cursor-wait' : ''}`}
+                  disabled={isLoadingAddress}
+                >
+                  <option value="">Select Region</option>
+                  {regions.map(region => (
+                    <option key={region.code} value={region.name}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+                {getFieldError('region') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('region')}</p>
                 )}
               </div>
 
@@ -444,15 +524,22 @@ const SettingsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Province *
                 </label>
-                <input
-                  type="text"
+                <select
                   name="province"
                   value={formData.province}
-                  onChange={handleInputChange}
+                  onChange={handleAddressChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
                     hasFieldError('province') ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
+                  } ${isLoadingAddress || !formData.region ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                  disabled={isLoadingAddress || !formData.region}
+                >
+                  <option value="">Select Province</option>
+                  {provinces.map(province => (
+                    <option key={province.code} value={province.name}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
                 {getFieldError('province') && (
                   <p className="mt-1 text-sm text-red-600">{getFieldError('province')}</p>
                 )}
@@ -460,19 +547,51 @@ const SettingsPage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Region *
+                  City/Municipality *
                 </label>
-                <input
-                  type="text"
-                  name="region"
-                  value={formData.region}
-                  onChange={handleInputChange}
+                <select
+                  name="city"
+                  value={formData.city}
+                  onChange={handleAddressChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    hasFieldError('region') ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {getFieldError('region') && (
-                  <p className="mt-1 text-sm text-red-600">{getFieldError('region')}</p>
+                    hasFieldError('city') ? 'border-red-300' : 'border-gray-300'
+                  } ${isLoadingAddress || !formData.province ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                  disabled={isLoadingAddress || !formData.province}
+                >
+                  <option value="">Select City/Municipality</option>
+                  {cities.map(city => (
+                    <option key={city.code} value={city.name}>
+                      {city.name}
+                    </option>
+                  ))}
+                </select>
+                {getFieldError('city') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('city')}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Barangay *
+                </label>
+                <select
+                  name="barangay"
+                  value={formData.barangay}
+                  onChange={handleAddressChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
+                    hasFieldError('barangay') ? 'border-red-300' : 'border-gray-300'
+                  } ${isLoadingAddress || !formData.city ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                  disabled={isLoadingAddress || !formData.city}
+                >
+                  <option value="">Select Barangay</option>
+                  {barangays.map(barangay => (
+                    <option key={barangay.code} value={barangay.name}>
+                      {barangay.name}
+                    </option>
+                  ))}
+                </select>
+                {getFieldError('barangay') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError('barangay')}</p>
                 )}
               </div>
 
@@ -539,36 +658,28 @@ const SettingsPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Opening Hours *
                 </label>
-                <input
-                  type="text"
+                <TimeInput
                   name="openingHours"
                   value={formData.openingHours}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    hasFieldError('openingHours') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  error={getFieldError('openingHours')}
+                  placeholder="Select opening hours"
+                  required
                 />
-                {getFieldError('openingHours') && (
-                  <p className="mt-1 text-sm text-red-600">{getFieldError('openingHours')}</p>
-                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Closing Hours *
                 </label>
-                <input
-                  type="text"
+                <TimeInput
                   name="closingHours"
                   value={formData.closingHours}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200 ${
-                    hasFieldError('closingHours') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  error={getFieldError('closingHours')}
+                  placeholder="Select closing hours"
+                  required
                 />
-                {getFieldError('closingHours') && (
-                  <p className="mt-1 text-sm text-red-600">{getFieldError('closingHours')}</p>
-                )}
               </div>
 
               <div>

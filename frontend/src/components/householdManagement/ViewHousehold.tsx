@@ -24,10 +24,15 @@ const ViewHousehold: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Validate UUID format
-  const isValidUUID = (uuid: string) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
+  // Validate ID format - simplified validation
+  const isValidId = (id: string) => {
+    // Just check if it's a non-empty string
+    const isValid = id && id.trim().length > 0;
+    
+    // Log for debugging
+    console.log('ID validation:', { id, isValid });
+    
+    return isValid;
   };
 
   // Use our household hook
@@ -35,7 +40,7 @@ const ViewHousehold: React.FC = () => {
     data: household, 
     isLoading, 
     error 
-  } = useHousehold(id || '', !!id && isValidUUID(id || ''));
+  } = useHousehold(id || '', !!id && isValidId(id || ''));
 
   const handleClose = () => {
     navigate('/household');
@@ -46,7 +51,7 @@ const ViewHousehold: React.FC = () => {
   };
 
   // Handle invalid ID
-  if (!id || !isValidUUID(id)) {
+  if (!id || !isValidId(id)) {
     return (
       <main className="p-6 bg-gray-50 min-h-screen flex justify-center items-center">
         <div className="text-center max-w-md">
@@ -166,8 +171,7 @@ const ViewHousehold: React.FC = () => {
               : 'No Head Assigned' },
             { label: "Total Members", value: `${household.members?.length || 0} member${(household.members?.length || 0) !== 1 ? 's' : ''}` },
             { label: "Household Type", value: household.household_type ? formatHouseholdType(household.household_type) : 'Not specified' },
-            { label: "Ownership Status", value: household.ownership_status ? formatOwnershipStatus(household.ownership_status) : 'Not specified' },
-            { label: "Barangay", value: household.barangay || 'Not specified' }
+            { label: "Ownership Status", value: household.ownership_status ? formatOwnershipStatus(household.ownership_status) : 'Not specified' }
           ]}
         />
 
@@ -176,11 +180,9 @@ const ViewHousehold: React.FC = () => {
           title="Address Information"
           icon={FiMapPin}
           data={[
-            { label: "Complete Address", value: household.complete_address || 'Not specified' },
-            { label: "Street/Sitio", value: household.street_sitio || 'Not specified' },
-            { label: "House Number", value: household.house_number || 'Not specified' }
+            { label: "Complete Address", value: household.complete_address || 'Not specified' }
           ]}
-          columns={2}
+          columns={1}
         />
 
         {/* Economic Information */}

@@ -480,6 +480,42 @@ export function usePhilippineAddress() {
     }
   }, []);
 
+  // Handler functions that update internal state and trigger cascading
+  const handleRegionChange = useCallback((regionCode: string) => {
+    setSelectedRegionCode(regionCode);
+    if (regionCode) {
+      loadProvinces(regionCode);
+    } else {
+      setProvinces([]);
+      setCities([]);
+      setBarangays([]);
+    }
+  }, [loadProvinces]);
+
+  const handleProvinceChange = useCallback((provinceCode: string) => {
+    setSelectedProvinceCode(provinceCode);
+    if (provinceCode) {
+      loadCities(provinceCode);
+    } else {
+      setCities([]);
+      setBarangays([]);
+    }
+  }, [loadCities]);
+
+  const handleCityChange = useCallback((cityCode: string) => {
+    setSelectedCityCode(cityCode);
+    if (cityCode) {
+      loadBarangays(cityCode);
+    } else {
+      setBarangays([]);
+    }
+  }, [loadBarangays]);
+
+  const handleBarangayChange = useCallback((_barangayCode: string) => {
+    // For barangay, we just track the selection
+    // No further cascading needed
+  }, []);
+
   return {
     regions,
     provinces,
@@ -488,6 +524,10 @@ export function usePhilippineAddress() {
     loadProvinces,
     loadCities,
     loadBarangays,
+    handleRegionChange,
+    handleProvinceChange,
+    handleCityChange,
+    handleBarangayChange,
     isLoadingAddress,
     isInitialized,
     error,

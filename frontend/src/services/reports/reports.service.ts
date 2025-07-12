@@ -1,5 +1,6 @@
 import { BaseApiService } from '../__shared/api';
-import { type ApiResponse } from '../__shared/types';
+import { type ApiResponse, ApiResponseSchema } from '../__shared/types';
+import { z } from 'zod';
 import {
   type StatisticsOverview,
   type AgeGroupDistribution,
@@ -22,33 +23,36 @@ export class ReportsService extends BaseApiService {
     if (filters?.quarter) params.append('quarter', filters.quarter);
 
     const queryString = params.toString();
-    const endpoint = `/reports/statistics-overview${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/reports/statistics${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<StatisticsOverview>(endpoint);
+    const schema = ApiResponseSchema(z.any());
+    return await this.request(endpoint, schema);
   }
 
   /**
    * Get age group distribution data
    */
-  async getAgeGroupDistribution(filters?: ReportsFilters): Promise<ApiResponse<AgeGroupDistribution[]>> {
+  async getAgeGroupDistribution(_filters?: ReportsFilters): Promise<ApiResponse<AgeGroupDistribution[]>> {
     const params = new URLSearchParams();
 
     const queryString = params.toString();
     const endpoint = `/reports/age-group-distribution${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<AgeGroupDistribution[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
    * Get special population registry data
    */
-  async getSpecialPopulationRegistry(filters?: ReportsFilters): Promise<ApiResponse<SpecialPopulationRegistry[]>> {
+  async getSpecialPopulationRegistry(_filters?: ReportsFilters): Promise<ApiResponse<SpecialPopulationRegistry[]>> {
     const params = new URLSearchParams();
 
     const queryString = params.toString();
     const endpoint = `/reports/special-population-registry${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<SpecialPopulationRegistry[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
@@ -61,7 +65,8 @@ export class ReportsService extends BaseApiService {
     const queryString = params.toString();
     const endpoint = `/reports/monthly-revenue${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<MonthlyRevenue[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
@@ -72,9 +77,10 @@ export class ReportsService extends BaseApiService {
     if (filters?.year) params.append('year', filters.year.toString());
 
     const queryString = params.toString();
-    const endpoint = `/reports/population-distribution-by-purok${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/reports/population-distribution-by-street${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<PopulationDistributionByStreet[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
@@ -88,7 +94,8 @@ export class ReportsService extends BaseApiService {
     const queryString = params.toString();
     const endpoint = `/reports/document-types-issued${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<DocumentTypesIssued[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
@@ -102,14 +109,16 @@ export class ReportsService extends BaseApiService {
     const queryString = params.toString();
     const endpoint = `/reports/most-requested-services${queryString ? `?${queryString}` : ''}`;
     
-    return await this.request<MostRequestedService[]>(endpoint);
+    const schema = ApiResponseSchema(z.array(z.any()));
+    return await this.request(endpoint, schema);
   }
 
   /**
-   * Get filter options (years, quarters, puroks)
+   * Get filter options (years, quarters, streets)
    */
   async getFilterOptions(): Promise<ApiResponse<FilterOptions>> {
-    return await this.request<FilterOptions>('/reports/filter-options');
+    const schema = ApiResponseSchema(z.any());
+    return await this.request('/reports/filter-options', schema);
   }
 
   /**
@@ -124,8 +133,12 @@ export class ReportsService extends BaseApiService {
     const queryString = params.toString();
     const endpoint = `/reports/export${queryString ? `?${queryString}` : ''}`;
     
-    const response = await fetch(`http://127.0.0.1:8000/api${endpoint}`, {
-      headers: this.getHeaders(),
+    // Use the API client baseURL configuration
+    const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/api${endpoint}`, {
+      headers: {
+        'Accept': 'application/octet-stream',
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -135,3 +148,6 @@ export class ReportsService extends BaseApiService {
     return await response.blob();
   }
 }
+
+// Create singleton instance
+export const reportsService = new ReportsService();

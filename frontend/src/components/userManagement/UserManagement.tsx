@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye, FiLock, FiPower } from 'react-icons/fi';
 import { FaUsers, FaUserCheck, FaShieldAlt, FaUserPlus } from 'react-icons/fa';
@@ -6,7 +6,7 @@ import AddNewUser from './AddNewUser';
 import ResetPassword from '../_auth/ResetPassword';
 import StatCard from '../_global/StatCard';
 import { UsersService } from '../../services/users/users.service';
-import type { User, UserParams } from '../../services/users/users.types';
+import type { User, UserParams, UserRole, UserFormData } from '../../services/users/users.types';
 import Breadcrumb from '../_global/Breadcrumb';
 
 const UserManagement: React.FC = () => {
@@ -15,9 +15,9 @@ const UserManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
-  const [roleFilter, setRoleFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isLoaded, setIsLoaded] = useState(false); // Add isLoaded state
   
@@ -38,38 +38,10 @@ const UserManagement: React.FC = () => {
     newThisMonth: 0
   });
   
-  const usersService = new UsersService();
-
-  // Animation trigger on component mount
-  useEffect(() => {
-    loadData();
-    
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Create a loadData function that combines your existing useEffect logic
-  const loadData = () => {
-    fetchUsers();
-    fetchStats();
-  };
+  const usersService = useMemo(() => new UsersService(), []);
 
   // Fetch users data
-  useEffect(() => {
-    fetchUsers();
-    fetchStats();
-  }, [currentPage, searchTerm, roleFilter, statusFilter]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [searchTerm, roleFilter, statusFilter]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -109,19 +81,19 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, roleFilter, statusFilter, usersService]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const statsResponse = await usersService.getUserStatistics();
       console.log('Stats response:', statsResponse);
       
       // Map backend response to frontend expected format
       setStats({
-        total: statsResponse.total || 0,
-        active: statsResponse.active || 0,
-        admins: statsResponse.admins || 0,
-        newThisMonth: statsResponse.newThisMonth || 0
+        total: statsResponse.total_users || 0,
+        active: statsResponse.active_users || 0,
+        admins: (statsResponse.by_role?.ADMIN || 0) + (statsResponse.by_role?.SUPER_ADMIN || 0),
+        newThisMonth: statsResponse.recent_logins || 0
       });
     } catch (err: unknown) {
       console.error('Failed to fetch user statistics:', err);
@@ -133,7 +105,36 @@ const UserManagement: React.FC = () => {
         newThisMonth: 0
       });
     }
-  };
+  }, [usersService]);
+
+  // Create a loadData function that combines your existing useEffect logic
+  const loadData = useCallback(() => {
+    fetchUsers();
+    fetchStats();
+  }, [fetchUsers, fetchStats]);
+
+  // Animation trigger on component mount
+  useEffect(() => {
+    loadData();
+    
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [loadData]);
+
+  // Fetch users data
+  useEffect(() => {
+    fetchUsers();
+    fetchStats();
+  }, [fetchUsers, fetchStats]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm, roleFilter, statusFilter, currentPage]);
 
   const getRoleBadgeColor = (role: string) => {
     const colors: { [key: string]: string } = {
@@ -163,11 +164,11 @@ const UserManagement: React.FC = () => {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const handleAddUser = async (userData: any) => {
+  const handleAddUser = async (userData: UserFormData) => {
     await handleUserSaved(userData);
   };
 
-  const handleDeleteUser = async (userId: number) => {
+  const handleDeleteUser = async (userId: string) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
@@ -180,10 +181,19 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (userId: number) => {
+  const handleToggleStatus = async (userId: string) => {
     try {
       setError(null);
-      await usersService.toggleUserStatus(userId);
+      // Get current user to check their status
+      const currentUser = await usersService.getUser(userId);
+      
+      // Toggle between active/inactive
+      if (currentUser.is_active) {
+        await usersService.deactivateUser(userId);
+      } else {
+        await usersService.activateUser(userId);
+      }
+      
       await fetchUsers();
       await fetchStats();
     } catch (err: unknown) {
@@ -191,15 +201,15 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleViewUser = (userId: number) => {
+  const handleViewUser = (userId: string) => {
     navigate(`/users/view/${userId}`);
   };
 
-  const handleEditUser = (userId: number) => {
+  const handleEditUser = (userId: string) => {
     navigate(`/users/edit/${userId}`);
   };
 
-  const handleResetPassword = (userId: number, userName: string) => {
+  const handleResetPassword = (userId: string, userName: string) => {
     setSelectedUserId(userId);
     setSelectedUserName(userName);
     setShowResetPassword(true);
@@ -249,7 +259,7 @@ const UserManagement: React.FC = () => {
   if (showResetPassword && selectedUserId) {
     return (
       <ResetPassword 
-        userId={selectedUserId}
+        userId={parseInt(selectedUserId)}
         userName={selectedUserName}
         onClose={handleCloseModals}
         onSuccess={handlePasswordResetSuccess}
@@ -341,7 +351,7 @@ const UserManagement: React.FC = () => {
           <div className="flex gap-3">
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => setRoleFilter(e.target.value as UserRole | '')}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
               aria-label="Filter by role"
             >

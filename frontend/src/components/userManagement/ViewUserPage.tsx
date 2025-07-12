@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiEdit, FiLock, FiUserCheck, FiMail, FiPhone, FiMapPin, FiCalendar, FiClock } from 'react-icons/fi';
 import { FaUser, FaShieldAlt } from 'react-icons/fa';
@@ -13,23 +13,13 @@ const ViewUserPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
-  const usersService = new UsersService();
+  const usersService = useMemo(() => new UsersService(), []);
 
-  useEffect(() => {
-    if (!id || isNaN(Number(id))) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-
-    fetchUser();
-  }, [id]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const userData = await usersService.getUser(Number(id));
+      const userData = await usersService.getUser(id ?? '');
       setUser(userData);
     } catch (err: unknown) {
       console.error('Failed to fetch user:', err);
@@ -41,7 +31,17 @@ const ViewUserPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, usersService]);
+
+  useEffect(() => {
+    if (!id || isNaN(Number(id))) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    fetchUser();
+  }, [id, fetchUser]);
 
   const handleGoBack = () => {
     navigate('/users');

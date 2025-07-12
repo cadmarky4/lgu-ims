@@ -80,7 +80,7 @@ export const DocumentFormDataSchema = z.object({
 
 // Main Document schema with system fields
 export const DocumentSchema = DocumentFormDataSchema.extend({
-  id: z.union([z.string(), z.number()]).transform(String),
+  id: z.string(),
   status: DocumentStatusSchema,
   payment_status: PaymentStatusSchema,
   

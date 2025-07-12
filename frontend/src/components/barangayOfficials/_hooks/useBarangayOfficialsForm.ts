@@ -24,7 +24,31 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
 
     const form = useForm<BarangayOfficialFormData>({
         resolver: zodResolver(BarangayOfficialFormDataSchema),
-        // defaultValues: transformBarangayOfficialToFormData(null),
+        defaultValues: {
+            resident_search: '',
+            resident_id: '',
+            prefix: 'Mr.',
+            first_name: '',
+            middle_name: '',
+            last_name: '',
+            suffix: '',
+            birth_date: '',
+            gender: 'MALE',
+            nationality: 'FILIPINO',
+            civil_status: 'SINGLE',
+            educational_attainment: 'NO_FORMAL_EDUCATION',
+            mobile_number: '',
+            email_address: '',
+            complete_address: '',
+            position: 'KAGAWAD',
+            committee_assignment: 'Health',
+            term_start: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+            term_end: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 years from now
+            term_number: 1,
+            is_current_term: true,
+            status: 'ACTIVE',
+            profile_photo_url: '',
+        },
         mode: 'onBlur',
     })
 
@@ -74,6 +98,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                         //     resident.id === (residentId ? Number(residentId) : -1)
                         // );
                         setIsResidentValidNewOfficial(true);
+                        setIsAlreadyRegisteredAsOfficialWarning(null);
                         setValue('resident_id', selectedResidentId)
                         setValue('first_name', res.first_name);
                         setValue('middle_name', res.middle_name);
@@ -94,51 +119,21 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
         } else {
             setIsAlreadyRegisteredAsOfficialWarning(null);
         }
-    }, [selectedResidentId]);
+    }, [selectedResidentId, getOfficialRegistrationStatus, mode, setValue]);
     
     // Load official data for edit mode
     useEffect(() => {
         if (mode === 'edit' && official) {
             const formData = transformBarangayOfficialToFormData(official);
             setIsResidentValidNewOfficial(true);
-            setValue('resident_id', selectedResidentId)
-            setValue('first_name', formData.first_name);
-            setValue('middle_name', formData.middle_name);
-            setValue('last_name', formData.last_name);
-            setValue('gender', formData.gender);
-            setValue('birth_date', formData.birth_date);
-            setValue('mobile_number', formData.mobile_number);
-            setValue('email_address', formData.email_address);
-            setValue('complete_address', formData.complete_address);
-            setValue('civil_status', formData.civil_status);
-            setValue('educational_attainment', formData.educational_attainment);
-            setValue('profile_photo_url', formData.profile_photo_url);
-            setValue('position', formData.position);
-            setValue('committee_assignment', formData.committee_assignment);
-            setValue('term_start', formData.term_start);
-            setValue('term_end', formData.term_end);
+            setSelectedResidentId(formData.resident_id);
             reset(formData);
 
             if (official.profile_photo_url) {
                 setProfilePhotoPreview(official.profile_photo_url);
             }
         }
-    }, [mode, official, reset])
-
-    // Load draft on mount for create mode
-    useEffect(() => {
-        if (mode === 'create') {
-        try {
-            const savedDraft = localStorage.getItem('barangayOfficialDraft');
-            if (savedDraft) {
-            const draftData = JSON.parse(savedDraft);
-            reset(draftData);
-            }
-        } catch (error) {
-            console.error('Failed to load draft:', error);
-        }
-        }
-    }, [mode, reset]);
+    }, [mode, official, reset, setSelectedResidentId])
 
     // Load draft on mount for create mode
     useEffect(() => {
@@ -157,9 +152,12 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
 
     // Form submission
     const handleSubmit = form.handleSubmit(async (data: BarangayOfficialFormData) => {
+        console.log('Form handleSubmit called with data:', data);
         try {
             if (mode === 'create') {
-                await createBarangayOfficial.mutateAsync(data);
+                console.log('Creating barangay official...');
+                const result = await createBarangayOfficial.mutateAsync(data);
+                console.log('Create result:', result);
                 showNotification({
                     type: 'success',
                     title: t('barangayOfficials.form.messages.createSuccess'),
@@ -168,6 +166,9 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
                     persistent: false,
                 });
             } else if (mode === 'edit' && barangayOfficialId) {
+                console.log('Updating barangay official...');
+                const result = await updateBarangayOfficial.mutateAsync({ id: barangayOfficialId, data });
+                console.log('Update result:', result);
                 showNotification({
                     type: 'success',
                     title: t('barangayOfficials.form.messages.updateSuccess'),
@@ -179,6 +180,7 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
             onSuccess?.();
             
         } catch (error) {
+            console.error('Form submission error details:', error);
             const errorMessage = (error as Error)?.message || 
               (mode === 'create' 
                 ? t('barangayOfficials.form.messages.createError')
@@ -193,6 +195,8 @@ export function useBarangayOfficialsForm({ mode, barangayOfficialId, onSuccess }
             });
             console.error('Form submission error:', error);
         }
+    }, (errors) => {
+        console.log('Form validation errors:', errors);
     });
 
     // Draft management

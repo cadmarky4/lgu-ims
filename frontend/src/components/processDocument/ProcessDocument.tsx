@@ -26,6 +26,7 @@ import {
 import { LoadingSpinner } from '../__shared/LoadingSpinner';
 import { useDocumentQueue, SORTABLE_FIELDS } from './_hooks/useDocumentQueue';
 import { useNotifications } from '@/components/_global/NotificationSystem';
+import { useBarangayOfficials } from '@/services/officials/useBarangayOfficials';
 import Breadcrumb from '../_global/Breadcrumb';
 import { formatDate } from '@/utils/dateUtils';
 import type { Document, DocumentStatus } from '@/services/documents/documents.types';
@@ -702,6 +703,15 @@ const ProcessDocumentModal: React.FC<{
   const [notes, setNotes] = useState('');
   const [certifyingOfficial, setCertifyingOfficial] = useState('');
 
+  // Fetch active barangay officials for the certifying official dropdown
+  const { data: officialsData, isLoading: isLoadingOfficials } = useBarangayOfficials({
+    status: 'ACTIVE',
+    current_term: true,
+    per_page: 100 // Get all active officials
+  });
+
+  const officials = officialsData?.data || [];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -762,14 +772,26 @@ const ProcessDocumentModal: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Certifying Official
               </label>
-              <input
-                type="text"
+              <select
                 value={certifyingOfficial}
                 onChange={(e) => setCertifyingOfficial(e.target.value)}
-                placeholder="Enter certifying official name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-200 focus:border-smblue-200"
-                disabled={isProcessing}
-              />
+                disabled={isProcessing || isLoadingOfficials}
+                required
+              >
+                <option value="">
+                  {isLoadingOfficials ? 'Loading officials...' : 'Select certifying official'}
+                </option>
+                {officials.map((official) => {
+                  const fullName = `${official.prefix} ${official.first_name} ${official.middle_name ? official.middle_name + ' ' : ''}${official.last_name}${official.suffix ? ' ' + official.suffix : ''}`.trim();
+                  const positionText = official.position.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                  return (
+                    <option key={official.id} value={fullName}>
+                      {fullName} ({positionText})
+                    </option>
+                  );
+                })}
+              </select>
             </div>
           )}
 

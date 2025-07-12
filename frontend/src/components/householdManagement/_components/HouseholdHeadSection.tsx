@@ -49,8 +49,10 @@ const HouseholdHeadSection: React.FC<HouseholdHeadSectionProps> = ({ form }) => 
  };
 
  const handleAddNewResident = () => {
-   // TODO: Navigate to add resident page or open modal
-   console.log('Add new resident clicked');
+   // Navigate to add resident page with return context
+   const currentUrl = window.location.pathname;
+   const returnUrl = encodeURIComponent(currentUrl);
+   window.location.href = `/residents/create?return=${returnUrl}&context=household`;
  };
 
  return (

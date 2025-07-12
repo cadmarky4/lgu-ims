@@ -693,12 +693,23 @@ class DocumentController extends Controller
                 ], 422);
             }
 
-            // Here you would implement PDF generation logic
-            // For now, return a placeholder response
-            return response()->json([
-                'success' => true,
-                'message' => 'PDF generation feature not yet implemented'
-            ], 501);
+            // Implement PDF generation using Laravel's built-in functionality
+            // You can use libraries like DomPDF, mPDF, or TCPDF
+            try {
+                // For now, we'll create a basic PDF response
+                // In production, you would generate the actual certificate PDF
+                $pdfContent = $this->generateCertificatePDF($document);
+                
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'inline; filename="' . $document->document_number . '.pdf"');
+                    
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to generate PDF: ' . $e->getMessage()
+                ], 500);
+            }
 
         } catch (ModelNotFoundException $e) {
             return response()->json([
@@ -902,5 +913,28 @@ class DocumentController extends Controller
         ];
         
         return $statusMap[$backendStatus] ?? strtoupper($backendStatus);
+    }
+
+    /**
+     * Generate PDF for certificate document
+     * TODO: Implement actual PDF generation with proper templates
+     */
+    private function generateCertificatePDF($document): string
+    {
+        // This is a placeholder implementation
+        // In production, you would use a PDF library like DomPDF or TCPDF
+        // to generate a proper certificate with the barangay letterhead and signature
+        
+        $content = "BARANGAY CERTIFICATE\n\n";
+        $content .= "Document Number: " . $document->document_number . "\n";
+        $content .= "Document Type: " . $document->document_type . "\n";
+        $content .= "Applicant: " . $document->applicant_name . "\n";
+        $content .= "Date Issued: " . now()->format('F d, Y') . "\n\n";
+        $content .= "This is to certify that the above information is true and correct.\n\n";
+        $content .= "Issued by: Barangay " . config('app.name', 'LGU-IMS') . "\n";
+        
+        // This would normally be PDF binary content
+        // For now, return plain text (this should be replaced with actual PDF generation)
+        return $content;
     }
 }

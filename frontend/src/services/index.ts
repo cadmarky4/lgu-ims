@@ -3,8 +3,8 @@ import { residentsService, ResidentsService } from './residents/residents.servic
 import { householdsService, HouseholdsService } from './households/households.service';
 import { DocumentsService } from './documents/documents.service';
 import { UsersService } from './users/users.service';
-import { ComplaintsService } from './helpDesk/complaints/complaints.service';
-import { SuggestionsService } from './helpDesk/suggestions/suggestions.service';
+import { ComplaintService } from './helpDesk/complaints/complaints.service';
+import { SuggestionService } from './helpDesk/suggestions/suggestions.service';
 import { BlotterService } from './helpDesk/blotters/blotters.service';
 import { AppointmentsService } from './helpDesk/appointments/appointments.service';
 import { barangayOfficialsService, BarangayOfficialsService } from './officials/barangayOfficials.service';
@@ -29,8 +29,8 @@ export {
   HouseholdsService,
   DocumentsService,
   UsersService,
-  ComplaintsService,
-  SuggestionsService,
+  ComplaintService,
+  SuggestionService,
   BlotterService,
   AppointmentsService,
   BarangayOfficialsService,

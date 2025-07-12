@@ -179,11 +179,11 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             src={buildImageUrl(preview)}
             alt="Profile Preview"
             className="w-full h-full object-cover rounded-full border"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              console.log('Image load error for:', preview);
-              target.src = getPlaceholderImageUrl(128, 'No Photo');
-            }}
+            // onError={(e) => {
+            //   const target = e.target as HTMLImageElement;
+            //   console.log('Image load error for:', preview);
+            //   target.src = getPlaceholderImageUrl(128, 'No Photo');
+            // }}
             onLoad={() => {
               console.log('Image loaded successfully for:', preview);
             }}

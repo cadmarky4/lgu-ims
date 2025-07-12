@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiX, FiSave, FiUser } from 'react-icons/fi';
+import { FiX, FiSave } from 'react-icons/fi';
 import { UsersService } from '../../services/users/users.service';
-import type { User, UserFormData } from '../../services/users/users.types';
+import type { User, UserRole, Department } from '../../services/users/users.types';
 
 const EditUserPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,25 +13,25 @@ const EditUserPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const [formData, setFormData] = useState<UserFormData>({
-    firstName: '',
-    lastName: '',
-    middleName: '',
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    middle_name: '',
     username: '',
     email: '',
     phone: '',
-    role: 'USER',
-    department: '',
+    role: 'VIEWER' as UserRole,
+    department: 'ADMINISTRATION' as Department,
     position: '',
-    employeeId: '',
+    employee_id: '',
     password: '',
-    confirmPassword: '',
-    isActive: true,
-    sendCredentials: false,
+    confirm_password: '',
+    is_active: true,
+    send_credentials: false,
     notes: ''
   });
 
-  const usersService = new UsersService();
+  const usersService = useMemo(() => new UsersService(), []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -41,19 +41,11 @@ const EditUserPage: React.FC = () => {
         return;
       }
 
-      // Validate ID is a valid number
-      const userId = parseInt(id);
-      if (isNaN(userId) || userId <= 0) {
-        setError('Invalid user ID');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
         
-        const userData = await usersService.getUser(userId);
+        const userData = await usersService.getUser(id);
         
         if (!userData) {
           setError('User not found');
@@ -64,15 +56,33 @@ const EditUserPage: React.FC = () => {
         setUser(userData);
         
         // Transform API data to form data
-        setFormData(usersService.transformApiDataToFormData(userData));
+        setFormData({
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          middle_name: userData.middle_name || '',
+          username: userData.username || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          role: userData.role,
+          department: userData.department,
+          position: userData.position || '',
+          employee_id: userData.employee_id || '',
+          password: '',
+          confirm_password: '',
+          is_active: userData.is_active,
+          send_credentials: false,
+          notes: userData.notes || ''
+        });
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to load user:', error);
         
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
         // Check if it's a 404 error (user not found)
-        if (error.message?.includes('404') || error.message?.includes('not found')) {
+        if (errorMessage?.includes('404') || errorMessage?.includes('not found')) {
           setError('User not found');
-        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        } else if (errorMessage?.includes('network') || errorMessage?.includes('fetch')) {
           setError('Unable to connect to server. Please check your connection.');
         } else {
           setError('Failed to load user data. Please try again.');
@@ -83,7 +93,7 @@ const EditUserPage: React.FC = () => {
     };
 
     loadUser();
-  }, [id]);
+  }, [id, usersService]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -102,11 +112,11 @@ const EditUserPage: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.firstName.trim()) {
+    if (!formData.first_name.trim()) {
       setError('First name is required');
       return false;
     }
-    if (!formData.lastName.trim()) {
+    if (!formData.last_name.trim()) {
       setError('Last name is required');
       return false;
     }
@@ -124,7 +134,7 @@ const EditUserPage: React.FC = () => {
     }
     
     // Only validate password if it's provided (for updates)
-    if (formData.password && formData.password !== formData.confirmPassword) {
+    if (formData.password && formData.password !== formData.confirm_password) {
       setError('Passwords do not match');
       return false;
     }
@@ -149,19 +159,23 @@ const EditUserPage: React.FC = () => {
       setSaving(true);
       
       // Create update data (exclude password fields if empty)
-      const updateData: Partial<UserFormData> = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
+      const updateData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name || null,
         username: formData.username,
         email: formData.email,
         phone: formData.phone,
         role: formData.role,
         department: formData.department,
-        position: formData.position,
-        employeeId: formData.employeeId,
-        isActive: formData.isActive,
-        notes: formData.notes
+        position: formData.position || null,
+        employee_id: formData.employee_id || null,
+        is_active: formData.is_active,
+        notes: formData.notes || null,
+        ...(formData.password && { 
+          password: formData.password,
+          confirm_password: formData.confirm_password
+        })
       };
 
       await usersService.updateUser(user.id, updateData);
@@ -169,13 +183,15 @@ const EditUserPage: React.FC = () => {
       // Navigate back to users list with success
       navigate('/users', { state: { message: 'User updated successfully' } });
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update user:', err);
-      if (err.response?.data?.errors) {
-        const errors = Object.values(err.response.data.errors).flat();
+      const error = err as { response?: { data?: { errors?: Record<string, string[]> } }; message?: string };
+      
+      if (error.response?.data?.errors) {
+        const errors = Object.values(error.response.data.errors).flat();
         setError(errors.join(', '));
       } else {
-        setError(err.message || 'Failed to update user. Please try again.');
+        setError(error.message || 'Failed to update user. Please try again.');
       }
     } finally {
       setSaving(false);
@@ -266,8 +282,8 @@ const EditUserPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                   <input
                     type="text"
-                    name="firstName"
-                    value={formData.firstName}
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
                     required
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-500 focus:border-transparent"
@@ -278,8 +294,8 @@ const EditUserPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
                   <input
                     type="text"
-                    name="middleName"
-                    value={formData.middleName}
+                    name="middle_name"
+                    value={formData.middle_name || ''}
                     onChange={handleInputChange}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-500 focus:border-transparent"
                     placeholder="Enter middle name"
@@ -289,8 +305,8 @@ const EditUserPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                   <input
                     type="text"
-                    name="lastName"
-                    value={formData.lastName}
+                    name="last_name"
+                    value={formData.last_name}
                     onChange={handleInputChange}
                     required
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-smblue-500 focus:border-transparent"
@@ -405,8 +421,8 @@ const EditUserPage: React.FC = () => {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
+                  name="is_active"
+                  checked={formData.is_active}
                   onChange={handleInputChange}
                   className="h-4 w-4 text-smblue-600 rounded border-gray-300 focus:ring-smblue-500"
                 />

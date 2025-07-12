@@ -42,6 +42,9 @@ import AppointmentsPage from "./components/helpDesk/Appointments/Appointments";
 import BlotterPage from "./components/helpDesk/Blotter/Blotter";
 import ComplaintsPage from "./components/helpDesk/Complaints/Complaints";
 import SuggestionsPage from "./components/helpDesk/Suggestions/Suggestions";
+import UserManagement from "./components/userManagement/UserManagement";
+import EditUserPage from "./components/userManagement/EditUserPage";
+import ViewUserPage from "./components/userManagement/ViewUserPage";
 
 
 // Wrapper components to handle navigation prop
@@ -233,20 +236,20 @@ const router = createBrowserRouter([
         // ],
       },      {
         path: "users",
-        // children: [
-        //   {
-        //     index: true,
-        //     element: <UserManagement />,
-        //   },
-        //   {
-        //     path: "edit/:id",
-        //     element: <EditUserPage />,
-        //   },
-        //   {
-        //     path: "view/:id",
-        //     element: <ViewUserPage />,
-        //   },
-        // ],
+        children: [
+          {
+            index: true,
+            element: <UserManagement />,
+          },
+          {
+            path: "edit/:id",
+            element: <EditUserPage />,
+          },
+          {
+            path: "view/:id",
+            element: <ViewUserPage />,
+          },
+        ],
       },
       {
         path: "settings",

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FiX, FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiShield } from 'react-icons/fi';
 import { UsersService } from '../../services/users/users.service';
 import { formatDate } from '@/utils/dateUtils';
 import type { User } from '../../services/users/users.types';
 
 interface ViewUserProps {
-  userId: number;
+  userId: string;
   onClose: () => void;
   onEdit?: () => void;
 }
@@ -15,13 +15,9 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const usersService = new UsersService();
+  const usersService = useMemo(() => new UsersService(), []);
 
-  useEffect(() => {
-    fetchUser();
-  }, [userId]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -32,7 +28,11 @@ const ViewUser: React.FC<ViewUserProps> = ({ userId, onClose, onEdit }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, usersService]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const formatRoleName = (role: string) => {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());

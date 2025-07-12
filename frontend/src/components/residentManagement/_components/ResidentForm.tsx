@@ -96,9 +96,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     provinces,
     cities,
     barangays,
-    loadProvinces,
-    loadCities,
-    loadBarangays,
+    handleRegionChange,
+    handleProvinceChange,
+    handleCityChange,
+    handleBarangayChange,
     isLoadingAddress,
     error: addressError,
     retry: retryAddressLoad
@@ -135,7 +136,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
   useEffect(() => {
     if (selectedRegion) {
-      loadProvinces(selectedRegion);
+      handleRegionChange(selectedRegion);
       // Only clear dependent fields if this is user interaction, not initial load
       if (!isInitialLoad) {
         form.setValue('province', '');
@@ -143,28 +144,28 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         form.setValue('barangay', '');
       }
     }
-  }, [selectedRegion, loadProvinces, form, isInitialLoad]);
+  }, [selectedRegion, handleRegionChange, form, isInitialLoad]);
 
   useEffect(() => {
     if (selectedProvince) {
-      loadCities(selectedProvince);
+      handleProvinceChange(selectedProvince);
       // Only clear dependent fields if this is user interaction, not initial load
       if (!isInitialLoad) {
         form.setValue('city', '');
         form.setValue('barangay', '');
       }
     }
-  }, [selectedProvince, loadCities, form, isInitialLoad]);
+  }, [selectedProvince, handleProvinceChange, form, isInitialLoad]);
 
   useEffect(() => {
     if (selectedCity) {
-      loadBarangays(selectedCity);
+      handleCityChange(selectedCity);
       // Only clear dependent fields if this is user interaction, not initial load
       if (!isInitialLoad) {
         form.setValue('barangay', '');
       }
     }
-  }, [selectedCity, loadBarangays, form, isInitialLoad]);
+  }, [selectedCity, handleCityChange, form, isInitialLoad]);
 
   // Handle initial address cascade when form data is loaded (draft or edit)
   useEffect(() => {
@@ -178,15 +179,15 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         
         try {
           // Load provinces first
-          await loadProvinces(formValues.region);
+          handleRegionChange(formValues.region);
           
           // Wait for provinces to load, then load cities
           await new Promise(resolve => setTimeout(resolve, 500));
-          await loadCities(formValues.province);
+          handleProvinceChange(formValues.province);
           
           // Wait for cities to load, then load barangays
           await new Promise(resolve => setTimeout(resolve, 500));
-          await loadBarangays(formValues.city);
+          handleCityChange(formValues.city);
           
           // Mark initial load as complete after everything is loaded
           await new Promise(resolve => setTimeout(resolve, 300));
@@ -200,10 +201,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         // Partial address data - load what we can
         console.log('Loading partial address cascade for region:', formValues.region);
         try {
-          await loadProvinces(formValues.region);
+          handleRegionChange(formValues.region);
           if (formValues.province) {
             await new Promise(resolve => setTimeout(resolve, 500));
-            await loadCities(formValues.province);
+            handleProvinceChange(formValues.province);
           }
           setTimeout(() => setIsInitialLoad(false), 300);
         } catch (error) {
@@ -233,7 +234,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     handleInitialAddressCascade();
 
     return () => subscription.unsubscribe();
-  }, [form, loadProvinces, loadCities, loadBarangays]);
+  }, [form, handleRegionChange, handleProvinceChange, handleCityChange]);
 
   // Debug form values (can be removed in production)
   useEffect(() => {

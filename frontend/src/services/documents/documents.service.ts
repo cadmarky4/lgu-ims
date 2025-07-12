@@ -36,6 +36,33 @@ import { apiClient } from '@/services/__shared/client';
 
 export class DocumentsService extends BaseApiService {
   /**
+   * Transform document API response to frontend format
+   */
+  private transformDocument(doc: Document & { id: string | number }): Document {
+    return {
+      ...doc,
+      id: String(doc.id)
+    };
+  }
+
+  /**
+   * Transform document array API response to frontend format
+   */
+  private transformDocuments(docs: (Document & { id: string | number })[]): Document[] {
+    return docs.map(doc => this.transformDocument(doc));
+  }
+
+  /**
+   * Transform document tracking API response to frontend format
+   */
+  private transformDocumentTracking(tracking: DocumentTracking & { document: Document & { id: string | number } }): DocumentTracking {
+    return {
+      ...tracking,
+      document: this.transformDocument(tracking.document)
+    };
+  }
+
+  /**
    * Convert frontend status values to backend expected format
    */
   private convertStatusToBackend(status?: DocumentStatus | null): string | undefined {
@@ -76,11 +103,16 @@ export class DocumentsService extends BaseApiService {
 
     const paginatedSchema = PaginatedResponseSchema(DocumentSchema);
     
-    return this.request(
+    const response = await this.request(
       `/documents?${searchParams.toString()}`,
       paginatedSchema,
       { method: 'GET' }
     );
+
+    return {
+      ...response,
+      data: this.transformDocuments(response.data)
+    };
   }
 
   /**
@@ -103,7 +135,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Document not found');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -128,7 +160,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to create document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -157,7 +189,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to update document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -212,7 +244,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 
   /**
@@ -231,7 +263,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 
   /**
@@ -250,7 +282,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 
   /**
@@ -269,7 +301,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 
   /**
@@ -298,7 +330,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to process document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -327,7 +359,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to approve document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -356,7 +388,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to reject document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -385,7 +417,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to release document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -415,7 +447,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to cancel document');
     }
 
-    return response.data;
+    return this.transformDocument(response.data);
   }
 
   /**
@@ -438,7 +470,7 @@ export class DocumentsService extends BaseApiService {
       throw new Error('Failed to get document tracking');
     }
 
-    return response.data;
+    return this.transformDocumentTracking(response.data);
   }
 
   /**
@@ -494,7 +526,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 
   /**
@@ -509,7 +541,7 @@ export class DocumentsService extends BaseApiService {
       { method: 'GET' }
     );
 
-    return response.data;
+    return this.transformDocuments(response.data);
   }
 }
 

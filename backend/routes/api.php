@@ -40,268 +40,39 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// TEMPORARY: Import routes without authentication for testing
-Route::prefix('import')->group(function () {
-    Route::post('/residents', [ImportController::class, 'importResidents']);
-    Route::post('/households', [ImportController::class, 'importHouseholds']);
-    Route::get('/history', [ImportController::class, 'getImportHistory']);
-});
-
-// TEMPORARY: Residents routes without authentication for testing
-Route::prefix('residents')->name('residents.')->group(function () {
-    // Statistics endpoints
-    Route::get('/statistics', [ResidentController::class, 'statistics'])->name('statistics');
-    Route::get('/age-groups', [ResidentController::class, 'ageGroups'])->name('age-groups');
-
-    // Special list endpoints (matching frontend service)
-    Route::get('/senior-citizens', [ResidentController::class, 'seniorCitizens'])->name('senior-citizens');
-    Route::get('/pwd', [ResidentController::class, 'pwd'])->name('pwd');
-    Route::get('/four-ps', [ResidentController::class, 'fourPs'])->name('four-ps');
-    Route::get('/household-heads', [ResidentController::class, 'householdHeads'])->name('household-heads');
-    Route::get('/indigenous', [ResidentController::class, 'indigenous'])->name('indigenous');
-
-    // Utility endpoints
-    Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates'])->name('check-duplicates');
-    Route::put('/{resident}/restore', [ResidentController::class, 'restore'])->name('restore');
-
-    // Photo upload
-    Route::post('/{resident}/photo', [ResidentController::class, 'uploadPhoto'])->name('upload-photo');
-
-
-    // Main CRUD operations
-    Route::get('/', [ResidentController::class, 'index'])->name('index');
-    Route::post('/', [ResidentController::class, 'store'])->name('store');
-    Route::get('/{resident}', [ResidentController::class, 'show'])->name('show');
-    Route::put('/{resident}', [ResidentController::class, 'update'])->name('update');
-    Route::delete('/{resident}', [ResidentController::class, 'destroy'])->name('destroy');
-
-
-});
-
-/*
-|--------------------------------------------------------------------------
-| Household API Routes
-|--------------------------------------------------------------------------
-|
-| Routes for household management that align with frontend service expectations
-|
-*/
-
-Route::prefix('households')->name('households.')->group(function () {
-    Route::get('/statistics', [HouseholdController::class, 'statistics'])->name('statistics');
-
-    // Special list endpoints (matching frontend service)
-    Route::get('/four-ps', [HouseholdController::class, 'fourPs'])->name('four-ps');
-    Route::get('/with-senior-citizens', [HouseholdController::class, 'withSeniorCitizens'])->name('with-senior-citizens');
-    Route::get('/with-pwd', [HouseholdController::class, 'withPwd'])->name('with-pwd');
-    Route::get('/by-type', [HouseholdController::class, 'byType'])->name('by-type');
-    Route::get('/by-ownership', [HouseholdController::class, 'byOwnership'])->name('by-ownership');
-
-    // Utility endpoints
-    Route::post('/check-duplicates', [HouseholdController::class, 'checkDuplicates'])->name('check-duplicates');
-
-    // Member management endpoints
-    Route::put('/{household}/members', [HouseholdController::class, 'updateMembers'])->name('update-members');
-    Route::post('/{household}/members', [HouseholdController::class, 'addMember'])->name('add-member');
-    Route::delete('/{household}/members', [HouseholdController::class, 'removeMember'])->name('remove-member');
-
-
-    // Main CRUD operations
-    Route::get('/', [HouseholdController::class, 'index'])->name('index');
-    Route::post('/', [HouseholdController::class, 'store'])->name('store');
-    Route::get('/{household}', [HouseholdController::class, 'show'])->name('show');
-    Route::put('/{household}', [HouseholdController::class, 'update'])->name('update');
-    Route::delete('/{household}', [HouseholdController::class, 'destroy'])->name('destroy');
-
-    // Statistics endpoint
-
-});
-
-// TEMPORARY: Users routes without authentication for testing
-Route::middleware(['auth:sanctum'])->prefix('users')->name('users.')->group(function () {
-
-    // Core CRUD
-    Route::get('/', [UserController::class, 'index'])->name('index');
-    Route::post('/', [UserController::class, 'store'])->name('store');
-    Route::get('/{id}', [UserController::class, 'show'])->name('show');
-    Route::put('/{id}', [UserController::class, 'update'])->name('update');
-    Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
-
-    // Current User
-    Route::prefix('me')->name('me.')->group(function () {
-        Route::get('/', [UserController::class, 'me'])->name('show');
-        Route::put('/', [UserController::class, 'updateMe'])->name('update');
-        Route::post('/change-password', [UserController::class, 'changeMyPassword'])->name('change-password');
-    });
-
-    // Password Management
-    Route::prefix('{id}')->group(function () {
-        Route::post('/change-password', [UserController::class, 'changePassword'])->name('change-password');
-        Route::post('/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
-    });
-
-    // Status Management
-    Route::put('/{id}/status', [UserController::class, 'changeStatus'])->name('change-status');
-
-    // Verification & Communication
-    Route::prefix('{id}')->group(function () {
-        Route::post('/verify', [UserController::class, 'verify'])->name('verify');
-        Route::post('/resend-verification', [UserController::class, 'resendVerification'])->name('resend-verification');
-        Route::post('/send-credentials', [UserController::class, 'sendCredentials'])->name('send-credentials');
-    });
-
-    // Validation
-    Route::prefix('check')->name('check.')->group(function () {
-        Route::get('/username', [UserController::class, 'checkUsername'])->name('username');
-        Route::get('/email', [UserController::class, 'checkEmail'])->name('email');
-    });
-
-    // Queries
-    Route::prefix('by')->name('by.')->group(function () {
-        Route::get('/role/{role}', [UserController::class, 'byRole'])->name('role');
-        Route::get('/department/{department}', [UserController::class, 'byDepartment'])->name('department');
-    });
-
-    // Security & Monitoring
-    Route::prefix('{id}')->group(function () {
-        Route::get('/activity', [UserController::class, 'activity'])->name('activity');
-        Route::prefix('sessions')->name('sessions.')->group(function () {
-            Route::get('/', [UserController::class, 'sessions'])->name('index');
-            Route::delete('/{sessionId}', [UserController::class, 'terminateSession'])->name('terminate');
-            Route::delete('/', [UserController::class, 'terminateAllSessions'])->name('terminate-all');
-        });
-    });
-
-    // Bulk & Import/Export
-    Route::post('/bulk-action', [UserController::class, 'bulkAction'])->name('bulk-action');
-    Route::get('/export', [UserController::class, 'export'])->name('export');
-    Route::post('/import', [UserController::class, 'import'])->name('import');
-
-    // Statistics
-    Route::get('/statistics', [UserController::class, 'statistics'])->name('statistics');
-});
-Route::apiResource('users', UserController::class);
-
-// TEMPORARY: Barangay Officials routes without authentication for testing
-Route::prefix('barangay-officials')->group(function () {
-    Route::get('/statistics', [BarangayOfficialController::class, 'statistics']);
-    Route::get('/active', [BarangayOfficialController::class, 'getActiveOfficials']);
-    Route::get('/position/{position}', [BarangayOfficialController::class, 'getByPosition']);
-    Route::get('/committee/{committee}', [BarangayOfficialController::class, 'getByCommittee']);
-    Route::get('/export', [BarangayOfficialController::class, 'export']);
-    Route::post('/check-duplicate', [BarangayOfficialController::class, 'checkDuplicate']);
-    Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
-    Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
-    Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
-});
-Route::apiResource('barangay-officials', BarangayOfficialController::class);
-
-// TEMPORARY: Help Desk routes without authentication for public access
-// These will be moved back under auth middleware when staff authentication is implemented
-
-// Help Desk Routes
+// Public Help Desk Routes (these remain public for citizen access)
 Route::prefix('help-desk')->group(function () {
-    Route::get('/', [TicketController::class, 'index']);
-    Route::get('/statistics', [TicketController::class, 'statistics']);
-    Route::delete('/{id}', [TicketController::class, 'destroy']);
+    // Public appointments
+    Route::prefix('appointments')->group(function () {
+        Route::get('/view/{id}', [AppointmentController::class, 'view']);
+        Route::post('/', [AppointmentController::class, 'store']);
+        Route::put('/{id}', [AppointmentController::class, 'update']);
+        Route::get('/check-vacancy/{schedule}', [AppointmentController::class, 'checkScheduleVacancy']);
+    });
+
+    // Public blotter
+    Route::prefix('blotter')->group(function () {
+        Route::get('/view/{id}', [BlotterController::class, 'view']);
+        Route::post('/', [BlotterController::class, 'store']);
+        Route::put('/{id}', [BlotterController::class, 'update']);
+        Route::post('/{id}/photo', [BlotterController::class, 'uploadPhoto']);
+    });
+
+    // Public complaints
+    Route::prefix('complaint')->group(function () {
+        Route::get('/view/{id}', [ComplaintController::class, 'view']);
+        Route::post('/', [ComplaintController::class, 'store']);
+        Route::put('/{id}', [ComplaintController::class, 'update']);
+    });
+
+    // Public suggestions
+    Route::prefix('suggestion')->group(function () {
+        Route::get('/view/{id}', [SuggestionController::class, 'view']);
+        Route::post('/', [SuggestionController::class, 'store']);
+        Route::put('/{id}', [SuggestionController::class, 'update']);
+    });
 });
-
-// Public Help Desk - Appointments
-Route::prefix('appointments')->group(function () {
-    // View specific appointment
-    Route::get('/view/{id}', [AppointmentController::class, 'view']);
-
-    // Create new appointment
-    Route::post('/', [AppointmentController::class, 'store']);
-
-    // Update appointment
-    Route::put('/{id}', [AppointmentController::class, 'update']);
-
-    // Check schedule availability
-    Route::get('/check-vacancy/{schedule}', [AppointmentController::class, 'checkScheduleVacancy']);
-});
-// Route::apiResource('appointments', AppointmentController::class)->only(['index', 'store', 'show', 'update']);
-
-Route::prefix('blotter')->group(function () {
-    Route::get('/view/{id}', [BlotterController::class, 'view']);
-    Route::post('/', [BlotterController::class, 'store']);
-    Route::put('/{id}', [BlotterController::class, 'update']);
-    Route::post('/{id}/photo', [BlotterController::class, 'uploadPhoto']);
-});
-// Public Help Desk - Blotter Cases
-
-// Public Help Desk - Complaints
-Route::prefix('complaint')->group(function () {
-    Route::get('/view/{id}', [ComplaintController::class, 'view']);
-    Route::post('/', [ComplaintController::class, 'store']);
-    Route::put('/{id}', [ComplaintController::class, 'update']);
-});
-// Route::apiResource('complaints', ComplaintController::class)->only(['index', 'store', 'show', 'update']);
-
-// Public Help Desk - Suggestions
-Route::prefix('suggestion')->group(function () {
-    Route::get('/view/{id}', [SuggestionController::class, 'view']);
-    Route::post('/', [SuggestionController::class, 'store']);
-    Route::put('/{id}', [SuggestionController::class, 'update']);
-});
-// Route::apiResource('suggestions', SuggestionController::class)->only(['index', 'store', 'show', 'update']);
-
-// Settings - System Configuration (temporarily outside auth for testing)
-Route::get('settings', [SettingController::class, 'index']);
-Route::put('settings', [SettingController::class, 'update']);
-Route::post('settings/reset', [SettingController::class, 'reset']);
-Route::post('settings/backup', [SettingController::class, 'backup']);
-Route::get('settings/backups', [SettingController::class, 'backups']);
-Route::post('settings/restore', [SettingController::class, 'restore']);
-Route::get('settings/history', [SettingController::class, 'history']);
-Route::post('settings/test', [SettingController::class, 'test']);
-
-// Dashboard routes (temporarily outside auth for testing)
-Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
-Route::get('dashboard/demographics', [DashboardController::class, 'demographics']);
-Route::get('dashboard/notifications', [DashboardController::class, 'notifications']);
-Route::get('dashboard/activities', [DashboardController::class, 'activities']);
-Route::get('dashboard/barangay-officials', [DashboardController::class, 'barangayOfficials']);
-
-// Projects routes (temporarily outside auth for testing)  
-Route::get('projects/test', function () {
-    return response()->json(['message' => 'Projects API working']);
-});
-Route::get('projects/statistics', [ProjectController::class, 'statistics']);
-Route::apiResource('projects', ProjectController::class);
-
-// Reports routes (temporarily outside auth for testing)
-Route::prefix('reports')->group(function () {
-    Route::get('/statistics', [ReportsController::class, 'getStatisticsOverview']);
-    Route::get('/age-group-distribution', [ReportsController::class, 'getAgeGroupDistribution']);
-    Route::get('/special-population-registry', [ReportsController::class, 'getSpecialPopulationRegistry']);
-    Route::get('/monthly-revenue', [ReportsController::class, 'getMonthlyRevenue']);
-    Route::get('/population-distribution-by-street', [ReportsController::class, 'getPopulationDistributionByPurok']);
-    Route::get('/document-types-issued', [ReportsController::class, 'getDocumentTypesIssued']);
-    Route::get('/most-requested-services', [ReportsController::class, 'getMostRequestedServices']);
-    Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
-});
-
-Route::prefix('documents')->group(function () {
-    Route::get('/', [DocumentController::class, 'index']);
-    Route::post('/', [DocumentController::class, 'store']);
-    Route::get('/statistics', [DocumentController::class, 'statistics']);
-    Route::get('/overdue', [DocumentController::class, 'overdue']);
-    Route::get('/pending', [DocumentController::class, 'pending']);
-    Route::get('/{id}', [DocumentController::class, 'show']);
-    Route::put('/{id}', [DocumentController::class, 'update']);
-    Route::delete('/{id}', [DocumentController::class, 'destroy']);
-    Route::get('/{id}/tracking', [DocumentController::class, 'tracking']);
-    Route::get('/{id}/history', [DocumentController::class, 'history']);
-    Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
-    Route::post('/{id}/process', [DocumentController::class, 'process']);
-    Route::post('/{id}/approve', [DocumentController::class, 'approve']);
-    Route::post('/{id}/reject', [DocumentController::class, 'reject']);
-    Route::post('/{id}/release', [DocumentController::class, 'release']);
-    Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
-});
-
-// Protected routes
+// Protected routes - All administrative functions require authentication
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::prefix('auth')->group(function () {
@@ -311,17 +82,192 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/refresh', [AuthController::class, 'refresh']);
     });
 
-    // NOTE: Import routes will be moved here when authentication is properly implemented
-    // Route::prefix('import')->group(function () {
-    //     Route::post('/residents', [ImportController::class, 'importResidents']);
-    //     Route::post('/households', [ImportController::class, 'importHouseholds']);
-    //     Route::get('/history', [ImportController::class, 'getImportHistory']);
-    // });
+    // Import/Export functionality
+    Route::prefix('import')->group(function () {
+        Route::post('/residents', [ImportController::class, 'importResidents']);
+        Route::post('/households', [ImportController::class, 'importHouseholds']);
+        Route::get('/history', [ImportController::class, 'getImportHistory']);
+    });
 
-    // NOTE: Households routes are temporarily moved outside auth middleware for testing
-    // They will be moved back here when authentication is properly implemented in frontend
+    // Residents Management
+    Route::prefix('residents')->name('residents.')->group(function () {
+        // Statistics endpoints
+        Route::get('/statistics', [ResidentController::class, 'statistics'])->name('statistics');
+        Route::get('/age-groups', [ResidentController::class, 'ageGroups'])->name('age-groups');
 
-    // Documents - Specific routes BEFORE apiResource
+        // Special list endpoints (matching frontend service)
+        Route::get('/senior-citizens', [ResidentController::class, 'seniorCitizens'])->name('senior-citizens');
+        Route::get('/pwd', [ResidentController::class, 'pwd'])->name('pwd');
+        Route::get('/four-ps', [ResidentController::class, 'fourPs'])->name('four-ps');
+        Route::get('/household-heads', [ResidentController::class, 'householdHeads'])->name('household-heads');
+        Route::get('/indigenous', [ResidentController::class, 'indigenous'])->name('indigenous');
+
+        // Utility endpoints
+        Route::post('/check-duplicates', [ResidentController::class, 'checkDuplicates'])->name('check-duplicates');
+        Route::put('/{resident}/restore', [ResidentController::class, 'restore'])->name('restore');
+
+        // Photo upload
+        Route::post('/{resident}/photo', [ResidentController::class, 'uploadPhoto'])->name('upload-photo');
+
+        // Main CRUD operations
+        Route::get('/', [ResidentController::class, 'index'])->name('index');
+        Route::post('/', [ResidentController::class, 'store'])->name('store');
+        Route::get('/{resident}', [ResidentController::class, 'show'])->name('show');
+        Route::put('/{resident}', [ResidentController::class, 'update'])->name('update');
+        Route::delete('/{resident}', [ResidentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Household Management
+    Route::prefix('households')->name('households.')->group(function () {
+        Route::get('/statistics', [HouseholdController::class, 'statistics'])->name('statistics');
+
+        // Special list endpoints (matching frontend service)
+        Route::get('/four-ps', [HouseholdController::class, 'fourPs'])->name('four-ps');
+        Route::get('/with-senior-citizens', [HouseholdController::class, 'withSeniorCitizens'])->name('with-senior-citizens');
+        Route::get('/with-pwd', [HouseholdController::class, 'withPwd'])->name('with-pwd');
+        Route::get('/by-type', [HouseholdController::class, 'byType'])->name('by-type');
+        Route::get('/by-ownership', [HouseholdController::class, 'byOwnership'])->name('by-ownership');
+
+        // Utility endpoints
+        Route::post('/check-duplicates', [HouseholdController::class, 'checkDuplicates'])->name('check-duplicates');
+
+        // Member management endpoints
+        Route::put('/{household}/members', [HouseholdController::class, 'updateMembers'])->name('update-members');
+        Route::post('/{household}/members', [HouseholdController::class, 'addMember'])->name('add-member');
+        Route::delete('/{household}/members', [HouseholdController::class, 'removeMember'])->name('remove-member');
+
+        // Main CRUD operations
+        Route::get('/', [HouseholdController::class, 'index'])->name('index');
+        Route::post('/', [HouseholdController::class, 'store'])->name('store');
+        Route::get('/{household}', [HouseholdController::class, 'show'])->name('show');
+        Route::put('/{household}', [HouseholdController::class, 'update'])->name('update');
+        Route::delete('/{household}', [HouseholdController::class, 'destroy'])->name('destroy');
+    });
+
+    // User Management
+    Route::prefix('users')->name('users.')->group(function () {
+        // Core CRUD
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{id}', [UserController::class, 'show'])->name('show');
+        Route::put('/{id}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
+
+        // Current User
+        Route::prefix('me')->name('me.')->group(function () {
+            Route::get('/', [UserController::class, 'me'])->name('show');
+            Route::put('/', [UserController::class, 'updateMe'])->name('update');
+            Route::post('/change-password', [UserController::class, 'changeMyPassword'])->name('change-password');
+        });
+
+        // Password Management
+        Route::prefix('{id}')->group(function () {
+            Route::post('/change-password', [UserController::class, 'changePassword'])->name('change-password');
+            Route::post('/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+        });
+
+        // Status Management
+        Route::put('/{id}/status', [UserController::class, 'changeStatus'])->name('change-status');
+
+        // Verification & Communication
+        Route::prefix('{id}')->group(function () {
+            Route::post('/verify', [UserController::class, 'verify'])->name('verify');
+            Route::post('/resend-verification', [UserController::class, 'resendVerification'])->name('resend-verification');
+            Route::post('/send-credentials', [UserController::class, 'sendCredentials'])->name('send-credentials');
+        });
+
+        // Validation
+        Route::prefix('check')->name('check.')->group(function () {
+            Route::get('/username', [UserController::class, 'checkUsername'])->name('username');
+            Route::get('/email', [UserController::class, 'checkEmail'])->name('email');
+        });
+
+        // Queries
+        Route::prefix('by')->name('by.')->group(function () {
+            Route::get('/role/{role}', [UserController::class, 'byRole'])->name('role');
+            Route::get('/department/{department}', [UserController::class, 'byDepartment'])->name('department');
+        });
+
+        // Security & Monitoring
+        Route::prefix('{id}')->group(function () {
+            Route::get('/activity', [UserController::class, 'activity'])->name('activity');
+            Route::prefix('sessions')->name('sessions.')->group(function () {
+                Route::get('/', [UserController::class, 'sessions'])->name('index');
+                Route::delete('/{sessionId}', [UserController::class, 'terminateSession'])->name('terminate');
+                Route::delete('/', [UserController::class, 'terminateAllSessions'])->name('terminate-all');
+            });
+        });
+
+        // Bulk & Import/Export
+        Route::post('/bulk-action', [UserController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/export', [UserController::class, 'export'])->name('export');
+        Route::post('/import', [UserController::class, 'import'])->name('import');
+
+        // Statistics
+        Route::get('/statistics', [UserController::class, 'statistics'])->name('statistics');
+    });
+
+    // Barangay Officials Management
+    Route::prefix('barangay-officials')->group(function () {
+        Route::get('/statistics', [BarangayOfficialController::class, 'statistics']);
+        Route::get('/active', [BarangayOfficialController::class, 'getActiveOfficials']);
+        Route::get('/position/{position}', [BarangayOfficialController::class, 'getByPosition']);
+        Route::get('/committee/{committee}', [BarangayOfficialController::class, 'getByCommittee']);
+        Route::get('/export', [BarangayOfficialController::class, 'export']);
+        Route::post('/check-duplicate', [BarangayOfficialController::class, 'checkDuplicate']);
+        Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
+        Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
+        Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
+    });
+    Route::apiResource('barangay-officials', BarangayOfficialController::class);
+
+    // Help Desk Management (Administrative)
+    Route::prefix('help-desk')->group(function () {
+        Route::get('/', [TicketController::class, 'index']);
+        Route::get('/statistics', [TicketController::class, 'statistics']);
+        Route::delete('/{id}', [TicketController::class, 'destroy']);
+    });
+
+    // Settings Management
+    Route::prefix('settings')->group(function () {
+        Route::get('/', [SettingController::class, 'index']);
+        Route::put('/', [SettingController::class, 'update']);
+        Route::post('/reset', [SettingController::class, 'reset']);
+        Route::post('/backup', [SettingController::class, 'backup']);
+        Route::get('/backups', [SettingController::class, 'backups']);
+        Route::post('/restore', [SettingController::class, 'restore']);
+        Route::get('/history', [SettingController::class, 'history']);
+        Route::post('/test', [SettingController::class, 'test']);
+    });
+
+    // Dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/statistics', [DashboardController::class, 'statistics']);
+        Route::get('/demographics', [DashboardController::class, 'demographics']);
+        Route::get('/notifications', [DashboardController::class, 'notifications']);
+        Route::get('/activities', [DashboardController::class, 'activities']);
+        Route::get('/barangay-officials', [DashboardController::class, 'barangayOfficials']);
+    });
+
+    // Projects Management
+    Route::prefix('projects')->group(function () {
+        Route::get('/statistics', [ProjectController::class, 'statistics']);
+    });
+    Route::apiResource('projects', ProjectController::class);
+
+    // Reports
+    Route::prefix('reports')->group(function () {
+        Route::get('/statistics', [ReportsController::class, 'getStatisticsOverview']);
+        Route::get('/age-group-distribution', [ReportsController::class, 'getAgeGroupDistribution']);
+        Route::get('/special-population-registry', [ReportsController::class, 'getSpecialPopulationRegistry']);
+        Route::get('/monthly-revenue', [ReportsController::class, 'getMonthlyRevenue']);
+        Route::get('/population-distribution-by-street', [ReportsController::class, 'getPopulationDistributionByPurok']);
+        Route::get('/document-types-issued', [ReportsController::class, 'getDocumentTypesIssued']);
+        Route::get('/most-requested-services', [ReportsController::class, 'getMostRequestedServices']);
+        Route::get('/filter-options', [ReportsController::class, 'getFilterOptions']);
+    });
+
+    // Document Management
     Route::prefix('documents')->group(function () {
         Route::get('/', [DocumentController::class, 'index']);
         Route::post('/', [DocumentController::class, 'store']);
@@ -333,74 +279,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [DocumentController::class, 'destroy']);
         Route::get('/{id}/tracking', [DocumentController::class, 'tracking']);
         Route::get('/{id}/history', [DocumentController::class, 'history']);
-            Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
-    Route::post('/{id}/process', [DocumentController::class, 'process']);
-    Route::post('/{id}/approve', [DocumentController::class, 'approve']);
-    Route::post('/{id}/reject', [DocumentController::class, 'reject']);
-    Route::post('/{id}/release', [DocumentController::class, 'release']);
-    Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
+        Route::get('/{id}/pdf', [DocumentController::class, 'pdf']);
+        Route::post('/{id}/process', [DocumentController::class, 'process']);
+        Route::post('/{id}/approve', [DocumentController::class, 'approve']);
+        Route::post('/{id}/reject', [DocumentController::class, 'reject']);
+        Route::post('/{id}/release', [DocumentController::class, 'release']);
+        Route::post('/{id}/cancel', [DocumentController::class, 'cancel']);
     });
-    Route::apiResource('documents', DocumentController::class);
 
-    // Help Desk - Complaints - Specific routes BEFORE apiResource
-    // Route::prefix('complaints')->group(function () {
-    //     Route::get('/statistics', [ComplaintController::class, 'statistics']);
-    //     Route::post('/{complaint}/acknowledge', [ComplaintController::class, 'acknowledge']);
-    //     Route::post('/{complaint}/assign', [ComplaintController::class, 'assign']);
-    //     Route::post('/{complaint}/resolve', [ComplaintController::class, 'resolve']);
-    //     Route::post('/{complaint}/feedback', [ComplaintController::class, 'submitFeedback']);
-    // });
-    // Route::apiResource('complaints', ComplaintController::class);
-
-    // Help Desk - Suggestions - Specific routes BEFORE apiResource
-    // Route::prefix('suggestions')->group(function () {
-    //     Route::get('/statistics', [SuggestionController::class, 'statistics']);
-    //     Route::post('/{suggestion}/review', [SuggestionController::class, 'review']);
-    //     Route::post('/{suggestion}/vote', [SuggestionController::class, 'vote']);
-    //     Route::patch('/{suggestion}/implementation', [SuggestionController::class, 'updateImplementation']);
-    // });
-    // Route::apiResource('suggestions', SuggestionController::class);
-
-    // Help Desk - Blotter Cases - Specific routes BEFORE apiResource
-    // Route::prefix('blotter-cases')->group(function () {
-    //     Route::get('/statistics', [BlotterCaseController::class, 'statistics']);
-    //     Route::post('/{blotterCase}/assign-investigator', [BlotterCaseController::class, 'assignInvestigator']);
-    //     Route::post('/{blotterCase}/schedule-mediation', [BlotterCaseController::class, 'scheduleMediation']);
-    //     Route::post('/{blotterCase}/complete-mediation', [BlotterCaseController::class, 'completeMediation']);
-    //     Route::patch('/{blotterCase}/compliance', [BlotterCaseController::class, 'updateCompliance']);
-    //     Route::post('/{blotterCase}/close', [BlotterCaseController::class, 'closeCase']);
-    // });
-    // Route::apiResource('blotter-cases', BlotterCaseController::class);
-
-    // Help Desk - Appointments - Specific routes BEFORE apiResource
-    // Route::prefix('appointments')->group(function () {
-    //     Route::get('/statistics', [AppointmentController::class, 'statistics']);
-    //     Route::get('/available-slots', [AppointmentController::class, 'getAvailableSlots']);
-    //     Route::post('/{appointment}/confirm', [AppointmentController::class, 'confirm']);
-    //     Route::post('/{appointment}/cancel', [AppointmentController::class, 'cancel']);
-    //     Route::post('/{appointment}/complete', [AppointmentController::class, 'complete']);
-    //     Route::post('/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
-    //     Route::post('/{appointment}/follow-up', [AppointmentController::class, 'addFollowUp']);
-    // });
-    // Route::apiResource('appointments', AppointmentController::class);
-
-    // Barangay Officials - Specific routes BEFORE apiResource
-    Route::prefix('barangay-officials')->group(function () {
-        Route::get('/statistics', [BarangayOfficialController::class, 'statistics']);
-        Route::get('/active', [BarangayOfficialController::class, 'getActiveOfficials']);
-        Route::get('/position/{position}', [BarangayOfficialController::class, 'getByPosition']);
-        Route::get('/committee/{committee}', [BarangayOfficialController::class, 'getByCommittee']);
-        Route::get('/export', [BarangayOfficialController::class, 'export']);
-        Route::patch('/{barangayOfficial}/performance', [BarangayOfficialController::class, 'updatePerformance']);
-        Route::post('/{barangayOfficial}/archive', [BarangayOfficialController::class, 'archive']);
-        Route::post('/{barangayOfficial}/reactivate', [BarangayOfficialController::class, 'reactivate']);
-    });
-    Route::apiResource('barangay-officials', BarangayOfficialController::class);
-
-    // File Upload route
+    // File Upload
     Route::post('/upload', [FileUploadController::class, 'upload']);
 
-    // Agendas - Specific routes BEFORE apiResource
+    // Agendas Management
     Route::prefix('agendas')->group(function () {
         Route::get('/statistics', [AgendaController::class, 'statistics']);
         Route::get('/calendar', [AgendaController::class, 'calendar']);
@@ -411,24 +301,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{agenda}/duplicate', [AgendaController::class, 'duplicate']);
     });
     Route::apiResource('agendas', AgendaController::class);
-
-    // Temporary test route
-    Route::get('/test-appointment-model', function () {
-        try {
-            $appointment = new App\Models\Appointment();
-            return response()->json([
-                'success' => true,
-                'message' => 'Model created successfully',
-                'fillable' => $appointment->getFillable(),
-                'casts' => $appointment->getCasts()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Model creation failed',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        }
-    });
 });

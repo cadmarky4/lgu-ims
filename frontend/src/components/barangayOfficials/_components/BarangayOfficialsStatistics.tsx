@@ -30,7 +30,7 @@ export const BarangayOfficialsStatistics: React.FC<BarangayOfficialsStatisticsPr
 
             <div className={`bg-white rounded-lg p-6 border border-gray-100 shadow-sm transform transition-all duration-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{ animationDelay: '300ms' }}>
               <div className="flex items-center justify-between">
-                {/* HARDCODED FOR NOW */}
+                {/* TODO: Implement upcoming elections tracking in backend statistics */}
                 <div>
                   <p className="text-sm text-gray-600 mb-1">{t('barangayOfficials.statistics.upcomingElections')}</p>
                   <p className="text-2xl font-bold text-gray-900">To be announced</p>

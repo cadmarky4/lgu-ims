@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { UsersService } from '../../services/users/users.service';
-import type { UserFormData, User } from '../../services/users/users.types';
+import type { CreateUserFormData, User, UserRole, Department } from '../../services/users/users.types';
 
 interface AddNewUserProps {
   onClose: () => void;
@@ -8,28 +8,28 @@ interface AddNewUserProps {
 }
 
 const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    middleName: '',
+  const [formData, setFormData] = useState<CreateUserFormData>({
+    first_name: '',
+    last_name: '',
+    middle_name: '',
     email: '',
     username: '',
     phone: '',
-    role: '',
-    department: '',
+    role: 'VIEWER' as UserRole,
+    department: 'ADMINISTRATION' as Department,
     position: '',
-    employeeId: '',
+    employee_id: '',
     password: '',
-    confirmPassword: '',
-    isActive: true,
-    sendCredentials: true,
+    confirm_password: '',
+    is_active: true,
+    send_credentials: true,
     notes: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const usersService = new UsersService();
+  const usersService = useMemo(() => new UsersService(), []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -45,13 +45,51 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
         [name]: value
       }));
     }
-  };  const handleSubmit = async (e: React.FormEvent) => {
+  };  const validateForm = (): boolean => {
+    if (!formData.first_name.trim()) {
+      setError('First name is required');
+      return false;
+    }
+    if (!formData.last_name.trim()) {
+      setError('Last name is required');
+      return false;
+    }
+    if (!formData.username.trim()) {
+      setError('Username is required');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+    if (!formData.role) {
+      setError('Role is required');
+      return false;
+    }
+    if (!formData.department) {
+      setError('Department is required');
+      return false;
+    }
+    if (!formData.password.trim()) {
+      setError('Password is required');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     // Basic validation
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirm_password) {
       setError('Passwords do not match');
       setIsLoading(false);
       return;
@@ -80,7 +118,7 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
     setFormData(prev => ({
       ...prev,
       password: password,
-      confirmPassword: password
+      confirm_password: password
     }));
   };
 
@@ -108,8 +146,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleInputChange}
                 placeholder="Enter first name here..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -123,8 +161,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="lastName"
-                value={formData.lastName}
+                name="last_name"
+                value={formData.last_name}
                 onChange={handleInputChange}
                 placeholder="Enter last name here..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -138,8 +176,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="middleName"
-                value={formData.middleName}
+                name="middle_name"
+                value={formData.middle_name || ''}
                 onChange={handleInputChange}
                 placeholder="N/A if not applicable"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -152,8 +190,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="text"
-                name="employeeId"
-                value={formData.employeeId}
+                name="employee_id"
+                value={formData.employee_id || ''}
                 onChange={handleInputChange}
                 placeholder="Enter employee ID (optional)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -240,8 +278,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               </label>
               <input
                 type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
+                name="confirm_password"
+                value={formData.confirm_password}
                 onChange={handleInputChange}
                 placeholder="Confirm password..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -274,11 +312,13 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
                 <option value="BARANGAY_CAPTAIN">Barangay Captain</option>
                 <option value="BARANGAY_SECRETARY">Barangay Secretary</option>
                 <option value="BARANGAY_TREASURER">Barangay Treasurer</option>
-                <option value="KAGAWAD">Kagawad</option>
-                <option value="SK_CHAIRPERSON">SK Chairperson</option>
-                <option value="SK_KAGAWAD">SK Kagawad</option>
-                <option value="STAFF">Staff</option>
-                <option value="USER">User</option>
+                <option value="BARANGAY_COUNCILOR">Barangay Councilor</option>
+                <option value="BARANGAY_CLERK">Barangay Clerk</option>
+                <option value="HEALTH_WORKER">Health Worker</option>
+                <option value="SOCIAL_WORKER">Social Worker</option>
+                <option value="SECURITY_OFFICER">Security Officer</option>
+                <option value="DATA_ENCODER">Data Encoder</option>
+                <option value="VIEWER">Viewer</option>
               </select>
             </div>
 
@@ -295,15 +335,20 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
                  required
                >
                 <option value="">Select Department</option>
-                <option value="Executive Office">Executive Office</option>
-                <option value="Secretary Office">Secretary Office</option>
-                <option value="Treasury Office">Treasury Office</option>
-                <option value="Council">Council</option>
-                <option value="SK Office">SK Office</option>
-                <option value="Records Office">Records Office</option>
-                <option value="Administration">Administration</option>
-                <option value="General Staff">General Staff</option>
-                <option value="IT Department">IT Department</option>
+                <option value="ADMINISTRATION">Administration</option>
+                <option value="HEALTH_SERVICES">Health Services</option>
+                <option value="SOCIAL_SERVICES">Social Services</option>
+                <option value="SECURITY_PUBLIC_SAFETY">Security & Public Safety</option>
+                <option value="FINANCE_TREASURY">Finance & Treasury</option>
+                <option value="RECORDS_MANAGEMENT">Records Management</option>
+                <option value="COMMUNITY_DEVELOPMENT">Community Development</option>
+                <option value="DISASTER_RISK_REDUCTION">Disaster Risk Reduction</option>
+                <option value="ENVIRONMENTAL_MANAGEMENT">Environmental Management</option>
+                <option value="YOUTH_SPORTS_DEVELOPMENT">Youth & Sports Development</option>
+                <option value="SENIOR_CITIZEN_AFFAIRS">Senior Citizen Affairs</option>
+                <option value="WOMENS_AFFAIRS">Women's Affairs</option>
+                <option value="BUSINESS_PERMITS">Business Permits</option>
+                <option value="INFRASTRUCTURE_DEVELOPMENT">Infrastructure Development</option>
               </select>
             </div>
 
@@ -314,7 +359,7 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
               <input
                 type="text"
                 name="position"
-                value={formData.position}
+                value={formData.position || ''}
                 onChange={handleInputChange}
                 placeholder="Enter position or job title..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -331,8 +376,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
             <div className="flex items-center">
               <input
                 type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
+                name="is_active"
+                checked={formData.is_active}
                 onChange={handleInputChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -344,8 +389,8 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
             <div className="flex items-center">
               <input
                 type="checkbox"
-                name="sendCredentials"
-                checked={formData.sendCredentials}
+                name="send_credentials"
+                checked={formData.send_credentials}
                 onChange={handleInputChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
@@ -366,7 +411,7 @@ const AddNewUser: React.FC<AddNewUserProps> = ({ onClose, onSave }) => {
             </label>
             <textarea
               name="notes"
-              value={formData.notes}
+              value={formData.notes || ''}
               onChange={handleInputChange}
               rows={3}
               placeholder="Enter any additional notes or comments about this user..."

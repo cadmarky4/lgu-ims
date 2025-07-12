@@ -77,7 +77,7 @@ export const ResidentTableRow: React.FC<ResidentTableRowProps> = ({
           <img
             src={
               resident.profile_photo_url
-                ? `${resident.profile_photo_url}`
+                ? `${STORAGE_BASE_URL}/${resident.profile_photo_url}`
                 : "https://placehold.co/80"
             }
             alt={fullName}
