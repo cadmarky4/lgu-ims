@@ -4,10 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
-    "render-build": "npm install && composer install --optimize-autoloader --no-dev --no-interaction && npm run build && php artisan config:cache && php artisan route:cache && php artisan view:cache",
-    "render-start": "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT",
-    "postinstall": "composer install --optimize-autoloader --no-dev --no-interaction"
+    "dev": "vite"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
